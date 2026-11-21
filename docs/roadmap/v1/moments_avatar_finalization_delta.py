@@ -48,6 +48,11 @@ def _canonical_checks(value):
     )
 
 
+def _matches_fields(record, expected):
+    """Compare ordered exact string evidence bindings; boolean checks stay separate."""
+    return all(record.get(key) == value for key, value in expected.items())
+
+
 def _provenance(receipt, raw, check):
     check(
         receipt.get("predecessor_path") == PATH
@@ -60,12 +65,14 @@ def _provenance(receipt, raw, check):
         "selected source scope",
     )
     check(
-        receipt.get("core_qualified_head") == CORE_HEAD
-        and receipt.get("core_merge") == CORE_MERGE
-        and receipt.get("core_tree") == CORE_TREE
-        and receipt.get("apple_qualified_head") == APPLE_HEAD
-        and receipt.get("apple_merge") == APPLE_MERGE
-        and receipt.get("apple_tree") == APPLE_TREE,
+        _matches_fields(receipt, {
+            "core_qualified_head": CORE_HEAD,
+            "core_merge": CORE_MERGE,
+            "core_tree": CORE_TREE,
+            "apple_qualified_head": APPLE_HEAD,
+            "apple_merge": APPLE_MERGE,
+            "apple_tree": APPLE_TREE,
+        }),
         "exact merged provenance",
     )
     check(
@@ -104,9 +111,11 @@ def _acceptance(receipt, check):
 
 def _core_publication(receipt, evidence, check):
     check(
-        evidence.get("merge_sha") == CORE_MERGE
-        and evidence.get("qualified_head") == CORE_HEAD
-        and evidence.get("tree_sha") == CORE_TREE
+        _matches_fields(evidence, {
+            "merge_sha": CORE_MERGE,
+            "qualified_head": CORE_HEAD,
+            "tree_sha": CORE_TREE,
+        })
         and evidence.get("tree_equal_to_qualified_head") is True
         and evidence.get("main_workflow_result") == "PASS",
         "actual Core main readback",
