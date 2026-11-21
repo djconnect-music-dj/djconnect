@@ -11,6 +11,7 @@ from typing import Any
 
 from homeassistant.core import HomeAssistant
 
+from .pipeline import _pipeline_list
 from .const import (
     CONF_ASSIST_PIPELINE_ID,
     DEFAULT_TTS_LANGUAGE,
@@ -306,20 +307,6 @@ def _find_pipeline(
         if str(_pipeline_attr(pipeline, "id") or "") == pipeline_id:
             return pipeline
     return None
-
-
-def _pipeline_list(pipelines: Any) -> list[Any]:
-    if isinstance(pipelines, dict):
-        return list(pipelines.values())
-    mapping = getattr(pipelines, "pipelines", None)
-    if isinstance(mapping, dict):
-        return list(mapping.values())
-    if isinstance(mapping, list | tuple):
-        return list(mapping)
-    try:
-        return list(pipelines)
-    except TypeError:
-        return []
 
 
 def _pipeline_has_stt(pipeline: Any) -> bool:

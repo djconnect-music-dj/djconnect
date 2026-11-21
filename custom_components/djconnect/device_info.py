@@ -65,3 +65,14 @@ def _runtime_client_type(runtime: Any, status: dict[str, Any], config: dict[str,
         or config.get(CONF_CLIENT_TYPE)
         or DEFAULT_CLIENT_TYPE
     )
+
+
+def playback_mapping(runtime: Any) -> dict[str, Any]:
+    playback = getattr(runtime, "last_playback", None)
+    if isinstance(playback, dict) and playback:
+        return playback
+    status = getattr(runtime, "device_status", {}) or {}
+    playback = status.get("playback")
+    if isinstance(playback, dict):
+        return playback
+    return {}

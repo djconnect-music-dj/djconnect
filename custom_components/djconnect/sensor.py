@@ -22,7 +22,7 @@ from .const import (
     CLIENT_TYPE_WATCHOS,
     DOMAIN,
 )
-from .device_info import djconnect_device_info
+from .device_info import djconnect_device_info, playback_mapping as _playback_mapping
 from .entity_ids import entry_unique_id
 from .push import relay_configured
 from .use_cases import run_music_command
@@ -691,17 +691,6 @@ def _collection_items(value):
             if isinstance(items, list):
                 return items
     return []
-
-
-def _playback_mapping(runtime) -> dict:
-    playback = getattr(runtime, "last_playback", None)
-    if isinstance(playback, dict) and playback:
-        return playback
-    status = getattr(runtime, "device_status", {}) or {}
-    playback = status.get("playback")
-    if isinstance(playback, dict):
-        return playback
-    return {}
 
 
 def _outputs_for_runtime(runtime) -> list[dict]:
