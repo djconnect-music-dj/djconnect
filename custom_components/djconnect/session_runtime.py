@@ -6607,7 +6607,255 @@ class _LaterMusicAttempt:
 
     def _commit_playback_current(self):
         manager = self.manager
-        return not (self.active.broadcast.state.playback.state != 'playing' or self.active.broadcast.state.playback.item_id != self.current.item_id or manager._monotonic_source() - self.current.last_observed_monotonic > 30 or (self.current.last_observed_position_ms is None) or (self.active.broadcast.state.playback.duration_ms is None))
+        return not (
+            self.active.broadcast.state.playback.state != "playing"
+            or self.active.broadcast.state.playback.item_id != self.current.item_id
+            or manager._monotonic_source() - self.current.last_observed_monotonic > 30
+            or (self.current.last_observed_position_ms is None)
+            or (self.active.broadcast.state.playback.duration_ms is None)
+        )
+
+
+class _PlaybackObservationAttempt:
+    """One normalized observation under the manager's original single lock."""
+
+    def __init__(
+        self,
+        manager,
+        *,
+        projection,
+        owner_profile_id,
+        session_id,
+        media_identity,
+        album_uri,
+        up_next,
+        forecast_authority,
+        original_status,
+        capture_occurrence,
+    ):
+        self.manager = manager
+        self.projection = projection
+        self.owner_profile_id = owner_profile_id
+        self.session_id = session_id
+        self.media_identity = media_identity
+        self.album_uri = album_uri
+        self.up_next = up_next
+        self.forecast_authority = forecast_authority
+        self.original_status = original_status
+        self.capture_occurrence = capture_occurrence
+
+    def _confirm_first_play(self):
+        """Only the exact dispatched personal offer can be confirmed by this sample."""
+        self.pending = self.active.broadcast.first_play_pending
+        from .surface_status_samples import OriginalSample
+
+        if (
+            type(self.original_status) is OriginalSample
+            and self.original_status.current()
+            and (self.original_status.state == "playing")
+            and (self.pending is not None)
+            and self.pending.play_dispatched
+            and self.pending.authority()
+            and (self.media_identity == self.pending.selected_media[0])
+            and (getattr(self.original_status, "target_id", None) == self.pending.output_id)
+        ):
+            self.active.broadcast.first_play_state = "confirmed"
+
+    def _capture_occurrence(self):
+        """Read the occurrence from this accepted sample, before any history await."""
+        self.occurrence = self.capture_occurrence() if self.capture_occurrence else None
+        from .track_start_announcement import Occurrence
+
+        if (
+            type(self.occurrence) is not Occurrence
+            or self.occurrence.item_id != self.projection.item_id
+        ):
+            self.occurrence = None
+
+    def _history_observation_due(self):
+        manager = self.manager
+        return (
+            manager._historical_projections is not None
+            and self.projection.state == "playing"
+            and self.projection.item_id
+            and (
+                self.old_playback.state != "playing"
+                or self.projection.item_id != self.old_playback.item_id
+                or (self.occurrence is not None and self.occurrence.repeated)
+            )
+        )
+
+    async def _append_history_observation(self):
+        manager = self.manager
+        from .session_history_projection import new_observation_reference
+
+        await manager._historical_projections.async_append_entries(
+            self.owner_profile_id,
+            self.session_id,
+            [
+                {
+                    "kind": "playback_observed",
+                    "reference_id": self.occurrence.occurrence_id
+                    if self.occurrence
+                    else new_observation_reference(),
+                    "body": {
+                        "item_id": self.projection.item_id,
+                        "title": self.projection.title,
+                        "artist": self.projection.artist,
+                        "album": self.projection.album,
+                        "source_url": self.projection.source_url,
+                        "album_uri": self.album_uri
+                        if re.fullmatch("spotify:album:[A-Za-z0-9]{22}", self.album_uri)
+                        else "",
+                        "source_context": manager._history_source_contexts.get(self.session_id, {}),
+                        "provider": "Spotify"
+                        if self.projection.source_url.startswith("https://open.spotify.com/")
+                        else "Music Assistant"
+                        if self.active.music_backend == "music_assistant"
+                        else "DJConnect",
+                        "coverage": "observed_playing_not_full_listen",
+                    },
+                }
+            ],
+        )
+
+    def _observe_published_context(self):
+        """Keep the observation clock and the two original evidence clock reads separate."""
+        manager = self.manager
+        self.now = manager._monotonic_source()
+        if self.projection.item_id and self.media_identity:
+            self.active.published_recording_context.observe(self.media_identity, time.monotonic())
+            self.active.published_album_context.observe(self.media_identity, time.monotonic())
+
+    def _select_opportunity(self):
+        manager = self.manager
+        self.opportunity = manager._intra_track_opportunities.get(self.owner_profile_id)
+        if self.projection.state in {"idle", "stopped"} or not self.projection.item_id:
+            manager._intra_track_opportunities.pop(self.owner_profile_id, None)
+        elif (
+            self.opportunity is None
+            or self.opportunity.session_id != self.session_id
+            or self.opportunity.item_id != self.projection.item_id
+        ):
+            self.opportunity = IntraTrackOpportunity(
+                session_id=self.session_id,
+                media_identity=self.media_identity,
+                item_id=self.projection.item_id,
+                source_context=(
+                    self.projection.target_name,
+                    self.projection.title,
+                    self.projection.artist,
+                    self.projection.album,
+                ),
+            )
+            manager._intra_track_opportunities[self.owner_profile_id] = self.opportunity
+
+    def _observe_position(self):
+        self.old_position = self.opportunity.last_observed_position_ms
+        self.elapsed_ms = max(0, (self.now - self.opportunity.last_observed_monotonic) * 1000)
+        if self.old_position is not None and (
+            self.projection.position_ms < self.old_position - 5000
+            or self.projection.position_ms > self.old_position + max(20000, self.elapsed_ms + 15000)
+        ):
+            self.opportunity.blocked = True
+            self.opportunity.generation += 1
+            self.opportunity.pending = False
+        self.opportunity.last_observed_position_ms = self.projection.position_ms
+
+    def _update_opportunity(self):
+        self.context = (
+            self.projection.target_name,
+            self.projection.title,
+            self.projection.artist,
+            self.projection.album,
+        )
+        if (
+            self.active.broadcast.state.playback.state == "paused"
+            and self.projection.state == "playing"
+        ):
+            self.opportunity.resume_ready_at = self.now + 15
+        if (
+            self.context != self.opportunity.source_context
+            or self.media_identity != self.opportunity.media_identity
+        ):
+            self.opportunity.blocked = True
+            self.opportunity.generation += 1
+            self.opportunity.pending = False
+            self.opportunity.pending_transition = None
+        if self.projection.state != "playing":
+            self.opportunity.generation += 1
+            self.opportunity.pending = False
+            self.opportunity.pending_transition = None
+        if self.projection.position_ms is not None:
+            self._observe_position()
+        self.opportunity.last_observed_monotonic = self.now
+
+    def _inherit_up_next(self):
+        """Re-read playback after history waiting before inheriting the current queue."""
+        self.old_playback = self.active.broadcast.state.playback
+        if (
+            self.up_next is None
+            and self.projection.state == "playing"
+            and (self.old_playback.item_id == self.projection.item_id)
+            and (self.old_playback.target_name == self.projection.target_name)
+        ):
+            self.projection = RendererSafePlaybackProjection(
+                **{**self.projection.__dict__, "up_next": self.old_playback.up_next}
+            )
+
+    def _publish_projection(self):
+        """Renew passive observations only here, including unchanged playback frames."""
+        manager = self.manager
+        if self.opportunity is not None and self.opportunity.blocked:
+            self.active.broadcast.invalidate_current_delivery()
+        if self.forecast_authority is not None:
+            self.active.broadcast.forecast.authority = self.forecast_authority
+        self.active.broadcast.passive_observation_serial += 1
+        self.active.broadcast.passive_observation = (time.monotonic(), time.time(), self.projection)
+        self.active.broadcast.passive_state_observed = self.active.broadcast.passive_observation[:2]
+        self.changed = self.active.broadcast.update_playback(self.projection)
+        if not self.changed and self.active.broadcast.passive_grants:
+            self.active.broadcast._publish(
+                BroadcastEventType.PLAYBACK_CHANGED,
+                {"playback": self.active.broadcast.as_dict()["playback"]},
+            )
+        self.active.broadcast.forecast.accept_observation()
+        self.active.broadcast.update_forecast(self.active)
+        manager._replace_playback_progress_clock(
+            self.owner_profile_id, self.projection, self.session_id
+        )
+        if self.changed:
+            _LOGGER.debug("DJConnect renderer-safe playback projection changed")
+
+    async def _apply_locked(self):
+        manager = self.manager
+        self.active = manager._migrate_legacy_presence_locked(self.owner_profile_id)
+        if self.active is None or self.active.session_id != self.session_id:
+            return False
+        self.old_playback = self.active.broadcast.state.playback
+        if self.projection.state == "playing":
+            self._confirm_first_play()
+        self._capture_occurrence()
+        if self._history_observation_due():
+            await self._append_history_observation()
+        self._observe_published_context()
+        self._select_opportunity()
+        if (
+            self.opportunity is not None
+            and manager._intra_track_opportunities.get(self.owner_profile_id) is self.opportunity
+        ):
+            self._update_opportunity()
+        self._inherit_up_next()
+        self._publish_projection()
+        from .surface_status_samples import publish
+
+        await publish(manager, self.active, self.original_status)
+        return self.changed
+
+    async def execute(self):
+        manager = self.manager
+        async with manager._lock:
+            return await self._apply_locked()
 
 
 class SessionRuntimeManager:
@@ -7195,111 +7443,11 @@ class SessionRuntimeManager:
             position_ms=position_ms,
             up_next=up_next,
         )
-        async with self._lock:
-            active = self._migrate_legacy_presence_locked(owner_profile_id)
-            if active is None or active.session_id != session_id:
-                return False
-            old_playback = active.broadcast.state.playback
-            if projection.state == "playing":
-                # Ordinary playback is neither dismissal nor acceptance of the
-                # Session's personal offer. Only its exact pending mix can close it.
-                pending = active.broadcast.first_play_pending
-                from .surface_status_samples import OriginalSample
-                if (type(original_status) is OriginalSample and original_status.current()
-                        and original_status.state == "playing"
-                        and pending is not None and pending.play_dispatched
-                        and pending.authority()
-                        and media_identity == pending.selected_media[0]
-                        and getattr(original_status, "target_id", None) == pending.output_id):
-                    active.broadcast.first_play_state = "confirmed"
-            # Capture the occurrence from the very sample being accepted here.
-            # A prior command readback or legacy row has no shared occurrence proof.
-            occurrence = capture_occurrence() if capture_occurrence else None
-            from .track_start_announcement import Occurrence
-            if type(occurrence) is not Occurrence or occurrence.item_id != projection.item_id:
-                occurrence = None
-            if (self._historical_projections is not None and projection.state == "playing"
-                and projection.item_id and (old_playback.state != "playing"
-                    or projection.item_id != old_playback.item_id
-                    or (occurrence is not None and occurrence.repeated))):
-                from .session_history_projection import new_observation_reference
-                await self._historical_projections.async_append_entries(owner_profile_id,session_id,[{
-                    "kind":"playback_observed",
-                    "reference_id":occurrence.occurrence_id if occurrence else new_observation_reference(),
-                    "body":{"item_id":projection.item_id,"title":projection.title,"artist":projection.artist,
-                            "album":projection.album,"source_url":projection.source_url,
-                            "album_uri": album_uri if re.fullmatch(r"spotify:album:[A-Za-z0-9]{22}", album_uri) else "",
-                            "source_context":self._history_source_contexts.get(session_id, {}),
-                            "provider":"Spotify" if projection.source_url.startswith("https://open.spotify.com/") else "Music Assistant" if active.music_backend == "music_assistant" else "DJConnect",
-                            "coverage":"observed_playing_not_full_listen"},
-                }])
-            now = self._monotonic_source()
-            if projection.item_id and media_identity:
-                active.published_recording_context.observe(media_identity, time.monotonic())
-                active.published_album_context.observe(media_identity, time.monotonic())
-            opportunity = self._intra_track_opportunities.get(owner_profile_id)
-            if projection.state in {"idle", "stopped"} or not projection.item_id:
-                self._intra_track_opportunities.pop(owner_profile_id, None)
-            elif opportunity is None or opportunity.session_id != session_id or opportunity.item_id != projection.item_id:
-                opportunity = IntraTrackOpportunity(
-                    session_id=session_id,
-                    media_identity=media_identity,
-                    item_id=projection.item_id,
-                    source_context=(projection.target_name, projection.title, projection.artist, projection.album),
-                )
-                self._intra_track_opportunities[owner_profile_id] = opportunity
-            if opportunity is not None and self._intra_track_opportunities.get(owner_profile_id) is opportunity:
-                context = (projection.target_name, projection.title, projection.artist, projection.album)
-                if active.broadcast.state.playback.state == "paused" and projection.state == "playing":
-                    opportunity.resume_ready_at = now + 15
-                if context != opportunity.source_context or media_identity != opportunity.media_identity:
-                    opportunity.blocked = True
-                    opportunity.generation += 1
-                    opportunity.pending = False
-                    opportunity.pending_transition = None
-                if projection.state != "playing":
-                    opportunity.generation += 1
-                    opportunity.pending = False
-                    opportunity.pending_transition = None
-                if projection.position_ms is not None:
-                    old_position = opportunity.last_observed_position_ms
-                    elapsed_ms = max(0, (now - opportunity.last_observed_monotonic) * 1000)
-                    if old_position is not None and (
-                        projection.position_ms < old_position - 5000
-                        or projection.position_ms > old_position + max(20_000, elapsed_ms + 15_000)
-                    ):
-                        opportunity.blocked = True
-                        opportunity.generation += 1
-                        opportunity.pending = False
-                    opportunity.last_observed_position_ms = projection.position_ms
-                opportunity.last_observed_monotonic = now
-            old_playback = active.broadcast.state.playback
-            if up_next is None and projection.state == "playing" and old_playback.item_id == projection.item_id and old_playback.target_name == projection.target_name:
-                projection = RendererSafePlaybackProjection(**{**projection.__dict__, "up_next": old_playback.up_next})
-            if opportunity is not None and opportunity.blocked:
-                active.broadcast.invalidate_current_delivery()
-            if forecast_authority is not None:
-                active.broadcast.forecast.authority = forecast_authority
-            # Only a genuinely accepted backend observation starts this clock;
-            # progress ticks, queue updates and snapshot reads never renew it.
-            active.broadcast.passive_observation_serial += 1
-            active.broadcast.passive_observation = (time.monotonic(), time.time(), projection)
-            active.broadcast.passive_state_observed = active.broadcast.passive_observation[:2]
-            changed = active.broadcast.update_playback(projection)
-            if not changed and active.broadcast.passive_grants:
-                # A newly accepted source observation has a new original clock
-                # even when safe values are identical. Existing passive readers
-                # must not receive a changed frame under their old sequence.
-                active.broadcast._publish(BroadcastEventType.PLAYBACK_CHANGED,
-                    {"playback": active.broadcast.as_dict()["playback"]})
-            active.broadcast.forecast.accept_observation()
-            active.broadcast.update_forecast(active)
-            self._replace_playback_progress_clock(owner_profile_id, projection, session_id)
-            if changed:
-                _LOGGER.debug("DJConnect renderer-safe playback projection changed")
-            from .surface_status_samples import publish
-            await publish(self, active, original_status)
-            return changed
+        attempt = _PlaybackObservationAttempt(self, projection=projection,
+            owner_profile_id=owner_profile_id, session_id=session_id, media_identity=media_identity,
+            album_uri=album_uri, up_next=up_next, forecast_authority=forecast_authority,
+            original_status=original_status, capture_occurrence=capture_occurrence)
+        return await attempt.execute()
 
     async def async_update_next_item_projection(self, *, owner_profile_id: str, session_id: str,
                                                  media_identity: str, target_name: str, up_next: dict[str, Any],
