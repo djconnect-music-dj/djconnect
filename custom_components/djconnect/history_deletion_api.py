@@ -182,7 +182,7 @@ async def async_handle_history_delete(hass, data, *, headers=None, operation="si
     version_token = None
     coordinator = None
     owner = None
-    snapshot: object
+    snapshot = None
 
     async def execute_request():
         nonlocal version_token, coordinator, owner

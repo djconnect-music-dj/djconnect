@@ -1,5 +1,7 @@
 """Production paired handler and Runtime/SQLite; synthetic device-auth, agent and Store boundaries."""
+from copy import deepcopy
 from datetime import UTC, datetime
+from unittest.mock import patch
 from types import SimpleNamespace
 import unittest
 
@@ -96,6 +98,48 @@ class PairedHistoryDeleteTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(await self.query._repository.async_session_record(self.target.session_id))
         self.assertEqual(self.query._repository.retention_fence[1], 0)
         self.assertTrue((await self.f.history.async_history('profile:profile-a'))['messages'])
+
+    async def assert_early_all_error_is_private_and_read_only(self, code, status):
+        from custom_components.djconnect.history_entry_contract import version_context
+        from custom_components.djconnect.persistence.history_deletion import HistoryDeletionError
+
+        previous_version = version_context.get()
+        previous_store = deepcopy(self.store.data)
+        def durable_rows(tx):
+            return {table: tx.fetchall('SELECT * FROM ' + table) for table in (
+                'djconnect_persistent_sessions', 'djconnect_session_entries',
+                'djconnect_history_deletions', 'djconnect_history_deletion_targets',
+                'djconnect_history_deletion_clock',
+            )}
+
+        previous_sql = await self.query._repository._async_in_transaction(durable_rows)
+
+        async def reject_authority(*args, **kwargs):
+            self.assertEqual(version_context.get(), 2)
+            raise HistoryDeletionError(code)
+
+        with patch.object(self.api.HistoryDeletionAuthority, 'resolve', reject_authority), patch(
+            'custom_components.djconnect.history_deletion.deletion_coordinator',
+            side_effect=AssertionError('early authority rejection must not reach deletion'),
+        ) as coordinator_factory:
+            result = await self.api.async_handle_history_delete(self.hass,
+                {**self.f.identity, 'confirmed': True, 'snapshot_id': 'unresolved-snapshot',
+                 'operation_id': identifier(self.now, 88), 'history_contract_version': 2},
+                headers=self.f.headers, operation='all')
+        self.assertEqual(result, ({'success': False, 'error': code}, status))
+        coordinator_factory.assert_not_called()
+        self.assertEqual(version_context.get(), previous_version)
+        self.assertEqual(self.store.data, previous_store)
+        self.assertEqual(await self.query._repository._async_in_transaction(durable_rows), previous_sql)
+
+    async def test_early_bulk_unavailable_is_private_404_without_delete(self):
+        await self.assert_early_all_error_is_private_and_read_only('history_unavailable', 404)
+
+    async def test_early_bulk_revision_conflict_is_409_without_delete(self):
+        await self.assert_early_all_error_is_private_and_read_only('history_revision_conflict', 409)
+
+    async def test_early_bulk_active_session_is_409_without_delete(self):
+        await self.assert_early_all_error_is_private_and_read_only('session_not_archived', 409)
 
     async def snapshot(self):
         result, status = await self.api.async_handle_history_delete(
