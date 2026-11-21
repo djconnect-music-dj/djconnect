@@ -6290,6 +6290,326 @@ class _MomentPersistenceAttempt:
         return self._ordinary_commit()
 
 
+_CONTINUE_LATER_MUSIC = object()
+
+
+class _LaterMusicAttempt:
+    """One later-playback call's captures; the existing manager owns state and locks."""
+
+    def __init__(self, manager, *, owner_profile_id, session_id, media_identity):
+        self.manager = manager
+        self.owner_profile_id = owner_profile_id
+        self.session_id = session_id
+        self.media_identity = media_identity
+
+    def _capture_transition_locked(self):
+        manager = self.manager
+        self.active = manager._migrate_legacy_presence_locked(self.owner_profile_id)
+        self.opportunity = manager._intra_track_opportunities.get(self.owner_profile_id)
+        self.prepared_transition = (
+            manager._prepare_pending_transition(self.active, self.opportunity)
+            if self.active is not None
+            and self.active.session_id == self.session_id
+            and (self.opportunity is not None)
+            and (self.opportunity.session_id == self.session_id)
+            and (self.opportunity.media_identity == self.media_identity)
+            and (not self.opportunity.pending)
+            else None
+        )
+        if self.prepared_transition is not None:
+            self.pending = self.opportunity.pending_transition
+            self.transition_content_epoch = self.active.broadcast.content_epoch
+            self.opportunity.pending = True
+
+    async def _realize_transition(self):
+        manager = self.manager
+        self.engine, self.transition = self.prepared_transition
+        try:
+            self.original = self.transition
+            self.transition = await manager._async_enrich_runtime_moment(
+                self.active, self.transition
+            )
+            self.engine.moments = tuple(
+                (self.transition if m is self.original else m for m in self.engine.moments)
+            )
+            async with manager._lock:
+                if not self._transition_current():
+                    return None
+                return await manager._commit_pending_transition(
+                    self.owner_profile_id,
+                    self.active,
+                    self.opportunity,
+                    self.engine,
+                    self.transition,
+                )
+        except PermissionError:
+            return None
+        finally:
+            async with manager._lock:
+                if (
+                    manager._intra_track_opportunities.get(self.owner_profile_id)
+                    is self.opportunity
+                ):
+                    self.opportunity.pending = False
+
+    async def _prepare_current_locked(self):
+        manager = self.manager
+        self.active = manager._active_by_profile.get(self.owner_profile_id)
+        self.opportunity = manager._intra_track_opportunities.get(self.owner_profile_id)
+        if (
+            self.active is None
+            or self.active.session_id != self.session_id
+            or self.opportunity is None
+        ):
+            return None
+        if self.opportunity.pending:
+            return None
+        if (
+            self.opportunity.pending_transition is not None
+            and manager._monotonic_source() > self.opportunity.pending_transition[-1]
+        ):
+            self.opportunity.pending_transition = None
+        if not self.active.allows_proactive():
+            return None
+        self.transition = await manager._publish_pending_transition(
+            self.owner_profile_id, self.active, self.opportunity
+        )
+        if self.transition is not None:
+            return self.transition
+        self.playback = self.active.broadcast.state.playback
+        self.position = self.opportunity.last_observed_position_ms
+        self.duration = self.playback.duration_ms
+        if self.opportunity.qualified_facts:
+            return self._prepare_fact_locked()
+        return self._prepare_ordinary_locked()
+
+    async def _assemble_current(self):
+        manager = self.manager
+        try:
+            self.knowledge = await self.working_knowledge.async_assemble_track_context(
+                intent=self.intent,
+                raw_insight=self.safe_insight,
+                session_direction=self.direction,
+                session_start_strategy=self.strategy,
+                session_mood=self.mood,
+                discover_context=self.discover,
+                performance_memory=self.memory,
+            )
+            self.moment = self.working_moments.create_track_context(
+                session_id=self.session_id,
+                knowledge_intent=self.intent,
+                selected_mood=self.mood,
+                persona=self.persona,
+                locale=self.locale,
+                insight=self.knowledge.as_insight(),
+            )
+            self.original = self.moment
+            self.moment = await manager._async_enrich_runtime_moment(self.active, self.moment)
+            self.working_moments.moments = tuple(
+                (self.moment if m is self.original else m for m in self.working_moments.moments)
+            )
+        except asyncio.CancelledError:
+            async with manager._lock:
+                self.current = manager._intra_track_opportunities.get(self.owner_profile_id)
+                if self.current is self.opportunity and self.current.generation == self.generation:
+                    self.current.pending = False
+            raise
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.debug(
+                "DJConnect later current-track context unavailable: %s", exc.__class__.__name__
+            )
+            self.moment = None
+
+    async def _commit_current_locked(self):
+        manager = self.manager
+        self.active = manager._active_by_profile.get(self.owner_profile_id)
+        self.current = manager._intra_track_opportunities.get(self.owner_profile_id)
+        if (
+            not self._commit_owner_current()
+            or not self._commit_opportunity_current()
+            or (not self._commit_playback_current())
+        ):
+            if self.current is self.opportunity and self.current.generation == self.generation:
+                self.current.pending = False
+            return None
+        self.current.pending = False
+        if self.moment is None or self.moment.moment_type is DJMomentType.SILENCE:
+            self.current.spent = True
+            return None
+        self.remaining_ms = (
+            self.active.broadcast.state.playback.duration_ms
+            - self.current.last_observed_position_ms
+        )
+        if (
+            self.remaining_ms
+            < (self.moment.presentation_intent.maximum_duration_seconds + 5) * 1000
+        ):
+            return None
+        # Persistence may yield: unpublished engines stay private until acceptance.
+        if not await manager._async_persist_moment(self.active, self.moment):
+            return None
+        self.active.knowledge_engine.__dict__.update(self.working_knowledge.__dict__)
+        self.active.moment_engine.__dict__.update(self.working_moments.__dict__)
+        self.active.publish_moment(self.moment)
+        self.current.spent = True
+        manager._record_performance_memory(self.owner_profile_id, self.active)
+        return self.moment
+
+    async def execute(self):
+        manager = self.manager
+        async with manager._lock:
+            self._capture_transition_locked()
+        if self.prepared_transition is not None:
+            return await self._realize_transition()
+        self.prepared_fact = None
+        async with manager._lock:
+            result = await self._prepare_current_locked()
+            if result is not _CONTINUE_LATER_MUSIC:
+                return result
+        if self.prepared_fact is not None:
+            return await manager._realize_qualified_current_fact(self.prepared_fact)
+        await self._assemble_current()
+        async with manager._lock:
+            return await self._commit_current_locked()
+
+    def _transition_current(self):
+        manager = self.manager
+        return not (
+            manager._active_by_profile.get(self.owner_profile_id) is not self.active
+            or manager._intra_track_opportunities.get(self.owner_profile_id) is not self.opportunity
+            or self.active.broadcast.content_epoch != self.transition_content_epoch
+            or self.active.broadcast.content_pending
+            or (self.opportunity.pending_transition is not self.pending)
+            or (manager._prepare_pending_transition(self.active, self.opportunity) is None)
+        )
+
+    def _qualified_playback_current(self):
+        return not (
+            self.opportunity.session_id != self.session_id
+            or self.opportunity.media_identity != self.media_identity
+            or self.opportunity.item_id != self.playback.item_id
+            or self.opportunity.blocked
+            or (self.opportunity.fact_count >= 6)
+            or (self.playback.state != "playing")
+            or (self.position is None)
+            or (self.duration is None)
+        )
+
+    def _qualified_spacing_current(self):
+        manager = self.manager
+        return not (
+            manager._monotonic_source() - self.opportunity.last_observed_monotonic > 30
+            or manager._monotonic_source() < self.opportunity.resume_ready_at
+            or self.duration - self.position < 45_000
+            or (
+                self.opportunity.last_fact_position_ms is not None
+                and self.position - self.opportunity.last_fact_position_ms
+                < max(
+                    _qualified_fact_spacing_seconds(
+                        self.active.selected_mood,
+                        self.active.dj_persona,
+                        self.active.session_direction.direction,
+                    ),
+                    self.opportunity.last_fact_read_seconds - 5,
+                )
+                * 1000
+            )
+        )
+
+    def _prepare_fact_locked(self):
+        manager = self.manager
+        if not self._qualified_playback_current() or not self._qualified_spacing_current():
+            return None
+        self.prepared_fact = manager._prepare_qualified_current_fact(
+            self.owner_profile_id, self.active, self.opportunity
+        )
+        if self.prepared_fact is None:
+            return None
+        return _CONTINUE_LATER_MUSIC
+
+    def _ordinary_owner_current(self):
+        return not (
+            self.opportunity.session_id != self.session_id
+            or self.opportunity.media_identity != self.media_identity
+            or self.opportunity.item_id != self.playback.item_id
+            or self.opportunity.blocked
+            or self.opportunity.spent
+            or self.opportunity.pending
+            or (self.opportunity.first_moment_type is None)
+            or (not self.opportunity.safe_insight)
+            or (self.playback.state != "playing")
+        )
+
+    def _ordinary_observation_current(self):
+        manager = self.manager
+        return not (
+            self.position is None
+            or self.duration is None
+            or self.opportunity.first_moment_position_ms is None
+            or (manager._monotonic_source() - self.opportunity.last_observed_monotonic > 30)
+            or (manager._monotonic_source() < self.opportunity.resume_ready_at)
+        )
+
+    def _prepare_ordinary_locked(self):
+        if not self._ordinary_owner_current() or not self._ordinary_observation_current():
+            return None
+        self.intent = self.active.planner.select_intra_track_intent(
+            first_type=self.opportunity.first_moment_type,
+            first_position_ms=self.opportunity.first_moment_position_ms,
+            first_read_seconds=self.opportunity.first_read_seconds,
+            observed_position_ms=self.position,
+            duration_ms=self.duration,
+            safe_insight=self.opportunity.safe_insight,
+            performance_memory=self.active.performance_memory,
+            allowed_intents=self.active.allowed_capability_intents,
+        )
+        if self.intent is None:
+            return None
+        self.opportunity.pending = True
+        self.generation = self.opportunity.generation
+        self.safe_insight = copy.deepcopy(self.opportunity.safe_insight)
+        self.working_knowledge = copy.deepcopy(self.active.knowledge_engine)
+        self.working_moments = copy.deepcopy(self.active.moment_engine)
+        self.direction = self.active.session_direction
+        self.mood = self.active.selected_mood
+        self.candidate_mood_revision = self.active.mood_revision
+        self.candidate_presence_revision = self.active.presence_revision
+        self.candidate_persona_revision = self.active.persona_revision
+        self.candidate_settings_revision = self.active.settings_revision
+        self.candidate_content_epoch = self.active.broadcast.content_epoch
+        self.strategy = self.active.session_start_strategy
+        self.discover = self.active.discover_context
+        self.memory = self.active.performance_memory
+        self.persona = self.active.dj_persona
+        self.locale = self.active.locale
+        return _CONTINUE_LATER_MUSIC
+
+    def _commit_owner_current(self):
+        return not (
+            self.active is None
+            or self.active.session_id != self.session_id
+            or self.active.mood_revision != self.candidate_mood_revision
+            or (self.active.presence_revision != self.candidate_presence_revision)
+            or (self.active.persona_revision != self.candidate_persona_revision)
+            or (self.active.settings_revision != self.candidate_settings_revision)
+            or (self.active.broadcast.content_epoch != self.candidate_content_epoch)
+            or self.active.broadcast.content_pending
+        )
+
+    def _commit_opportunity_current(self):
+        return not (
+            not self.active.allows_proactive()
+            or self.current is not self.opportunity
+            or self.current.generation != self.generation
+            or (not self.current.pending)
+            or self.current.blocked
+        )
+
+    def _commit_playback_current(self):
+        manager = self.manager
+        return not (self.active.broadcast.state.playback.state != 'playing' or self.active.broadcast.state.playback.item_id != self.current.item_id or manager._monotonic_source() - self.current.last_observed_monotonic > 30 or (self.current.last_observed_position_ms is None) or (self.active.broadcast.state.playback.duration_ms is None))
+
+
 class SessionRuntimeManager:
     """Own active DJ Session Runtimes for this Home Assistant instance."""
 
@@ -7101,185 +7421,9 @@ class SessionRuntimeManager:
         self, *, owner_profile_id: str, session_id: str, media_identity: str
     ) -> DJMoment | None:
         """Realize one later Moment only from fresh observed current playback."""
-        # A qualified pending relation is prepared under the same owner lock,
-        # enriched outside it, then revalidated before the ordinary commit.
-        async with self._lock:
-            active = self._migrate_legacy_presence_locked(owner_profile_id)
-            opportunity = self._intra_track_opportunities.get(owner_profile_id)
-            prepared_transition = (self._prepare_pending_transition(active, opportunity)
-                if active is not None and active.session_id == session_id and opportunity is not None
-                and opportunity.session_id == session_id and opportunity.media_identity == media_identity
-                and not opportunity.pending else None)
-            if prepared_transition is not None:
-                pending = opportunity.pending_transition
-                transition_content_epoch = active.broadcast.content_epoch
-                opportunity.pending = True
-        if prepared_transition is not None:
-            engine, transition = prepared_transition
-            try:
-                original = transition
-                transition = await self._async_enrich_runtime_moment(active, transition)
-                engine.moments = tuple(transition if m is original else m for m in engine.moments)
-                async with self._lock:
-                    if (self._active_by_profile.get(owner_profile_id) is not active
-                            or self._intra_track_opportunities.get(owner_profile_id) is not opportunity
-                            or active.broadcast.content_epoch != transition_content_epoch
-                            or active.broadcast.content_pending
-                            or opportunity.pending_transition is not pending
-                            or self._prepare_pending_transition(active, opportunity) is None):
-                        return None
-                    return await self._commit_pending_transition(owner_profile_id, active, opportunity, engine, transition)
-            except PermissionError:
-                return None
-            finally:
-                async with self._lock:
-                    if self._intra_track_opportunities.get(owner_profile_id) is opportunity:
-                        opportunity.pending = False
-        prepared_fact = None
-        async with self._lock:
-            active = self._active_by_profile.get(owner_profile_id)
-            opportunity = self._intra_track_opportunities.get(owner_profile_id)
-            if active is None or active.session_id != session_id or opportunity is None:
-                return None
-            if opportunity.pending:
-                return None
-            if opportunity.pending_transition is not None and self._monotonic_source() > opportunity.pending_transition[-1]:
-                opportunity.pending_transition = None
-            if not active.allows_proactive():
-                return None
-            transition = await self._publish_pending_transition(owner_profile_id, active, opportunity)
-            if transition is not None:
-                return transition
-            playback = active.broadcast.state.playback
-            position = opportunity.last_observed_position_ms
-            duration = playback.duration_ms
-            if opportunity.qualified_facts:
-                # Fresh provider observations, not the one-second display clock,
-                # drive each independent fact opportunity. No backlog or replay.
-                if (opportunity.session_id != session_id or opportunity.media_identity != media_identity
-                        or opportunity.item_id != playback.item_id or opportunity.blocked
-                        or opportunity.fact_count >= 6 or playback.state != "playing"
-                        or position is None or duration is None
-                        or self._monotonic_source() - opportunity.last_observed_monotonic > 30
-                        or self._monotonic_source() < opportunity.resume_ready_at
-                        or duration - position < 45_000
-                        or (opportunity.last_fact_position_ms is not None and
-                            position - opportunity.last_fact_position_ms < max(
-                                _qualified_fact_spacing_seconds(active.selected_mood, active.dj_persona, active.session_direction.direction),
-                                opportunity.last_fact_read_seconds - 5) * 1000)):
-                    return None
-                prepared_fact = self._prepare_qualified_current_fact(owner_profile_id, active, opportunity)
-                if prepared_fact is None:
-                    return None
-            else:
-                if (
-                    opportunity.session_id != session_id
-                    or opportunity.media_identity != media_identity
-                    or opportunity.item_id != playback.item_id
-                    or opportunity.blocked or opportunity.spent or opportunity.pending
-                    or opportunity.first_moment_type is None
-                    or not opportunity.safe_insight
-                    or playback.state != "playing"
-                    or position is None or duration is None
-                    or opportunity.first_moment_position_ms is None
-                    or self._monotonic_source() - opportunity.last_observed_monotonic > 30
-                    or self._monotonic_source() < opportunity.resume_ready_at
-                ):
-                    return None
-                intent = active.planner.select_intra_track_intent(
-                    first_type=opportunity.first_moment_type,
-                    first_position_ms=opportunity.first_moment_position_ms,
-                    first_read_seconds=opportunity.first_read_seconds,
-                    observed_position_ms=position,
-                    duration_ms=duration,
-                    safe_insight=opportunity.safe_insight,
-                    performance_memory=active.performance_memory,
-                    allowed_intents=active.allowed_capability_intents,
-                )
-                if intent is None:
-                    return None
-                opportunity.pending = True
-                generation = opportunity.generation
-                safe_insight = copy.deepcopy(opportunity.safe_insight)
-                working_knowledge = copy.deepcopy(active.knowledge_engine)
-                working_moments = copy.deepcopy(active.moment_engine)
-                direction = active.session_direction
-                mood = active.selected_mood
-                candidate_mood_revision = active.mood_revision
-                candidate_presence_revision = active.presence_revision
-                candidate_persona_revision = active.persona_revision
-                candidate_settings_revision = active.settings_revision
-                candidate_content_epoch = active.broadcast.content_epoch
-                strategy = active.session_start_strategy
-                discover = active.discover_context
-                memory = active.performance_memory
-                persona = active.dj_persona
-                locale = active.locale
-        if prepared_fact is not None:
-            return await self._realize_qualified_current_fact(prepared_fact)
-        try:
-            knowledge = await working_knowledge.async_assemble_track_context(
-                intent=intent, raw_insight=safe_insight, session_direction=direction,
-                session_start_strategy=strategy, session_mood=mood,
-                discover_context=discover, performance_memory=memory,
-            )
-            moment = working_moments.create_track_context(
-                session_id=session_id, knowledge_intent=intent,
-                selected_mood=mood, persona=persona, locale=locale,
-                insight=knowledge.as_insight(),
-            )
-            original = moment
-            moment = await self._async_enrich_runtime_moment(active, moment)
-            working_moments.moments = tuple(moment if m is original else m for m in working_moments.moments)
-        except asyncio.CancelledError:
-            async with self._lock:
-                current = self._intra_track_opportunities.get(owner_profile_id)
-                if current is opportunity and current.generation == generation:
-                    current.pending = False
-            raise
-        except Exception as exc:  # noqa: BLE001
-            _LOGGER.debug("DJConnect later current-track context unavailable: %s", exc.__class__.__name__)
-            moment = None
-        async with self._lock:
-            active = self._active_by_profile.get(owner_profile_id)
-            current = self._intra_track_opportunities.get(owner_profile_id)
-            if (
-                active is None or active.session_id != session_id
-                or active.mood_revision != candidate_mood_revision
-                or active.presence_revision != candidate_presence_revision
-                or active.persona_revision != candidate_persona_revision
-                or active.settings_revision != candidate_settings_revision
-                or active.broadcast.content_epoch != candidate_content_epoch
-                or active.broadcast.content_pending
-                or not active.allows_proactive()
-                or current is not opportunity or current.generation != generation
-                or not current.pending or current.blocked
-                or active.broadcast.state.playback.state != "playing"
-                or active.broadcast.state.playback.item_id != current.item_id
-                or self._monotonic_source() - current.last_observed_monotonic > 30
-                or current.last_observed_position_ms is None
-                or active.broadcast.state.playback.duration_ms is None
-            ):
-                if current is opportunity and current.generation == generation:
-                    current.pending = False
-                return None
-            current.pending = False
-            if moment is None or moment.moment_type is DJMomentType.SILENCE:
-                current.spent = True
-                return None
-            remaining_ms = active.broadcast.state.playback.duration_ms - current.last_observed_position_ms
-            if remaining_ms < (moment.presentation_intent.maximum_duration_seconds + 5) * 1000:
-                return None
-            # Persistence may yield or be cancelled. Keep unpublished working
-            # engines and the current opportunity unspent until it succeeds.
-            if not await self._async_persist_moment(active, moment):
-                return None
-            active.knowledge_engine.__dict__.update(working_knowledge.__dict__)
-            active.moment_engine.__dict__.update(working_moments.__dict__)
-            active.publish_moment(moment)
-            current.spent = True
-            self._record_performance_memory(owner_profile_id, active)
-            return moment
+        attempt = _LaterMusicAttempt(self, owner_profile_id=owner_profile_id,
+            session_id=session_id, media_identity=media_identity)
+        return await attempt.execute()
 
     def _prepare_qualified_current_fact(self, owner_profile_id: str, active: DJSessionRuntime,
                                         opportunity: IntraTrackOpportunity):
