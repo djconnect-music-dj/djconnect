@@ -50,6 +50,13 @@ def apply_runtime_content(manager, owner, scope):
     identifiers = {m for s, m in scope['moments'] if s == active.session_id}
     if not identifiers:
         return
+    changed = _withdraw_moment_state(active, identifiers)
+    _withdraw_flow(active, identifiers, changed)
+    manager._record_performance_memory(owner, active)
+    _withdraw_narrative(manager, owner, active, identifiers)
+
+
+def _invalidate_current(active, identifiers):
     broadcast = active.broadcast
     current = broadcast.native_delivery().get('current_moment_id')
     active.deleted_moment_ids.update(identifiers)
@@ -60,6 +67,11 @@ def apply_runtime_content(manager, owner, scope):
     if current in identifiers or latest in identifiers:
         broadcast.content_current_withdrawn = True
         broadcast.invalidate_current_delivery()
+
+
+def _withdraw_moment_state(active, identifiers):
+    _invalidate_current(active, identifiers)
+    broadcast = active.broadcast
     changed = any(m.moment_id in identifiers for m in broadcast.state.dj_moments)
     active.moment_engine.moments = tuple(m for m in active.moment_engine.moments if m.moment_id not in identifiers)
     for identifier in identifiers:
@@ -70,6 +82,11 @@ def apply_runtime_content(manager, owner, scope):
     broadcast.state = replace(broadcast.state,
         dj_moments=tuple(m for m in broadcast.state.dj_moments if m.moment_id not in identifiers),
         presentations=tuple(p for p in broadcast.state.presentations if p.source_moment_id not in identifiers))
+    return changed
+
+
+def _withdraw_flow(active, identifiers, changed):
+    broadcast = active.broadcast
     flow = active.planner.output.session_flow
     items = tuple(i for i in flow.items if i.moment_id not in identifiers)
     retained_old_flow = any(i.moment_id in identifiers for change in active.planner.flow_change_journal for i in change.flow.items)
@@ -84,7 +101,9 @@ def apply_runtime_content(manager, owner, scope):
         broadcast.recovery_cursor = None
         for events in broadcast._pending_subscriptions.values():
             events.clear()
-    manager._record_performance_memory(owner, active)
+
+
+def _withdraw_narrative(manager, owner, active, identifiers):
     line = active.planner.discover_narrative_line
     if line is not None and line.source_moment_id in identifiers:
         active.planner.discover_narrative_line = None

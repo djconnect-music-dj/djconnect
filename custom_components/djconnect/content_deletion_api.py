@@ -35,18 +35,7 @@ class ContentConfirmations:
         token = secrets.token_urlsafe(32)
         self._records[token] = dict(owner=owner, binding=binding, snapshot=snapshot,
                                    privacy=privacy, fence=fence, deadline=now + 300, size=size)
-        wall = time.time()
-        return {'success': True, 'schema_version': 1, 'owner_profile_id': owner,
-                'confirmation_id': token, 'target': snapshot['selector'], 'unit': scope['unit'],
-                'affected_entries': [{'session_id': s, 'entry_id': e, 'disposition': mode}
-                                     for s, e, _, _, mode in scope['entries']],
-                'removed_message_ids': plan['remove_message_ids'],
-                'unavailable_message_ids': plan['redact_message_ids'],
-                'affected_moments': [{'session_id': s, 'moment_id': m} for s, m in scope['moments']],
-                'fenced_request_count': len(scope['request_hashes']),
-                'music_playback_undone': False,
-                'created_at': datetime.fromtimestamp(wall, UTC).isoformat(),
-                'expires_at': datetime.fromtimestamp(wall + 300, UTC).isoformat()}
+        return _confirmation_response(owner, token, snapshot, scope=scope, plan=plan)
 
     def get(self, owner, binding, token):
         record = self._records.get(token)
@@ -57,18 +46,140 @@ class ContentConfirmations:
         return record
 
 
+def _confirmation_response(owner, token, snapshot, *, scope, plan):
+    wall = time.time()
+    return {'success': True, 'schema_version': 1, 'owner_profile_id': owner,
+            'confirmation_id': token, 'target': snapshot['selector'], 'unit': scope['unit'],
+            'affected_entries': [{'session_id': s, 'entry_id': e, 'disposition': mode}
+                                 for s, e, _, _, mode in scope['entries']],
+            'removed_message_ids': plan['remove_message_ids'],
+            'unavailable_message_ids': plan['redact_message_ids'],
+            'affected_moments': [{'session_id': s, 'moment_id': m} for s, m in scope['moments']],
+            'fenced_request_count': len(scope['request_hashes']),
+            'music_playback_undone': False,
+            'created_at': datetime.fromtimestamp(wall, UTC).isoformat(),
+            'expires_at': datetime.fromtimestamp(wall + 300, UTC).isoformat()}
+
+
+
 def confirmations(hass):
     return hass.data.setdefault('djconnect', {}).setdefault('content_confirmations', ContentConfirmations())
+
+
+def _selector_ids(selector):
+    return (isinstance(selector['session_id'], str)
+            and (not selector['session_id'] or _ID.fullmatch(selector['session_id']))
+            and isinstance(selector['target_id'], str) and _ID.fullmatch(selector['target_id']))
 
 
 def _valid_selector(selector):
     return (type(selector) is dict and set(selector) == {'kind', 'session_id', 'target_id'}
             and isinstance(selector['kind'], str)
             and selector['kind'] in {'entry', 'moment', 'message', 'request'}
-            and isinstance(selector['session_id'], str)
-            and (not selector['session_id'] or _ID.fullmatch(selector['session_id']))
-            and isinstance(selector['target_id'], str) and _ID.fullmatch(selector['target_id'])
+            and _selector_ids(selector)
             and (selector['kind'] not in {'entry', 'moment'} or bool(selector['session_id'])))
+
+
+def _request_fields(operation):
+    fields = {'device_id', 'client_type', 'contract_version'}
+    if operation == 'prepare':
+        fields.add('target')
+    elif operation in {'delete', 'status'}:
+        fields.update({'operation_id', 'confirmation_id'})
+        if operation == 'delete':
+            fields.add('confirmed')
+    else:
+        return None
+    return fields
+
+
+def _request_contract(data, operation):
+    fields = _request_fields(operation)
+    if fields is None:
+        return False
+    if (type(data) is not dict or set(data) != fields or type(data.get('contract_version')) is not int
+            or data['contract_version'] != 1):
+        return False
+    if operation == 'prepare':
+        return _valid_selector(data.get('target'))
+    if operation == 'delete' and data.get('confirmed') is not True:
+        return False
+    return isinstance(data.get('confirmation_id'), str) and _TOKEN.fullmatch(data['confirmation_id'])
+
+
+async def _status(coordinator, authority, data, owner, binding, register):
+    result = await coordinator.journal.async_content_status(owner, data['operation_id'], binding,
+        scope_digest({'confirmation_id': data['confirmation_id']}))
+    authority.validate_now()
+    register(authority.validate_now)
+    if result.get('receipt') is not None:
+        result['receipt'] = {**result['receipt'], 'confirmation_id': data['confirmation_id']}
+    return {'success': True, 'schema_version': 1, 'owner_profile_id': owner,
+            'operation_id': data['operation_id'], 'confirmation_id': data['confirmation_id'],
+            'request_digest': scope_digest({'confirmation_id': data['confirmation_id']}), **result}, 200
+
+
+async def _prepare(hass, coordinator, authority, data, owner, binding, fence, register):
+    snapshot = await coordinator.async_preview(owner, data['target'], authorize=authority.validate_now)
+    authority.validate_now()
+    if fence != coordinator.repository.retention_fence or fence[1]:
+        raise HistoryDeletionError('content_delete_scope_conflict')
+    result = confirmations(hass).capture(owner, binding, snapshot,
+        coordinator.history.scope_revision('profile:' + owner), fence)
+    register(authority.validate_now)
+    return result, 200
+
+
+async def _execute(hass, coordinator, authority, data, owner, binding, fence, register):
+    key = owner, data['operation_id']
+    own = int(key in coordinator._barriers)
+    fence = fence[0] - own, fence[1] - own
+    digest = scope_digest({'confirmation_id': data['confirmation_id']})
+    previous = await coordinator.journal.async_content_operation(owner, data['operation_id'], binding, digest=digest)
+    record = None if previous is not None else confirmations(hass).get(owner, binding, data['confirmation_id'])
+
+    def authorize():
+        authority.validate_now()
+        owned = int(key in coordinator._barriers)
+        if coordinator.repository.retention_fence != (fence[0] + owned, fence[1] + owned) or fence[1]:
+            raise HistoryDeletionError('content_delete_scope_conflict')
+        if record is not None and (record['fence'] != fence
+                or coordinator.history.scope_revision('profile:' + owner) != record['privacy']):
+            raise HistoryDeletionError('content_delete_scope_conflict')
+        return True
+
+    receipt = await coordinator.async_execute(owner=owner, operation_id=data['operation_id'], binding=binding,
+        digest=digest, snapshot=record['snapshot'] if record else None, authorize=authorize)
+    authority.validate_now()
+    register(authority.validate_now)
+    return {**receipt, 'confirmation_id': data['confirmation_id']}, 200
+
+
+async def _dispatch(hass, data, headers, operation, coordinator_factory, register):
+    if operation != 'prepare':
+        operation_created_ms(data['operation_id'])
+    authority = await HistoryDeletionAuthority.resolve(hass, {k: data[k] for k in ('device_id', 'client_type')}, headers or {})
+    authority.validate_now()
+    owner, binding = authority.context.profile_id, authority.binding
+    coordinator = coordinator_factory(hass)
+    if operation == 'status':
+        return await _status(coordinator, authority, data, owner, binding, register)
+    fence = coordinator.repository.retention_fence
+    if operation == 'prepare':
+        return await _prepare(hass, coordinator, authority, data, owner, binding, fence, register)
+    return await _execute(hass, coordinator, authority, data, owner, binding, fence, register)
+
+
+def _operation_failure(error):
+    code = 'invalid_content_delete_request' if error.code == 'invalid_operation_id' else error.code
+    return {'success': False, 'error': code}, error.status
+
+
+def _content_failure(error):
+    code = str(error)
+    status = (400 if code.startswith('invalid_') else 404 if code in {'content_unavailable', 'history_unavailable'}
+              else 503 if code.endswith(('_capacity', '_outcome_unknown')) else 409)
+    return {'success': False, 'error': code}, status
 
 
 async def async_handle_content_delete(hass, data, *, headers=None, operation='delete'):
@@ -78,80 +189,16 @@ async def async_handle_content_delete(hass, data, *, headers=None, operation='de
     from .persistence.service import PersistenceError
     from .transport_delivery import register_delivery_admission
 
-    fields = {'device_id', 'client_type', 'contract_version'}
-    if operation == 'prepare':
-        fields.add('target')
-    elif operation in {'delete', 'status'}:
-        fields.update({'operation_id', 'confirmation_id'})
-        if operation == 'delete':
-            fields.add('confirmed')
-    else:
-        return {'success': False, 'error': 'invalid_content_delete_request'}, 400
-    if (type(data) is not dict or set(data) != fields or type(data.get('contract_version')) is not int
-            or data['contract_version'] != 1
-            or (operation == 'prepare' and not _valid_selector(data.get('target')))
-            or (operation == 'delete' and data.get('confirmed') is not True)
-            or (operation != 'prepare' and (not isinstance(data.get('confirmation_id'), str)
-                or not _TOKEN.fullmatch(data['confirmation_id'])))):
+    if not _request_contract(data, operation):
         return {'success': False, 'error': 'invalid_content_delete_request'}, 400
     try:
-        if operation != 'prepare':
-            operation_created_ms(data['operation_id'])
-        authority = await HistoryDeletionAuthority.resolve(hass, {k: data[k] for k in ('device_id', 'client_type')}, headers or {})
-        authority.validate_now()
-        owner, binding = authority.context.profile_id, authority.binding
-        coordinator = content_deletion_coordinator(hass)
-        if operation == 'status':
-            result = await coordinator.journal.async_content_status(owner, data['operation_id'], binding,
-                scope_digest({'confirmation_id': data['confirmation_id']}))
-            authority.validate_now()
-            register_delivery_admission(authority.validate_now)
-            if result.get('receipt') is not None:
-                result['receipt'] = {**result['receipt'], 'confirmation_id': data['confirmation_id']}
-            return {'success': True, 'schema_version': 1, 'owner_profile_id': owner,
-                    'operation_id': data['operation_id'], 'confirmation_id': data['confirmation_id'],
-                    'request_digest': scope_digest({'confirmation_id': data['confirmation_id']}), **result}, 200
-        fence = coordinator.repository.retention_fence
-        if operation == 'prepare':
-            snapshot = await coordinator.async_preview(owner, data['target'], authorize=authority.validate_now)
-            authority.validate_now()
-            if fence != coordinator.repository.retention_fence or fence[1]:
-                raise HistoryDeletionError('content_delete_scope_conflict')
-            result = confirmations(hass).capture(owner, binding, snapshot,
-                coordinator.history.scope_revision('profile:' + owner), fence)
-            register_delivery_admission(authority.validate_now)
-            return result, 200
-        key = owner, data['operation_id']
-        own = int(key in coordinator._barriers)
-        fence = fence[0] - own, fence[1] - own
-        digest = scope_digest({'confirmation_id': data['confirmation_id']})
-        previous = await coordinator.journal.async_content_operation(owner, data['operation_id'], binding, digest=digest)
-        record = None if previous is not None else confirmations(hass).get(owner, binding, data['confirmation_id'])
-
-        def authorize():
-            authority.validate_now()
-            owned = int(key in coordinator._barriers)
-            if coordinator.repository.retention_fence != (fence[0] + owned, fence[1] + owned) or fence[1]:
-                raise HistoryDeletionError('content_delete_scope_conflict')
-            if record is not None and (record['fence'] != fence
-                    or coordinator.history.scope_revision('profile:' + owner) != record['privacy']):
-                raise HistoryDeletionError('content_delete_scope_conflict')
-            return True
-
-        receipt = await coordinator.async_execute(owner=owner, operation_id=data['operation_id'], binding=binding,
-            digest=digest, snapshot=record['snapshot'] if record else None, authorize=authorize)
-        authority.validate_now()
-        register_delivery_admission(authority.validate_now)
-        return {**receipt, 'confirmation_id': data['confirmation_id']}, 200
+        return await _dispatch(hass, data, headers, operation, content_deletion_coordinator, register_delivery_admission)
     except OperationError as error:
-        return {'success': False, 'error': 'invalid_content_delete_request' if error.code == 'invalid_operation_id' else error.code}, error.status
+        return _operation_failure(error)
     except SessionConversationError as error:
         return {'success': False, 'error': error.code}, error.status
     except HistoryDeletionError as error:
-        code = str(error)
-        status = (400 if code.startswith('invalid_') else 404 if code in {'content_unavailable', 'history_unavailable'}
-                  else 503 if code.endswith(('_capacity', '_outcome_unknown')) else 409)
-        return {'success': False, 'error': code}, status
+        return _content_failure(error)
     except (PersistenceError, OSError, RuntimeError, ValueError):
         # No optimistic success and no automatic new operation after ambiguity.
         return {'success': False, 'error': 'content_delete_outcome_unknown'}, 503

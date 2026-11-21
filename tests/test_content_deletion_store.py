@@ -33,22 +33,30 @@ class ContentDeletionStoreTests(unittest.IsolatedAsyncioTestCase):
             entry_index={}, prepare_intent=prepare, individual=True,
             targeted_withdraw=withdraw, recovery_plan=recovery_plan)
 
-    async def test_either_role_removes_exact_complete_standalone_exchange(self):
-        for role in ('assistant_message', 'user_message'):
-            # Restore an independent disposable owner for each role selection.
-            if role == 'user_message':
-                await self.asyncSetUp()
-            before = await self.history.async_scope_revision('profile:p')
-            await self.erase(role)
-            messages = (await self.history.async_history('profile:p'))['messages']
-            self.assertNotIn('selected', {m['client_message_id'] for m in messages})
-            independent = [m for m in messages if m['client_message_id']=='independent']
-            self.assertEqual(len(independent), 2)
-            self.assertTrue(all('Synthetic' in m['text'] for m in independent))
-            dependent = [m for m in messages if m['client_message_id']=='dependent']
-            self.assertEqual([m['id'] for m in dependent], [m['id'] for m in self.saved['dependent']['messages']])
-            self.assertTrue(all(m['content_state']=='source_withdrawn' and m['text']=='' for m in dependent))
-            self.assertEqual(await self.history.async_scope_revision('profile:p'), before)
+    def assert_independent_exchange_preserved(self, messages):
+        independent = [m for m in messages if m['client_message_id'] == 'independent']
+        self.assertEqual(len(independent), 2)
+        self.assertTrue(all('Synthetic' in m['text'] for m in independent))
+
+    def assert_dependent_exchange_withdrawn(self, messages):
+        dependent = [m for m in messages if m['client_message_id'] == 'dependent']
+        self.assertEqual([m['id'] for m in dependent], [m['id'] for m in self.saved['dependent']['messages']])
+        self.assertTrue(all(m['content_state'] == 'source_withdrawn' and m['text'] == '' for m in dependent))
+
+    async def assert_complete_standalone_exchange_removed(self, role):
+        before = await self.history.async_scope_revision('profile:p')
+        await self.erase(role)
+        messages = (await self.history.async_history('profile:p'))['messages']
+        self.assertNotIn('selected', {m['client_message_id'] for m in messages})
+        self.assert_independent_exchange_preserved(messages)
+        self.assert_dependent_exchange_withdrawn(messages)
+        self.assertEqual(await self.history.async_scope_revision('profile:p'), before)
+
+    async def test_assistant_role_removes_exact_complete_standalone_exchange(self):
+        await self.assert_complete_standalone_exchange_removed('assistant_message')
+
+    async def test_user_role_removes_exact_complete_standalone_exchange(self):
+        await self.assert_complete_standalone_exchange_removed('user_message')
 
     async def test_unrelated_pending_request_not_fenced_and_effect_receipt_preserved(self):
         self.history.register_session_request('profile:p', 'unrelated-inflight')
