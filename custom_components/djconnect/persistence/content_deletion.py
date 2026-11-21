@@ -235,13 +235,7 @@ class ContentDeletionRepository(HistoryDeletionRepository):
         import time
         created = operation_created_ms(operation_id)
         def read(tx):
-            stored = tx.fetchone('SELECT high_water_ms FROM djconnect_history_deletion_clock WHERE singleton=1')[0]
-            advanced = (int(self._anchor_wall + max(0, self._monotonic() - self._anchor_mono) * 1000)
-                        if self._anchor_wall is not None else 0)
-            observed = max(int(time.time() * 1000), stored)
-            if self._anchor_wall is None or observed > advanced:
-                self._anchor_wall, self._anchor_mono = observed, self._monotonic()
-            now = max(observed, advanced)
+            now = self._status_now(tx, time)
             record = self._content_row(tx, owner, operation_id, binding)
             if created > now + FUTURE_SKEW_MS:
                 raise HistoryDeletionError('invalid_content_delete_request')

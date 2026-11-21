@@ -35,6 +35,24 @@ def _identifier(value):
     return isinstance(value, str) and 0 < len(value) <= 200
 
 
+def _validate_reservation_identity(owner, binding, digest):
+    if (not _identifier(owner) or not isinstance(binding, str) or not _HASH.fullmatch(binding)
+            or not isinstance(digest, str) or not _HASH.fullmatch(digest)):
+        raise HistoryDeletionError('invalid_history_delete_request')
+
+
+def _valid_reservation_target(target):
+    return (type(target) is tuple and len(target) == 2 and _identifier(target[0])
+            and type(target[1]) is int and target[1] >= 0)
+
+
+def _validate_reservation_targets(targets):
+    if (type(targets) is not tuple or not 1 <= len(targets) <= MAX_TARGETS
+            or any(not _valid_reservation_target(target) for target in targets)
+            or len({target[0] for target in targets}) != len(targets)):
+        raise HistoryDeletionError('invalid_history_delete_request')
+
+
 class HistoryDeletionRepository(PersistenceRepository):
     """One persistence transaction owner, bounded receipts, durable pending fences."""
 
@@ -75,16 +93,18 @@ class HistoryDeletionRepository(PersistenceRepository):
             raise HistoryDeletionError('history_delete_operation_conflict')
         return row
 
+    @staticmethod
+    def _reserved_response(row, digest, encoded):
+        if row[1] != digest or row[2] != encoded:
+            raise HistoryDeletionError('history_delete_operation_conflict')
+        return ({'state': 'completed', 'receipt': json.loads(row[6])}
+                if row[3] == 'completed' else {'state': row[3]})
+
     async def async_reserve(self, *, owner, operation_id, binding, digest, targets, now_ms=None,
                             store_plan=None, authorize=None, finalize_authorize=None):
         """Atomically validate the complete captured SQL set and install its intent."""
-        if (not _identifier(owner) or not isinstance(binding, str) or not _HASH.fullmatch(binding)
-                or not isinstance(digest, str) or not _HASH.fullmatch(digest)
-                or type(targets) is not tuple or not 1 <= len(targets) <= MAX_TARGETS
-                or any(type(t) is not tuple or len(t) != 2 or not _identifier(t[0])
-                       or type(t[1]) is not int or t[1] < 0 for t in targets)
-                or len({t[0] for t in targets}) != len(targets)):
-            raise HistoryDeletionError('invalid_history_delete_request')
+        _validate_reservation_identity(owner, binding, digest)
+        _validate_reservation_targets(targets)
         try:
             created_ms = operation_created_ms(operation_id)
         except OperationError:
@@ -101,10 +121,7 @@ class HistoryDeletionRepository(PersistenceRepository):
                 raise HistoryDeletionError('history_delete_operation_expired')
             row = self._row(tx, owner, operation_id, binding)
             if row:
-                if row[1] != digest or row[2] != encoded:
-                    raise HistoryDeletionError('history_delete_operation_conflict')
-                return ({'state': 'completed', 'receipt': json.loads(row[6])}
-                        if row[3] == 'completed' else {'state': row[3]})
+                return self._reserved_response(row, digest, encoded)
             # Expired completed receipts may leave the transport journal; an
             # unfinished intent/fence is NEVER evicted, regardless of age.
             tx.execute("DELETE FROM djconnect_history_deletions WHERE state='completed' AND expires_ms<?", (now,))
@@ -112,16 +129,7 @@ class HistoryDeletionRepository(PersistenceRepository):
             if count >= self._max_records:
                 raise HistoryDeletionError('history_delete_capacity')
             for session_id, revision in sorted(targets):
-                session = tx.fetchone(
-                    'SELECT owner_profile_id,lifecycle_status,history_revision '
-                    'FROM djconnect_persistent_sessions WHERE session_id=?', (session_id,),
-                )
-                if not session or session[0] != owner:
-                    raise HistoryDeletionError('history_unavailable')
-                if session[1] not in {'ENDED', 'INTERRUPTED'}:
-                    raise HistoryDeletionError('session_not_archived')
-                if session[2] != revision:
-                    raise HistoryDeletionError('history_revision_conflict')
+                self._require_terminal_revision(tx, owner, session_id, revision)
                 if tx.fetchone(
                     'SELECT 1 FROM djconnect_history_deletion_targets '
                     'WHERE owner_profile_id=? AND session_id=?', (owner, session_id),
@@ -200,18 +208,22 @@ class HistoryDeletionRepository(PersistenceRepository):
             return [dict(zip(keys, row)) for row in rows]
         return await self._async_in_transaction(read)
 
+    @staticmethod
+    def _require_terminal_revision(tx, owner, session_id, revision):
+        row = tx.fetchone('SELECT owner_profile_id,lifecycle_status,history_revision '
+                          'FROM djconnect_persistent_sessions WHERE session_id=?', (session_id,))
+        if not row or row[0] != owner:
+            raise HistoryDeletionError('history_unavailable')
+        if row[1] not in {'ENDED', 'INTERRUPTED'}:
+            raise HistoryDeletionError('session_not_archived')
+        if row[2] != revision:
+            raise HistoryDeletionError('history_revision_conflict')
+
     async def async_validate_targets(self, owner, targets, *, authorize):
         """Read-only admission before any process-local media invalidation."""
         def read(tx):
             for session_id, revision in targets:
-                row = tx.fetchone('SELECT owner_profile_id,lifecycle_status,history_revision '
-                                  'FROM djconnect_persistent_sessions WHERE session_id=?', (session_id,))
-                if not row or row[0] != owner:
-                    raise HistoryDeletionError('history_unavailable')
-                if row[1] not in {'ENDED', 'INTERRUPTED'}:
-                    raise HistoryDeletionError('session_not_archived')
-                if row[2] != revision:
-                    raise HistoryDeletionError('history_revision_conflict')
+                self._require_terminal_revision(tx, owner, session_id, revision)
         await self._async_in_transaction(read, authorize=authorize, finalize_authorize=authorize)
 
     async def async_scope_index(self, owner, messages, session_ids):
@@ -314,17 +326,22 @@ class HistoryDeletionRepository(PersistenceRepository):
         return await self._async_in_transaction(complete, authorize=authorize,
                                                 finalize_authorize=finalize_authorize)
 
+    def _status_now(self, tx, clock):
+        """Observe the shared bounded clock without writing its SQL high-water row."""
+        stored = tx.fetchone('SELECT high_water_ms FROM djconnect_history_deletion_clock WHERE singleton=1')[0]
+        advanced = (int(self._anchor_wall + max(0, self._monotonic() - self._anchor_mono) * 1000)
+                    if self._anchor_wall is not None else 0)
+        observed = max(int(clock.time() * 1000), stored)
+        if self._anchor_wall is None or observed > advanced:
+            self._anchor_wall, self._anchor_mono = observed, self._monotonic()
+        now = max(observed, advanced)
+        return now
+
     async def async_operation_status(self, owner, operation_id, binding, digest):
         """Read-only archive status; original confirmation body, no erasure/retry."""
         created = operation_created_ms(operation_id)
         def read(tx):
-            stored = tx.fetchone('SELECT high_water_ms FROM djconnect_history_deletion_clock WHERE singleton=1')[0]
-            advanced = (int(self._anchor_wall + max(0, self._monotonic() - self._anchor_mono) * 1000)
-                        if self._anchor_wall is not None else 0)
-            observed = max(int(time.time() * 1000), stored)
-            if self._anchor_wall is None or observed > advanced:
-                self._anchor_wall, self._anchor_mono = observed, self._monotonic()
-            now = max(observed, advanced)
+            now = self._status_now(tx, time)
             row = self._row(tx, owner, operation_id, binding)
             if created > now + FUTURE_SKEW_MS:
                 raise HistoryDeletionError('invalid_history_delete_request')
