@@ -4825,7 +4825,6 @@ class _TrackStartAttempt:
         return True
 
     def _prepare_ordinary_candidate(self):
-        manager = self.manager
         if self.recovering:
             # Fact-only recovery must also stay closed on later tracks;
             # an empty evidence set cannot enter legacy/model planning.
@@ -5733,6 +5732,562 @@ class _QualifiedFactAttempt:
         if not self._delivery_still_current():
             return None
         return await self._finish_publication()
+
+
+_CONTINUE_MOMENT_PERSISTENCE = object()
+
+
+def _archive_source_context_complete(context):
+    return all(
+        isinstance(context.get(key), str) and context[key]
+        for key in ("backend_id", "music_account_id", "provider_entry_id", "provider_account_id")
+    )
+
+
+@dataclass(frozen=True, slots=True, kw_only=True, repr=False)
+class _MomentPersistenceGuard:
+    """Exactly the original admission closure's eight captured references.
+
+    Runtime reads still run on the event loop after provider-lock waiting,
+    never in SQLite's worker. No entry/presentation or attempt is retained.
+    """
+
+    manager: Any
+    active: DJSessionRuntime
+    moment: DJMoment
+    final_authorize: Any
+    archive_guard: Any
+    requested: Any
+    opportunity: IntraTrackOpportunity | None
+    generation: int | None
+
+    def _receipts_current(self):
+        from .narration_brief import RuntimeNarrationAcceptance
+
+        receipt = self.moment.narration_acceptance
+        if self.moment.bulletin is not None:
+            from .bulletin_runtime import admitted as bulletin_admitted
+
+            if not bulletin_admitted(self.moment):
+                return False
+        from .live_impression import admitted as admitted_live
+
+        if self.moment.live_impression is not None and (not admitted_live(self.moment)):
+            return False
+        from .public_artist_narration import ResearchMomentAcceptance, admitted
+
+        if type(receipt) is ResearchMomentAcceptance and (not admitted(self.moment)):
+            return False
+        if type(receipt) is RuntimeNarrationAcceptance:
+            try:
+                receipt.validate()
+            except PermissionError:
+                return False
+        return True
+
+    def _authority_current(self):
+        manager = self.manager
+        if self.final_authorize is not None:
+            try:
+                self.final_authorize()
+            except PermissionError:
+                return False
+        if self.archive_guard is not None:
+            try:
+                self.archive_guard()
+            except PermissionError:
+                return False
+        if manager._active_by_profile.get(
+            self.active.owner_profile_id
+        ) is not self.active or not self.active.allows_moment(self.moment):
+            return False
+        return True
+
+    def _sources_current(self):
+        manager = self.manager
+        source = getattr(self.moment, "source_fact", None)
+        if source is not None and (not source.eligible(source.media_identity, time.monotonic())):
+            return False
+        observed = self.moment.observed_playback
+        if observed is not None and (
+            not observed.eligible(manager._monotonic_source())
+            or self.active.broadcast.state.playback.item_id != observed.item_id
+        ):
+            return False
+        relation = self.moment.genre_transition
+        if relation is not None and (
+            not relation.eligible(manager._monotonic_source())
+            or self.active.broadcast.state.playback.item_id != relation.current.item_id
+        ):
+            return False
+        return True
+
+    def _slot_owner_current(self, playback, age):
+        manager = self.manager
+        return not (
+            manager._intra_track_opportunities.get(self.active.owner_profile_id)
+            is not self.opportunity
+            or self.opportunity.generation != self.generation
+            or self.opportunity.blocked
+            or (playback.state != "playing")
+            or (playback.item_id != self.opportunity.item_id)
+            or (not 0 <= age <= 30)
+            or (self.opportunity.last_observed_position_ms is None)
+            or (playback.duration_ms is None)
+        )
+
+    def _slot_current(self):
+        manager = self.manager
+        if (
+            self.requested is None
+            and self.opportunity is not None
+            and (
+                self.moment.moment_type
+                not in {DJMomentType.SESSION, DJMomentType.MUSIC_ANNOUNCEMENT}
+            )
+        ):
+            playback = self.active.broadcast.state.playback
+            age = manager._monotonic_source() - self.opportunity.last_observed_monotonic
+            if not self._slot_owner_current(playback, age):
+                return False
+            position = max(
+                playback.position_ms or 0,
+                self.opportunity.last_observed_position_ms + int(age * 1000),
+            )
+            if (
+                playback.duration_ms - position
+                < (self.moment.presentation_intent.maximum_duration_seconds + 5) * 1000
+            ):
+                return False
+        return True
+
+    def validate(self):
+        if not self._receipts_current():
+            return False
+        if not self._authority_current():
+            return False
+        if not self._sources_current():
+            return False
+        return self._slot_current()
+
+
+class _MomentPersistenceAttempt:
+    def __init__(self, manager, active, moment, final_authorize):
+        self.manager = manager
+        self.active = active
+        self.moment = moment
+        self.final_authorize = final_authorize
+
+    def _identity_current(self):
+        if (
+            self.moment.moment_id in self.active.deleted_moment_ids
+            or self.moment.session_id != self.active.session_id
+        ):
+            return False
+        if self.moment.session_opening is not None:
+            from .session_opening import admitted_opening
+
+            if opening_context(self.moment) != self.active.opening_context or not admitted_opening(
+                self.moment
+            ):
+                return False
+        return True
+
+    def _preflight(self):
+        manager = self.manager
+        if not self._identity_current():
+            return False
+        if self.final_authorize is not None:
+            try:
+                self.final_authorize()
+            except PermissionError:
+                return False
+        from .requested_moment_proof import proof as request_proof
+
+        self.requested = request_proof(self.moment)
+        if manager._historical_projections is None:
+            return self.requested is None
+        if self.moment.moment_type is not DJMomentType.SILENCE and (
+            not self.active.allows_moment(self.moment)
+        ):
+            return False
+        return _CONTINUE_MOMENT_PERSISTENCE
+
+    async def _append_silence(self):
+        manager = self.manager
+        active = self.active
+        await manager._historical_projections.async_append_entries(
+            self.active.owner_profile_id,
+            self.active.session_id,
+            [
+                {
+                    "kind": "dj_silence",
+                    "reference_id": self.moment.moment_id,
+                    "occurred_at": self.moment.created_at,
+                    "body": {
+                        "moment_id": self.moment.moment_id,
+                        "moment_type": "silence",
+                        "content_state": "silence",
+                        "locale": self.active.locale,
+                        "persona": self.moment.presentation_intent.dj_persona.value,
+                    },
+                }
+            ],
+            authorize=lambda: manager._active_by_profile.get(active.owner_profile_id) is active,
+        )
+        return True
+
+    def _capture_archive_inputs(self):
+        """Capture opportunity and dependency bindings before archive admission can await."""
+        manager = self.manager
+        self.archive_guard = None
+        self.opportunity = manager._intra_track_opportunities.get(self.active.owner_profile_id)
+        self.generation = self.opportunity.generation if self.opportunity is not None else None
+        self.prepared = self.active.compose_moment(self.moment)
+        from .session_facts import QualifiedSessionFact, SharedProducerFact
+
+        self.qualified_fact_type = QualifiedSessionFact
+        self.shared_producer_type = SharedProducerFact
+        self.source = getattr(self.moment, "source_fact", None)
+        self.metadata = dict(self.moment.generation_metadata)
+        from .track_start_announcement import contribution
+
+        self.announcement = contribution(self.moment)
+        self.basis = ""
+        from .public_artist_narration import ResearchMomentAcceptance, admitted, BASIS, sources_for
+
+        self.research_receipt_type = ResearchMomentAcceptance
+        self.research_admitted = admitted
+        self.research_basis = BASIS
+        self.research_sources_for = sources_for
+        from .live_impression import BASIS as LIVE_BASIS, admitted as admitted_live
+
+        self.live_basis = LIVE_BASIS
+        self.live_admitted = admitted_live
+
+    def _qualify_cc0(self):
+        self.expected = {
+            "provider": self.source.provider,
+            "url": self.source.source_url,
+            "license": self.source.license,
+        }
+        if (
+            isinstance(self.source, self.shared_producer_type)
+            and self.source.previous_evidence is not None
+        ):
+            self.expected["url_previous"] = self.source.previous_evidence.source_url
+        if (
+            self.source.provider in {"MusicBrainz", "Wikidata"}
+            and self.source.license == "CC0-1.0"
+            and self.source.eligible(self.source.media_identity, time.monotonic())
+            and (dict(self.moment.source_attribution) == self.expected)
+        ):
+            self.basis = "cc0_normalized_fields_v1"
+
+    def _authored_direction(self):
+        return (
+            not self.moment.source_attribution
+            and self.moment.source_references == ("session_direction",)
+            and (self.moment.moment_type.value == "session")
+            and (self.metadata.get("context_source") == "session_direction")
+            and (self.metadata.get("validated") == "true")
+        )
+
+    def _primary_basis(self):
+        if self.moment.live_impression is not None:
+            if not self.live_admitted(self.moment):
+                return False
+            self.basis = self.live_basis
+        elif type(self.moment.narration_acceptance) is self.research_receipt_type:
+            if not self.research_admitted(self.moment):
+                return False
+            self.basis = self.research_basis
+        elif isinstance(self.source, self.qualified_fact_type):
+            self._qualify_cc0()
+        elif self._authored_direction():
+            self.basis = "runtime_authored_direction_v1"
+        return True
+
+    def _metadata_sources(self):
+        """Capture all source flags eagerly, preserving their separate clock reads."""
+        manager = self.manager
+        self.captured = manager._history_source_contexts.get(self.active.session_id, {})
+        self.metadata_source = (
+            isinstance(self.source, self.qualified_fact_type)
+            and self.source.provider == "Spotify"
+            and (self.source.key in {"album_release", "genre_context", "album_continuity"})
+            and self.source.eligible(self.source.media_identity, time.monotonic())
+        )
+        self.observed_source = (
+            self.moment.observed_playback is not None
+            and self.moment.observed_playback.eligible(manager._monotonic_source())
+            or (
+                self.announcement is not None
+                and self.announcement.occurrence.current(manager._monotonic_source())
+            )
+        )
+        self.transition_source = (
+            self.moment.genre_transition is not None
+            and self.moment.genre_transition.eligible(manager._monotonic_source())
+        )
+
+    async def _metadata_basis(self):
+        manager = self.manager
+        self._metadata_sources()
+        if (
+            self.metadata_source or self.observed_source or self.transition_source
+        ) and _archive_source_context_complete(self.captured):
+            self.registration = manager._narration_providers.get(self.active.owner_profile_id)
+            if (
+                self.registration is not None
+                and self.registration[0] == self.active.session_id
+                and (self.registration[4] is not None)
+            ):
+                try:
+                    self.archive_guard = await self.registration[4](self.captured)
+                except PermissionError:
+                    self.archive_guard = None
+                if self.archive_guard is not None:
+                    self.basis = "owner_metadata_narration_v1"
+
+    def _retained_body(self):
+        manager = self.manager
+        self.entry = {
+            "kind": "dj_moment",
+            "reference_id": self.moment.moment_id,
+            "occurred_at": self.moment.created_at,
+            "body": {
+                "moment_id": self.moment.moment_id,
+                "moment_type": self.moment.moment_type.value,
+                "text": self.moment.content,
+                "summary": self.moment.summary,
+                "source_attribution": dict(self.moment.source_attribution),
+                "archive_basis": self.basis,
+                "persona": self.moment.presentation_intent.dj_persona.value,
+                "mood": self.moment.presentation_intent.source_session_mood,
+                "persona_revision": self.active.persona_revision,
+                "locale": self.active.locale,
+            },
+        }
+        if self.basis == self.live_basis:
+            from .ask_dj.dialogue import normalized_subjects
+
+            self.entry["body"].update(
+                title=self.moment.title,
+                live_impression=json.loads(self.moment.live_impression.payload_json),
+                live_impression_reference=json.loads(self.moment.live_impression.reference_json),
+                sources=json.loads(self.moment.live_impression.sources_json),
+                dialogue_subjects=normalized_subjects(self.source),
+            )
+        if opening_context(self.moment) is not None:
+            self.entry["body"]["generation_metadata"] = dict(self.moment.generation_metadata)
+        if self.basis in {"cc0_normalized_fields_v1", self.research_basis}:
+            from .ask_dj.dialogue import normalized_subjects
+
+            self.entry["body"]["dialogue_subjects"] = normalized_subjects(self.source)
+            self.entry["body"]["qualified_fact_text"] = self.source.copy_for(self.active.locale)[1]
+            if self.basis == self.research_basis:
+                self.entry["body"].update(
+                    sources=self.research_sources_for(self.moment),
+                    **self.moment.narration_acceptance.accepted.qualified_fact(),
+                )
+        elif self.basis == "owner_metadata_narration_v1":
+            self.entry["body"].update(
+                provider="Spotify",
+                source_context=dict(manager._history_source_contexts[self.active.session_id]),
+            )
+
+    def _subject_media_reference(self):
+        manager = self.manager
+        from .session_artwork import subject_for_fact
+
+        self.subject = subject_for_fact(self.source)
+        if self.subject is None and self.moment.observed_playback is not None:
+            self.observed_url = self.moment.observed_playback.source_url
+            self.match = re.fullmatch(
+                "https://open\\.spotify\\.com/track/([A-Za-z0-9]{22})", self.observed_url
+            )
+            self.subject = "spotify:track:" + self.match[1] if self.match else None
+        self.captured_source = manager._history_source_contexts.get(self.active.session_id, {})
+        if self.subject and _archive_source_context_complete(self.captured_source):
+            self.entry["body"]["session_media_reference"] = {
+                "version": 1,
+                "subject_uri": self.subject,
+                "album_uri": getattr(self.source, "artwork_album_uri", "")
+                if ":track:" in self.subject
+                else "",
+                "source_context": dict(self.captured_source),
+            }
+        if self.announcement is not None:
+            self.entry["body"]["music_announcement"] = self.announcement.data()
+            self.entry["body"]["generation_metadata"] = dict(self.moment.generation_metadata)
+            self.entry["body"]["session_media_reference"] = {
+                "version": 1,
+                "subject_uri": self.announcement.occurrence.media_uri,
+                "album_uri": self.announcement.occurrence.album_uri,
+                "source_context": dict(self.captured_source),
+            }
+
+    def _retained_media(self):
+        self._subject_media_reference()
+        self.artist_image = getattr(self.source, "artwork_artist_identity", None)
+        from .session_facts import ArtistImageIdentity
+
+        if (
+            type(self.artist_image) is ArtistImageIdentity
+            and self.artist_image.eligible()
+            and (
+                self.source.key
+                in {"artist_begin", "artist_description", "recording_credits", "work_composers"}
+            )
+            and _archive_source_context_complete(self.captured_source)
+        ):
+            self.entry["body"]["artist_image_reference"] = {
+                "version": 2,
+                "subject_uri": self.artist_image.spotify_uri,
+                "wikidata_id": self.artist_image.wikidata_id,
+                "name": self.artist_image.name,
+                "musicbrainz_id": self.artist_image.musicbrainz_id,
+                "source_context": dict(self.captured_source),
+            }
+
+    def _build_entry(self):
+        self.entry = None
+        if self.basis:
+            self._retained_body()
+            self._retained_media()
+        if self.entry is None:
+            self.entry = {
+                "kind": "dj_publication",
+                "reference_id": self.moment.moment_id,
+                "occurred_at": self.moment.created_at,
+                "body": {
+                    "moment_id": self.moment.moment_id,
+                    "moment_type": self.moment.moment_type.value,
+                    "content_state": "unavailable",
+                    "unavailable_reason": "source_retention_not_qualified",
+                    "persona": self.moment.presentation_intent.dj_persona.value,
+                    "persona_revision": self.active.persona_revision,
+                    "locale": self.active.locale,
+                },
+            }
+        if self.requested is not None and self.entry is not None:
+            self.entry["body"]["user_requested"] = self.requested.data()
+            self.entry["body"]["user_requested_owner"] = {
+                "device": self.requested.device,
+                "binding": self.requested.binding,
+            }
+            self.entry["body"]["title"] = self.moment.title
+        from .content_deletion_runtime import moment_dependencies
+
+        self.dependencies = moment_dependencies(self.moment)
+        if self.dependencies:
+            self.entry["body"]["dependency_moment_ids"] = sorted(self.dependencies)
+
+    async def _accept_entry(self):
+        """Bind only the eight admission references after the archive guard resolves."""
+        manager = self.manager
+        guard_state = _MomentPersistenceGuard(
+            manager=manager,
+            active=self.active,
+            moment=self.moment,
+            final_authorize=self.final_authorize,
+            archive_guard=self.archive_guard,
+            requested=self.requested,
+            opportunity=self.opportunity,
+            generation=self.generation,
+        )
+        self.admission_callback = guard_state.validate
+        try:
+            (
+                self.accepted,
+                self.retained,
+            ) = await manager._historical_projections.async_accept_moment(
+                self.active.owner_profile_id,
+                self.active.session_id,
+                self.moment.moment_id,
+                self.entry,
+                authorize=self.admission_callback,
+                finalize_authorize=self.admission_callback,
+                include_retention=True,
+            )
+        except PermissionError:
+            if not self.admission_callback():
+                return False
+            raise
+        return self.accepted
+
+    async def _requested_commit(self):
+        """Acknowledge the durable request even when its later delivery fence closes."""
+        manager = self.manager
+        self.requested.committed = True
+        self.requested.retained = self.retained and self.entry["kind"] == "dj_moment"
+        if self.source is not None:
+            self.active.published_recording_context.consume(
+                self.source, time.monotonic(), semantic_accepted=True
+            )
+        self.original = await manager._historical_projections.async_requested_moment_entry(
+            self.active.owner_profile_id, self.active.session_id, self.requested.operation_id
+        )
+        self.requested.entry_id = self.original["entry_id"] if self.original is not None else None
+        if self.admission_callback():
+            self.active.prepared_presentations[self.moment.moment_id] = (
+                self.prepared,
+                self.retained,
+            )
+        return True
+
+    def _close_delivery(self):
+        """Account for semantic acceptance without publishing an expired presentation."""
+        if self.opportunity is not None:
+            self.opportunity.spent = True
+            if self.source is not None:
+                self.opportunity.used_fact_keys.add(self.source.key)
+            self.opportunity.fact_count += 1
+            self.opportunity.last_fact_position_ms = self.opportunity.last_observed_position_ms
+            self.opportunity.last_fact_read_seconds = (
+                self.moment.presentation_intent.maximum_duration_seconds
+            )
+        if self.moment.moment_type is DJMomentType.MUSIC_ANNOUNCEMENT:
+            self.active.presence_ledger.commit_announcement(
+                self.moment.presentation_intent.maximum_duration_seconds
+            )
+        else:
+            self.active.presence_ledger.commit(
+                self.active.broadcast.state.playback.item_id,
+                self.moment.presentation_intent.maximum_duration_seconds,
+            )
+        return False
+
+    def _ordinary_commit(self):
+        if self.source is not None:
+            self.active.published_recording_context.consume(
+                self.source, time.monotonic(), semantic_accepted=True
+            )
+        if not self.admission_callback():
+            return self._close_delivery()
+        self.active.prepared_presentations.clear()
+        self.active.prepared_presentations[self.moment.moment_id] = (self.prepared, self.retained)
+        return self.accepted
+
+    async def execute(self):
+        result = self._preflight()
+        if result is not _CONTINUE_MOMENT_PERSISTENCE:
+            return result
+        if self.moment.moment_type is DJMomentType.SILENCE:
+            return await self._append_silence()
+        self._capture_archive_inputs()
+        if not self._primary_basis():
+            return False
+        if not self.basis:
+            await self._metadata_basis()
+        self._build_entry()
+        accepted = await self._accept_entry()
+        if not accepted:
+            return accepted
+        if self.requested is not None:
+            return await self._requested_commit()
+        return self._ordinary_commit()
 
 
 class SessionRuntimeManager:
@@ -7769,287 +8324,7 @@ class SessionRuntimeManager:
 
     async def _async_persist_moment(self, active: DJSessionRuntime, moment: DJMoment, *, final_authorize=None) -> bool:
         """Explicit historical field qualification before actual live publication."""
-        if moment.moment_id in active.deleted_moment_ids or moment.session_id != active.session_id:
-            return False
-        if moment.session_opening is not None:
-            from .session_opening import admitted_opening
-            if opening_context(moment) != active.opening_context or not admitted_opening(moment):
-                return False
-        if final_authorize is not None:
-            try:
-                final_authorize()
-            except PermissionError:
-                return False
-        from .requested_moment_proof import proof as request_proof
-        requested = request_proof(moment)
-        if self._historical_projections is None:
-            return requested is None
-        if moment.moment_type is not DJMomentType.SILENCE and not active.allows_moment(moment):
-            return False
-        if moment.moment_type is DJMomentType.SILENCE:
-            await self._historical_projections.async_append_entries(
-                active.owner_profile_id, active.session_id, [{
-                    "kind": "dj_silence", "reference_id": moment.moment_id,
-                    "occurred_at": moment.created_at,
-                    "body": {"moment_id": moment.moment_id, "moment_type": "silence",
-                             "content_state": "silence", "locale": active.locale,
-                             "persona": moment.presentation_intent.dj_persona.value},
-                }], authorize=lambda: self._active_by_profile.get(active.owner_profile_id) is active)
-            return True
-        archive_guard = None
-        opportunity = self._intra_track_opportunities.get(active.owner_profile_id)
-        generation = opportunity.generation if opportunity is not None else None
-
-        def admission_is_current():
-            # Runs on the event loop after provider-lock waiting, never in SQLite's worker.
-            from .narration_brief import RuntimeNarrationAcceptance
-            receipt = moment.narration_acceptance
-            if moment.bulletin is not None:
-                from .bulletin_runtime import admitted as bulletin_admitted
-                if not bulletin_admitted(moment):
-                    return False
-            from .live_impression import admitted as admitted_live
-            if moment.live_impression is not None and not admitted_live(moment):
-                return False
-            from .public_artist_narration import ResearchMomentAcceptance, admitted
-            if type(receipt) is ResearchMomentAcceptance and not admitted(moment):
-                return False
-            if type(receipt) is RuntimeNarrationAcceptance:
-                try:
-                    receipt.validate()
-                except PermissionError:
-                    return False
-            if final_authorize is not None:
-                try:
-                    final_authorize()
-                except PermissionError:
-                    return False
-            if archive_guard is not None:
-                try:
-                    archive_guard()
-                except PermissionError:
-                    return False
-            if self._active_by_profile.get(active.owner_profile_id) is not active or not active.allows_moment(moment):
-                return False
-            source = getattr(moment, "source_fact", None)
-            if source is not None and not source.eligible(source.media_identity, time.monotonic()):
-                return False
-            observed = moment.observed_playback
-            if observed is not None and (not observed.eligible(self._monotonic_source())
-                    or active.broadcast.state.playback.item_id != observed.item_id):
-                return False
-            relation = moment.genre_transition
-            if relation is not None and (not relation.eligible(self._monotonic_source())
-                    or active.broadcast.state.playback.item_id != relation.current.item_id):
-                return False
-            if requested is None and opportunity is not None and moment.moment_type not in {DJMomentType.SESSION, DJMomentType.MUSIC_ANNOUNCEMENT}:
-                playback = active.broadcast.state.playback
-                age = self._monotonic_source() - opportunity.last_observed_monotonic
-                if (self._intra_track_opportunities.get(active.owner_profile_id) is not opportunity
-                        or opportunity.generation != generation or opportunity.blocked
-                        or playback.state != "playing" or playback.item_id != opportunity.item_id
-                        or not 0 <= age <= 30 or opportunity.last_observed_position_ms is None
-                        or playback.duration_ms is None):
-                    return False
-                position = max(playback.position_ms or 0,
-                    opportunity.last_observed_position_ms + int(age * 1000))
-                if playback.duration_ms - position < (moment.presentation_intent.maximum_duration_seconds + 5) * 1000:
-                    return False
-            return True
-
-        prepared = active.compose_moment(moment)
-        from .session_facts import QualifiedSessionFact, SharedProducerFact
-
-        source = getattr(moment, "source_fact", None)
-        metadata = dict(moment.generation_metadata)
-        from .track_start_announcement import contribution
-        announcement = contribution(moment)
-        basis = ""
-        from .public_artist_narration import ResearchMomentAcceptance, admitted, BASIS, sources_for
-        from .live_impression import BASIS as LIVE_BASIS, admitted as admitted_live
-        if moment.live_impression is not None:
-            if not admitted_live(moment):
-                return False
-            basis = LIVE_BASIS
-        elif type(moment.narration_acceptance) is ResearchMomentAcceptance:
-            if not admitted(moment):
-                return False
-            basis = BASIS
-        elif isinstance(source, QualifiedSessionFact):
-            expected = {
-                "provider": source.provider,
-                "url": source.source_url,
-                "license": source.license,
-            }
-            if isinstance(source, SharedProducerFact) and source.previous_evidence is not None:
-                expected["url_previous"] = source.previous_evidence.source_url
-            if (
-                source.provider in {"MusicBrainz", "Wikidata"}
-                and source.license == "CC0-1.0"
-                and source.eligible(source.media_identity, time.monotonic())
-                and dict(moment.source_attribution) == expected
-            ):
-                basis = "cc0_normalized_fields_v1"
-        elif (
-            not moment.source_attribution
-            and moment.source_references == ("session_direction",)
-            and moment.moment_type.value == "session"
-            and metadata.get("context_source") == "session_direction"
-            and metadata.get("validated") == "true"
-        ):
-            basis = "runtime_authored_direction_v1"
-        if not basis:
-            captured = self._history_source_contexts.get(active.session_id, {})
-            metadata_source = (
-                isinstance(source, QualifiedSessionFact) and source.provider == 'Spotify'
-                and source.key in {'album_release','genre_context','album_continuity'}
-                and source.eligible(source.media_identity, time.monotonic()))
-            observed_source = ((moment.observed_playback is not None
-                and moment.observed_playback.eligible(self._monotonic_source()))
-                or (announcement is not None and announcement.occurrence.current(self._monotonic_source())))
-            transition_source = (moment.genre_transition is not None
-                and moment.genre_transition.eligible(self._monotonic_source()))
-            if ((metadata_source or observed_source or transition_source)
-                    and all(isinstance(captured.get(k),str) and captured[k]
-                            for k in ('backend_id','music_account_id','provider_entry_id','provider_account_id'))):
-                registration = self._narration_providers.get(active.owner_profile_id)
-                if registration is not None and registration[0] == active.session_id and registration[4] is not None:
-                    try:
-                        archive_guard = await registration[4](captured)
-                    except PermissionError:
-                        archive_guard = None
-                    if archive_guard is not None:
-                        basis = 'owner_metadata_narration_v1'
-        entry = None
-        if basis:
-            entry = {"kind":"dj_moment", "reference_id":moment.moment_id,
-                     "occurred_at":moment.created_at,
-                     "body":{"moment_id":moment.moment_id,"moment_type":moment.moment_type.value,
-                             "text":moment.content,"summary":moment.summary,
-                             "source_attribution":dict(moment.source_attribution),"archive_basis":basis,
-                             "persona":moment.presentation_intent.dj_persona.value,
-                             "mood":moment.presentation_intent.source_session_mood,
-                             "persona_revision":active.persona_revision,"locale":active.locale}}
-            if basis == LIVE_BASIS:
-                from .ask_dj.dialogue import normalized_subjects
-                entry["body"].update(title=moment.title, live_impression=json.loads(moment.live_impression.payload_json),
-                    live_impression_reference=json.loads(moment.live_impression.reference_json),
-                    sources=json.loads(moment.live_impression.sources_json),
-                    dialogue_subjects=normalized_subjects(source))
-            if opening_context(moment) is not None:
-                entry['body']['generation_metadata'] = dict(moment.generation_metadata)
-            if basis in {"cc0_normalized_fields_v1", BASIS}:
-                from .ask_dj.dialogue import normalized_subjects
-                entry["body"]["dialogue_subjects"] = normalized_subjects(source)
-                # The creative presentation is not new factual evidence.
-                entry["body"]["qualified_fact_text"] = source.copy_for(active.locale)[1]
-                if basis == BASIS:
-                    entry["body"].update(sources=sources_for(moment),
-                        **moment.narration_acceptance.accepted.qualified_fact())
-            elif basis == 'owner_metadata_narration_v1':
-                entry['body'].update(provider='Spotify',
-                    source_context=dict(self._history_source_contexts[active.session_id]))
-            # Retain only exact original subject IDs and the source binding for
-            # explicit future image preparation, independent of body license.
-            from .session_artwork import subject_for_fact
-            subject = subject_for_fact(source)
-            if subject is None and moment.observed_playback is not None:
-                observed_url = moment.observed_playback.source_url
-                match = re.fullmatch(r'https://open\.spotify\.com/track/([A-Za-z0-9]{22})', observed_url)
-                subject = 'spotify:track:'+match[1] if match else None
-            captured_source = self._history_source_contexts.get(active.session_id, {})
-            if subject and all(isinstance(captured_source.get(key), str) and captured_source[key]
-                    for key in ('backend_id','music_account_id','provider_entry_id','provider_account_id')):
-                entry['body']['session_media_reference'] = {
-                    'version':1, 'subject_uri':subject,
-                    'album_uri':getattr(source,'artwork_album_uri','') if ':track:' in subject else '',
-                    'source_context':dict(captured_source)}
-            if announcement is not None:
-                entry['body']['music_announcement'] = announcement.data()
-                entry['body']['generation_metadata'] = dict(moment.generation_metadata)
-                entry['body']['session_media_reference'] = {'version':1,
-                    'subject_uri':announcement.occurrence.media_uri,
-                    'album_uri':announcement.occurrence.album_uri,
-                    'source_context':dict(captured_source)}
-            artist_image=getattr(source,'artwork_artist_identity',None)
-            from .session_facts import ArtistImageIdentity
-            if (type(artist_image) is ArtistImageIdentity and artist_image.eligible()
-                    and source.key in {'artist_begin','artist_description','recording_credits','work_composers'}
-                    and all(isinstance(captured_source.get(key),str) and captured_source[key]
-                            for key in ('backend_id','music_account_id','provider_entry_id','provider_account_id'))):
-                entry['body']['artist_image_reference'] = {
-                    'version':2, 'subject_uri':artist_image.spotify_uri,
-                    'wikidata_id':artist_image.wikidata_id,'name':artist_image.name,
-                    'musicbrainz_id':artist_image.musicbrainz_id,
-                    'source_context':dict(captured_source)}
-
-        if entry is None:
-            # Retention of source content is separate from retention of the
-            # Core-owned fact that this immutable publication occurred.
-            entry = {"kind": "dj_publication", "reference_id": moment.moment_id,
-                     "occurred_at": moment.created_at,
-                     "body": {"moment_id": moment.moment_id,
-                              "moment_type": moment.moment_type.value,
-                              "content_state": "unavailable",
-                              "unavailable_reason": "source_retention_not_qualified",
-                              "persona": moment.presentation_intent.dj_persona.value,
-                              "persona_revision": active.persona_revision,
-                              "locale": active.locale}}
-
-        if requested is not None and entry is not None:
-            entry['body']['user_requested'] = requested.data()
-            entry['body']['user_requested_owner'] = {'device':requested.device,'binding':requested.binding}
-            entry['body']['title'] = moment.title
-        from .content_deletion_runtime import moment_dependencies
-        dependencies = moment_dependencies(moment)
-        if dependencies:
-            entry['body']['dependency_moment_ids'] = sorted(dependencies)
-
-        try:
-            accepted, retained = await self._historical_projections.async_accept_moment(
-                active.owner_profile_id, active.session_id, moment.moment_id, entry,
-                authorize=admission_is_current,
-                finalize_authorize=admission_is_current, include_retention=True)
-        except PermissionError:
-            if not admission_is_current():
-                return False
-            raise
-        if accepted:
-            if requested is not None:
-                requested.committed = True
-                requested.retained = retained and entry['kind'] == 'dj_moment'
-                if source is not None:
-                    active.published_recording_context.consume(source,time.monotonic(),semantic_accepted=True)
-                original = await self._historical_projections.async_requested_moment_entry(
-                    active.owner_profile_id,active.session_id,requested.operation_id)
-                requested.entry_id = original['entry_id'] if original is not None else None
-                # Commit is truthful even if a later source/owner delivery fence
-                # fails. No proactive opportunity or ledger is consumed.
-                if admission_is_current():
-                    active.prepared_presentations[moment.moment_id] = (prepared, retained)
-                return True
-            if source is not None:
-                active.published_recording_context.consume(source, time.monotonic(), semantic_accepted=True)
-            # The SQLite commit is semantic acceptance; resuming the event loop
-            # may be delayed. Keep that acceptance, but never deliver expired
-            # evidence or advance published-only expression memory.
-            if not admission_is_current():
-                if opportunity is not None:
-                    opportunity.spent = True
-                    if source is not None:
-                        opportunity.used_fact_keys.add(source.key)
-                    opportunity.fact_count += 1
-                    opportunity.last_fact_position_ms = opportunity.last_observed_position_ms
-                    opportunity.last_fact_read_seconds = moment.presentation_intent.maximum_duration_seconds
-                if moment.moment_type is DJMomentType.MUSIC_ANNOUNCEMENT:
-                    active.presence_ledger.commit_announcement(moment.presentation_intent.maximum_duration_seconds)
-                else:
-                    active.presence_ledger.commit(active.broadcast.state.playback.item_id,
-                        moment.presentation_intent.maximum_duration_seconds)
-                return False
-            active.prepared_presentations.clear()
-            active.prepared_presentations[moment.moment_id] = (prepared, retained)
-        return accepted
+        return await _MomentPersistenceAttempt(self, active, moment, final_authorize).execute()
 
     async def async_end(
         self,
