@@ -5393,6 +5393,348 @@ class _TrackStartAttempt:
         return self.moment
 
 
+@dataclass(frozen=True, slots=True, kw_only=True, repr=False)
+class _QualifiedFactGuard:
+    """Only the original guard's captures, without transient prose or pixels.
+
+    A provider/persistence callback can retain this bounded evidence after the
+    attempt ends. The manager remains the sole state and publication owner.
+    """
+
+    manager: Any
+    owner_profile_id: str
+    active: DJSessionRuntime
+    opportunity: IntraTrackOpportunity
+    generation: int
+    provider: Any
+    owner_guard: Any
+    fact: QualifiedSessionFact
+    original_moments: tuple[DJMoment, ...]
+
+    def _recovery_current(self):
+        if self.opportunity.insight_recovery_used and not self.manager._insight_recovery_is_current(
+            self.opportunity, self.active
+        ):
+            raise PermissionError("narration_recovery_context_changed")
+
+    def _provider_current(self):
+        if self.provider is not None:
+            try:
+                if (
+                    self.provider[0] != self.active.session_id
+                    or self.manager._narration_providers.get(self.owner_profile_id)
+                    is not self.provider
+                ):
+                    raise PermissionError("narration_owner_changed")
+                self.owner_guard()
+            except Exception:
+                raise PermissionError("narration_owner_changed") from None
+
+    def _opportunity_current(self, require_pending):
+        current = self.manager._active_by_profile.get(self.owner_profile_id)
+        if (
+            current is not self.active
+            or not self.active.allows_proactive()
+            or self.manager._intra_track_opportunities.get(self.owner_profile_id)
+            is not self.opportunity
+            or self.opportunity.generation != self.generation
+            or (require_pending and not self.opportunity.pending)
+            or self.opportunity.blocked
+        ):
+            raise PermissionError("narration_context_changed")
+
+    def _source_playback_current(self):
+        if (
+            not self.fact.eligible(self.opportunity.media_identity, time.monotonic())
+            or self.active.moment_engine.moments != self.original_moments
+            or self.active.broadcast.state.playback.state != "playing"
+            or self.active.broadcast.state.playback.item_id != self.opportunity.item_id
+            or not 0
+            <= self.manager._monotonic_source() - self.opportunity.last_observed_monotonic
+            <= 30
+        ):
+            raise PermissionError("narration_context_changed")
+
+    def validate(self, *, require_pending=True):
+        self._recovery_current()
+        self._provider_current()
+        self._opportunity_current(require_pending)
+        self._source_playback_current()
+
+
+class _QualifiedFactAttempt:
+    """One realization/commit's transient locals; never retained by its guard."""
+
+    def __init__(self, manager, prepared):
+        self.manager = manager
+        (
+            self.owner_profile_id,
+            self.active,
+            self.opportunity,
+            self.generation,
+            self.working_moments,
+            self.moment,
+            self.fact,
+            self.original_moments,
+        ) = prepared
+        self.provider = manager._narration_providers.get(self.owner_profile_id)
+        self.requires_public_story = self.fact.key in {
+            "work_composers",
+            "artist_begin",
+            "artist_description",
+        }
+        self.genre_expression_accepted = False
+        self.original_genre_seed = self.moment.content
+
+    def _clear_pending_locked(self):
+        manager = self.manager
+        if (
+            manager._intra_track_opportunities.get(self.owner_profile_id) is self.opportunity
+            and self.opportunity.generation == self.generation
+        ):
+            self.opportunity.pending = False
+
+    def _consume_semantic(self):
+        self.active.moment_engine.__dict__.update(self.working_moments.__dict__)
+        self.opportunity.used_fact_keys.add(self.fact.key)
+        self.opportunity.fact_count += 1
+        self.opportunity.last_fact_position_ms = self.opportunity.last_observed_position_ms
+        self.opportunity.last_fact_read_seconds = (
+            self.moment.presentation_intent.maximum_duration_seconds
+        )
+
+    def _genre_expression_qualified(self):
+        if (
+            self.provider is not None
+            and self.fact.key == "genre_context"
+            and (
+                not self.genre_expression_accepted
+                or self.moment.content == self.original_genre_seed
+            )
+        ):
+            self.opportunity.used_fact_keys.add(self.fact.key)
+            return False
+
+        return True
+
+    def _public_story_qualified(self):
+        if (
+            self.provider is not None
+            and (
+                self.requires_public_story
+                or (self.fact.key == "album_release" and self.fact.album_artist_id)
+            )
+        ) or (
+            self.fact.key in {"artist_begin", "artist_description"} and self.fact.public_artist_qid
+        ):
+            from .public_artist_narration import ResearchMomentAcceptance, admitted
+            from .live_impression import admitted as admitted_live
+
+            if not admitted_live(self.moment) and (
+                type(self.moment.narration_acceptance) is not ResearchMomentAcceptance
+                or not admitted(self.moment)
+            ):
+                # A source descriptor or raw credit list is not the promised
+                # personal story. Reuse the album policy for researchable
+                # artist/producer facts: decline once, never publish/count
+                # the technical fallback or retry it on every observer tick.
+                self.opportunity.used_fact_keys.add(self.fact.key)
+                return False
+
+        return True
+
+    def _slot_available(self):
+        manager = self.manager
+        self.playback = self.active.broadcast.state.playback
+        self.age = max(0, manager._monotonic_source() - self.opportunity.last_observed_monotonic)
+        self.position = max(
+            self.playback.position_ms or 0,
+            (self.opportunity.last_observed_position_ms or 0) + int(self.age * 1000),
+        )
+        if (
+            self.playback.state != "playing"
+            or self.opportunity.blocked
+            or self.opportunity.last_observed_position_ms is None
+            or self.playback.duration_ms is None
+            or manager._monotonic_source() - self.opportunity.last_observed_monotonic > 30
+            or self.playback.duration_ms - self.position
+            < (self.moment.presentation_intent.maximum_duration_seconds + 5) * 1000
+        ):
+            return False
+
+        return True
+
+    def _delivery_still_current(self):
+        manager = self.manager
+        try:
+            self._verify_delivery()
+        except Exception:
+            self.active.prepared_presentations.pop(self.moment.moment_id, None)
+            if manager._historical_projections is not None:
+                self.active.presence_ledger.commit(
+                    self.opportunity.item_id,
+                    self.moment.presentation_intent.maximum_duration_seconds,
+                )
+            return False
+        return True
+
+    def _verify_delivery(self):
+        manager = self.manager
+        if self.provider is not None:
+            self.owner_guard()
+        if not self.fact.eligible(self.opportunity.media_identity, time.monotonic()):
+            raise PermissionError("narration_source_expired")
+        self.latest = self.active.broadcast.state.playback
+        self.age = manager._monotonic_source() - self.opportunity.last_observed_monotonic
+        self.position = max(
+            self.latest.position_ms or 0,
+            (self.opportunity.last_observed_position_ms or 0) + int(max(0, self.age) * 1000),
+        )
+        self._verify_delivery_owner()
+
+    def _verify_delivery_owner(self):
+        manager = self.manager
+        if (
+            manager._active_by_profile.get(self.owner_profile_id) is not self.active
+            or manager._intra_track_opportunities.get(self.owner_profile_id) is not self.opportunity
+            or self.opportunity.generation != self.generation
+            or self.opportunity.blocked
+            or self.latest.state != "playing"
+            or self.latest.item_id != self.opportunity.item_id
+            or not 0 <= self.age <= 30
+            or self.latest.duration_ms is None
+            or self.latest.duration_ms - self.position
+            < (self.moment.presentation_intent.maximum_duration_seconds + 5) * 1000
+        ):
+            raise PermissionError("narration_delivery_changed")
+
+    async def _prepare_live_media(self):
+        manager = self.manager
+        if self.moment.live_impression is not None and getattr(manager, "_hass", None) is not None:
+            from .live_impression_media import prepare as prepare_live_media
+            from types import SimpleNamespace
+            from .session_artwork import attach_live_projection
+
+            self.photo = json.loads(self.moment.live_impression.payload_json)["photos"][0]
+            await prepare_live_media(
+                manager._hass,
+                None,
+                SimpleNamespace(profile_id=self.owner_profile_id),
+                session_id=self.active.session_id,
+                target={"moment_id": self.moment.moment_id, "photo_id": self.photo["photo_id"]},
+                preloaded=(self.text.pixels, self.text.mime),
+            )
+            attach_live_projection(manager._hass, self.owner_profile_id, self.active.session_id)
+
+    async def _finish_publication(self):
+        manager = self.manager
+        self.active.publish_moment(self.moment, commit_expression=False)
+        await self._prepare_live_media()
+        if not any(
+            published.moment_id == self.moment.moment_id
+            for published in self.active.broadcast.state.dj_moments
+        ):
+            return None
+        self.active.published_recording_context.commit(
+            self.fact, time.monotonic(), self.moment.moment_id
+        )
+        if (
+            self.active.session_start_strategy is SessionStartStrategy.DISCOVER
+            and self.active.session_direction.direction is SessionDirectionType.EXPLORING
+        ):
+            self.active.published_album_context.commit(self.fact, time.monotonic())
+        if manager._historical_projections is None:
+            self._consume_semantic()
+        self.active.moment_engine.commit_expression(
+            self.moment, self.active.planner.output.session_flow
+        )
+        manager._record_performance_memory(self.owner_profile_id, self.active)
+        return self.moment
+
+    async def execute(self):
+        manager = self.manager
+        try:
+            self.owner_guard = (
+                self.provider[3]()
+                if self.provider is not None and self.provider[3] is not None
+                else (self.provider[2] if self.provider else None)
+            )
+        except Exception:
+            async with manager._lock:
+                self._clear_pending_locked()
+            return None
+        guard_state = _QualifiedFactGuard(
+            manager=manager,
+            owner_profile_id=self.owner_profile_id,
+            active=self.active,
+            opportunity=self.opportunity,
+            generation=self.generation,
+            provider=self.provider,
+            owner_guard=self.owner_guard,
+            fact=self.fact,
+            original_moments=self.original_moments,
+        )
+        self.guard_callback = guard_state.validate
+        try:
+            self.guard_callback()
+            (
+                self.moment,
+                self.text,
+                self.requires_public_story,
+                self.genre_expression_accepted,
+            ) = await manager._async_realize_qualified_moment(
+                self.active,
+                self.fact,
+                self.moment,
+                self.working_moments,
+                self.provider,
+                self.guard_callback,
+            )
+            self.guard_callback()
+        except asyncio.CancelledError:
+            async with manager._lock:
+                self._clear_pending_locked()
+            raise
+        except PermissionError:
+            async with manager._lock:
+                self._clear_pending_locked()
+            return None
+        except Exception as exc:
+            # Provider failure keeps the original approved local realization.
+            _LOGGER.debug("DJConnect qualified narration unavailable: %s", type(exc).__name__)
+        async with manager._lock:
+            return await self._commit_locked()
+
+    async def _commit_locked(self):
+        manager = self.manager
+        try:
+            self.guard_callback()
+        except PermissionError:
+            self._clear_pending_locked()
+            return None
+        self.opportunity.pending = False
+        if not self._genre_expression_qualified():
+            return None
+        if not self._public_story_qualified():
+            return None
+        if not self._slot_available():
+            return None
+        guard = self.guard_callback
+        if not await manager._async_persist_moment(
+            self.active, self.moment, final_authorize=lambda: guard(require_pending=False)
+        ):
+            return None
+        # A durable semantic commit consumes this opportunity once, even if
+        # transport subsequently fails. Continuity seeds still require actual Flow.
+        if manager._historical_projections is not None:
+            self._consume_semantic()
+        # Revocation after semantic admission cannot erase that commit, but
+        # must still prevent live delivery and style-memory advancement.
+        if not self._delivery_still_current():
+            return None
+        return await self._finish_publication()
+
+
 class SessionRuntimeManager:
     """Own active DJ Session Runtimes for this Home Assistant instance."""
 
@@ -6524,151 +6866,7 @@ class SessionRuntimeManager:
 
     async def _realize_qualified_current_fact(self, prepared):
         """Realize outside the manager lock; revalidate every captured owner at commit."""
-        owner_profile_id, active, opportunity, generation, working_moments, moment, fact, original_moments = prepared
-        provider = self._narration_providers.get(owner_profile_id)
-        requires_public_story = fact.key in {'work_composers', 'artist_begin', 'artist_description'}
-        genre_expression_accepted = False
-        original_genre_seed = moment.content
-        try:
-            owner_guard = provider[3]() if provider is not None and provider[3] is not None else (provider[2] if provider else None)
-        except Exception:
-            async with self._lock:
-                if self._intra_track_opportunities.get(owner_profile_id) is opportunity and opportunity.generation == generation:
-                    opportunity.pending = False
-            return None
-
-        def guard(*, require_pending=True):
-            if (opportunity.insight_recovery_used
-                    and not self._insight_recovery_is_current(opportunity, active)):
-                raise PermissionError("narration_recovery_context_changed")
-            if provider is not None:
-                try:
-                    if (provider[0] != active.session_id
-                            or self._narration_providers.get(owner_profile_id) is not provider):
-                        raise PermissionError("narration_owner_changed")
-                    owner_guard()
-                except Exception:
-                    raise PermissionError("narration_owner_changed") from None
-            current = self._active_by_profile.get(owner_profile_id)
-            if (current is not active or not active.allows_proactive()
-                    or self._intra_track_opportunities.get(owner_profile_id) is not opportunity
-                    or opportunity.generation != generation or (require_pending and not opportunity.pending)
-                    or opportunity.blocked or not fact.eligible(opportunity.media_identity, time.monotonic())
-                    or active.moment_engine.moments != original_moments
-                    or active.broadcast.state.playback.state != "playing"
-                    or active.broadcast.state.playback.item_id != opportunity.item_id
-                    or not 0 <= self._monotonic_source() - opportunity.last_observed_monotonic <= 30):
-                raise PermissionError("narration_context_changed")
-
-        try:
-            guard()
-            moment, text, requires_public_story, genre_expression_accepted = await self._async_realize_qualified_moment(
-                active, fact, moment, working_moments, provider, guard)
-            guard()
-        except asyncio.CancelledError:
-            async with self._lock:
-                if self._intra_track_opportunities.get(owner_profile_id) is opportunity and opportunity.generation == generation:
-                    opportunity.pending = False
-            raise
-        except PermissionError:
-            async with self._lock:
-                if self._intra_track_opportunities.get(owner_profile_id) is opportunity and opportunity.generation == generation:
-                    opportunity.pending = False
-            return None
-        except Exception as exc:
-            # Provider failure keeps the original approved local realization.
-            _LOGGER.debug("DJConnect qualified narration unavailable: %s", type(exc).__name__)
-        async with self._lock:
-            try:
-                guard()
-            except PermissionError:
-                if self._intra_track_opportunities.get(owner_profile_id) is opportunity and opportunity.generation == generation:
-                    opportunity.pending = False
-                return None
-            opportunity.pending = False
-            if (provider is not None and fact.key == 'genre_context'
-                    and (not genre_expression_accepted or moment.content == original_genre_seed)):
-                opportunity.used_fact_keys.add(fact.key)
-                return None
-            if ((provider is not None and (requires_public_story or
-                    (fact.key == 'album_release' and fact.album_artist_id)))
-                    or (fact.key in {'artist_begin','artist_description'} and fact.public_artist_qid)):
-                from .public_artist_narration import ResearchMomentAcceptance, admitted
-                from .live_impression import admitted as admitted_live
-                if not admitted_live(moment) and (type(moment.narration_acceptance) is not ResearchMomentAcceptance or not admitted(moment)):
-                    # A source descriptor or raw credit list is not the promised
-                    # personal story. Reuse the album policy for researchable
-                    # artist/producer facts: decline once, never publish/count
-                    # the technical fallback or retry it on every observer tick.
-                    opportunity.used_fact_keys.add(fact.key)
-                    return None
-            playback = active.broadcast.state.playback
-            age = max(0, self._monotonic_source() - opportunity.last_observed_monotonic)
-            position = max(playback.position_ms or 0,
-                           (opportunity.last_observed_position_ms or 0) + int(age * 1000))
-            if (playback.state != "playing" or opportunity.blocked
-                    or opportunity.last_observed_position_ms is None or playback.duration_ms is None
-                    or self._monotonic_source() - opportunity.last_observed_monotonic > 30
-                    or playback.duration_ms - position < (moment.presentation_intent.maximum_duration_seconds + 5) * 1000):
-                return None
-            if not await self._async_persist_moment(active, moment, final_authorize=lambda:guard(require_pending=False)):
-                return None
-            # A durable semantic commit consumes this opportunity once, even if
-            # transport subsequently fails. Continuity seeds still require actual Flow.
-            if self._historical_projections is not None:
-                active.moment_engine.__dict__.update(working_moments.__dict__)
-                opportunity.used_fact_keys.add(fact.key)
-                opportunity.fact_count += 1
-                opportunity.last_fact_position_ms = opportunity.last_observed_position_ms
-                opportunity.last_fact_read_seconds = moment.presentation_intent.maximum_duration_seconds
-            # Revocation after semantic admission cannot erase that commit, but
-            # must still prevent live delivery and style-memory advancement.
-            try:
-                if provider is not None:
-                    owner_guard()
-                if not fact.eligible(opportunity.media_identity, time.monotonic()):
-                    raise PermissionError("narration_source_expired")
-                latest = active.broadcast.state.playback
-                age = self._monotonic_source() - opportunity.last_observed_monotonic
-                position = max(latest.position_ms or 0,
-                    (opportunity.last_observed_position_ms or 0) + int(max(0,age)*1000))
-                if (self._active_by_profile.get(owner_profile_id) is not active
-                        or self._intra_track_opportunities.get(owner_profile_id) is not opportunity
-                        or opportunity.generation != generation or opportunity.blocked
-                        or latest.state != "playing" or latest.item_id != opportunity.item_id
-                        or not 0 <= age <= 30 or latest.duration_ms is None
-                        or latest.duration_ms-position < (moment.presentation_intent.maximum_duration_seconds+5)*1000):
-                    raise PermissionError("narration_delivery_changed")
-            except Exception:
-                active.prepared_presentations.pop(moment.moment_id, None)
-                if self._historical_projections is not None:
-                    active.presence_ledger.commit(opportunity.item_id, moment.presentation_intent.maximum_duration_seconds)
-                return None
-            active.publish_moment(moment, commit_expression=False)
-            if moment.live_impression is not None and getattr(self,"_hass",None) is not None:
-                from .live_impression_media import prepare as prepare_live_media
-                from types import SimpleNamespace
-                from .session_artwork import attach_live_projection
-                photo=json.loads(moment.live_impression.payload_json)["photos"][0]
-                await prepare_live_media(self._hass,None,SimpleNamespace(profile_id=owner_profile_id),
-                    session_id=active.session_id,target={"moment_id":moment.moment_id,"photo_id":photo["photo_id"]},
-                    preloaded=(text.pixels,text.mime))
-                attach_live_projection(self._hass,owner_profile_id,active.session_id)
-            if not any(published.moment_id == moment.moment_id for published in active.broadcast.state.dj_moments):
-                return None
-            active.published_recording_context.commit(fact, time.monotonic(), moment.moment_id)
-            if (active.session_start_strategy is SessionStartStrategy.DISCOVER
-                    and active.session_direction.direction is SessionDirectionType.EXPLORING):
-                active.published_album_context.commit(fact, time.monotonic())
-            if self._historical_projections is None:
-                active.moment_engine.__dict__.update(working_moments.__dict__)
-                opportunity.used_fact_keys.add(fact.key)
-                opportunity.fact_count += 1
-                opportunity.last_fact_position_ms = opportunity.last_observed_position_ms
-                opportunity.last_fact_read_seconds = moment.presentation_intent.maximum_duration_seconds
-            active.moment_engine.commit_expression(moment, active.planner.output.session_flow)
-            self._record_performance_memory(owner_profile_id, active)
-            return moment
+        return await _QualifiedFactAttempt(self, prepared).execute()
 
     async def async_advance_playback_progress(
         self, *, owner_profile_id: str, session_id: str
