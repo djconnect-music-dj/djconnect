@@ -1053,6 +1053,15 @@ class TrackStartedPlanningInput:
     planner_decision: PlannerDecision | None = None
 
 
+def _planned_category_allowed(owner, candidate):
+    """Planning allowlist only: silence remains a provisional option."""
+    return (
+        owner.allowed_intents is None
+        or candidate.category == "silence"
+        or candidate.category in owner.allowed_intents
+    )
+
+
 class PlannerIntentSelector:
     """Select at most one supported candidate deterministically."""
 
@@ -1087,16 +1096,25 @@ class PlannerIntentSelector:
         elif influence.effective_direction is SessionDirectionType.EXPLORING:
             priorities = ("recommendation", "artist_story", "album_story", "genre_story", "silence")
         for category in priorities:
-            if allowed_intents is not None and category not in allowed_intents and category != "silence":
+            if not cls._choice_eligible(category, influence, allowed_intents):
                 continue
-            if (
-                influence.performance_memory is not None
-                and cls._recently_used(category, influence.performance_memory)
-            ):
-                continue
-            if any(slot.category == category for slot in window.candidate_slots):
+            if any((slot.category == category for slot in window.candidate_slots)):
                 return PlannerIntent(category, window.generation)
         return None
+
+    @classmethod
+    def _choice_eligible(cls, category, influence, allowed_intents):
+        if (
+            allowed_intents is not None
+            and category not in allowed_intents
+            and (category != "silence")
+        ):
+            return False
+        if influence.performance_memory is not None and cls._recently_used(
+            category, influence.performance_memory
+        ):
+            return False
+        return True
 
     @staticmethod
     def _recently_used(category: str, memory: PerformanceMemory) -> bool:
@@ -1220,104 +1238,126 @@ class PlanningWindow:
                 if prefetch is not None
                 else None
             )
-            invalidated = (
-                intent.status is not PlannedIntentStatus.PLANNED
-                or intent.generation != self.generation
-                or (
-                    prefetch is not None
-                    and (
-                        prefetch.planning_generation != self.generation
-                        or prefetch.invalidation_generation != active_invalidation_generation
-                    )
-                )
-                or (result is not None and result.planning_generation != self.generation)
-            )
-            available = result is not None
-            valid = bool(result and result.is_valid)
-            execution_status = result.status if result is not None else None
-            if invalidated:
-                status = ReadinessStatus.INVALID
-            elif prefetch is None:
-                status = ReadinessStatus.READY
-            elif result is None:
-                status = ReadinessStatus.WAITING
-            elif result.status is PreparedKnowledgeStatus.UNSUPPORTED:
-                status = ReadinessStatus.UNSUPPORTED
-            elif result.status is PreparedKnowledgeStatus.STALE:
-                status = ReadinessStatus.EXPIRED
-            elif result.status is PreparedKnowledgeStatus.UNAVAILABLE:
-                status = ReadinessStatus.BLOCKED
-            elif result.status in {
-                PreparedKnowledgeStatus.INVALID,
-                PreparedKnowledgeStatus.CANCELLED,
-                PreparedKnowledgeStatus.SUPERSEDED,
-            } or not result.is_valid:
-                status = ReadinessStatus.INVALID
-            elif result.confidence < prefetch.knowledge_confidence:
-                status = ReadinessStatus.BLOCKED
-            elif result.freshness < prefetch.freshness:
-                status = ReadinessStatus.EXPIRED
-            else:
-                status = ReadinessStatus.READY
             evaluations.append(
-                ReadinessEvaluation(
-                    target_intent=intent,
-                    planning_generation=self.generation,
-                    prepared_knowledge_available=available,
-                    prepared_knowledge_valid=valid,
-                    confidence_threshold=prefetch.knowledge_confidence if prefetch else 0.0,
-                    freshness_threshold=prefetch.freshness if prefetch else 0.0,
-                    invalidation_generation=active_invalidation_generation,
-                    is_invalidated=invalidated,
-                    execution_status=execution_status,
-                    status=status,
+                self._evaluate_intent_readiness(
+                    intent, prefetch, result, active_invalidation_generation
                 )
             )
         self.readiness_evaluations = tuple(evaluations)
         return self.readiness_evaluations
 
+    def _evaluate_intent_readiness(self, intent, prefetch, result, active_invalidation_generation):
+        invalidated = self._readiness_invalidated(
+            intent, prefetch, result, active_invalidation_generation
+        )
+        available = result is not None
+        valid = bool(result and result.is_valid)
+        execution_status = result.status if result is not None else None
+        status = self._intent_readiness_status(invalidated, prefetch, result)
+        return ReadinessEvaluation(
+            target_intent=intent,
+            planning_generation=self.generation,
+            prepared_knowledge_available=available,
+            prepared_knowledge_valid=valid,
+            confidence_threshold=prefetch.knowledge_confidence if prefetch else 0.0,
+            freshness_threshold=prefetch.freshness if prefetch else 0.0,
+            invalidation_generation=active_invalidation_generation,
+            is_invalidated=invalidated,
+            execution_status=execution_status,
+            status=status,
+        )
+
+    def _readiness_invalidated(self, intent, prefetch, result, active_invalidation_generation):
+        return (
+            intent.status is not PlannedIntentStatus.PLANNED
+            or intent.generation != self.generation
+            or (
+                prefetch is not None
+                and (
+                    prefetch.planning_generation != self.generation
+                    or prefetch.invalidation_generation != active_invalidation_generation
+                )
+            )
+            or (result is not None and result.planning_generation != self.generation)
+        )
+
+    def _intent_readiness_status(self, invalidated, prefetch, result):
+        if invalidated:
+            return ReadinessStatus.INVALID
+        elif prefetch is None:
+            return ReadinessStatus.READY
+        elif result is None:
+            return ReadinessStatus.WAITING
+        else:
+            return self._prepared_readiness_status(prefetch, result)
+
+    @staticmethod
+    def _prepared_readiness_status(prefetch, result):
+        if result.status is PreparedKnowledgeStatus.UNSUPPORTED:
+            return ReadinessStatus.UNSUPPORTED
+        elif result.status is PreparedKnowledgeStatus.STALE:
+            return ReadinessStatus.EXPIRED
+        elif result.status is PreparedKnowledgeStatus.UNAVAILABLE:
+            return ReadinessStatus.BLOCKED
+        elif (
+            result.status
+            in {
+                PreparedKnowledgeStatus.INVALID,
+                PreparedKnowledgeStatus.CANCELLED,
+                PreparedKnowledgeStatus.SUPERSEDED,
+            }
+            or not result.is_valid
+        ):
+            return ReadinessStatus.INVALID
+        elif result.confidence < prefetch.knowledge_confidence:
+            return ReadinessStatus.BLOCKED
+        elif result.freshness < prefetch.freshness:
+            return ReadinessStatus.EXPIRED
+        else:
+            return ReadinessStatus.READY
+
     def plan_intents(self) -> tuple[PlannedIntent, ...]:
         """Create deterministic provisional intents only for observed future slots."""
         if self.planned_intents:
             return self.planned_intents
-        if self.planning_coverage_seconds <= 0 and not any(
-            slot.is_current_track for slot in self.candidate_slots
+        if self.planning_coverage_seconds <= 0 and (
+            not any((slot.is_current_track for slot in self.candidate_slots))
         ):
             return ()
-
         eligible_slots = (
             slot
             for slot in sorted(
                 self.candidate_slots,
                 key=lambda slot: (slot.starts_at_seconds, slot.ends_at_seconds, slot.category),
             )
-            if (
-                slot.category in PlannerIntentSelector._SUPPORTED
-                and (
-                    self.allowed_intents is None
-                    or slot.category == "silence"
-                    or slot.category in self.allowed_intents
-                )
-                and (
-                    slot.is_current_track
-                    or (
-                        0 <= slot.starts_at_seconds < slot.ends_at_seconds
-                        and slot.ends_at_seconds <= self.planning_coverage_seconds
-                    )
-                )
-            )
+            if self._slot_eligible(slot)
         )
         confidence = max(0.0, min(1.0, self.confidence))
         self.planned_intents = tuple(
-            PlannedIntent(
-                category=slot.category,
-                slot=slot,
-                generation=self.generation,
-                confidence=confidence,
+            (
+                PlannedIntent(
+                    category=slot.category,
+                    slot=slot,
+                    generation=self.generation,
+                    confidence=confidence,
+                )
+                for slot in eligible_slots
             )
-            for slot in eligible_slots
         )[: self.max_planned_intents]
         return self.planned_intents
+
+    def _slot_eligible(self, slot):
+        return (
+            slot.category in PlannerIntentSelector._SUPPORTED
+            and _planned_category_allowed(self, slot)
+            and (
+                slot.is_current_track
+                or (
+                    0 <= slot.starts_at_seconds < slot.ends_at_seconds
+                    and slot.ends_at_seconds <= self.planning_coverage_seconds
+                )
+            )
+        )
 
     def approve_earliest_planned_intent(self) -> PlannerIntent | None:
         """Approve only an already-ready earliest future intent, once per window."""
@@ -1503,61 +1543,70 @@ class RollingSessionHorizon:
         self.current_track_candidate = current_track_candidate
         if self.planning_window is None:
             return self.build_planning_window()
-
         signature = self._signature()
         if signature == self._replanning_signature:
             return self.planning_window
-
         previous = self.planning_window
         generation = max(previous.generation + 1, self.invalidation_generation + 1)
         self.invalidation_generation = generation
         rebuilt = self._new_planning_window(generation)
         available = {self._slot_key(slot) for slot in rebuilt.candidate_slots}
         consumed = set(self.consumed_slot_keys)
+        retained, retained_keys = self._retain_replanned_intents(previous, available, consumed)
+        return self._finish_replanned_window(
+            rebuilt=rebuilt,
+            retained=retained,
+            retained_keys=retained_keys,
+            consumed=consumed,
+            previous=previous,
+            generation=generation,
+        )
+
+    def _retain_replanned_intents(self, previous, available, consumed):
         retained: list[PlannedIntent] = []
         retained_keys: set[tuple[str, int, int]] = set()
         for intent in previous.planned_intents:
             key = self._slot_key(intent.slot)
-            if (
-                intent.status is PlannedIntentStatus.APPROVED
-                and (
-                    self.allowed_intents is None
-                    or intent.category == "silence"
-                    or intent.category in self.allowed_intents
-                )
+            if intent.status is PlannedIntentStatus.APPROVED and _planned_category_allowed(
+                self, intent
             ):
                 retained.append(intent)
                 retained_keys.add(key)
             elif (
                 intent.status is PlannedIntentStatus.PLANNED
                 and key in available
-                and key not in consumed
-                and (
-                    self.allowed_intents is None
-                    or intent.category == "silence"
-                    or intent.category in self.allowed_intents
-                )
+                and (key not in consumed)
+                and _planned_category_allowed(self, intent)
             ):
                 retained.append(intent)
                 retained_keys.add(key)
             elif intent.status is PlannedIntentStatus.PLANNED:
                 retained.append(self._with_status(intent, PlannedIntentStatus.SUPERSEDED))
+        return (retained, retained_keys)
 
+    def _finish_replanned_window(
+        self, *, rebuilt, retained, retained_keys, consumed, previous, generation
+    ):
         generated = tuple(
-            intent
-            for intent in rebuilt.planned_intents
-            if self._slot_key(intent.slot) not in retained_keys
-            and self._slot_key(intent.slot) not in consumed
+            (
+                intent
+                for intent in rebuilt.planned_intents
+                if self._slot_key(intent.slot) not in retained_keys
+                and self._slot_key(intent.slot) not in consumed
+            )
         )
         rebuilt.planned_intents = tuple(retained + list(generated))[: rebuilt.max_planned_intents]
         approved = next(
-            (intent for intent in rebuilt.planned_intents if intent.status is PlannedIntentStatus.APPROVED),
+            (
+                intent
+                for intent in rebuilt.planned_intents
+                if intent.status is PlannedIntentStatus.APPROVED
+            ),
             None,
         )
         rebuilt.approved_intent = approved.as_planner_intent() if approved is not None else None
         rebuilt.plan_knowledge_prefetches(
-            invalidation_generation=generation,
-            previous_prefetches=previous.knowledge_prefetches,
+            invalidation_generation=generation, previous_prefetches=previous.knowledge_prefetches
         )
         self.planning_window = rebuilt
         self._replanning_signature = self._signature()
@@ -1570,6 +1619,181 @@ class RollingSessionHorizon:
         self.invalidation_generation += 1
         self.planning_window = None
         self._replanning_signature = None
+
+
+_CONTINUE_TRACK_DECISION = object()
+
+
+class _TrackStartedDecisionAttempt:
+    """One decision's original inputs; only the existing Planner records its result."""
+
+    def __init__(
+        self,
+        planner,
+        *,
+        session_start_strategy,
+        session_direction,
+        selected_mood,
+        persona,
+        knowledge_hints,
+        performance_memory,
+        discover_context,
+        record_track_available,
+    ):
+        self.planner = planner
+        self.session_start_strategy = session_start_strategy
+        self.session_direction = session_direction
+        self.selected_mood = selected_mood
+        self.persona = persona
+        self.knowledge_hints = knowledge_hints
+        self.performance_memory = performance_memory
+        self.discover_context = discover_context
+        self.record_track_available = record_track_available
+
+    def _observe_event(self):
+        planner = self.planner
+        if self.record_track_available:
+            planner.pending_events = (*planner.pending_events, PlannerEventType.TRACK_AVAILABLE)
+        self.performance_memory = self.performance_memory or PerformanceMemory("")
+        self.discover_context = self.discover_context or DiscoverContext()
+        self.mood = self.selected_mood.strip().lower()
+        self.now = planner.elapsed_time_source()
+        if (
+            planner.last_spoken_moment_at
+            and self.now - planner.last_spoken_moment_at
+            < planner.configuration.minimum_time_between_moments_seconds
+        ):
+            planner.last_decision = PlannerDecision(PlannerDecisionType.SILENCE, "minimum_interval")
+            return planner.last_decision
+        return _CONTINUE_TRACK_DECISION
+
+    def _consider_direction(self):
+        planner = self.planner
+        self.proposed_direction = _planned_direction(
+            current=self.session_direction.direction, selected_mood=self.mood, persona=self.persona
+        )
+        self.direction_change_reason = "session_direction_changed"
+        if (
+            self.performance_memory.recent_moment_types[-2:]
+            == (DJMomentType.SILENCE, DJMomentType.SILENCE)
+            and self.session_direction.direction is not SessionDirectionType.RESETTING
+            and (DJMomentType.SESSION not in self.performance_memory.recent_moment_types[-3:])
+        ):
+            self.proposed_direction = SessionDirectionType.RESETTING
+            self.direction_change_reason = "recent_silence_recovery"
+        elif (
+            self.session_direction.direction is SessionDirectionType.RESETTING
+            and self.performance_memory.recent_session_directions[-1:]
+            == (SessionDirectionType.RESETTING,)
+        ):
+            self.proposed_direction = SessionDirectionType.RETURNING
+            self.direction_change_reason = "resetting_session_return"
+        if self.proposed_direction is not self.session_direction.direction:
+            if (
+                DJMomentType.SESSION in self.performance_memory.recent_moment_types[-2:]
+                and self.direction_change_reason != "resetting_session_return"
+            ):
+                planner.last_decision = PlannerDecision(
+                    PlannerDecisionType.SILENCE, "recent_session_update"
+                )
+                return planner.last_decision
+            self.intent = KnowledgeIntent(
+                KnowledgeIntentType.SESSION_DIRECTION,
+                "Communicate the updated direction of the active DJ Session.",
+            )
+            planner.last_decision = PlannerDecision(
+                PlannerDecisionType.CREATE_SESSION_UPDATE,
+                self.direction_change_reason,
+                self.intent,
+                self.proposed_direction,
+            )
+            return planner.last_decision
+        return _CONTINUE_TRACK_DECISION
+
+    def _consider_silence(self):
+        planner = self.planner
+        if (
+            self.mood in {"deep", "focus", "chill"} or self.persona is DJPersona.CLUB_DJ
+        ) and self.performance_memory.recent_silence_count < 2:
+            planner.last_decision = PlannerDecision(
+                PlannerDecisionType.SILENCE, "mood_or_persona_prefers_silence"
+            )
+            return planner.last_decision
+        self.hints = self.knowledge_hints or {}
+        self.fingerprint = _context_fingerprint(
+            self.hints.get("artist", ""),
+            self.hints.get("summary", ""),
+            self.hints.get("full_text", ""),
+        )
+        if (
+            self.fingerprint
+            and self.fingerprint in self.performance_memory.recent_context_fingerprints
+        ):
+            planner.last_decision = PlannerDecision(
+                PlannerDecisionType.SILENCE, "no_fresh_session_context"
+            )
+            return planner.last_decision
+        return _CONTINUE_TRACK_DECISION
+
+    def _choose_context(self):
+        planner = self.planner
+        self.choices = _prioritized_knowledge_choices(
+            session_start_strategy=self.session_start_strategy,
+            selected_mood=self.mood,
+            persona=self.persona,
+            session_direction=self.session_direction.direction,
+            recommendation_preference=planner.configuration.recommendation_preference,
+        )
+        self.choices = _space_recommendation_choices(
+            self.choices,
+            performance_memory=self.performance_memory,
+            discover_context=self.discover_context,
+            hints=self.hints,
+        )
+        self.choices = _space_recent_type_choices(
+            self.choices,
+            performance_memory=self.performance_memory,
+            discover_context=self.discover_context,
+            hints=self.hints,
+        )
+        for self.key, self.decision_type, self.intent_type, self.goal in self.choices:
+            if _bounded_text(self.hints.get(self.key), 1200):
+                if _performance_memory_repeats(
+                    self.performance_memory, self.intent_type, self.hints
+                ):
+                    continue
+                if _discover_context_repeats(self.discover_context, self.intent_type, self.hints):
+                    continue
+                self.intent = KnowledgeIntent(self.intent_type, self.goal)
+                self.reason = (
+                    f"discover_knowledge_hint:{self.key}"
+                    if self.session_start_strategy is SessionStartStrategy.DISCOVER
+                    else f"knowledge_hint:{self.key}"
+                )
+                planner.last_decision = PlannerDecision(
+                    self.decision_type, self.reason, self.intent
+                )
+                return planner.last_decision
+        self.intent = KnowledgeIntent(
+            KnowledgeIntentType.TRACK_CONTEXT,
+            "Explain one relevant detail that improves appreciation of the current track.",
+        )
+        planner.last_decision = PlannerDecision(
+            PlannerDecisionType.CREATE_TRACK_CONTEXT, "track_context_appropriate", self.intent
+        )
+        return planner.last_decision
+
+    def execute(self):
+        decision = self._observe_event()
+        if decision is not _CONTINUE_TRACK_DECISION:
+            return decision
+        decision = self._consider_direction()
+        if decision is not _CONTINUE_TRACK_DECISION:
+            return decision
+        decision = self._consider_silence()
+        if decision is not _CONTINUE_TRACK_DECISION:
+            return decision
+        return self._choose_context()
 
 
 @dataclass
@@ -1674,112 +1898,17 @@ class DJSessionPlanner:
         record_track_available: bool = True,
     ) -> PlannerDecision:
         """Make the bounded first production decision without invoking services."""
-        if record_track_available:
-            self.pending_events = (*self.pending_events, PlannerEventType.TRACK_AVAILABLE)
-        performance_memory = performance_memory or PerformanceMemory("")
-        discover_context = discover_context or DiscoverContext()
-        mood = selected_mood.strip().lower()
-        now = self.elapsed_time_source()
-        if self.last_spoken_moment_at and now - self.last_spoken_moment_at < self.configuration.minimum_time_between_moments_seconds:
-            self.last_decision = PlannerDecision(PlannerDecisionType.SILENCE, "minimum_interval")
-            return self.last_decision
-        proposed_direction = _planned_direction(
-            current=session_direction.direction,
-            selected_mood=mood,
-            persona=persona,
-        )
-        direction_change_reason = "session_direction_changed"
-        if (
-            performance_memory.recent_moment_types[-2:]
-            == (DJMomentType.SILENCE, DJMomentType.SILENCE)
-            and session_direction.direction is not SessionDirectionType.RESETTING
-            and DJMomentType.SESSION not in performance_memory.recent_moment_types[-3:]
-        ):
-            proposed_direction = SessionDirectionType.RESETTING
-            direction_change_reason = "recent_silence_recovery"
-        elif (
-            session_direction.direction is SessionDirectionType.RESETTING
-            and performance_memory.recent_session_directions[-1:]
-            == (SessionDirectionType.RESETTING,)
-        ):
-            proposed_direction = SessionDirectionType.RETURNING
-            direction_change_reason = "resetting_session_return"
-        if proposed_direction is not session_direction.direction:
-            if (
-                DJMomentType.SESSION in performance_memory.recent_moment_types[-2:]
-                and direction_change_reason != "resetting_session_return"
-            ):
-                self.last_decision = PlannerDecision(
-                    PlannerDecisionType.SILENCE, "recent_session_update"
-                )
-                return self.last_decision
-            intent = KnowledgeIntent(
-                KnowledgeIntentType.SESSION_DIRECTION,
-                "Communicate the updated direction of the active DJ Session.",
-            )
-            self.last_decision = PlannerDecision(
-                PlannerDecisionType.CREATE_SESSION_UPDATE,
-                direction_change_reason,
-                intent,
-                proposed_direction,
-            )
-            return self.last_decision
-        if (
-            (mood in {"deep", "focus", "chill"} or persona is DJPersona.CLUB_DJ)
-            and performance_memory.recent_silence_count < 2
-        ):
-            self.last_decision = PlannerDecision(PlannerDecisionType.SILENCE, "mood_or_persona_prefers_silence")
-            return self.last_decision
-        hints = knowledge_hints or {}
-        fingerprint = _context_fingerprint(
-            hints.get("artist", ""), hints.get("summary", ""), hints.get("full_text", "")
-        )
-        if fingerprint and fingerprint in performance_memory.recent_context_fingerprints:
-            self.last_decision = PlannerDecision(
-                PlannerDecisionType.SILENCE, "no_fresh_session_context"
-            )
-            return self.last_decision
-        choices = _prioritized_knowledge_choices(
+        return _TrackStartedDecisionAttempt(
+            self,
             session_start_strategy=session_start_strategy,
-            selected_mood=mood,
+            session_direction=session_direction,
+            selected_mood=selected_mood,
             persona=persona,
-            session_direction=session_direction.direction,
-            recommendation_preference=self.configuration.recommendation_preference,
-        )
-        choices = _space_recommendation_choices(
-            choices,
+            knowledge_hints=knowledge_hints,
             performance_memory=performance_memory,
             discover_context=discover_context,
-            hints=hints,
-        )
-        choices = _space_recent_type_choices(
-            choices,
-            performance_memory=performance_memory,
-            discover_context=discover_context,
-            hints=hints,
-        )
-        for key, decision_type, intent_type, goal in choices:
-            if _bounded_text(hints.get(key), 1200):
-                if _performance_memory_repeats(
-                    performance_memory, intent_type, hints
-                ):
-                    continue
-                if _discover_context_repeats(discover_context, intent_type, hints):
-                    continue
-                intent = KnowledgeIntent(intent_type, goal)
-                reason = (
-                    f"discover_knowledge_hint:{key}"
-                    if session_start_strategy is SessionStartStrategy.DISCOVER
-                    else f"knowledge_hint:{key}"
-                )
-                self.last_decision = PlannerDecision(decision_type, reason, intent)
-                return self.last_decision
-        intent = KnowledgeIntent(
-            KnowledgeIntentType.TRACK_CONTEXT,
-            "Explain one relevant detail that improves appreciation of the current track.",
-        )
-        self.last_decision = PlannerDecision(PlannerDecisionType.CREATE_TRACK_CONTEXT, "track_context_appropriate", intent)
-        return self.last_decision
+            record_track_available=record_track_available,
+        ).execute()
 
     def record_spoken_moment(self) -> None:
         self.last_spoken_moment_at = self.elapsed_time_source()
@@ -3320,30 +3449,25 @@ class DJKnowledgeEngine:
     ) -> KnowledgeContext:
         """Reuse Track Insight while excluding raw Profile and Music DNA data."""
         track = raw_insight.get("track") if isinstance(raw_insight.get("track"), dict) else {}
-        analysis = raw_insight.get("analysis") if isinstance(raw_insight.get("analysis"), dict) else {}
+        analysis = (
+            raw_insight.get("analysis") if isinstance(raw_insight.get("analysis"), dict) else {}
+        )
         genre_fact = raw_insight.get("_qualified_genre_fact")
-        if (intent.intent_type is KnowledgeIntentType.GENRE_STORY and type(genre_fact) is QualifiedSessionFact
-                and genre_fact.key == "genre_context" and genre_fact.eligible(genre_fact.media_identity, time.monotonic())):
-            return KnowledgeContext(track=(), analysis=(), sources=(genre_fact.provider,), qualified_fact=genre_fact)
+        if self._current_genre_fact(intent, genre_fact):
+            return KnowledgeContext(
+                track=(), analysis=(), sources=(genre_fact.provider,), qualified_fact=genre_fact
+            )
         primary_evidence = _primary_knowledge_evidence(intent.intent_type, track, analysis)
         if primary_evidence is not None:
-            evidence_source, evidence_key, evidence_value = primary_evidence
-            track_values = {
-                key: _bounded_text(track.get(key), 2048)
-                for key in ("title", "artist", "album", "artwork_url", "backend")
-            }
-            analysis_values = {
-                key: _bounded_text(analysis.get(key), 1200)
-                for key in ("summary", "full_text", "basis")
-            }
-            if evidence_source == "track":
-                track_values[evidence_key] = evidence_value
-            else:
-                analysis_values[evidence_key] = evidence_value
+            track_values, analysis_values = self._primary_track_fields(
+                track, analysis, primary_evidence
+            )
             return self._record(
                 KnowledgeContext(
-                    track=tuple((key, value) for key, value in track_values.items() if value),
-                    analysis=tuple((key, value) for key, value in analysis_values.items() if value),
+                    track=tuple(((key, value) for key, value in track_values.items() if value)),
+                    analysis=tuple(
+                        ((key, value) for key, value in analysis_values.items() if value)
+                    ),
                     sources=("track_insight",),
                     personal_context_used=personal_context_authorized,
                     session_direction=session_direction,
@@ -3356,7 +3480,9 @@ class DJKnowledgeEngine:
         if intent.intent_type in _PRIMARY_EVIDENCE_INTENTS:
             return self._record(
                 KnowledgeContext(
-                    (), (), ("track_insight",),
+                    (),
+                    (),
+                    ("track_insight",),
                     personal_context_used=personal_context_authorized,
                     session_direction=session_direction,
                     session_start_strategy=session_start_strategy,
@@ -3367,20 +3493,10 @@ class DJKnowledgeEngine:
             )
         track_fields, analysis_fields = _knowledge_fields_for_intent(intent.intent_type)
         observed = raw_insight.get("_observed_playback")
-        observed = observed if (intent.intent_type is KnowledgeIntentType.TRACK_CONTEXT
-            and isinstance(observed, ObservedPlaybackNarration) and observed.eligible(time.monotonic())
-            and track.get("title") == observed.title and track.get("artist") == observed.artist) else None
+        observed = self._current_observed_playback(intent, observed, track)
         context = KnowledgeContext(
-            track=tuple(
-                (key, value)
-                for key, value in ((key, _bounded_text(track.get(key), 2048)) for key in track_fields)
-                if value
-            ),
-            analysis=tuple(
-                (key, value)
-                for key, value in ((key, _bounded_text(analysis.get(key), 1200)) for key in analysis_fields)
-                if value
-            ),
+            track=self._bounded_context_fields(track, track_fields, 2048),
+            analysis=self._bounded_context_fields(analysis, analysis_fields, 1200),
             sources=("track_insight",),
             personal_context_used=personal_context_authorized,
             observed_playback=observed,
@@ -3391,6 +3507,53 @@ class DJKnowledgeEngine:
             performance_memory=performance_memory,
         )
         return self._record(context)
+
+    @staticmethod
+    def _bounded_context_fields(source, fields, limit):
+        return tuple(
+            (
+                (key, value)
+                for key, value in ((key, _bounded_text(source.get(key), limit)) for key in fields)
+                if value
+            )
+        )
+
+    @staticmethod
+    def _primary_track_fields(track, analysis, primary_evidence):
+        evidence_source, evidence_key, evidence_value = primary_evidence
+        track_values = {
+            key: _bounded_text(track.get(key), 2048)
+            for key in ("title", "artist", "album", "artwork_url", "backend")
+        }
+        analysis_values = {
+            key: _bounded_text(analysis.get(key), 1200) for key in ("summary", "full_text", "basis")
+        }
+        if evidence_source == "track":
+            track_values[evidence_key] = evidence_value
+        else:
+            analysis_values[evidence_key] = evidence_value
+        return (track_values, analysis_values)
+
+    @staticmethod
+    def _current_genre_fact(intent, genre_fact):
+        return (
+            intent.intent_type is KnowledgeIntentType.GENRE_STORY
+            and type(genre_fact) is QualifiedSessionFact
+            and (genre_fact.key == "genre_context")
+            and genre_fact.eligible(genre_fact.media_identity, time.monotonic())
+        )
+
+    @staticmethod
+    def _current_observed_playback(intent, observed, track):
+        return (
+            observed
+            if intent.intent_type is KnowledgeIntentType.TRACK_CONTEXT
+            and isinstance(observed, ObservedPlaybackNarration)
+            and observed.eligible(time.monotonic())
+            and (track.get("title") == observed.title)
+            and (track.get("artist") == observed.artist)
+            else None
+        )
 
     async def async_resolve_approved_planned_intent(
         self,
@@ -3472,53 +3635,35 @@ class DJKnowledgeEngine:
         same_prefetch_target = (
             prefetch.target_intent.category == planned_intent.category
             and prefetch.target_intent.slot == planned_intent.slot
-            and prefetch.target_intent.generation == planned_intent.generation
+            and (prefetch.target_intent.generation == planned_intent.generation)
         )
-        if (
-            planned_intent.status is not PlannedIntentStatus.APPROVED
-            or approved_intent != planned_intent.as_planner_intent()
-            or knowledge_intent.intent_type.value != planned_intent.category
-            or expected_category is None
-            or not same_prefetch_target
-            or prefetch.status is not KnowledgePrefetchStatus.PLANNED
-            or prefetch.knowledge_category != expected_category
-            or prefetch.planning_generation != planned_intent.generation
-            or prefetch.invalidation_generation != invalidation_generation
+        if not DJKnowledgeEngine._prepared_target_matches(
+            approved_intent,
+            planned_intent,
+            knowledge_intent,
+            prefetch,
+            expected_category,
+            same_prefetch_target,
+            invalidation_generation,
         ):
             return None
         expected_request_id = KnowledgePrefetchRequest.from_prefetch(
             prefetch, subject_projection=()
         ).request_id
         prepared = next(
-            (
-                result
-                for result in prepared_knowledge
-                if result.request_id == expected_request_id
-            ),
+            (result for result in prepared_knowledge if result.request_id == expected_request_id),
             None,
         )
-        if (
-            prepared is None
-            or prepared.status is not PreparedKnowledgeStatus.PREPARED
-            or not prepared.is_valid
-            or prepared.planning_generation != planned_intent.generation
-            or prepared.knowledge_category != expected_category
-            or prepared.confidence < prefetch.knowledge_confidence
-            or prepared.freshness < prefetch.freshness
-            or len(prepared.projection) != 1
+        if not DJKnowledgeEngine._prepared_result_matches(
+            prepared, planned_intent, prefetch, expected_category
         ):
             return None
         subject_key, subject_value = prepared.projection[0]
         if subject_key != expected_category or _bounded_text(subject_value, 256) != subject_value:
             return None
-        track = ()
-        analysis = ()
-        if expected_category == "genre":
-            analysis = (("genre", subject_value),)
-        elif expected_category == "recommendation":
-            track = (("related_tracks", subject_value),)
-        else:
-            track = ((expected_category, subject_value),)
+        track, analysis = DJKnowledgeEngine._prepared_subject_fields(
+            expected_category, subject_value
+        )
         return KnowledgeContext(
             track=track,
             analysis=analysis,
@@ -3529,6 +3674,53 @@ class DJKnowledgeEngine:
             session_mood=session_mood,
             discover_context=discover_context,
             performance_memory=performance_memory,
+        )
+
+    @staticmethod
+    def _prepared_subject_fields(expected_category, subject_value):
+        track = ()
+        analysis = ()
+        if expected_category == "genre":
+            analysis = (("genre", subject_value),)
+        elif expected_category == "recommendation":
+            track = (("related_tracks", subject_value),)
+        else:
+            track = ((expected_category, subject_value),)
+        return (track, analysis)
+
+    @staticmethod
+    def _prepared_target_matches(
+        approved_intent,
+        planned_intent,
+        knowledge_intent,
+        prefetch,
+        expected_category,
+        same_prefetch_target,
+        invalidation_generation,
+    ):
+        return not (
+            planned_intent.status is not PlannedIntentStatus.APPROVED
+            or approved_intent != planned_intent.as_planner_intent()
+            or knowledge_intent.intent_type.value != planned_intent.category
+            or (expected_category is None)
+            or (not same_prefetch_target)
+            or (prefetch.status is not KnowledgePrefetchStatus.PLANNED)
+            or (prefetch.knowledge_category != expected_category)
+            or (prefetch.planning_generation != planned_intent.generation)
+            or (prefetch.invalidation_generation != invalidation_generation)
+        )
+
+    @staticmethod
+    def _prepared_result_matches(prepared, planned_intent, prefetch, expected_category):
+        return not (
+            prepared is None
+            or prepared.status is not PreparedKnowledgeStatus.PREPARED
+            or (not prepared.is_valid)
+            or (prepared.planning_generation != planned_intent.generation)
+            or (prepared.knowledge_category != expected_category)
+            or (prepared.confidence < prefetch.knowledge_confidence)
+            or (prepared.freshness < prefetch.freshness)
+            or (len(prepared.projection) != 1)
         )
 
     def assemble_session_direction_context(
@@ -3644,6 +3836,231 @@ class KnowledgePrefetchExecutionBoundary:
         return knowledge_engine.execute_prefetch(request)
 
 
+_CONTINUE_PLANNING_COORDINATION = object()
+
+
+class _PlanningCoordinationAttempt:
+    """One lifecycle call; the existing coordinator records all approval/completion state."""
+
+    def __init__(
+        self,
+        coordinator,
+        *,
+        planner,
+        knowledge_engine,
+        moment_engine,
+        session_id,
+        selected_mood,
+        persona,
+        locale,
+        session_direction,
+        session_start_strategy,
+        performance_memory,
+        discover_context,
+        raw_insight,
+        planning_input,
+        allowed_intents,
+    ):
+        self.coordinator = coordinator
+        self.planner = planner
+        self.knowledge_engine = knowledge_engine
+        self.moment_engine = moment_engine
+        self.session_id = session_id
+        self.selected_mood = selected_mood
+        self.persona = persona
+        self.locale = locale
+        self.session_direction = session_direction
+        self.session_start_strategy = session_start_strategy
+        self.performance_memory = performance_memory
+        self.discover_context = discover_context
+        self.raw_insight = raw_insight
+        self.planning_input = planning_input
+        self.allowed_intents = allowed_intents
+
+    def _plan_and_approve(self):
+        coordinator = self.coordinator
+        coordinator.last_lifecycle_state = "entered"
+        coordinator.last_fallback_reason = None
+        coordinator.last_approval_source = None
+        coordinator.last_realized_intent = None
+        coordinator.last_session_direction = None
+        self.horizon = self.planner.horizon
+        if coordinator.disposed or self.horizon is None:
+            return coordinator._fallback("planning_runtime_unavailable")
+        self.influence = PlannerInfluence.normalize(
+            mood=self.selected_mood,
+            direction=self.session_direction.direction,
+            performance_memory=self.performance_memory,
+            generation=self.horizon.invalidation_generation,
+        )
+        self.window = self.horizon.replan(
+            upcoming_playback=self.planning_input.upcoming_playback,
+            influence=self.influence,
+            current_track_candidate=self.planning_input.current_track_candidate,
+            allowed_intents=self.allowed_intents,
+        )
+        coordinator.last_planning_generation = self.window.generation
+        self.prefetches = self.window.plan_knowledge_prefetches(
+            invalidation_generation=self.horizon.invalidation_generation,
+            previous_prefetches=self.window.knowledge_prefetches,
+        )
+        self.subject_projection = _planning_subject_projection(self.raw_insight)
+        self.boundary = KnowledgePrefetchExecutionBoundary()
+        self.prepared = tuple(
+            (
+                self.boundary.submit(
+                    prefetch=prefetch,
+                    subject_projection=self.subject_projection,
+                    window=self.window,
+                    invalidation_generation=self.horizon.invalidation_generation,
+                    knowledge_engine=self.knowledge_engine,
+                )
+                for prefetch in self.prefetches
+                if prefetch.status is KnowledgePrefetchStatus.PLANNED
+            )
+        )
+        self.window.evaluate_readiness(
+            self.prepared, invalidation_generation=self.horizon.invalidation_generation
+        )
+        self.approved = self.window.approve_earliest_planned_intent()
+        if self.approved is None:
+            if self.allowed_intents is not None:
+                coordinator.last_lifecycle_state = "completed"
+                return self.moment_engine.create_silence(
+                    session_id=self.session_id,
+                    selected_mood=self.selected_mood,
+                    persona=self.persona,
+                    locale=self.locale,
+                    reason="capability_policy_no_eligible_intent",
+                )
+            return coordinator._fallback("no_ready_planned_intent")
+        return _CONTINUE_PLANNING_COORDINATION
+
+    def _realize_immediate(self):
+        coordinator = self.coordinator
+        self.planned = next(
+            (
+                intent
+                for intent in self.window.planned_intents
+                if intent.status is PlannedIntentStatus.APPROVED
+                and intent.as_planner_intent() == self.approved
+            ),
+            None,
+        )
+        if self.planned is None:
+            return coordinator._fallback("planning_state_invalid")
+        coordinator.last_approval_source = "planned_intent"
+        if self.planned.category == "silence":
+            self.moment = self.moment_engine.create_silence(
+                session_id=self.session_id,
+                selected_mood=self.selected_mood,
+                persona=self.persona,
+                locale=self.locale,
+                reason="planned_silence",
+            )
+            return self._complete(self.moment)
+        if self.planned.category == "session_update":
+            self.direction = self.planning_input.session_update_direction
+            if self.direction is None:
+                return coordinator._fallback("session_update_direction_unavailable")
+            self.updated_direction = SessionDirection(
+                direction=self.direction,
+                initialized_at=self.session_direction.initialized_at,
+                updated_at=_timestamp(),
+                start_strategy=self.session_direction.start_strategy,
+            )
+            self.knowledge = self.knowledge_engine.assemble_session_direction_context(
+                self.updated_direction,
+                self.session_start_strategy,
+                self.selected_mood,
+                self.performance_memory,
+            )
+            self.moment = self.moment_engine.create_session_update(
+                session_id=self.session_id,
+                selected_mood=self.selected_mood,
+                persona=self.persona,
+                locale=self.locale,
+                session_direction=self.updated_direction,
+                knowledge_context=self.knowledge,
+            )
+            coordinator.last_session_direction = self.updated_direction
+            return self._complete(self.moment)
+        return _CONTINUE_PLANNING_COORDINATION
+
+    async def _resolve_knowledge(self):
+        coordinator = self.coordinator
+        self.prefetch = next(
+            (
+                candidate
+                for candidate in self.prefetches
+                if candidate.target_intent.category == self.planned.category
+                and candidate.target_intent.slot == self.planned.slot
+                and (candidate.target_intent.generation == self.planned.generation)
+            ),
+            None,
+        )
+        self.knowledge_intent = _knowledge_intent_for_planned_category(self.planned.category)
+        if self.knowledge_intent is None:
+            return coordinator._fallback("unsupported_planned_intent")
+        if self.prefetch is None:
+            self.knowledge = await self.knowledge_engine.async_assemble_track_context(
+                intent=self.knowledge_intent,
+                raw_insight=self.raw_insight,
+                session_direction=self.session_direction,
+                session_start_strategy=self.session_start_strategy,
+                session_mood=self.selected_mood,
+                discover_context=self.discover_context,
+                performance_memory=self.performance_memory,
+            )
+        else:
+            self.knowledge = await self.knowledge_engine.async_resolve_approved_planned_intent(
+                approved_intent=self.approved,
+                planned_intent=self.planned,
+                knowledge_intent=self.knowledge_intent,
+                prefetch=self.prefetch,
+                prepared_knowledge=self.prepared,
+                invalidation_generation=self.horizon.invalidation_generation,
+                raw_insight=self.raw_insight,
+                session_direction=self.session_direction,
+                session_start_strategy=self.session_start_strategy,
+                session_mood=self.selected_mood,
+                discover_context=self.discover_context,
+                performance_memory=self.performance_memory,
+            )
+        return _CONTINUE_PLANNING_COORDINATION
+
+    def _complete(self, moment):
+        coordinator = self.coordinator
+        coordinator.last_realized_intent = self.planned
+        coordinator.last_lifecycle_state = "completed"
+        return moment
+
+    async def execute(self):
+        outcome = self._plan_and_approve()
+        if outcome is not _CONTINUE_PLANNING_COORDINATION:
+            return outcome
+        outcome = self._realize_immediate()
+        if outcome is not _CONTINUE_PLANNING_COORDINATION:
+            return outcome
+        outcome = await self._resolve_knowledge()
+        if outcome is not _CONTINUE_PLANNING_COORDINATION:
+            return outcome
+        self.moment = self.moment_engine.create_track_context(
+            session_id=self.session_id,
+            knowledge_intent=self.knowledge_intent,
+            selected_mood=self.selected_mood,
+            persona=self.persona,
+            locale=self.locale,
+            insight=_planning_realization_insight(
+                self.knowledge, self.raw_insight, self.knowledge_intent
+            ),
+            source_insight=self.raw_insight,
+        )
+        if self.moment.moment_type is DJMomentType.SILENCE:
+            return self._complete(self.moment)
+        return self._complete(self.moment)
+
+
 @dataclass
 class PlanningRuntimeCoordinator:
     """Runtime-only coordinator for the existing planning and knowledge lifecycle."""
@@ -3675,164 +4092,23 @@ class PlanningRuntimeCoordinator:
         allowed_intents: frozenset[str] | None = None,
     ) -> DJMoment | None:
         """Run the authoritative planning lifecycle; ``None`` preserves fallback."""
-        self.last_lifecycle_state = "entered"
-        self.last_fallback_reason = None
-        self.last_approval_source = None
-        self.last_realized_intent = None
-        self.last_session_direction = None
-        horizon = planner.horizon
-        if self.disposed or horizon is None:
-            return self._fallback("planning_runtime_unavailable")
-        influence = PlannerInfluence.normalize(
-            mood=selected_mood,
-            direction=session_direction.direction,
-            performance_memory=performance_memory,
-            generation=horizon.invalidation_generation,
-        )
-        window = horizon.replan(
-            upcoming_playback=planning_input.upcoming_playback,
-            influence=influence,
-            current_track_candidate=planning_input.current_track_candidate,
-            allowed_intents=allowed_intents,
-        )
-        self.last_planning_generation = window.generation
-        prefetches = window.plan_knowledge_prefetches(
-            invalidation_generation=horizon.invalidation_generation,
-            previous_prefetches=window.knowledge_prefetches,
-        )
-        subject_projection = _planning_subject_projection(raw_insight)
-        boundary = KnowledgePrefetchExecutionBoundary()
-        prepared = tuple(
-            boundary.submit(
-                prefetch=prefetch,
-                subject_projection=subject_projection,
-                window=window,
-                invalidation_generation=horizon.invalidation_generation,
-                knowledge_engine=knowledge_engine,
-            )
-            for prefetch in prefetches
-            if prefetch.status is KnowledgePrefetchStatus.PLANNED
-        )
-        window.evaluate_readiness(
-            prepared, invalidation_generation=horizon.invalidation_generation
-        )
-        approved = window.approve_earliest_planned_intent()
-        if approved is None:
-            if allowed_intents is not None:
-                self.last_lifecycle_state = "completed"
-                return moment_engine.create_silence(
-                    session_id=session_id,
-                    selected_mood=selected_mood,
-                    persona=persona,
-                    locale=locale,
-                    reason="capability_policy_no_eligible_intent",
-                )
-            return self._fallback("no_ready_planned_intent")
-        planned = next(
-            (
-                intent
-                for intent in window.planned_intents
-                if intent.status is PlannedIntentStatus.APPROVED
-                and intent.as_planner_intent() == approved
-            ),
-            None,
-        )
-        if planned is None:
-            return self._fallback("planning_state_invalid")
-        self.last_approval_source = "planned_intent"
-        if planned.category == "silence":
-            moment = moment_engine.create_silence(
-                session_id=session_id,
-                selected_mood=selected_mood,
-                persona=persona,
-                locale=locale,
-                reason="planned_silence",
-            )
-            self.last_realized_intent = planned
-            self.last_lifecycle_state = "completed"
-            return moment
-        if planned.category == "session_update":
-            direction = planning_input.session_update_direction
-            if direction is None:
-                return self._fallback("session_update_direction_unavailable")
-            updated_direction = SessionDirection(
-                direction=direction,
-                initialized_at=session_direction.initialized_at,
-                updated_at=_timestamp(),
-                start_strategy=session_direction.start_strategy,
-            )
-            knowledge = knowledge_engine.assemble_session_direction_context(
-                updated_direction,
-                session_start_strategy,
-                selected_mood,
-                performance_memory,
-            )
-            moment = moment_engine.create_session_update(
-                session_id=session_id,
-                selected_mood=selected_mood,
-                persona=persona,
-                locale=locale,
-                session_direction=updated_direction,
-                knowledge_context=knowledge,
-            )
-            self.last_session_direction = updated_direction
-            self.last_realized_intent = planned
-            self.last_lifecycle_state = "completed"
-            return moment
-        prefetch = next(
-            (
-                candidate
-                for candidate in prefetches
-                if candidate.target_intent.category == planned.category
-                and candidate.target_intent.slot == planned.slot
-                and candidate.target_intent.generation == planned.generation
-            ),
-            None,
-        )
-        knowledge_intent = _knowledge_intent_for_planned_category(planned.category)
-        if knowledge_intent is None:
-            return self._fallback("unsupported_planned_intent")
-        if prefetch is None:
-            knowledge = await knowledge_engine.async_assemble_track_context(
-                intent=knowledge_intent,
-                raw_insight=raw_insight,
-                session_direction=session_direction,
-                session_start_strategy=session_start_strategy,
-                session_mood=selected_mood,
-                discover_context=discover_context,
-                performance_memory=performance_memory,
-            )
-        else:
-            knowledge = await knowledge_engine.async_resolve_approved_planned_intent(
-                approved_intent=approved,
-                planned_intent=planned,
-                knowledge_intent=knowledge_intent,
-                prefetch=prefetch,
-                prepared_knowledge=prepared,
-                invalidation_generation=horizon.invalidation_generation,
-                raw_insight=raw_insight,
-                session_direction=session_direction,
-                session_start_strategy=session_start_strategy,
-                session_mood=selected_mood,
-                discover_context=discover_context,
-                performance_memory=performance_memory,
-            )
-        moment = moment_engine.create_track_context(
+        return await _PlanningCoordinationAttempt(
+            self,
+            planner=planner,
+            knowledge_engine=knowledge_engine,
+            moment_engine=moment_engine,
             session_id=session_id,
-            knowledge_intent=knowledge_intent,
             selected_mood=selected_mood,
             persona=persona,
             locale=locale,
-            insight=_planning_realization_insight(knowledge, raw_insight, knowledge_intent),
-            source_insight=raw_insight,
-        )
-        if moment.moment_type is DJMomentType.SILENCE:
-            self.last_realized_intent = planned
-            self.last_lifecycle_state = "completed"
-            return moment
-        self.last_realized_intent = planned
-        self.last_lifecycle_state = "completed"
-        return moment
+            session_direction=session_direction,
+            session_start_strategy=session_start_strategy,
+            performance_memory=performance_memory,
+            discover_context=discover_context,
+            raw_insight=raw_insight,
+            planning_input=planning_input,
+            allowed_intents=allowed_intents,
+        ).execute()
 
     def confirm_published(self, planner: DJSessionPlanner) -> None:
         """Consume a planned occurrence only after Runtime publication succeeds."""
@@ -9834,10 +10110,30 @@ def _prioritized_knowledge_choices(
 ) -> tuple[tuple[str, PlannerDecisionType, KnowledgeIntentType, str], ...]:
     """Combine bounded Runtime context into one deterministic Intent ordering."""
     choices = (
-        ("related_tracks", PlannerDecisionType.CREATE_RECOMMENDATION, KnowledgeIntentType.RECOMMENDATION, "Recommend one related work when it adds value."),
-        ("producer", PlannerDecisionType.CREATE_ARTIST_STORY, KnowledgeIntentType.ARTIST_STORY, "Share relevant artist or production context."),
-        ("release_year", PlannerDecisionType.CREATE_ALBUM_STORY, KnowledgeIntentType.ALBUM_STORY, "Share relevant album context."),
-        ("genre", PlannerDecisionType.CREATE_GENRE_STORY, KnowledgeIntentType.GENRE_STORY, "Explain relevant genre context."),
+        (
+            "related_tracks",
+            PlannerDecisionType.CREATE_RECOMMENDATION,
+            KnowledgeIntentType.RECOMMENDATION,
+            "Recommend one related work when it adds value.",
+        ),
+        (
+            "producer",
+            PlannerDecisionType.CREATE_ARTIST_STORY,
+            KnowledgeIntentType.ARTIST_STORY,
+            "Share relevant artist or production context.",
+        ),
+        (
+            "release_year",
+            PlannerDecisionType.CREATE_ALBUM_STORY,
+            KnowledgeIntentType.ALBUM_STORY,
+            "Share relevant album context.",
+        ),
+        (
+            "genre",
+            PlannerDecisionType.CREATE_GENRE_STORY,
+            KnowledgeIntentType.GENRE_STORY,
+            "Explain relevant genre context.",
+        ),
     )
     priorities = {
         KnowledgeIntentType.ARTIST_STORY: 0,
@@ -9857,20 +10153,26 @@ def _prioritized_knowledge_choices(
         promote(KnowledgeIntentType.RECOMMENDATION, 2)
     elif recommendation_preference == "deprioritize":
         priorities[KnowledgeIntentType.RECOMMENDATION] += 2
-
     if selected_mood in {"deep", "focus", "chill"}:
         promote(KnowledgeIntentType.ALBUM_STORY, 2)
         promote(KnowledgeIntentType.GENRE_STORY, 1)
     elif selected_mood in {"party", "energy", "high_energy"}:
         promote(KnowledgeIntentType.RECOMMENDATION, 3)
         promote(KnowledgeIntentType.ARTIST_STORY, 1)
-
     if persona is DJPersona.RADIO_DJ:
         promote(KnowledgeIntentType.ALBUM_STORY, 3)
         promote(KnowledgeIntentType.ARTIST_STORY, 1)
     elif persona is DJPersona.FESTIVAL_DJ:
         promote(KnowledgeIntentType.RECOMMENDATION, 4)
         promote(KnowledgeIntentType.ARTIST_STORY, 1)
+    _apply_direction_priorities(priorities, session_direction)
+    return tuple(sorted(choices, key=lambda choice: priorities[choice[2]]))
+
+
+def _apply_direction_priorities(priorities, session_direction):
+
+    def promote(intent_type: KnowledgeIntentType, amount: int) -> None:
+        priorities[intent_type] -= amount
 
     if session_direction is SessionDirectionType.EXPLORING:
         promote(KnowledgeIntentType.RECOMMENDATION, 2)
@@ -9885,10 +10187,6 @@ def _prioritized_knowledge_choices(
         promote(KnowledgeIntentType.RECOMMENDATION, 2)
         promote(KnowledgeIntentType.ARTIST_STORY, 1)
 
-    return tuple(
-        sorted(choices, key=lambda choice: priorities[choice[2]])
-    )
-
 
 def _space_recommendation_choices(
     choices: tuple[tuple[str, PlannerDecisionType, KnowledgeIntentType, str], ...],
@@ -9901,24 +10199,36 @@ def _space_recommendation_choices(
     if _recent_factual_moment_type(performance_memory) is not DJMomentType.RECOMMENDATION:
         return choices
     alternatives = tuple(
-        choice
-        for choice in choices
-        if choice[2]
-        in {
-            KnowledgeIntentType.ARTIST_STORY,
-            KnowledgeIntentType.ALBUM_STORY,
-            KnowledgeIntentType.GENRE_STORY,
-        }
+        (
+            choice
+            for choice in choices
+            if choice[2]
+            in {
+                KnowledgeIntentType.ARTIST_STORY,
+                KnowledgeIntentType.ALBUM_STORY,
+                KnowledgeIntentType.GENRE_STORY,
+            }
+        )
     )
-    if not any(
-        _bounded_text(hints.get(key), 1200)
-        and not _performance_memory_repeats(performance_memory, intent_type, hints)
-        and not _discover_context_repeats(discover_context, intent_type, hints)
-        for key, _, intent_type, _ in alternatives
+    if not _recommendation_alternative_available(
+        alternatives, hints, performance_memory, discover_context
     ):
         return choices
-    return tuple(choice for choice in choices if choice[2] is not KnowledgeIntentType.RECOMMENDATION) + tuple(
-        choice for choice in choices if choice[2] is KnowledgeIntentType.RECOMMENDATION
+    return tuple(
+        (choice for choice in choices if choice[2] is not KnowledgeIntentType.RECOMMENDATION)
+    ) + tuple((choice for choice in choices if choice[2] is KnowledgeIntentType.RECOMMENDATION))
+
+
+def _recommendation_alternative_available(
+    alternatives, hints, performance_memory, discover_context
+):
+    return any(
+        (
+            _bounded_text(hints.get(key), 1200)
+            and (not _performance_memory_repeats(performance_memory, intent_type, hints))
+            and (not _discover_context_repeats(discover_context, intent_type, hints))
+            for key, _, intent_type, _ in alternatives
+        )
     )
 
 
@@ -10026,33 +10336,27 @@ def _performance_memory_repeats(
     """Reject the same delivered angle and subject within the Runtime window."""
     if intent_type is KnowledgeIntentType.ARTIST_STORY:
         candidate = _bounded_text(hints.get("artist") or hints.get("producer"), 160)
-        return (
-            (DJMomentType.ARTIST, candidate.casefold()) in memory.recent_topics
-            if memory.topics_observed
-            else candidate in memory.recent_artists
-        )
+        return _delivered_topic_repeats(memory, DJMomentType.ARTIST, candidate, "recent_artists")
     if intent_type is KnowledgeIntentType.ALBUM_STORY:
         candidate = _bounded_text(hints.get("album") or hints.get("release_year"), 160)
-        return (
-            (DJMomentType.ALBUM, candidate.casefold()) in memory.recent_topics
-            if memory.topics_observed
-            else candidate in memory.recent_albums
-        )
+        return _delivered_topic_repeats(memory, DJMomentType.ALBUM, candidate, "recent_albums")
     if intent_type is KnowledgeIntentType.GENRE_STORY:
         candidate = _bounded_text(hints.get("genre"), 160)
-        return (
-            (DJMomentType.GENRE, candidate.casefold()) in memory.recent_topics
-            if memory.topics_observed
-            else candidate in memory.recent_genres
-        )
+        return _delivered_topic_repeats(memory, DJMomentType.GENRE, candidate, "recent_genres")
     if intent_type is KnowledgeIntentType.RECOMMENDATION:
         candidate = _bounded_text(hints.get("artist") or hints.get("related_tracks"), 160)
-        return (
-            (DJMomentType.RECOMMENDATION, candidate.casefold()) in memory.recent_topics
-            if memory.topics_observed
-            else candidate in memory.recent_recommendations
+        return _delivered_topic_repeats(
+            memory, DJMomentType.RECOMMENDATION, candidate, "recent_recommendations"
         )
     return False
+
+
+def _delivered_topic_repeats(memory, moment_type, candidate, legacy_field):
+    return (
+        (moment_type, candidate.casefold()) in memory.recent_topics
+        if memory.topics_observed
+        else candidate in getattr(memory, legacy_field)
+    )
 
 
 def _discover_context_repeats(
@@ -10238,41 +10542,70 @@ def _moment_actions(moment_type: DJMomentType, track: dict[str, Any], locale: st
     return actions
 
 
-def _specialize_track_moment(track: dict[str, Any], analysis: dict[str, Any], title: str, artist: str, summary: str, content: str, intent_type: KnowledgeIntentType, locale: str) -> tuple[DJMomentType, str, str, str] | None:
+def _specialize_track_moment(
+    track: dict[str, Any],
+    analysis: dict[str, Any],
+    title: str,
+    artist: str,
+    summary: str,
+    content: str,
+    intent_type: KnowledgeIntentType,
+    locale: str,
+) -> tuple[DJMomentType, str, str, str] | None:
     if intent_type is KnowledgeIntentType.RECOMMENDATION:
-        if not (
-            _bounded_text(track.get("related_tracks"), 1200)
-            or _bounded_text(track.get("related_artists"), 1200)
-            or _bounded_text(analysis.get("similar_tracks"), 1200)
-            or _bounded_text(analysis.get("listening_cues"), 1200)
-        ):
+        if not _has_recommendation_track_evidence(track, analysis):
             return None
-        return DJMomentType.RECOMMENDATION, f"Explore beyond {artist}", summary, content
+        return (DJMomentType.RECOMMENDATION, f"Explore beyond {artist}", summary, content)
     if intent_type is KnowledgeIntentType.ARTIST_STORY:
-        if not (
-            _bounded_text(track.get("producer"), 160)
-            or _bounded_text(track.get("composer"), 160)
-            or _bounded_text(track.get("recording_context"), 600)
-            or _bounded_text(track.get("related_artists"), 1200)
-            or _bounded_text(analysis.get("production_notes"), 1200)
-            or _bounded_text(analysis.get("instrumentation"), 1200)
-            or _bounded_text(analysis.get("arrangement_notes"), 1200)
-        ):
+        if not _has_artist_track_evidence(track, analysis):
             return None
-        return DJMomentType.ARTIST, artist, summary, content
+        return (DJMomentType.ARTIST, artist, summary, content)
     if intent_type is KnowledgeIntentType.ALBUM_STORY:
-        if not (_bounded_text(track.get("album"), 160) and (_bounded_text(track.get("release_year"), 32) or _bounded_text(track.get("release_date"), 32))):
+        if not _has_album_track_evidence(track):
             return None
-        return DJMomentType.ALBUM, _bounded_text(track.get("album"), 160), summary, content
+        return (DJMomentType.ALBUM, _bounded_text(track.get("album"), 160), summary, content)
     if intent_type is KnowledgeIntentType.GENRE_STORY:
-        genre = _bounded_evidence_value(analysis.get("genre"), 160) or _bounded_evidence_value(track.get("genres"), 160)
-        if not genre:
-            return None
-        genre_summary, genre_content = _genre_moment_copy(locale, genre, title, artist)
-        return DJMomentType.GENRE, genre, genre_summary, genre_content
+        return _genre_track_moment(track, analysis, title, artist, locale)
     if intent_type is KnowledgeIntentType.TRACK_CONTEXT:
-        return DJMomentType.TRACK, f"{title} — {artist}", summary, content
+        return (DJMomentType.TRACK, f"{title} — {artist}", summary, content)
     return None
+
+
+def _has_album_track_evidence(track):
+    return _bounded_text(track.get("album"), 160) and (
+        _bounded_text(track.get("release_year"), 32) or _bounded_text(track.get("release_date"), 32)
+    )
+
+
+def _genre_track_moment(track, analysis, title, artist, locale):
+    genre = _bounded_evidence_value(analysis.get("genre"), 160) or _bounded_evidence_value(
+        track.get("genres"), 160
+    )
+    if not genre:
+        return None
+    genre_summary, genre_content = _genre_moment_copy(locale, genre, title, artist)
+    return (DJMomentType.GENRE, genre, genre_summary, genre_content)
+
+
+def _has_recommendation_track_evidence(track, analysis):
+    return (
+        _bounded_text(track.get("related_tracks"), 1200)
+        or _bounded_text(track.get("related_artists"), 1200)
+        or _bounded_text(analysis.get("similar_tracks"), 1200)
+        or _bounded_text(analysis.get("listening_cues"), 1200)
+    )
+
+
+def _has_artist_track_evidence(track, analysis):
+    return (
+        _bounded_text(track.get("producer"), 160)
+        or _bounded_text(track.get("composer"), 160)
+        or _bounded_text(track.get("recording_context"), 600)
+        or _bounded_text(track.get("related_artists"), 1200)
+        or _bounded_text(analysis.get("production_notes"), 1200)
+        or _bounded_text(analysis.get("instrumentation"), 1200)
+        or _bounded_text(analysis.get("arrangement_notes"), 1200)
+    )
 
 
 def _valid_transition_approval(approval: PlannerDecision | None) -> bool:
