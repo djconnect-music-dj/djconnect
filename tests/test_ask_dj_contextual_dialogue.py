@@ -209,6 +209,16 @@ class SharedDialogueTest(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(PermissionError):
             guard()
 
+    async def test_missing_audio_decoder_never_starts_configured_provider(self):
+        import sys
+
+        stack, entity, _, calls, processor = self.generic_tts()
+        with stack, patch.dict(sys.modules, {"custom_components.djconnect.tts": None}):
+            with self.assertRaises(ImportError):
+                await processor.synthesize(entity, {"locale": "en", "voice_id": None},
+                                           "An accepted original contribution.")
+        self.assertEqual(calls, [])
+
     async def test_mood_prosody_preserves_literal_text_voice_and_provider_settings(self):
         import sys
         from types import ModuleType
