@@ -4593,6 +4593,806 @@ class DJSessionRuntime:
                 _LOGGER.debug("Watch Moment handoff unavailable")
 
 
+_CONTINUE_TRACK_START = object()
+
+
+class _TrackStartAttempt:
+    """One call's captured values; the existing manager owns every lock and commit.
+
+    This object never enters durable runtime state or authorizes a source. Its
+    fields replace only the original entrypoint's locals across the same waits.
+    """
+
+    def __init__(
+        self,
+        manager,
+        *,
+        owner_profile_id,
+        session_id,
+        insight_provider,
+        media_identity,
+        upcoming_playback,
+        require_current_playback,
+        allow_initial_facts,
+        recovery_insight_provider,
+        recovery_authorize,
+    ):
+        self.manager = manager
+        self.owner_profile_id = owner_profile_id
+        self.session_id = session_id
+        self.insight_provider = insight_provider
+        self.media_identity = media_identity
+        self.upcoming_playback = upcoming_playback
+        self.require_current_playback = require_current_playback
+        self.allow_initial_facts = allow_initial_facts
+        self.recovery_insight_provider = recovery_insight_provider
+        self.recovery_authorize = recovery_authorize
+
+    async def execute(self):
+        manager = self.manager
+        self.prepared_fact = None
+        async with manager._lock:
+            if not self._capture_locked():
+                return None
+        await self._receive_insight()
+        async with manager._lock:
+            if not self._prepare_after_insight_locked():
+                return None
+        if self.prepared_fact is not None:
+            return await self._realize_prepared_fact()
+        if not await self._coordinate():
+            return None
+        async with manager._lock:
+            outcome = await self._accept_coordinated_locked()
+            if outcome is not _CONTINUE_TRACK_START:
+                return outcome
+        _LOGGER.debug(
+            "DJConnect Planning Runtime Coordinator fallback invoked: reason=%s generation=%s",
+            self.active.planning_coordinator.last_fallback_reason,
+            self.active.planning_coordinator.last_planning_generation,
+        )
+        self.hints = _planner_knowledge_hints(self.raw_insight)
+        async with manager._lock:
+            outcome = await self._prepare_legacy_locked()
+            if outcome is not _CONTINUE_TRACK_START:
+                return outcome
+        await self._assemble_legacy_knowledge()
+        async with manager._lock:
+            return await self._accept_legacy_locked()
+
+    def _capture_original_revisions(self):
+        self.started_presence_revision = (
+            self.prior.presence_revision if self.prior is not None else -1
+        )
+        self.started_mood_revision = self.prior.mood_revision if self.prior is not None else -1
+        self.started_persona_revision = (
+            self.prior.persona_revision if self.prior is not None else -1
+        )
+        self.started_settings_revision = (
+            self.prior.settings_revision if self.prior is not None else -1
+        )
+        self.started_content_epoch = (
+            self.prior.broadcast.content_epoch if self.prior is not None else -1
+        )
+        self.previous_media_identity = (
+            self.prior.last_accepted_media_identity if self.prior is not None else ""
+        )
+        self.initial = self.prior is not None and not self.prior.last_accepted_media_identity
+
+    def _capture_recovery(self):
+        manager = self.manager
+        self.recovery = manager._intra_track_opportunities.get(self.owner_profile_id)
+        self.recovering = (
+            self.require_current_playback
+            and self.recovery is not None
+            and self.recovery.media_identity == self.media_identity
+            and self.recovery.insight_recovery_after is not None
+        )
+        self.recovery_admission = (
+            (
+                self.recovery.generation,
+                self.started_presence_revision,
+                self.started_mood_revision,
+                self.started_persona_revision,
+                self.started_settings_revision,
+                self.started_content_epoch,
+            )
+            if self.recovery
+            else ()
+        )
+
+    def _admit_recovery(self):
+        manager = self.manager
+        if self.recovering and not manager._insight_recovery_is_current(self.recovery, self.prior):
+            self.recovery.insight_recovery_used = True
+            return False
+        if self.recovering and (
+            self.recovery.insight_recovery_used
+            or manager._monotonic_source() < self.recovery.insight_recovery_after
+            or self.recovery_insight_provider is None
+        ):
+            return False
+        return True
+
+    def _insight_generation_current(self):
+        manager = self.manager
+        if not manager._track_started_result_is_current(
+            self.active,
+            session_id=self.session_id,
+            media_identity=self.media_identity,
+            require_current_playback=self.require_current_playback,
+        ):
+            return False
+        if self.require_current_playback and (
+            self.started_opportunity is None
+            or manager._intra_track_opportunities.get(self.owner_profile_id)
+            is not self.started_opportunity
+            or self.started_opportunity.generation != self.started_generation
+            or self.started_opportunity.blocked
+            or manager._monotonic_source() - self.started_opportunity.last_observed_monotonic > 30
+        ):
+            return False
+        return True
+
+    def _insight_presence_current(self):
+        manager = self.manager
+        if (
+            self.active.presence_revision != self.started_presence_revision
+            or self.active.mood_revision != self.started_mood_revision
+            or self.active.persona_revision != self.started_persona_revision
+            or self.active.settings_revision != self.started_settings_revision
+            or self.active.broadcast.content_epoch != self.started_content_epoch
+            or self.active.broadcast.content_pending
+            or not self.active.allows_proactive()
+        ):
+            manager._restore_track_started_media_locked(
+                self.owner_profile_id,
+                self.session_id,
+                self.media_identity,
+                self.previous_media_identity,
+            )
+            return False
+        return True
+
+    def _can_reserve_recovery(self):
+        return (
+            not self.recovering
+            and self.recovery_insight_provider is not None
+            and self.recovery_authorize is not None
+            and self.started_opportunity is not None
+            and self.started_opportunity.insight_recovery_after is None
+            and not self.started_opportunity.fact_count
+            and not self.started_opportunity.used_fact_keys
+            and self.started_opportunity.first_moment_type is None
+            and not self.started_opportunity.pending
+        )
+
+    def _reserve_recovery_after_failure(self):
+        manager = self.manager
+        if self._can_reserve_recovery():
+            self.started_opportunity.insight_recovery_after = manager._monotonic_source() + 30
+            self.started_opportunity.insight_recovery_admission = self.recovery_admission
+            self.started_opportunity.insight_recovery_authorize = self.recovery_authorize
+            if manager._insight_recovery_is_current(self.started_opportunity, self.active):
+                manager._restore_track_started_media_locked(
+                    self.owner_profile_id,
+                    self.session_id,
+                    self.media_identity,
+                    self.previous_media_identity,
+                )
+            else:
+                self.started_opportunity.insight_recovery_used = True
+
+    def _attach_observed_genre_fact(self):
+        if (
+            self.require_current_playback
+            and not self.facts
+            and isinstance(self.raw_insight.get("analysis"), dict)
+            and self.raw_insight["analysis"].get("basis") == "unmeasured_metadata_only_v1"
+        ):
+            from .session_facts import observed_genre_facts
+
+            self.playback = self.active.broadcast.state.playback
+            self.genre_facts = observed_genre_facts(
+                self.raw_insight.get("_session_narrative_evidence"),
+                media_identity=self.media_identity,
+                title=self.playback.title,
+                artist=self.playback.artist,
+            )
+            if self.genre_facts:
+                self.raw_insight["_qualified_genre_fact"] = self.genre_facts[0]
+
+    def _capture_qualified_fact(self):
+        manager = self.manager
+        if (
+            isinstance(self.facts, tuple)
+            and self.opportunity is not None
+            and self.opportunity.media_identity == self.media_identity
+            and not self.opportunity.blocked
+        ):
+            self.opportunity.qualified_facts = tuple(
+                fact
+                for fact in self.facts[:6]
+                if type(fact) is QualifiedSessionFact
+                and fact.eligible(self.media_identity, time.monotonic())
+            )
+            if self.opportunity.qualified_facts:
+                self.prepared_fact = manager._prepare_qualified_current_fact(
+                    self.owner_profile_id, self.active, self.opportunity
+                )
+                if self.prepared_fact is None:
+                    return False
+        return True
+
+    def _prepare_ordinary_candidate(self):
+        manager = self.manager
+        if self.recovering:
+            # Fact-only recovery must also stay closed on later tracks;
+            # an empty evidence set cannot enter legacy/model planning.
+            return False
+        if self.initial and self.allow_initial_facts:
+            # Initial metadata establishes the old baseline unless a new
+            # qualified source fact exists; never manufacture an intro.
+            return False
+        self.raw_insight = dict(self.raw_insight)
+        # A provider cannot supply its own Runtime acceptance proof. Only
+        # the actual observed playing projection can open this fallback.
+        self.raw_insight.pop("_observed_playback", None)
+        self.track = self.raw_insight.get("track") or {}
+        self.analysis = self.raw_insight.get("analysis") or {}
+        self.playback = self.active.broadcast.state.playback
+        self._bind_observed_playback()
+        self.working_planner = copy.deepcopy(self.active.planner)
+        self.working_knowledge_engine = copy.deepcopy(self.active.knowledge_engine)
+        self.working_moment_engine = copy.deepcopy(self.active.moment_engine)
+        self.working_coordinator = copy.deepcopy(self.active.planning_coordinator)
+        if self.active.session_start_strategy is SessionStartStrategy.DISCOVER:
+            self.working_planner.note_discover_track_started()
+        self.planning_mood_revision = self.active.mood_revision
+        self.planning_presence_revision = self.active.presence_revision
+        self.planning_persona_revision = self.active.persona_revision
+        self.planning_settings_revision = self.active.settings_revision
+        self.planning_content_epoch = self.active.broadcast.content_epoch
+        self.planning_input = self.working_planner.project_track_started_planning_input(
+            session_id=self.active.session_id,
+            upcoming_playback=self.upcoming_playback,
+            session_start_strategy=self.active.session_start_strategy,
+            session_direction=self.active.session_direction,
+            selected_mood=self.active.selected_mood,
+            persona=self.active.dj_persona,
+            knowledge_hints=_planner_knowledge_hints(self.raw_insight),
+            performance_memory=self.active.performance_memory,
+            discover_context=self.active.discover_context,
+        )
+        return True
+
+    def _observed_playback_matches(self):
+        return (
+            self.require_current_playback
+            and self.opportunity is not None
+            and self.analysis.get("basis") == "unmeasured_metadata_only_v1"
+            and not self._current_track_announced()
+            and self.playback.state == "playing"
+            and self.playback.item_id
+            == hashlib.sha256(self.media_identity.encode()).hexdigest()[:24]
+            and self.track.get("title") == self.playback.title
+            and self.track.get("artist") == self.playback.artist
+        )
+
+    def _current_track_announced(self):
+        return bool(
+            self.active.broadcast.track_announcements is not None
+            and self.active.broadcast.track_announcements.current_occurrence is not None
+            and self.active.broadcast.track_announcements.published_id
+            == self.active.broadcast.track_announcements.current_occurrence.occurrence_id
+        )
+
+    def _bind_observed_playback(self):
+        manager = self.manager
+        if self._observed_playback_matches():
+            self.proof = ObservedPlaybackNarration(
+                self.playback.item_id,
+                self.playback.title,
+                self.playback.artist,
+                self.playback.source_url,
+                self.opportunity.last_observed_monotonic,
+                self.active.locale,
+                self.raw_insight["_qualified_genre_fact"].source_url.rsplit("/", 1)[-1]
+                if "_qualified_genre_fact" in self.raw_insight
+                else "",
+                self.raw_insight["_qualified_genre_fact"].display_core.subject
+                if "_qualified_genre_fact" in self.raw_insight
+                else "",
+            )
+            if self.proof.eligible(manager._monotonic_source()):
+                self.raw_insight["_observed_playback"] = self.proof
+
+    def _coordinated_admission_current(self):
+        manager = self.manager
+        if not manager._track_started_result_is_current(
+            self.active,
+            session_id=self.session_id,
+            media_identity=self.media_identity,
+            require_current_playback=self.require_current_playback,
+        ):
+            return False
+        if (
+            self.active.mood_revision != self.planning_mood_revision
+            or self.active.presence_revision != self.planning_presence_revision
+            or self.active.persona_revision != self.planning_persona_revision
+            or self.active.settings_revision != self.planning_settings_revision
+            or self.active.broadcast.content_epoch != self.planning_content_epoch
+            or self.active.broadcast.content_pending
+            or not self.active.allows_proactive()
+        ):
+            manager._restore_track_started_media_locked(
+                self.owner_profile_id,
+                self.session_id,
+                self.media_identity,
+                self.previous_media_identity,
+            )
+            return False
+        return True
+
+    def _commit_working_owners(self):
+        self.retained_horizon = self.active.planner.horizon
+        self.active.planner.__dict__.clear()
+        self.active.planner.__dict__.update(self.working_planner.__dict__)
+        if self.retained_horizon is not None and self.working_planner.horizon is not None:
+            self.retained_horizon.__dict__.clear()
+            self.retained_horizon.__dict__.update(self.working_planner.horizon.__dict__)
+            self.active.planner.horizon = self.retained_horizon
+        self.active.knowledge_engine.__dict__.clear()
+        self.active.knowledge_engine.__dict__.update(self.working_knowledge_engine.__dict__)
+        self.active.moment_engine.__dict__.clear()
+        self.active.moment_engine.__dict__.update(self.working_moment_engine.__dict__)
+        self.active.planning_coordinator.__dict__.clear()
+        self.active.planning_coordinator.__dict__.update(self.working_coordinator.__dict__)
+
+    async def _publish_coordinated_locked(self):
+        manager = self.manager
+        self.is_session_update = self.active.planning_coordinator.last_session_direction is not None
+        if self.is_session_update:
+            self.updated_direction = self.active.planning_coordinator.last_session_direction
+            assert self.updated_direction is not None
+            if self.updated_direction.direction is not SessionDirectionType.EXPLORING:
+                self.active.published_album_context.close_lines()
+            if (
+                self.active.planner.discover_narrative_line is not None
+                and self.updated_direction.direction is not self.active.session_direction.direction
+            ):
+                self.active.planner.clear_discover_narrative()
+            self.active = DJSessionRuntime(
+                **{**self.active.__dict__, "session_direction": self.updated_direction}
+            )
+            manager._active_by_profile[self.owner_profile_id] = self.active
+            self.active.broadcast.update_session_direction(self.updated_direction)
+            self.active.broadcast.update_forecast(self.active)
+            self.active.planner.last_decision = self.planning_input.planner_decision
+        self.active.publish_moment(self.coordinated)
+        self.active.planning_coordinator.confirm_published(self.active.planner)
+        manager._note_initial_track_moment(
+            owner_profile_id=self.owner_profile_id,
+            active=self.active,
+            media_identity=self.media_identity,
+            raw_insight=self.raw_insight,
+            moment=self.coordinated,
+        )
+        if self.coordinated.moment_type is not DJMomentType.SILENCE:
+            self.active.planner.record_spoken_moment()
+        if self.coordinated.moment_type is not DJMomentType.SILENCE and not self.is_session_update:
+            self.active = manager._record_performance_memory(self.owner_profile_id, self.active)
+            self.active = await manager._publish_discover_transition(
+                self.owner_profile_id,
+                self.active,
+                self.coordinated,
+                self.raw_insight,
+                self.media_identity,
+            )
+            self.transition_decision = self.active.planner.evaluate_transition_after_moment(
+                triggering_intent=self.coordinated.knowledge_intent,
+                session_direction=self.active.session_direction,
+                performance_memory=self.active.performance_memory,
+            )
+            if self.transition_decision.decision_type is PlannerDecisionType.CREATE_TRANSITION:
+                await manager._submit_transition_approval(
+                    self.owner_profile_id, self.active, self.transition_decision
+                )
+        else:
+            self.active = manager._record_performance_memory(self.owner_profile_id, self.active)
+            await manager._publish_discover_transition(
+                self.owner_profile_id,
+                self.active,
+                self.coordinated,
+                self.raw_insight,
+                self.media_identity,
+            )
+        _LOGGER.debug(
+            "DJConnect Planning Runtime Coordinator lifecycle completed: approval_source=%s generation=%s",
+            self.active.planning_coordinator.last_approval_source,
+            self.active.planning_coordinator.last_planning_generation,
+        )
+        return self.coordinated
+
+    def _legacy_preparation_current(self):
+        manager = self.manager
+        if not manager._track_started_result_is_current(
+            self.active,
+            session_id=self.session_id,
+            media_identity=self.media_identity,
+            require_current_playback=self.require_current_playback,
+        ):
+            return False
+        if (
+            self.active.presence_revision != self.planning_presence_revision
+            or self.active.broadcast.content_epoch != self.planning_content_epoch
+            or self.active.broadcast.content_pending
+            or not self.active.allows_proactive()
+        ):
+            manager._restore_track_started_media_locked(
+                self.owner_profile_id,
+                self.session_id,
+                self.media_identity,
+                self.previous_media_identity,
+            )
+            return False
+        return True
+
+    def _legacy_acceptance_current(self):
+        manager = self.manager
+        if not manager._track_started_result_is_current(
+            self.active,
+            session_id=self.session_id,
+            media_identity=self.media_identity,
+            require_current_playback=self.require_current_playback,
+        ):
+            return False
+        if (
+            self.active.mood_revision != self.fallback_mood_revision
+            or self.active.presence_revision != self.fallback_presence_revision
+            or self.active.persona_revision != self.fallback_persona_revision
+            or self.active.settings_revision != self.fallback_settings_revision
+            or self.active.broadcast.content_epoch != self.fallback_content_epoch
+            or self.active.broadcast.content_pending
+            or not self.active.allows_proactive()
+        ):
+            manager._restore_track_started_media_locked(
+                self.owner_profile_id,
+                self.session_id,
+                self.media_identity,
+                self.previous_media_identity,
+            )
+            return False
+        return True
+
+    def _capture_locked(self):
+        manager = self.manager
+        self.prior = manager._migrate_legacy_presence_locked(self.owner_profile_id)
+        if (
+            self.prior is not None
+            and self.prior.session_id == self.session_id
+            and not self.prior.allows_proactive()
+        ):
+            return False
+        self._capture_original_revisions()
+        self._capture_recovery()
+        if not self._admit_recovery():
+            return False
+        self.active = manager._accept_track_started_media(
+            self.owner_profile_id,
+            self.session_id,
+            self.media_identity,
+            allow_initial=self.allow_initial_facts,
+        )
+        if self.active is None:
+            return False
+        self.started_opportunity = manager._intra_track_opportunities.get(self.owner_profile_id)
+        self.started_generation = (
+            self.started_opportunity.generation if self.started_opportunity else None
+        )
+        if self.recovering:
+            self.recovery.insight_recovery_used = True
+
+        return True
+
+    async def _receive_insight(self):
+        manager = self.manager
+        self.insight_failed = False
+        try:
+            self.raw_insight = await (
+                self.recovery_insight_provider() if self.recovering else self.insight_provider()
+            )
+        except asyncio.CancelledError:
+            await manager.async_restore_track_started_media(
+                owner_profile_id=self.owner_profile_id,
+                session_id=self.session_id,
+                media_identity=self.media_identity,
+                previous_media_identity=self.previous_media_identity,
+            )
+            raise
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.debug("DJConnect Track Insight unavailable: %s", exc.__class__.__name__)
+            self.raw_insight = {}
+            self.insight_failed = True
+
+    def _prepare_after_insight_locked(self):
+        manager = self.manager
+        self.active = manager._active_by_profile.get(self.owner_profile_id)
+        if not self._insight_generation_current():
+            return False
+        if not self._insight_presence_current():
+            return False
+        if self.recovering and not manager._insight_recovery_is_current(
+            self.started_opportunity, self.active
+        ):
+            return False
+        if self.insight_failed and self.require_current_playback:
+            # One fact-only recovery on a later normal observation. Never
+            # retry the general insight/model call, manufacture a fallback,
+            # or rearm an already consumed/rejected semantic effect.
+            self._reserve_recovery_after_failure()
+            return False
+        self.raw_insight = dict(self.raw_insight)
+        self.raw_insight.pop("_qualified_genre_fact", None)
+        self.facts = self.raw_insight.get("_qualified_facts")
+        self.opportunity = manager._intra_track_opportunities.get(self.owner_profile_id)
+        self._attach_observed_genre_fact()
+        if not self._capture_qualified_fact():
+            return False
+        if self.prepared_fact is None:
+            return self._prepare_ordinary_candidate()
+
+        return True
+
+    async def _realize_prepared_fact(self):
+        manager = self.manager
+        from .persistence.service import PersistenceError
+
+        try:
+            return await manager._realize_qualified_current_fact(self.prepared_fact)
+        except PersistenceError:
+            # The provider reports definitive rollback on this failure.
+            # Keep the qualified opportunity retryable; a prefetch/start
+            # reservation is not a published semantic acceptance.
+            await manager.async_restore_track_started_media(
+                owner_profile_id=self.owner_profile_id,
+                session_id=self.session_id,
+                media_identity=self.media_identity,
+                previous_media_identity=self.previous_media_identity,
+            )
+            raise
+
+    async def _coordinate(self):
+        manager = self.manager
+        _LOGGER.debug("DJConnect Planning Runtime Coordinator lifecycle entered")
+        try:
+            self.coordinated = await self.working_coordinator.async_coordinate_track_started(
+                planner=self.working_planner,
+                knowledge_engine=self.working_knowledge_engine,
+                moment_engine=self.working_moment_engine,
+                session_id=self.active.session_id,
+                selected_mood=self.active.selected_mood,
+                persona=self.active.dj_persona,
+                locale=self.active.locale,
+                session_direction=self.active.session_direction,
+                session_start_strategy=self.active.session_start_strategy,
+                performance_memory=self.active.performance_memory,
+                discover_context=self.active.discover_context,
+                raw_insight=self.raw_insight,
+                planning_input=self.planning_input,
+                allowed_intents=self.active.allowed_capability_intents,
+            )
+            if self.coordinated is not None:
+                self.original = self.coordinated
+                self.coordinated = await manager._async_enrich_runtime_moment(
+                    self.active, self.coordinated
+                )
+                self.working_moment_engine.moments = tuple(
+                    self.coordinated if m is self.original else m
+                    for m in self.working_moment_engine.moments
+                )
+        except asyncio.CancelledError:
+            await manager.async_restore_track_started_media(
+                owner_profile_id=self.owner_profile_id,
+                session_id=self.session_id,
+                media_identity=self.media_identity,
+                previous_media_identity=self.previous_media_identity,
+            )
+            raise
+        except PermissionError:
+            await manager.async_restore_track_started_media(
+                owner_profile_id=self.owner_profile_id,
+                session_id=self.session_id,
+                media_identity=self.media_identity,
+                previous_media_identity=self.previous_media_identity,
+            )
+            return False
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.debug(
+                "DJConnect Planning Runtime Coordinator failed: %s", exc.__class__.__name__
+            )
+            self.working_coordinator._fallback("planning_lifecycle_failed")
+            self.coordinated = None
+
+        return True
+
+    async def _accept_coordinated_locked(self):
+        manager = self.manager
+        self.active = manager._active_by_profile.get(self.owner_profile_id)
+        if not self._coordinated_admission_current():
+            return None
+        if self.coordinated is not None and not await manager._async_persist_track_started_moment(
+            self.active, self.coordinated, self.media_identity, self.previous_media_identity
+        ):
+            return None
+        self._commit_working_owners()
+        if self.coordinated is not None:
+            return await self._publish_coordinated_locked()
+
+        return _CONTINUE_TRACK_START
+
+    async def _prepare_legacy_locked(self):
+        manager = self.manager
+        self.active = manager._active_by_profile.get(self.owner_profile_id)
+        if not self._legacy_preparation_current():
+            return None
+        self.working_planner = copy.deepcopy(self.active.planner)
+        from .persistence.service import PersistenceError
+
+        try:
+            (
+                self.active,
+                self.legacy_moment,
+            ) = await manager._apply_legacy_initial_track_started_decision(
+                self.owner_profile_id, self.active, planner=self.working_planner
+            )
+        except PersistenceError:
+            manager._restore_track_started_media_locked(
+                self.owner_profile_id,
+                self.session_id,
+                self.media_identity,
+                self.previous_media_identity,
+            )
+            raise
+        if self.legacy_moment is not None:
+            if self.active.planner.discover_narrative_line is not None:
+                self.active.planner.clear_discover_narrative()
+            return self.legacy_moment
+        if not self.active.allows_proactive():
+            return None
+        self.fallback_mood_revision = self.active.mood_revision
+        self.fallback_presence_revision = self.active.presence_revision
+        self.fallback_persona_revision = self.active.persona_revision
+        self.fallback_settings_revision = self.active.settings_revision
+        self.fallback_content_epoch = self.active.broadcast.content_epoch
+        self.decision = self.working_planner.evaluate_track_started(
+            session_start_strategy=self.active.session_start_strategy,
+            session_direction=self.active.session_direction,
+            selected_mood=self.active.selected_mood,
+            persona=self.active.dj_persona,
+            knowledge_hints=self.hints,
+            performance_memory=self.active.performance_memory,
+            discover_context=self.active.discover_context,
+            record_track_available=False,
+        )
+        if self.decision.decision_type is PlannerDecisionType.SILENCE:
+            self.working_moments = copy.deepcopy(self.active.moment_engine)
+            self.moment = self.working_moments.create_silence(
+                session_id=self.active.session_id,
+                selected_mood=self.active.selected_mood,
+                persona=self.active.dj_persona,
+                locale=self.active.locale,
+                reason=self.decision.reason,
+            )
+            if not await manager._async_persist_track_started_moment(
+                self.active, self.moment, self.media_identity, self.previous_media_identity
+            ):
+                return None
+            manager._commit_planner_candidate(self.active, self.working_planner)
+            self.active.moment_engine.__dict__.update(self.working_moments.__dict__)
+            self.active.publish_moment(self.moment)
+            self.active = manager._record_performance_memory(self.owner_profile_id, self.active)
+            await manager._publish_discover_transition(
+                self.owner_profile_id,
+                self.active,
+                self.moment,
+                self.raw_insight,
+                self.media_identity,
+            )
+            return self.moment
+        self.intent = self.decision.knowledge_intent
+        if self.intent is None:
+            manager._commit_planner_candidate(self.active, self.working_planner)
+            if self.active.planner.discover_narrative_line is not None:
+                self.active.planner.clear_discover_narrative()
+            return None
+        self.candidate = self.active
+        self.working_knowledge_engine = copy.deepcopy(self.active.knowledge_engine)
+
+        return _CONTINUE_TRACK_START
+
+    async def _assemble_legacy_knowledge(self):
+        manager = self.manager
+        try:
+            self.knowledge = await self.working_knowledge_engine.async_assemble_track_context(
+                intent=self.intent,
+                raw_insight=self.raw_insight,
+                session_direction=self.candidate.session_direction,
+                session_start_strategy=self.candidate.session_start_strategy,
+                session_mood=self.candidate.selected_mood,
+                discover_context=self.candidate.discover_context,
+                performance_memory=self.candidate.performance_memory,
+                personal_context_authorized=False,
+            )
+        except asyncio.CancelledError:
+            await manager.async_restore_track_started_media(
+                owner_profile_id=self.owner_profile_id,
+                session_id=self.session_id,
+                media_identity=self.media_identity,
+                previous_media_identity=self.previous_media_identity,
+            )
+            raise
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.debug("DJConnect Knowledge Engine unavailable: %s", exc.__class__.__name__)
+            self.knowledge = KnowledgeContext(
+                (),
+                (),
+                (),
+                session_direction=self.candidate.session_direction,
+                session_start_strategy=self.candidate.session_start_strategy,
+                session_mood=self.candidate.selected_mood,
+                discover_context=self.candidate.discover_context,
+                performance_memory=self.candidate.performance_memory,
+            )
+
+    async def _accept_legacy_locked(self):
+        manager = self.manager
+        self.active = manager._active_by_profile.get(self.owner_profile_id)
+        if not self._legacy_acceptance_current():
+            return None
+        self.working_moments = copy.deepcopy(self.active.moment_engine)
+        self.moment = self.working_moments.create_track_context(
+            session_id=self.active.session_id,
+            knowledge_intent=self.intent,
+            selected_mood=self.active.selected_mood,
+            persona=self.active.dj_persona,
+            locale=self.active.locale,
+            insight=self.knowledge.as_insight(),
+        )
+        if not await manager._async_persist_track_started_moment(
+            self.active, self.moment, self.media_identity, self.previous_media_identity
+        ):
+            return None
+        manager._commit_planner_candidate(self.active, self.working_planner)
+        self.active.knowledge_engine.__dict__.update(self.working_knowledge_engine.__dict__)
+        self.active.moment_engine.__dict__.update(self.working_moments.__dict__)
+        if self.moment.moment_type is not DJMomentType.SILENCE:
+            self.active.planner.record_spoken_moment()
+        self.active.publish_moment(self.moment)
+        manager._note_initial_track_moment(
+            owner_profile_id=self.owner_profile_id,
+            active=self.active,
+            media_identity=self.media_identity,
+            raw_insight=self.raw_insight,
+            moment=self.moment,
+        )
+        self.active = manager._record_performance_memory(self.owner_profile_id, self.active)
+        self.active = await manager._publish_discover_transition(
+            self.owner_profile_id, self.active, self.moment, self.raw_insight, self.media_identity
+        )
+        self.transition_decision = self.active.planner.evaluate_transition_after_moment(
+            triggering_intent=self.intent,
+            session_direction=self.active.session_direction,
+            performance_memory=self.active.performance_memory,
+        )
+        if self.transition_decision.decision_type is PlannerDecisionType.CREATE_TRANSITION:
+            await manager._submit_transition_approval(
+                self.owner_profile_id, self.active, self.transition_decision
+            )
+        manager._record_performance_memory(self.owner_profile_id, self.active)
+        return self.moment
+
+
 class SessionRuntimeManager:
     """Own active DJ Session Runtimes for this Home Assistant instance."""
 
@@ -5998,456 +6798,19 @@ class SessionRuntimeManager:
         recovery_authorize: Callable[[], bool] | None = None,
     ) -> DJMoment | None:
         """Orchestrate Planner → Knowledge → Moment → Flow → Broadcast."""
-        prepared_fact = None
-        async with self._lock:
-            prior = self._migrate_legacy_presence_locked(owner_profile_id)
-            if prior is not None and prior.session_id == session_id and not prior.allows_proactive():
-                return None
-            started_presence_revision = prior.presence_revision if prior is not None else -1
-            started_mood_revision = prior.mood_revision if prior is not None else -1
-            started_persona_revision = prior.persona_revision if prior is not None else -1
-            started_settings_revision = prior.settings_revision if prior is not None else -1
-            started_content_epoch = prior.broadcast.content_epoch if prior is not None else -1
-            previous_media_identity = prior.last_accepted_media_identity if prior is not None else ""
-            initial = prior is not None and not prior.last_accepted_media_identity
-            recovery = self._intra_track_opportunities.get(owner_profile_id)
-            recovering = (require_current_playback and recovery is not None
-                          and recovery.media_identity == media_identity
-                          and recovery.insight_recovery_after is not None)
-            recovery_admission = (recovery.generation, started_presence_revision,
-                                  started_mood_revision, started_persona_revision,
-                                  started_settings_revision, started_content_epoch) if recovery else ()
-            if recovering and not self._insight_recovery_is_current(recovery, prior):
-                recovery.insight_recovery_used = True
-                return None
-            if recovering and (recovery.insight_recovery_used
-                    or self._monotonic_source() < recovery.insight_recovery_after
-                    or recovery_insight_provider is None):
-                return None
-            active = self._accept_track_started_media(owner_profile_id, session_id, media_identity, allow_initial=allow_initial_facts)
-            if active is None:
-                return None
-            started_opportunity = self._intra_track_opportunities.get(owner_profile_id)
-            started_generation = started_opportunity.generation if started_opportunity else None
-            if recovering:
-                recovery.insight_recovery_used = True
-        insight_failed = False
-        try:
-            raw_insight = await (recovery_insight_provider() if recovering else insight_provider())
-        except asyncio.CancelledError:
-            await self.async_restore_track_started_media(owner_profile_id=owner_profile_id,
-                session_id=session_id, media_identity=media_identity, previous_media_identity=previous_media_identity)
-            raise
-        except Exception as exc:  # noqa: BLE001
-            _LOGGER.debug("DJConnect Track Insight unavailable: %s", exc.__class__.__name__)
-            raw_insight = {}
-            insight_failed = True
-        async with self._lock:
-            active = self._active_by_profile.get(owner_profile_id)
-            if not self._track_started_result_is_current(
-                active,
-                session_id=session_id,
-                media_identity=media_identity,
-                require_current_playback=require_current_playback,
-            ):
-                return None
-            if require_current_playback and (
-                started_opportunity is None
-                or self._intra_track_opportunities.get(owner_profile_id) is not started_opportunity
-                or started_opportunity.generation != started_generation or started_opportunity.blocked
-                or self._monotonic_source() - started_opportunity.last_observed_monotonic > 30
-            ):
-                return None
-            if (active.presence_revision != started_presence_revision
-                    or active.mood_revision != started_mood_revision
-                    or active.persona_revision != started_persona_revision
-                    or active.settings_revision != started_settings_revision
-                    or active.broadcast.content_epoch != started_content_epoch
-                    or active.broadcast.content_pending
-                    or not active.allows_proactive()):
-                self._restore_track_started_media_locked(owner_profile_id, session_id, media_identity, previous_media_identity)
-                return None
-            if recovering and not self._insight_recovery_is_current(started_opportunity, active):
-                return None
-            if insight_failed and require_current_playback:
-                # One fact-only recovery on a later normal observation. Never
-                # retry the general insight/model call, manufacture a fallback,
-                # or rearm an already consumed/rejected semantic effect.
-                if (not recovering and recovery_insight_provider is not None
-                        and recovery_authorize is not None
-                        and started_opportunity is not None
-                        and started_opportunity.insight_recovery_after is None
-                        and not started_opportunity.fact_count
-                        and not started_opportunity.used_fact_keys
-                        and started_opportunity.first_moment_type is None
-                        and not started_opportunity.pending):
-                    started_opportunity.insight_recovery_after = self._monotonic_source() + 30
-                    started_opportunity.insight_recovery_admission = recovery_admission
-                    started_opportunity.insight_recovery_authorize = recovery_authorize
-                    if self._insight_recovery_is_current(started_opportunity, active):
-                        self._restore_track_started_media_locked(
-                            owner_profile_id, session_id, media_identity, previous_media_identity)
-                    else:
-                        started_opportunity.insight_recovery_used = True
-                return None
-            raw_insight = dict(raw_insight)
-            raw_insight.pop("_qualified_genre_fact", None)
-            facts = raw_insight.get("_qualified_facts")
-            opportunity = self._intra_track_opportunities.get(owner_profile_id)
-            if (require_current_playback and not facts
-                    and isinstance(raw_insight.get("analysis"), dict)
-                    and raw_insight["analysis"].get("basis") == "unmeasured_metadata_only_v1"):
-                from .session_facts import observed_genre_facts
-                playback = active.broadcast.state.playback
-                genre_facts = observed_genre_facts(raw_insight.get("_session_narrative_evidence"),
-                    media_identity=media_identity, title=playback.title, artist=playback.artist)
-                if genre_facts:
-                    raw_insight["_qualified_genre_fact"] = genre_facts[0]
-            if isinstance(facts, tuple) and opportunity is not None and opportunity.media_identity == media_identity and not opportunity.blocked:
-                opportunity.qualified_facts = tuple(fact for fact in facts[:6] if type(fact) is QualifiedSessionFact
-                                                    and fact.eligible(media_identity, time.monotonic()))
-                if opportunity.qualified_facts:
-                    prepared_fact = self._prepare_qualified_current_fact(owner_profile_id, active, opportunity)
-                    if prepared_fact is None:
-                        return None
-            if prepared_fact is None:
-                if recovering:
-                    # Fact-only recovery must also stay closed on later tracks;
-                    # an empty evidence set cannot enter legacy/model planning.
-                    return None
-                if initial and allow_initial_facts:
-                    # Initial metadata establishes the old baseline unless a new
-                    # qualified source fact exists; never manufacture an intro.
-                    return None
-                raw_insight = dict(raw_insight)
-                # A provider cannot supply its own Runtime acceptance proof. Only
-                # the actual observed playing projection can open this fallback.
-                raw_insight.pop("_observed_playback", None)
-                track = raw_insight.get("track") or {}
-                analysis = raw_insight.get("analysis") or {}
-                playback = active.broadcast.state.playback
-                if (require_current_playback and opportunity is not None
-                        and analysis.get("basis") == "unmeasured_metadata_only_v1"
-                        and not (active.broadcast.track_announcements is not None
-                            and active.broadcast.track_announcements.current_occurrence is not None
-                            and active.broadcast.track_announcements.published_id ==
-                                active.broadcast.track_announcements.current_occurrence.occurrence_id)
-                        and playback.state == "playing"
-                        and playback.item_id == hashlib.sha256(media_identity.encode()).hexdigest()[:24]
-                        and track.get("title") == playback.title and track.get("artist") == playback.artist):
-                    proof = ObservedPlaybackNarration(playback.item_id, playback.title, playback.artist,
-                        playback.source_url, opportunity.last_observed_monotonic, active.locale,
-                        raw_insight["_qualified_genre_fact"].source_url.rsplit("/", 1)[-1] if "_qualified_genre_fact" in raw_insight else "",
-                        raw_insight["_qualified_genre_fact"].display_core.subject if "_qualified_genre_fact" in raw_insight else "")
-                    if proof.eligible(self._monotonic_source()):
-                        raw_insight["_observed_playback"] = proof
-                working_planner = copy.deepcopy(active.planner)
-                working_knowledge_engine = copy.deepcopy(active.knowledge_engine)
-                working_moment_engine = copy.deepcopy(active.moment_engine)
-                working_coordinator = copy.deepcopy(active.planning_coordinator)
-                if active.session_start_strategy is SessionStartStrategy.DISCOVER:
-                    working_planner.note_discover_track_started()
-                planning_mood_revision = active.mood_revision
-                planning_presence_revision = active.presence_revision
-                planning_persona_revision = active.persona_revision
-                planning_settings_revision = active.settings_revision
-                planning_content_epoch = active.broadcast.content_epoch
-                planning_input = working_planner.project_track_started_planning_input(
-                    session_id=active.session_id,
-                    upcoming_playback=upcoming_playback,
-                    session_start_strategy=active.session_start_strategy,
-                    session_direction=active.session_direction,
-                    selected_mood=active.selected_mood,
-                    persona=active.dj_persona,
-                    knowledge_hints=_planner_knowledge_hints(raw_insight),
-                    performance_memory=active.performance_memory,
-                    discover_context=active.discover_context,
-                )
-        if prepared_fact is not None:
-            from .persistence.service import PersistenceError
-            try:
-                return await self._realize_qualified_current_fact(prepared_fact)
-            except PersistenceError:
-                # The provider reports definitive rollback on this failure.
-                # Keep the qualified opportunity retryable; a prefetch/start
-                # reservation is not a published semantic acceptance.
-                await self.async_restore_track_started_media(owner_profile_id=owner_profile_id,
-                    session_id=session_id, media_identity=media_identity,
-                    previous_media_identity=previous_media_identity)
-                raise
-        _LOGGER.debug("DJConnect Planning Runtime Coordinator lifecycle entered")
-        try:
-            coordinated = await working_coordinator.async_coordinate_track_started(
-                planner=working_planner,
-                knowledge_engine=working_knowledge_engine,
-                moment_engine=working_moment_engine,
-                session_id=active.session_id,
-                selected_mood=active.selected_mood,
-                persona=active.dj_persona,
-                locale=active.locale,
-                session_direction=active.session_direction,
-                session_start_strategy=active.session_start_strategy,
-                performance_memory=active.performance_memory,
-                discover_context=active.discover_context,
-                raw_insight=raw_insight,
-                planning_input=planning_input,
-                allowed_intents=active.allowed_capability_intents,
-            )
-            if coordinated is not None:
-                original = coordinated
-                coordinated = await self._async_enrich_runtime_moment(active, coordinated)
-                working_moment_engine.moments = tuple(coordinated if m is original else m
-                    for m in working_moment_engine.moments)
-        except asyncio.CancelledError:
-            await self.async_restore_track_started_media(owner_profile_id=owner_profile_id,
-                session_id=session_id, media_identity=media_identity, previous_media_identity=previous_media_identity)
-            raise
-        except PermissionError:
-            await self.async_restore_track_started_media(owner_profile_id=owner_profile_id,
-                session_id=session_id, media_identity=media_identity, previous_media_identity=previous_media_identity)
-            return None
-        except Exception as exc:  # noqa: BLE001
-            _LOGGER.debug("DJConnect Planning Runtime Coordinator failed: %s", exc.__class__.__name__)
-            working_coordinator._fallback("planning_lifecycle_failed")
-            coordinated = None
-        async with self._lock:
-            active = self._active_by_profile.get(owner_profile_id)
-            if not self._track_started_result_is_current(
-                active,
-                session_id=session_id,
-                media_identity=media_identity,
-                require_current_playback=require_current_playback,
-            ):
-                return None
-            if (active.mood_revision != planning_mood_revision
-                    or active.presence_revision != planning_presence_revision
-                    or active.persona_revision != planning_persona_revision
-                    or active.settings_revision != planning_settings_revision
-                    or active.broadcast.content_epoch != planning_content_epoch
-                    or active.broadcast.content_pending
-                    or not active.allows_proactive()):
-                self._restore_track_started_media_locked(
-                    owner_profile_id, session_id, media_identity, previous_media_identity)
-                return None
-            if coordinated is not None and not await self._async_persist_track_started_moment(active, coordinated, media_identity, previous_media_identity):
-                return None
-            retained_horizon = active.planner.horizon
-            active.planner.__dict__.clear()
-            active.planner.__dict__.update(working_planner.__dict__)
-            if retained_horizon is not None and working_planner.horizon is not None:
-                retained_horizon.__dict__.clear()
-                retained_horizon.__dict__.update(working_planner.horizon.__dict__)
-                active.planner.horizon = retained_horizon
-            active.knowledge_engine.__dict__.clear()
-            active.knowledge_engine.__dict__.update(working_knowledge_engine.__dict__)
-            active.moment_engine.__dict__.clear()
-            active.moment_engine.__dict__.update(working_moment_engine.__dict__)
-            active.planning_coordinator.__dict__.clear()
-            active.planning_coordinator.__dict__.update(working_coordinator.__dict__)
-            if coordinated is not None:
-                is_session_update = active.planning_coordinator.last_session_direction is not None
-                if is_session_update:
-                    updated_direction = active.planning_coordinator.last_session_direction
-                    assert updated_direction is not None
-                    if updated_direction.direction is not SessionDirectionType.EXPLORING:
-                        active.published_album_context.close_lines()
-                    if (active.planner.discover_narrative_line is not None
-                            and updated_direction.direction is not active.session_direction.direction):
-                        active.planner.clear_discover_narrative()
-                    active = DJSessionRuntime(
-                        **{**active.__dict__, "session_direction": updated_direction}
-                    )
-                    self._active_by_profile[owner_profile_id] = active
-                    active.broadcast.update_session_direction(updated_direction)
-                    active.broadcast.update_forecast(active)
-                    active.planner.last_decision = planning_input.planner_decision
-                active.publish_moment(coordinated)
-                active.planning_coordinator.confirm_published(active.planner)
-                self._note_initial_track_moment(
-                    owner_profile_id=owner_profile_id, active=active,
-                    media_identity=media_identity, raw_insight=raw_insight,
-                    moment=coordinated,
-                )
-                if coordinated.moment_type is not DJMomentType.SILENCE:
-                    active.planner.record_spoken_moment()
-                if coordinated.moment_type is not DJMomentType.SILENCE and not is_session_update:
-                    active = self._record_performance_memory(owner_profile_id, active)
-                    active = await self._publish_discover_transition(
-                        owner_profile_id, active, coordinated, raw_insight, media_identity
-                    )
-                    transition_decision = active.planner.evaluate_transition_after_moment(
-                        triggering_intent=coordinated.knowledge_intent,
-                        session_direction=active.session_direction,
-                        performance_memory=active.performance_memory,
-                    )
-                    if transition_decision.decision_type is PlannerDecisionType.CREATE_TRANSITION:
-                        await self._submit_transition_approval(owner_profile_id, active, transition_decision)
-                else:
-                    active = self._record_performance_memory(owner_profile_id, active)
-                    await self._publish_discover_transition(
-                        owner_profile_id, active, coordinated, raw_insight, media_identity
-                    )
-                _LOGGER.debug(
-                    "DJConnect Planning Runtime Coordinator lifecycle completed: approval_source=%s generation=%s",
-                    active.planning_coordinator.last_approval_source,
-                    active.planning_coordinator.last_planning_generation,
-                )
-                return coordinated
-        _LOGGER.debug(
-            "DJConnect Planning Runtime Coordinator fallback invoked: reason=%s generation=%s",
-            active.planning_coordinator.last_fallback_reason,
-            active.planning_coordinator.last_planning_generation,
+        attempt = _TrackStartAttempt(
+            self,
+            owner_profile_id=owner_profile_id,
+            session_id=session_id,
+            insight_provider=insight_provider,
+            media_identity=media_identity,
+            upcoming_playback=upcoming_playback,
+            require_current_playback=require_current_playback,
+            allow_initial_facts=allow_initial_facts,
+            recovery_insight_provider=recovery_insight_provider,
+            recovery_authorize=recovery_authorize,
         )
-        hints = _planner_knowledge_hints(raw_insight)
-        async with self._lock:
-            active = self._active_by_profile.get(owner_profile_id)
-            if not self._track_started_result_is_current(
-                active,
-                session_id=session_id,
-                media_identity=media_identity,
-                require_current_playback=require_current_playback,
-            ):
-                return None
-            if (active.presence_revision != planning_presence_revision
-                    or active.broadcast.content_epoch != planning_content_epoch
-                    or active.broadcast.content_pending or not active.allows_proactive()):
-                self._restore_track_started_media_locked(owner_profile_id, session_id, media_identity, previous_media_identity)
-                return None
-            working_planner = copy.deepcopy(active.planner)
-            from .persistence.service import PersistenceError
-            try:
-                active, legacy_moment = await self._apply_legacy_initial_track_started_decision(
-                    owner_profile_id, active, planner=working_planner)
-            except PersistenceError:
-                self._restore_track_started_media_locked(owner_profile_id,
-                    session_id, media_identity, previous_media_identity)
-                raise
-            if legacy_moment is not None:
-                if active.planner.discover_narrative_line is not None:
-                    active.planner.clear_discover_narrative()
-                return legacy_moment
-            if not active.allows_proactive():
-                return None
-            fallback_mood_revision = active.mood_revision
-            fallback_presence_revision = active.presence_revision
-            fallback_persona_revision = active.persona_revision
-            fallback_settings_revision = active.settings_revision
-            fallback_content_epoch = active.broadcast.content_epoch
-            decision = working_planner.evaluate_track_started(
-                session_start_strategy=active.session_start_strategy,
-                session_direction=active.session_direction,
-                selected_mood=active.selected_mood,
-                persona=active.dj_persona,
-                knowledge_hints=hints,
-                performance_memory=active.performance_memory,
-                discover_context=active.discover_context,
-                record_track_available=False,
-            )
-            if decision.decision_type is PlannerDecisionType.SILENCE:
-                working_moments = copy.deepcopy(active.moment_engine)
-                moment = working_moments.create_silence(
-                    session_id=active.session_id,
-                    selected_mood=active.selected_mood,
-                    persona=active.dj_persona,
-                    locale=active.locale,
-                    reason=decision.reason,
-                )
-                if not await self._async_persist_track_started_moment(active, moment, media_identity, previous_media_identity):
-                    return None
-                self._commit_planner_candidate(active, working_planner)
-                active.moment_engine.__dict__.update(working_moments.__dict__)
-                active.publish_moment(moment)
-                active = self._record_performance_memory(owner_profile_id, active)
-                await self._publish_discover_transition(
-                    owner_profile_id, active, moment, raw_insight, media_identity
-                )
-                return moment
-            intent = decision.knowledge_intent
-            if intent is None:
-                self._commit_planner_candidate(active, working_planner)
-                if active.planner.discover_narrative_line is not None:
-                    active.planner.clear_discover_narrative()
-                return None
-            candidate = active
-            working_knowledge_engine = copy.deepcopy(active.knowledge_engine)
-        try:
-            knowledge = await working_knowledge_engine.async_assemble_track_context(
-                intent=intent,
-                raw_insight=raw_insight,
-                session_direction=candidate.session_direction,
-                session_start_strategy=candidate.session_start_strategy,
-                session_mood=candidate.selected_mood,
-                discover_context=candidate.discover_context,
-                performance_memory=candidate.performance_memory,
-                personal_context_authorized=False,
-            )
-        except asyncio.CancelledError:
-            await self.async_restore_track_started_media(owner_profile_id=owner_profile_id,
-                session_id=session_id, media_identity=media_identity, previous_media_identity=previous_media_identity)
-            raise
-        except Exception as exc:  # noqa: BLE001
-            _LOGGER.debug("DJConnect Knowledge Engine unavailable: %s", exc.__class__.__name__)
-            knowledge = KnowledgeContext(
-                (), (), (), session_direction=candidate.session_direction,
-                session_start_strategy=candidate.session_start_strategy,
-                session_mood=candidate.selected_mood,
-                discover_context=candidate.discover_context,
-                performance_memory=candidate.performance_memory,
-            )
-        async with self._lock:
-            active = self._active_by_profile.get(owner_profile_id)
-            if not self._track_started_result_is_current(
-                active,
-                session_id=session_id,
-                media_identity=media_identity,
-                require_current_playback=require_current_playback,
-            ):
-                return None
-            if (active.mood_revision != fallback_mood_revision
-                    or active.presence_revision != fallback_presence_revision
-                    or active.persona_revision != fallback_persona_revision
-                    or active.settings_revision != fallback_settings_revision
-                    or active.broadcast.content_epoch != fallback_content_epoch
-                    or active.broadcast.content_pending
-                    or not active.allows_proactive()):
-                self._restore_track_started_media_locked(
-                    owner_profile_id, session_id, media_identity, previous_media_identity)
-                return None
-            working_moments = copy.deepcopy(active.moment_engine)
-            moment = working_moments.create_track_context(
-                session_id=active.session_id,
-                knowledge_intent=intent,
-                selected_mood=active.selected_mood,
-                persona=active.dj_persona,
-                locale=active.locale,
-                insight=knowledge.as_insight(),
-            )
-            if not await self._async_persist_track_started_moment(active, moment, media_identity, previous_media_identity):
-                return None
-            self._commit_planner_candidate(active, working_planner)
-            active.knowledge_engine.__dict__.update(working_knowledge_engine.__dict__)
-            active.moment_engine.__dict__.update(working_moments.__dict__)
-            if moment.moment_type is not DJMomentType.SILENCE:
-                active.planner.record_spoken_moment()
-            active.publish_moment(moment)
-            self._note_initial_track_moment(
-                owner_profile_id=owner_profile_id, active=active,
-                media_identity=media_identity, raw_insight=raw_insight,
-                moment=moment,
-            )
-            active = self._record_performance_memory(owner_profile_id, active)
-            active = await self._publish_discover_transition(
-                owner_profile_id, active, moment, raw_insight, media_identity
-            )
-            transition_decision = active.planner.evaluate_transition_after_moment(
-                triggering_intent=intent,
-                session_direction=active.session_direction,
-                performance_memory=active.performance_memory,
-            )
-            if transition_decision.decision_type is PlannerDecisionType.CREATE_TRANSITION:
-                await self._submit_transition_approval(owner_profile_id, active, transition_decision)
-            self._record_performance_memory(owner_profile_id, active)
-            return moment
+        return await attempt.execute()
 
     @staticmethod
     def _insight_recovery_is_current(opportunity, active) -> bool:
