@@ -131,6 +131,7 @@ from .request_auth import (
 from .client_identity import device_id_matches_client_type
 from .spotify_backend import SpotifyBackendError
 from .use_cases import (
+    _spotify_uri_prefix_kind as _spotify_recommendation_kind,
     MusicBackendCapabilityError,
     music_backend_metadata,
     run_music_command,
@@ -1681,6 +1682,270 @@ async def _spotify_recommendation_playback_error(
     return _recommendation_error("spotify_playback_failed", safe_message)
 
 
+class _RecommendationPlaybackAnswer:
+    """Present one accepted recommendation without changing its dispatch owner."""
+
+    def __init__(self, hass, runtime, recommendation, request_payload, result, user_id):
+        self.hass = hass
+        self.runtime = runtime
+        self.recommendation = recommendation
+        self.request_payload = request_payload
+        self.result = result
+        self.user_id = user_id
+
+    async def execute(self):
+        await self._record_memory()
+        self._prepare_media()
+        await self._readback()
+        self._fallback_copy()
+        self._prepare_narration()
+        await self._narrate_receipt()
+        await self._render_audio()
+        return self._wire_response()
+
+    async def _record_memory(self):
+        self.kind = str(self.recommendation.get("kind") or "").strip()
+        memory = getattr(self.runtime, "memory", None)
+        if memory is not None:
+            recorder = getattr(memory, "async_record_recommendation_play", None)
+            if callable(recorder):
+                try:
+                    memory_payload = dict(self.request_payload)
+                    if self.recommendation.get("music_dna_key") and (
+                        not memory_payload.get("music_dna_key")
+                    ):
+                        memory_payload["music_dna_key"] = self.recommendation["music_dna_key"]
+                    await recorder(
+                        self.runtime, self.recommendation, memory_payload, user_id=self.user_id
+                    )
+                except Exception as exc:
+                    _LOGGER.debug("DJConnect recommendation play memory update failed: %s", exc)
+
+    def _prepare_media(self):
+        self.playback = self.result.get("playback") if isinstance(self.result, dict) else {}
+        self.media = _play_now_dj_response_media(
+            self.recommendation, self.playback, self.request_payload
+        )
+        self.fallback_dj_text = _play_now_fallback_dj_text(
+            self.media,
+            self.recommendation,
+            _play_now_response_conf(self.runtime, self.request_payload, self.recommendation),
+            save_mix_prompt=self.kind == "track_mix",
+        )
+        self.dj_response_debug: dict[str, Any] = {}
+        from .ask_dj.dialogue import current_turn
+
+        self.turn = current_turn.get()
+        self.confirmed = False
+
+    async def _readback(self):
+        try:
+            if self.turn:
+                await self.turn.guard()
+            readback = await run_music_command(self.hass, self.runtime, "status")
+            self._observe_readback(readback)
+        except Exception:
+            pass
+
+    def _observe_readback(self, readback):
+        state = readback.get("playback") or {}
+        self._readback_identity(state)
+        self._readback_output(state)
+        self.confirmed = bool(
+            self.observed_identity
+            and self.observed_identity == self.target_uri
+            and (state.get("is_playing") is True or state.get("state") == "playing")
+            and (not self.required_output or self.observed_output == self.required_output)
+        )
+
+    def _readback_identity(self, state):
+        actual_uri = str(state.get("uri") or state.get("current_uri") or "")
+        self.target_uri = str(
+            self.recommendation.get("uri") or self.recommendation.get("offset_uri") or ""
+        )
+        actual_context = str(
+            state.get("context_uri") or (state.get("context") or {}).get("uri") or ""
+        )
+        self.observed_identity = (
+            actual_uri if self.target_uri.startswith("spotify:track:") else actual_context
+        )
+
+    def _readback_output(self, state):
+        device = state.get("device") if isinstance(state.get("device"), dict) else {}
+        self.observed_output = str(
+            state.get("output_id") or state.get("device_id") or device.get("id") or ""
+        )
+        self.required_output = self.turn.play_output_id if self.turn else None
+
+    def _fallback_copy(self):
+        # Keep producer-frozen kind/title even when provider readback lags.
+        # An album context is not the currently observed first recording.
+        if not self.confirmed:
+            from .playback_request import _copy
+
+            named = dict(self.recommendation)
+            if self.kind == "album":
+                named["album_name"] = ""
+            named["track_name"] = (
+                self.recommendation.get("title")
+                or self.recommendation.get("name")
+                or named.get("title")
+            )
+            self.receipt = {
+                "selection": {"kind": self.kind, "media": named},
+                "observed_match": self.confirmed,
+            }
+            _, self.fallback_dj_text = _copy(
+                self.receipt, (self.turn.style.get("language") if self.turn else None) or "en"
+            )
+
+    def _prepare_narration(self):
+        self.dj_text = self.fallback_dj_text
+        self.dj_response_debug["fallback_used"] = True
+        self.dj_response_debug["reason"] = "catalog_model_processing_not_qualified"
+        self.narration = {}
+        self.receipt = (
+            self.result.get("playback_outcome") if isinstance(self.result, dict) else None
+        )
+
+    def _accepted_receipt(self):
+        return (
+            isinstance(self.receipt, dict)
+            and self.receipt.get("schema_version") == 1
+            and (self.receipt.get("state") in {"observed", "dispatched"})
+            and isinstance(self.receipt.get("selection"), dict)
+        )
+
+    def _freeze_selected_media(self, selection, selected):
+        selected = dict(selected)
+        selected.update(
+            {
+                key: self.recommendation[key]
+                for key in (
+                    "artist",
+                    "artist_name",
+                    "image_url",
+                    "album_image_url",
+                    "media_image_url",
+                )
+                if self.recommendation.get(key)
+            }
+        )
+        if self.recommendation.get("title"):
+            selected["title"] = self.recommendation["title"]
+            selected["track_name"] = self.recommendation["title"]
+        if self.kind in {"album", "playlist"}:
+            selected.pop("album_name", None)
+            selected.pop("album", None)
+        selection["media"] = selected
+
+    async def _narrate_receipt(self):
+        # Preserve the backend's accepted-selection receipt through Play Now
+        # and frozen choices; never replace an album with a visible first track.
+        if self._accepted_receipt():
+            from copy import deepcopy
+            from .playback_request import response as playback_response
+
+            self.receipt = deepcopy(self.receipt)
+            selection = self.receipt["selection"]
+            selected = selection.get("media") or {}
+            target = self.recommendation.get("uri") or self.recommendation.get("context_uri")
+            if target and selected.get("uri") == target:
+                self._freeze_selected_media(selection, selected)
+                self.receipt.update(
+                    observed_match=self.confirmed,
+                    state="observed" if self.confirmed else "dispatched",
+                )
+                self.narration = await playback_response(self.hass, self.runtime, self.receipt)
+                self.dj_text = self.narration["text"]
+                self.dj_response_debug["fallback_used"] = not self.narration["is_generated_text"]
+                self.dj_response_debug["reason"] = "accepted_playback_request"
+
+    async def _render_audio(self):
+        self.generated_text = self.dj_response_debug.get("fallback_used") is False
+        self.text_source = "generated" if self.generated_text else "fallback"
+        self.audio_url = (
+            None
+            if self.request_payload.get("audio_response") == "never"
+            else await async_create_dj_audio_url(self.hass, self.runtime, self.dj_text)
+        )
+        self.dj_response = {
+            "success": True,
+            "delivered": False,
+            "displayed": False,
+            "spoken": False,
+            "audio_url": bool(self.audio_url),
+            "audio_url_value": self.audio_url,
+            "audio_type": _audio_type_from_url(self.audio_url),
+        }
+
+    def _wire_response(self):
+        self.runtime.update(
+            last_error=None,
+            last_dj_text=self.dj_text,
+            last_dj_response_debug=self.dj_response_debug,
+            last_playback=self.playback or getattr(self.runtime, "last_playback", None),
+        )
+        return {
+            "success": True,
+            "message": self.dj_text,
+            "text": self.dj_text,
+            "dj_text": self.dj_text,
+            "text_source": self.text_source,
+            "is_generated_text": self.generated_text,
+            "action": "spotify_start_recommendation",
+            "action_outcome": {
+                "state": "confirmed" if self.confirmed else "dispatched",
+                "readback_confirmed": self.confirmed,
+            },
+            "playback": self.playback or {},
+            "dj_response": self.dj_response,
+            "audio_url": self.audio_url,
+            "audio_type": _audio_type_from_url(self.audio_url),
+            "assistant_message": {
+                "role": "assistant",
+                "message_kind": "assistant",
+                "origin": "play_now",
+                "text": self.dj_text,
+                "text_source": self.text_source,
+                "is_generated_text": self.generated_text,
+                "audio_url": self.audio_url,
+                "playback_actions": [],
+                "items": [],
+                "images": self.narration.get("images", []),
+                "links": [],
+                "sources": self.narration.get("sources", []),
+            },
+            "recommendation": {
+                key: self.recommendation.get(key)
+                for key in (
+                    "uri",
+                    "uris",
+                    "context_uri",
+                    "offset_uri",
+                    "kind",
+                    "title",
+                    "subtitle",
+                    "reason",
+                )
+                if self.recommendation.get(key)
+            },
+            **{
+                key: self.narration[key]
+                for key in (
+                    "playback_outcome",
+                    "resolved_media",
+                    "media",
+                    "images",
+                    "sources",
+                    "model_processing_basis",
+                )
+                if key in self.narration
+            },
+            **music_backend_metadata(self.hass, self.runtime),
+        }
+
+
 async def _recommendation_play_success_response(
     hass: Any,
     runtime: Any,
@@ -1692,146 +1957,9 @@ async def _recommendation_play_success_response(
 ) -> dict[str, Any]:
     if isinstance(result, dict) and result.get("success") is False:
         return result
-    kind = str(recommendation.get("kind") or "").strip()
-    memory = getattr(runtime, "memory", None)
-    if memory is not None:
-        recorder = getattr(memory, "async_record_recommendation_play", None)
-        if callable(recorder):
-            try:
-                memory_payload = dict(request_payload)
-                if recommendation.get("music_dna_key") and not memory_payload.get("music_dna_key"):
-                    memory_payload["music_dna_key"] = recommendation["music_dna_key"]
-                await recorder(runtime, recommendation, memory_payload, user_id=user_id)
-            except Exception as exc:  # noqa: BLE001
-                _LOGGER.debug("DJConnect recommendation play memory update failed: %s", exc)
-    playback = result.get("playback") if isinstance(result, dict) else {}
-    media = _play_now_dj_response_media(recommendation, playback, request_payload)
-    fallback_dj_text = _play_now_fallback_dj_text(
-        media,
-        recommendation,
-        _play_now_response_conf(runtime, request_payload, recommendation),
-        save_mix_prompt=kind == "track_mix",
-    )
-    dj_response_debug: dict[str, Any] = {}
-    from .ask_dj.dialogue import current_turn
-    turn = current_turn.get()
-    confirmed = False
-    try:
-        if turn:
-            await turn.guard()
-        readback = await run_music_command(hass, runtime, "status")
-        state = readback.get("playback") or {}
-        actual_uri = str(state.get("uri") or state.get("current_uri") or "")
-        target_uri = str(recommendation.get("uri") or recommendation.get("offset_uri") or "")
-        actual_context=str(state.get("context_uri") or (state.get("context") or {}).get("uri") or "")
-        observed_identity=actual_uri if target_uri.startswith("spotify:track:") else actual_context
-        device = state.get("device") if isinstance(state.get("device"), dict) else {}
-        observed_output = str(state.get("output_id") or state.get("device_id") or device.get("id") or "")
-        required_output = turn.play_output_id if turn else None
-        confirmed = bool(
-            observed_identity and observed_identity == target_uri
-            and (state.get("is_playing") is True or state.get("state") == "playing")
-            and (not required_output or observed_output == required_output)
-        )
-    except Exception:
-        pass
-    if not confirmed:
-        # Keep the producer-frozen kind/title even when a provider readback lags.
-        # An album context is not the currently observed first recording.
-        from .playback_request import _copy
-        named = dict(recommendation)
-        if kind == "album":
-            named["album_name"] = ""
-        named["track_name"] = recommendation.get("title") or recommendation.get("name") or named.get("title")
-        receipt = {"selection": {"kind": kind, "media": named}, "observed_match": confirmed}
-        _, fallback_dj_text = _copy(receipt, (turn.style.get("language") if turn else None) or "en")
-    dj_text = fallback_dj_text
-    dj_response_debug["fallback_used"] = True
-    dj_response_debug["reason"] = "catalog_model_processing_not_qualified"
-    narration = {}
-    receipt = result.get("playback_outcome") if isinstance(result, dict) else None
-    # The backend already issued the accepted-selection receipt. Preserve it
-    # through Play Now / frozen conversational choices instead of replacing an
-    # album with whichever first track happens to be visible in the readback.
-    if (isinstance(receipt, dict) and receipt.get("schema_version") == 1
-            and receipt.get("state") in {"observed", "dispatched"}
-            and isinstance(receipt.get("selection"), dict)):
-        from copy import deepcopy
-        from .playback_request import response as playback_response
-        receipt = deepcopy(receipt)
-        selection = receipt["selection"]
-        selected = selection.get("media") or {}
-        target = recommendation.get("uri") or recommendation.get("context_uri")
-        if target and selected.get("uri") == target:
-            selected = dict(selected)
-            selected.update({key: recommendation[key] for key in
-                ("artist", "artist_name", "image_url", "album_image_url", "media_image_url")
-                if recommendation.get(key)})
-            if recommendation.get("title"):
-                selected["title"] = recommendation["title"]
-                selected["track_name"] = recommendation["title"]
-            if kind in {"album", "playlist"}:
-                selected.pop("album_name", None)
-                selected.pop("album", None)
-            selection["media"] = selected
-            receipt.update(observed_match=confirmed, state="observed" if confirmed else "dispatched")
-            narration = await playback_response(hass, runtime, receipt)
-            dj_text = narration["text"]
-            dj_response_debug["fallback_used"] = not narration["is_generated_text"]
-            dj_response_debug["reason"] = "accepted_playback_request"
-    generated_text = dj_response_debug.get("fallback_used") is False
-    text_source = "generated" if generated_text else "fallback"
-    audio_url = None if request_payload.get("audio_response") == "never" else await async_create_dj_audio_url(hass, runtime, dj_text)
-    dj_response = {
-        "success": True,
-        "delivered": False,
-        "displayed": False,
-        "spoken": False,
-        "audio_url": bool(audio_url),
-        "audio_url_value": audio_url,
-        "audio_type": _audio_type_from_url(audio_url),
-    }
-    runtime.update(
-        last_error=None,
-        last_dj_text=dj_text,
-        last_dj_response_debug=dj_response_debug,
-        last_playback=playback or getattr(runtime, "last_playback", None),
-    )
-    return {
-        "success": True,
-        "message": dj_text,
-        "text": dj_text,
-        "dj_text": dj_text,
-        "text_source": text_source,
-        "is_generated_text": generated_text,
-        "action": "spotify_start_recommendation",
-        "action_outcome": {"state": "confirmed" if confirmed else "dispatched", "readback_confirmed": confirmed},
-        "playback": playback or {},
-        "dj_response": dj_response,
-        "audio_url": audio_url,
-        "audio_type": _audio_type_from_url(audio_url),
-        "assistant_message": {
-            "role": "assistant",
-            "message_kind": "assistant",
-            "origin": "play_now",
-            "text": dj_text,
-            "text_source": text_source,
-            "is_generated_text": generated_text,
-            "audio_url": audio_url,
-            "playback_actions": [],
-            "items": [],
-            "images": narration.get("images", []),
-            "links": [],
-            "sources": narration.get("sources", []),
-        },
-        "recommendation": {
-            key: recommendation.get(key)
-            for key in ("uri", "uris", "context_uri", "offset_uri", "kind", "title", "subtitle", "reason")
-            if recommendation.get(key)
-        },
-        **{key: narration[key] for key in ("playback_outcome", "resolved_media", "media", "images", "sources", "model_processing_basis") if key in narration},
-        **music_backend_metadata(hass, runtime),
-    }
+    return await _RecommendationPlaybackAnswer(
+        hass, runtime, recommendation, request_payload, result, user_id
+    ).execute()
 
 
 def _play_now_dj_response_media(
@@ -2398,18 +2526,6 @@ def _safe_backend_error_message(exc: Exception) -> str:
     if any(part in lowered for part in ("token", "secret", "password", "authorization:")):
         return "The selected music backend could not complete playback."
     return text or "The selected music backend could not complete playback."
-
-
-def _spotify_recommendation_kind(uri: str) -> str:
-    if uri.startswith("spotify:track:"):
-        return "track"
-    if uri.startswith("spotify:album:"):
-        return "album"
-    if uri.startswith("spotify:artist:"):
-        return "artist"
-    if uri.startswith("spotify:playlist:"):
-        return "playlist"
-    return ""
 
 
 def _recommendation_track_uris(value: Any) -> list[str]:

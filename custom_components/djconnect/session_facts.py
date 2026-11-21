@@ -200,6 +200,11 @@ def label(value: Any, limit: int = 320) -> str:
     return text if 0 < len(text) <= limit and not any(ord(c) < 32 for c in text) else ""
 
 
+def recording_label_matches(recording, proof, label):
+    """Compare one exact recording label without coercing its result."""
+    return recording.get(label) == getattr(proof, label)
+
+
 def match_name(value: Any) -> str:
     return unicodedata.normalize("NFKC", label(value)).casefold()
 

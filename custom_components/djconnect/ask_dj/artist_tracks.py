@@ -1,11 +1,13 @@
 """Resolve model-proposed performer names through existing catalog read tools."""
 
+
 from datetime import UTC, datetime
 import asyncio
 import hashlib
 import re
 
 from .dialogue import current_turn, catalogue_result_text, DialogueError
+from .responses import _core_answer
 
 
 async def artist_tracks_read(hass, runtime, plan, selected):
@@ -123,9 +125,9 @@ async def artist_tracks_read(hass, runtime, plan, selected):
     for action in actions:
         action.update(label=copy[locale][2], button_label=copy[locale][2], reason=caption)
     text = catalogue_result_text(actions, locale, caption=caption) if actions else caption
-    return {"success": True, "text": text, "dj_text": text, "action": "none", "images": [],
-            "items": actions, "playback_actions": actions, "text_source": "qualified_catalog_result",
-            "is_generated_text": False, "_private_current_context": True,
-            "knowledge_basis": "qualified_provider_result_fields",
-            "intent": {"category": "informational", "intent": "artist_tracks_information"},
-            "sources": [{"source": "spotify_track_search", "title": "Spotify", "kind": "source"}] if actions else []}
+    return _core_answer(text, action="none", images=[],
+            items=actions, playback_actions=actions, text_source="qualified_catalog_result",
+            is_generated_text=False, _private_current_context=True,
+            knowledge_basis="qualified_provider_result_fields",
+            intent={"category": "informational", "intent": "artist_tracks_information"},
+            sources=[{"source": "spotify_track_search", "title": "Spotify", "kind": "source"}] if actions else [])

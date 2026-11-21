@@ -936,6 +936,19 @@ def _playback_item_kind(item: dict[str, Any], item_id: str) -> str:
     return kind if kind in {"track", "album", "artist", "playlist"} else "music"
 
 
+def _spotify_uri_prefix_kind(uri: str) -> str:
+    if uri.startswith("spotify:track:"):
+        return "track"
+    if uri.startswith("spotify:album:"):
+        return "album"
+    if uri.startswith("spotify:artist:"):
+        return "artist"
+    if uri.startswith("spotify:playlist:"):
+        return "playlist"
+    return ""
+
+
+
 def _spotify_uri_kind(uri: str) -> str:
     parts = str(uri or "").split(":")
     if (

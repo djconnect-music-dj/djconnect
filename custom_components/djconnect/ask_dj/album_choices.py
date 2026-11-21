@@ -1,8 +1,10 @@
 """Qualified alternative albums use the existing frozen result/selection owner."""
 
+
 import re
 
 from .dialogue import current_turn
+from .responses import _core_answer
 
 
 def other_album_request(text):
@@ -98,16 +100,13 @@ async def other_album_response(hass, runtime, artist):
         action.update(label=label, button_label=label, reason=reason.format(artist=artist))
     caption = copy[locale][0 if actions else 1].format(artist=artist)
     message = catalogue_result_text(actions, locale, caption=caption) if actions else caption
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "none",
-        "items": actions,
-        "playback_actions": actions,
-        "images": [],
-        "text_source": "qualified_catalog_result",
-        "is_generated_text": False,
-        "_catalogue_history_caption": caption,
-        "sources": [{"source": "spotify_artist_albums", "title": "Spotify", "kind": "source"}],
-    }
+    return _core_answer(message,
+        action="none",
+        items=actions,
+        playback_actions=actions,
+        images=[],
+        text_source="qualified_catalog_result",
+        is_generated_text=False,
+        _catalogue_history_caption=caption,
+        sources=[{"source": "spotify_artist_albums", "title": "Spotify", "kind": "source"}],
+    )

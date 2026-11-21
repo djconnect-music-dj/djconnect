@@ -52,11 +52,12 @@ class ContentDeletionStoreTests(unittest.IsolatedAsyncioTestCase):
         self.assert_dependent_exchange_withdrawn(messages)
         self.assertEqual(await self.history.async_scope_revision('profile:p'), before)
 
-    async def test_assistant_role_removes_exact_complete_standalone_exchange(self):
-        await self.assert_complete_standalone_exchange_removed('assistant_message')
-
-    async def test_user_role_removes_exact_complete_standalone_exchange(self):
-        await self.assert_complete_standalone_exchange_removed('user_message')
+    async def test_either_role_removes_exact_complete_standalone_exchange(self):
+        for role in ('assistant_message', 'user_message'):
+            # Preserve the externally bound test and its independent role owners.
+            if role == 'user_message':
+                await self.asyncSetUp()
+            await self.assert_complete_standalone_exchange_removed(role)
 
     async def test_unrelated_pending_request_not_fenced_and_effect_receipt_preserved(self):
         self.history.register_session_request('profile:p', 'unrelated-inflight')

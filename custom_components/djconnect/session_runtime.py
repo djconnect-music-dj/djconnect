@@ -25,7 +25,7 @@ from .presence_policy import DEFAULT as DEFAULT_PRESENCE, PresenceLedger, canoni
 from .session_opening import COPY as OPENING_COPY, SessionOpeningContext, opening_context
 from .session_facts import (
     QualifiedSessionFact, SharedProducerFact, ProducerRecommendationFact, producer_recommendation, PublishedRecordingContext,
-    AlbumContinuityFact, PublishedAlbumContext,
+    AlbumContinuityFact, PublishedAlbumContext, recording_label_matches,
 )
 from .moment_expression import realize as realize_fact_expression
 from .context_expression import form_count, genre_copy
@@ -425,6 +425,10 @@ class ObservedPlaybackNarration:
                          (re.fullmatch(r"[A-Za-z0-9]{22}", self.artist_id) and _narrative_label(self.genre, 160) == self.genre))
                     and re.fullmatch(r"https://open\.spotify\.com/track/[A-Za-z0-9]{22}", self.source_url)
                     and 0 <= now - self.observed_at < 30)
+
+    def matches_recording_label(self, recording, label):
+        """Compare one label; callers retain source/item/time and pair guards."""
+        return recording_label_matches(recording, self, label)
 
 
 @dataclass(frozen=True)
@@ -3550,8 +3554,8 @@ class DJKnowledgeEngine:
             if intent.intent_type is KnowledgeIntentType.TRACK_CONTEXT
             and isinstance(observed, ObservedPlaybackNarration)
             and observed.eligible(time.monotonic())
-            and (track.get("title") == observed.title)
-            and (track.get("artist") == observed.artist)
+            and ObservedPlaybackNarration.matches_recording_label(observed, track, "title")
+            and ObservedPlaybackNarration.matches_recording_label(observed, track, "artist")
             else None
         )
 

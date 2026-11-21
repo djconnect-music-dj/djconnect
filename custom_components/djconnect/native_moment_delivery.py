@@ -13,7 +13,9 @@ import json
 import math
 from typing import Any
 
-from .session_facts import QualifiedSessionFact, SharedProducerFact, AlbumContinuityFact
+from .session_facts import (
+    QualifiedSessionFact, SharedProducerFact, AlbumContinuityFact, recording_label_matches,
+)
 
 
 @dataclass(frozen=True)
@@ -285,8 +287,8 @@ class _NativeAdmission:
     def _track_identity_matches(self, snapshot, proof):
         return (
             self.boundary.playback_item_id == proof.item_id
-            and snapshot.get("title") == proof.title
-            and snapshot.get("artist") == proof.artist
+            and recording_label_matches(snapshot, proof, "title")
+            and recording_label_matches(snapshot, proof, "artist")
         )
 
     @staticmethod
