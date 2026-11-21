@@ -1971,70 +1971,175 @@ class DJSessionPlanner:
         if strategy is not SessionStartStrategy.DISCOVER or self.discover_narrative_closed:
             return None
         items = tuple(
-            item for item in self.output.session_flow.items
-            if item.item_type is SessionFlowItemType.DJ_MOMENT and item.moment_id
+            (
+                item
+                for item in self.output.session_flow.items
+                if item.item_type is SessionFlowItemType.DJ_MOMENT and item.moment_id
+            )
         )
         line = self.discover_narrative_line
         if line is not None:
             self.clear_discover_narrative()
             metadata = dict(current_moment.generation_metadata)
-            if (
-                self.discover_event_number != line.event_number + 1
-                or evidence is None
-                or current_moment.moment_type is not DJMomentType.TRACK
-                or session_direction.direction is not line.direction
-                or selected_mood != line.mood
-                or persona is not line.persona
-                or self.output.session_flow.flow_id != line.flow_id
-                or self.output.session_flow.flow_revision != line.flow_revision + 1
-                or len(items) < 2
-                or items[-2].moment_id != line.source_moment_id
-                or items[-2].moment_type != DJMomentType.GENRE.value
-                or items[-1].moment_id != current_moment.moment_id
-                or items[-1].moment_type != DJMomentType.TRACK.value
-                or line.source_moment_id not in performance_memory.recent_moment_ids
-                or DJMomentType.TRANSITION in performance_memory.recent_moment_types[-4:]
-                or evidence.artist_id != line.artist_id
-                or evidence.artist != line.artist
-                or evidence.media_identity == line.media_identity
-                or evidence.title == line.source_title
-                or not any(genre.casefold() == line.genre.casefold() for genre in evidence.genres)
-                or metadata.get("track_title") != evidence.title
-                or metadata.get("artist") != evidence.artist
-                or str(metadata.get("genre") or "").casefold() != line.genre.casefold()
-            ):
-                return None
-            self.last_decision = PlannerDecision(
-                PlannerDecisionType.CREATE_TRANSITION,
-                "discover_same_artist_genre",
-                KnowledgeIntent(
-                    KnowledgeIntentType.TRANSITION,
-                    "Connect the second observed track to the opened artist-genre context.",
-                ),
-                transition_moment_ids=(line.source_moment_id, current_moment.moment_id),
-                transition_placement=SessionFlowPosition.NEXT.value,
-                transition_relation="discover_same_artist_genre",
-                transition_context=(
-                    ("genre", line.genre),
-                    ("artist", line.artist),
-                    ("source_track", line.source_title),
-                    ("target_track", evidence.title),
-                ),
+            return self._complete_discover_relation(
+                line=line,
+                current_moment=current_moment,
+                session_direction=session_direction,
+                selected_mood=selected_mood,
+                persona=persona,
+                performance_memory=performance_memory,
+                evidence=evidence,
+                items=items,
+                metadata=metadata,
             )
-            return self.last_decision
         metadata = dict(current_moment.generation_metadata)
+        return self._open_discover_relation(
+            current_moment=current_moment,
+            session_direction=session_direction,
+            selected_mood=selected_mood,
+            persona=persona,
+            performance_memory=performance_memory,
+            evidence=evidence,
+            items=items,
+            metadata=metadata,
+        )
+
+    def _discover_line_scope_current(
+        self, *, line, current_moment, session_direction, selected_mood, persona, evidence
+    ):
+        return not (
+            self.discover_event_number != line.event_number + 1
+            or evidence is None
+            or current_moment.moment_type is not DJMomentType.TRACK
+            or (session_direction.direction is not line.direction)
+            or (selected_mood != line.mood)
+            or (persona is not line.persona)
+            or (self.output.session_flow.flow_id != line.flow_id)
+            or (self.output.session_flow.flow_revision != line.flow_revision + 1)
+        )
+
+    def _discover_successor_flow_current(self, *, line, current_moment, items, performance_memory):
+        return not (
+            len(items) < 2
+            or items[-2].moment_id != line.source_moment_id
+            or items[-2].moment_type != DJMomentType.GENRE.value
+            or (items[-1].moment_id != current_moment.moment_id)
+            or (items[-1].moment_type != DJMomentType.TRACK.value)
+            or (line.source_moment_id not in performance_memory.recent_moment_ids)
+            or (DJMomentType.TRANSITION in performance_memory.recent_moment_types[-4:])
+        )
+
+    def _discover_recording_relation_current(self, *, line, evidence):
+        return not (
+            evidence.artist_id != line.artist_id
+            or evidence.artist != line.artist
+            or evidence.media_identity == line.media_identity
+            or (evidence.title == line.source_title)
+            or (not any((genre.casefold() == line.genre.casefold() for genre in evidence.genres)))
+        )
+
+    @staticmethod
+    def _discover_track_metadata_matches(metadata, evidence):
+        return not (
+            metadata.get("track_title") != evidence.title
+            or metadata.get("artist") != evidence.artist
+        )
+
+    def _complete_discover_relation(
+        self,
+        *,
+        line,
+        current_moment,
+        session_direction,
+        selected_mood,
+        persona,
+        performance_memory,
+        evidence,
+        items,
+        metadata,
+    ):
         if (
+            not self._discover_line_scope_current(
+                line=line,
+                current_moment=current_moment,
+                session_direction=session_direction,
+                selected_mood=selected_mood,
+                persona=persona,
+                evidence=evidence,
+            )
+            or not self._discover_successor_flow_current(
+                line=line,
+                current_moment=current_moment,
+                items=items,
+                performance_memory=performance_memory,
+            )
+            or (not self._discover_recording_relation_current(line=line, evidence=evidence))
+            or (not self._discover_track_metadata_matches(metadata, evidence))
+            or (str(metadata.get("genre") or "").casefold() != line.genre.casefold())
+        ):
+            return None
+        self.last_decision = PlannerDecision(
+            PlannerDecisionType.CREATE_TRANSITION,
+            "discover_same_artist_genre",
+            KnowledgeIntent(
+                KnowledgeIntentType.TRANSITION,
+                "Connect the second observed track to the opened artist-genre context.",
+            ),
+            transition_moment_ids=(line.source_moment_id, current_moment.moment_id),
+            transition_placement=SessionFlowPosition.NEXT.value,
+            transition_relation="discover_same_artist_genre",
+            transition_context=(
+                ("genre", line.genre),
+                ("artist", line.artist),
+                ("source_track", line.source_title),
+                ("target_track", evidence.title),
+            ),
+        )
+        return self.last_decision
+
+    def _discover_opening_scope_current(
+        self, *, current_moment, session_direction, performance_memory, evidence, items
+    ):
+        return not (
             evidence is None
             or current_moment.moment_type is not DJMomentType.GENRE
             or session_direction.direction is not SessionDirectionType.EXPLORING
-            or not items
-            or items[-1].moment_id != current_moment.moment_id
-            or current_moment.moment_id not in performance_memory.recent_moment_ids
-            or DJMomentType.TRANSITION in performance_memory.recent_moment_types[-4:]
-            or metadata.get("track_title") != evidence.title
-            or metadata.get("artist") != evidence.artist
+            or (not items)
+            or (items[-1].moment_id != current_moment.moment_id)
+            or (current_moment.moment_id not in performance_memory.recent_moment_ids)
+            or (DJMomentType.TRANSITION in performance_memory.recent_moment_types[-4:])
+        )
+
+    def _open_discover_relation(
+        self,
+        *,
+        current_moment,
+        session_direction,
+        selected_mood,
+        persona,
+        performance_memory,
+        evidence,
+        items,
+        metadata,
+    ):
+        if (
+            not self._discover_opening_scope_current(
+                current_moment=current_moment,
+                session_direction=session_direction,
+                performance_memory=performance_memory,
+                evidence=evidence,
+                items=items,
+            )
+            or not self._discover_track_metadata_matches(metadata, evidence)
             or str(metadata.get("genre") or "").casefold() != current_moment.title.casefold()
-            or not any(genre.casefold() == current_moment.title.casefold() for genre in evidence.genres)
+            or (
+                not any(
+                    (
+                        genre.casefold() == current_moment.title.casefold()
+                        for genre in evidence.genres
+                    )
+                )
+            )
         ):
             return None
         self.discover_narrative_line = DiscoverNarrativeLine(
