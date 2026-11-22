@@ -44494,7 +44494,7 @@
         }
       ],
       "product_manifest_path": "docs/verification/ha-native-voice-product-manifest.json",
-      "product_manifest_sha256": "7feaacf975eab049e89bb768a73eabf5dcec87f7db3fc643194e029cbb111653"
+      "product_manifest_sha256": "687e79a5c49618f8dcd849726e8cba0323f490bd96fa36f30388423d9c8e0545"
     }
   }
 }

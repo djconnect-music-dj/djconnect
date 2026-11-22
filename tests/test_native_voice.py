@@ -217,6 +217,37 @@ class NativeVoiceTest(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(self.app.fixture.manager.current_active('profile-a'))
         self.assertEqual(self.app.effects, [])
 
+    async def test_saved_lifecycle_replay_keeps_original_target_after_frame_disposal(self):
+        from unittest.mock import AsyncMock
+        from custom_components.djconnect.playback_observation import PlaybackObservationManager
+        with patch.object(self.app.handlers, '_async_generate_initial_session_moment', AsyncMock()), patch.object(
+                PlaybackObservationManager, 'async_start_spotify', AsyncMock()):
+            start = self.input(text='Start a DJ session', request='saved-start')
+            await self.native.exchange(self.hass, self.runtime, start)
+            original = self.app.fixture.manager.current_active('profile-a').session_id
+            frames = self.app.history.dialogue.owners['profile:profile-a']
+            for key in list(frames):
+                if key.startswith('ha-'):
+                    del frames[key]
+            replay, _, _ = await self.native.exchange(self.hass, self.runtime, start)
+            self.assertTrue(replay['success'])
+            self.assertEqual(self.app.fixture.manager.current_active('profile-a').session_id, original)
+            end = self.input(text='End the DJ session', request='saved-end')
+            await self.native.exchange(self.hass, self.runtime, end)
+            with self.assertRaisesRegex(self.native.SessionConversationError, 'session_context_changed'):
+                await self.native.exchange(self.hass, self.runtime, start)
+            self.assertIsNone(self.app.fixture.manager.current_active('profile-a'))
+            ended_replay, _, _ = await self.native.exchange(self.hass, self.runtime, end)
+            self.assertTrue(ended_replay['success'])
+            await self.native.exchange(self.hass, self.runtime,
+                self.input(text='Start a DJ session', request='replacement-start'))
+            with self.assertRaisesRegex(self.native.SessionConversationError, 'session_context_changed'):
+                await self.native.exchange(self.hass, self.runtime, end)
+            self.assertNotEqual(self.app.fixture.manager.current_active('profile-a').session_id, original)
+            with self.assertRaisesRegex(self.native.SessionConversationError, 'session_context_changed'):
+                await self.native.exchange(self.hass, self.runtime, start)
+        self.assertEqual(self.app.effects, [])
+
     async def test_import_does_not_restore_personal_trust_and_profile_delete_does_not_transfer_it(self):
         from custom_components.djconnect.domain.storage import household_to_storage, household_from_storage
         saved = household_to_storage(self.storage.household)
@@ -252,7 +283,8 @@ class NativeVoiceActualHAEvidenceTest(unittest.TestCase):
         cases = proof['executions'][1]['receipt']['extension']['cases']
         self.assertEqual({key for key in cases if key.startswith('native_')}, {
             'native_exact_same_offer_known_output', 'native_same_mix_one_output_question',
-            'native_session_start_same_three_offers_no_playback_no_retry_regeneration'})
+            'native_session_start_same_three_offers_no_playback_no_retry_regeneration',
+            'native_saved_lifecycle_replay_retains_original_target_after_disposal'})
         self.assertEqual(set(cases.values()), {'PASS'})
         self.assertEqual(proof['shared_guest_request_display_delivery'], 'OPEN_NOT_IMPLEMENTED')
         self.assertEqual(proof['installed'], 'NOT_RUN')

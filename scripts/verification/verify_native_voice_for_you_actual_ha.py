@@ -78,6 +78,29 @@ async def native_flow(hass, manager, history, request, state):
     repeated, _, _ = await exchange(hass, runtime, start_input)
     assert repeated['success'] and state['reads'].count('/search') == searches
     assert not state['effects']
+    original_session = manager.current_active('profile-a').session_id
+    # Force persistent-history retry instead of the original RAM admission.
+    frames = history.dialogue.owners['profile:profile-a']
+    for key in list(frames):
+        if key.startswith('ha-'):
+            del frames[key]
+    saved_replay, _, _ = await exchange(hass, runtime, start_input)
+    assert saved_replay['success'] and manager.current_active('profile-a').session_id == original_session
+    from custom_components.djconnect import api_handlers
+    from custom_components.djconnect.playback_observation import playback_observation_manager
+    # The parent For-you lab stubs background observation startup. Exercise the
+    # real stop coordinator here rather than awaiting its parent's sync Mock.
+    with patch.object(api_handlers, 'playback_observation_manager', playback_observation_manager):
+        await exchange(hass, runtime, user('Beëindig de DJ-sessie', 'native-end'))
+    from custom_components.djconnect.session_conversation import SessionConversationError
+    try:
+        await exchange(hass, runtime, start_input)
+    except SessionConversationError as exc:
+        assert exc.code == 'session_context_changed', exc.code
+    else:
+        raise AssertionError('Ended original start must not replay a false active-Session success')
+    assert manager.current_active('profile-a') is None and not state['effects']
+    cases['native_saved_lifecycle_replay_retains_original_target_after_disposal'] = 'PASS'
     cases['native_session_start_same_three_offers_no_playback_no_retry_regeneration'] = 'PASS'
     return cases
 

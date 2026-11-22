@@ -64,7 +64,7 @@
     "custom_components/djconnect/ask_dj/recent_presentation.py": "44c01faa5193fee420984828cf134f44fe6fc78b370b25a9585bfcea1a329cb3",
     "custom_components/djconnect/ask_dj/responses.py": "53a536f1c5fb217769efe4b1a1a521db4787b656b91d6dcd86901a223a6b75aa",
     "custom_components/djconnect/ask_dj/semantic_reads.py": "bfc7a1d19e78774d39a7be776352662c9ecc34e561260bc475066b9530e15341",
-    "custom_components/djconnect/ask_dj/service.py": "4b60a8f9ed5263c4e40dff00e5cc9700d6c246b13f10cd983931bfc3ffba7cd1",
+    "custom_components/djconnect/ask_dj/service.py": "6c7ce3d2805fbb2f3f986e20fbb2245a8fda2caf3c81a25483b1244fc6ba7e99",
     "custom_components/djconnect/ask_dj/spotify_collection_offers.py": "909d277ef3fff241ce0abf8bc699ba9706a22a70417ef08c7af4ca78919981c5",
     "custom_components/djconnect/ask_dj_history.py": "9754714514f8f8741d3886b924fc38571865750775bb6a316b5e2917549222e5",
     "custom_components/djconnect/assist_stt.py": "42985d2e3d358d1829c8bd9e91a118eb8f35a4406812e31365781f50aba959e9",
@@ -367,7 +367,7 @@
     "harness": "scripts/verification/verify_current_track_insight_http.py",
     "harness_sha256": "0fa8d41564c70b7e7a1404731d58adba80357dbe91e3262dbff8a58bee900b6b",
     "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
-    "raw_receipt_sha256": "16d7a26764df7c63c21ff7fc96aa3c57e79383a0854a0e7d248a5363c6bee710",
+    "raw_receipt_sha256": "b65d3f69121c0d4d50852776df21ed5ea40466fe940d19ea21a1515e1a14f1ae",
     "raw_receipt": {
       "schema_version": 1,
       "qualification": "ACTUAL_ISOLATED_HA_PAIRED_HTTP_SYNTHETIC_ONLY",
@@ -409,7 +409,7 @@
         "custom_components/djconnect/ask_dj/recent_presentation.py": "44c01faa5193fee420984828cf134f44fe6fc78b370b25a9585bfcea1a329cb3",
         "custom_components/djconnect/ask_dj/responses.py": "53a536f1c5fb217769efe4b1a1a521db4787b656b91d6dcd86901a223a6b75aa",
         "custom_components/djconnect/ask_dj/semantic_reads.py": "bfc7a1d19e78774d39a7be776352662c9ecc34e561260bc475066b9530e15341",
-        "custom_components/djconnect/ask_dj/service.py": "4b60a8f9ed5263c4e40dff00e5cc9700d6c246b13f10cd983931bfc3ffba7cd1",
+        "custom_components/djconnect/ask_dj/service.py": "6c7ce3d2805fbb2f3f986e20fbb2245a8fda2caf3c81a25483b1244fc6ba7e99",
         "custom_components/djconnect/ask_dj/spotify_collection_offers.py": "909d277ef3fff241ce0abf8bc699ba9706a22a70417ef08c7af4ca78919981c5",
         "custom_components/djconnect/ask_dj_history.py": "9754714514f8f8741d3886b924fc38571865750775bb6a316b5e2917549222e5",
         "custom_components/djconnect/assist_stt.py": "42985d2e3d358d1829c8bd9e91a118eb8f35a4406812e31365781f50aba959e9",
@@ -732,7 +732,7 @@
       "responses": {
         "current": {
           "id": "track_insight_46f2f86799b7612de36684bd",
-          "created_at": "2026-11-22T20:24:32.448764+00:00",
+          "created_at": "2026-11-22T20:51:07.762222+00:00",
           "source": "current_detail",
           "language": "nl",
           "mood_context": null,
@@ -799,13 +799,13 @@
             "schema_version": 1,
             "media_identity": "spotify:track:AAAAAAAAAAAAAAAAAAAAAA",
             "observation_id": "<opaque-observation-redacted>",
-            "expires_at": 1795379102.44818,
+            "expires_at": 1795380697.7615583,
             "expires_in": 29
           }
         },
         "on_demand_credit": {
-          "id": "track_insight_8d79ac9c0681e3e57a29880c",
-          "created_at": "2026-11-22T20:24:32.488697+00:00",
+          "id": "track_insight_ff83ebf4b5534909d0c1585a",
+          "created_at": "2026-11-22T20:51:07.794529+00:00",
           "source": "current_detail",
           "language": "nl",
           "mood_context": null,
@@ -869,14 +869,14 @@
           },
           "cache": {
             "hit": false,
-            "key": "8d79ac9c0681e3e57a29880c"
+            "key": "ff83ebf4b5534909d0c1585a"
           },
           "subject": {
             "mode": "current",
             "schema_version": 1,
             "media_identity": "spotify:track:BBBBBBBBBBBBBBBBBBBBBB",
             "observation_id": "<opaque-observation-redacted>",
-            "expires_at": 1795379102.4871383,
+            "expires_at": 1795380697.7928538,
             "expires_in": 29
           }
         },
@@ -1085,7 +1085,7 @@
       "custom_components/djconnect/ask_dj/recent_presentation.py": "44c01faa5193fee420984828cf134f44fe6fc78b370b25a9585bfcea1a329cb3",
       "custom_components/djconnect/ask_dj/responses.py": "53a536f1c5fb217769efe4b1a1a521db4787b656b91d6dcd86901a223a6b75aa",
       "custom_components/djconnect/ask_dj/semantic_reads.py": "bfc7a1d19e78774d39a7be776352662c9ecc34e561260bc475066b9530e15341",
-      "custom_components/djconnect/ask_dj/service.py": "4b60a8f9ed5263c4e40dff00e5cc9700d6c246b13f10cd983931bfc3ffba7cd1",
+      "custom_components/djconnect/ask_dj/service.py": "6c7ce3d2805fbb2f3f986e20fbb2245a8fda2caf3c81a25483b1244fc6ba7e99",
       "custom_components/djconnect/ask_dj/spotify_collection_offers.py": "909d277ef3fff241ce0abf8bc699ba9706a22a70417ef08c7af4ca78919981c5",
       "custom_components/djconnect/ask_dj_history.py": "9754714514f8f8741d3886b924fc38571865750775bb6a316b5e2917549222e5",
       "custom_components/djconnect/assist_stt.py": "42985d2e3d358d1829c8bd9e91a118eb8f35a4406812e31365781f50aba959e9",

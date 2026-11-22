@@ -8,9 +8,9 @@
     "success": true,
     "tests_success": true,
     "coverage_requested": false,
-    "discovered": 4901,
-    "tests_run": 4901,
-    "accounted": 4901,
+    "discovered": 4902,
+    "tests_run": 4902,
+    "accounted": 4902,
     "workers": 4,
     "exit_codes": [
       0,
@@ -19,10 +19,10 @@
       0
     ],
     "skipped": 11,
-    "elapsed_seconds": 72.94194129099196
+    "elapsed_seconds": 61.25671924999915
   },
   "unit_command": "../venv/bin/python tools/run_parallel_unittest.py --jobs 4",
-  "unit_log_sha256": "1fda9c91d81f951f9552abf793a05cc6bad29a2f5f82a42a3583f9b8713b0811",
+  "unit_log_sha256": "abe5b5a23f7029997c0a7f5f24d9416e3dc5e67482bc56c455f05147644b7225",
   "planning": {
     "run": 216,
     "skipped": 1,
@@ -32,9 +32,9 @@
   "projection": "PASS_OFFLINE",
   "open_work_audit": "PASS_AUDIT_ONLY",
   "source_pins": {
-    "docs/verification/ha-native-voice-product-manifest.json": "7feaacf975eab049e89bb768a73eabf5dcec87f7db3fc643194e029cbb111653",
-    "docs/verification/ha-native-voice-actual-ha-matrix-20261122.json": "e19b16cca3bf66db9154a6f6ce1888a9b60511c4db4b3c0339b95449df547e2f",
-    "examples/client_contracts/ha_native_voice_v1/actual-ha.json": "f1292747d9eda7fc9ad17e5101e08e841800adeadccdc71a4fbc175c82507302"
+    "docs/verification/ha-native-voice-product-manifest.json": "687e79a5c49618f8dcd849726e8cba0323f490bd96fa36f30388423d9c8e0545",
+    "docs/verification/ha-native-voice-actual-ha-matrix-20261122.json": "bb49469090adbf3bfb786fe9d71c9359b0c9683972b1fc8f0e9d44b206372d04",
+    "examples/client_contracts/ha_native_voice_v1/actual-ha.json": "1ee075e02d4ca3d457e6c8ce7c3a31ab11204932c0165243507248aa1fa93bdd"
   },
   "independent_exact_head_review": "PENDING",
   "protected_ci": "PENDING",
@@ -49,5 +49,40 @@
     "unit-final",
     "unit-final-2",
     "unit-final-3"
-  ]
+  ],
+  "predecessor_local_qualification": {
+    "commit": "1dc4a8869d57d3ecf48feaf6f8d9587e1b48a1e5",
+    "unit_regression": {
+      "success": true,
+      "tests_success": true,
+      "coverage_requested": false,
+      "discovered": 4901,
+      "tests_run": 4901,
+      "accounted": 4901,
+      "workers": 4,
+      "exit_codes": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "skipped": 11,
+      "elapsed_seconds": 72.94194129099196
+    },
+    "unit_log_sha256": "1fda9c91d81f951f9552abf793a05cc6bad29a2f5f82a42a3583f9b8713b0811",
+    "source_pins": {
+      "docs/verification/ha-native-voice-product-manifest.json": "7feaacf975eab049e89bb768a73eabf5dcec87f7db3fc643194e029cbb111653",
+      "docs/verification/ha-native-voice-actual-ha-matrix-20261122.json": "e19b16cca3bf66db9154a6f6ce1888a9b60511c4db4b3c0339b95449df547e2f",
+      "examples/client_contracts/ha_native_voice_v1/actual-ha.json": "f1292747d9eda7fc9ad17e5101e08e841800adeadccdc71a4fbc175c82507302"
+    }
+  },
+  "review_correction": {
+    "finding": "https://github.com/djconnect-music-dj/djconnect/pull/1675#discussion_r4659956447",
+    "state": "FIXED_PENDING_EXACT_HEAD_REVIEW",
+    "persisted_original_lifecycle_target": true,
+    "fresh_ha_drivers": 51,
+    "native_tests": 17,
+    "shared_dialogue_tests": 204,
+    "failed_native_fixture_attempt_retained": "/Volumes/Shared Data/tmp/pcvantol/music-canvas-20261122-7lp9044s/ha-native-voice/ha-matrix-reviewed/summary.json"
+  }
 }

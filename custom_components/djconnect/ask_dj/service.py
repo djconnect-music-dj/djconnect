@@ -444,6 +444,16 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
             old = saved["user_message"].get("session_turn", {})
             if old.get("request_digest") != digest:
                 raise SessionConversationError("client_message_conflict")
+            if intent.intent == "session_lifecycle":
+                lifecycle = old.get("accepted_lifecycle")
+                if (not isinstance(lifecycle, (list, tuple)) or len(lifecycle) != 2
+                        or lifecycle[0] != intent.action
+                        or not isinstance(lifecycle[1], str) or not lifecycle[1]):
+                    raise SessionConversationError("session_context_changed")
+                # The persisted outcome owns the original target after RAM expiry.
+                # Restoring it also retains the normal final/delivery fences.
+                turn.accepted_lifecycle = tuple(lifecycle)
+                validate_persona()
             from ..historical_playback import validate_saved_output_replay
             await validate_saved_output_replay(query(), profile_id, saved, payload)
             for dep in saved["assistant_message"].get("historical_entry_references", []):
@@ -511,6 +521,8 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
                        "explicit_playback_request": explicit_action,
                        "implicit_playback_entry": implicit,
                        "dependency_entries": [d for d in dependencies if "entry_id" in d]}
+        if turn.accepted_lifecycle is not None:
+            turn_record["accepted_lifecycle"] = list(turn.accepted_lifecycle)
         turn_record['dependency_request_hashes'] = sorted(source_request_hashes)
         turn_record['dependency_moments'] = [d for d in dependencies if 'moment_id' in d]
         if turn.provider_display_source is not None:
