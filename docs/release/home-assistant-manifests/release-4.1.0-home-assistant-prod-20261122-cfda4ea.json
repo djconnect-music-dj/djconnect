@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "kind": "platform_release_operational_manifest",
+  "status": "APPROVED_DEPLOYMENT_DISPATCH_PENDING",
+  "manifest_id": "release-4.1.0-home-assistant-prod-20261122-cfda4ea",
+  "platform_version": "4.1",
+  "release_version": "4.1.0",
+  "release_profile": "INTERNAL_RELEASE",
+  "generated_at": "2026-11-22",
+  "approval": {
+    "state": "APPROVED",
+    "approved_at": "2026-11-22",
+    "approved_statement": "The maintainer explicitly requested a new release from current main and installation on all devices, HA development and HA production.",
+    "effect": "Deploy the exact current-main Core artifact below to HA production after development validation; run separate target-scoped smoke. Preserve pairing, profile data and recoverable rollback."
+  },
+  "repositories": [
+    {
+      "repository": "djconnect-music-dj/djconnect",
+      "source_sha": "cfda4ea0217da30fedaa555c17b2bf4491abeb70",
+      "version": "4.1.0",
+      "artifact_run": "45005077881"
+    }
+  ],
+  "required_targets": [
+    {
+      "target": "home_assistant_pi5",
+      "required": true
+    }
+  ],
+  "artifact_bindings": [
+    {
+      "owner": "djconnect-music-dj/djconnect",
+      "target": "home_assistant_pi5",
+      "artifact_id": "release-asset:djconnect-music-dj/djconnect:internal-ha-cfda4ea0217da30fedaa555c17b2bf4491abeb70:djconnect-home-assistant-integration-cfda4ea0217da30fedaa555c17b2bf4491abeb70.tar.gz",
+      "artifact_sha256": "aecc4cb9f49b2211ca199cd4261b210cfa35f1a69d0bcdc07c1d6d420529ff29",
+      "artifact_url": "https://github.com/djconnect-music-dj/djconnect/releases/download/internal-ha-cfda4ea0217da30fedaa555c17b2bf4491abeb70/djconnect-home-assistant-integration-cfda4ea0217da30fedaa555c17b2bf4491abeb70.tar.gz"
+    }
+  ],
+  "constraints": [
+    "Internal release only; no public HACS promotion or App Store/TestFlight submission.",
+    "Exact source CI and qualification passed; TDE complexity policy remains failed and does not establish a critical product defect.",
+    "Retain previously documented real-provider, editorial and physical product acceptance limits; installation and smoke do not certify those.",
+    "Back up production configuration and retain previous integration before installation.",
+    "Preserve existing pairing and Profile data; keep rollback outside custom_components."
+  ],
+  "next_authorized_action": "After HA-dev validation, dispatch private-network deployment and separate matching smoke for the exact binding."
+}
