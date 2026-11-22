@@ -14,7 +14,7 @@
   "custom_components/djconnect/device_info.py": "07d1b4c3534cbbaa48fa7ecd602f59c01f00356e4c7ea6383eb8939952926823",
   "custom_components/djconnect/request_auth.py": "f7fab1417869e350bcfd28e23bc48d6de34d53c22550c952f8e1490a0574c031",
   "custom_components/djconnect/icon.png": "4e91b019e423f8dd03b87aefc2e2fef04ecc6645f48f5bb8c431f94d2018da3e",
-  "custom_components/djconnect/music_canvas_runtime.py": "69d224d6ab310c75cbc8e73d0e742b4de239c431e7da5e9757dbd5d4aa50b72b",
+  "custom_components/djconnect/music_canvas_runtime.py": "ad5d95de90369d631acd4e45041cb66e40b12bdb153785b662fb5a222061d0e9",
   "custom_components/djconnect/client_retirement.py": "42bb54178f5c1655e600b21a6ccc954811d37e2a1f91f5318f7b97da6d69bca3",
   "custom_components/djconnect/native_widget_consent.py": "72bac2d9a8d96a8558133401fb1f85f572e349c4b8ad1c53f4089586a8581e72",
   "custom_components/djconnect/display_projection.py": "c1134edf803b60dac4d1a89e47a4cb942bbf94a084051cbf49546eb89dd846f1",

@@ -44082,7 +44082,7 @@
       "installed": "NOT_RUN",
       "live_model": "NOT_RUN",
       "automatic_dispatch": false,
-      "product_manifest_sha256": "6f964970de05d663d706542eb1c3eec3435bcb25417baae2d5514ae3af8bdca4",
+      "product_manifest_sha256": "65b70b4cb5aefc0f26db19061b39330827e2612ea673992a19e8b8953530c958",
       "documents": [
         {
           "path": "docs/product/MUSIC_CANVAS_V1.md",

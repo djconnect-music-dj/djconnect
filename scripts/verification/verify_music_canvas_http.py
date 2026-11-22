@@ -296,6 +296,41 @@ async def qualify(hass, manager, history, request, client):
         # Restore this declared synthetic hardware scenario for unrelated end tests.
         await runtime.repository.mutate(lambda current: current["devices"].update({device["id"]: device}), lambda: True)
         observed_content[device["id"]] = device["last_selected_content"]
+        # Cancellation during an actual private file save cannot strand references.
+        await runtime.cleanup_assets()
+        files_before_cancel = set(runtime.asset_root.glob("*.jpg"))
+        save_started, save_release = threading.Event(), threading.Event()
+        original_protocol = runtime.protocol
+        async def stalled_save_protocol(action):
+            if getattr(action, "__name__", None) == "save":
+                def save_after_release():
+                    save_started.set()
+                    assert save_release.wait(5)
+                    action()
+                return await original_protocol(save_after_release)
+            return await original_protocol(action)
+        state = await runtime.repository.read()
+        config = deepcopy(state["profiles"]["profile-a"])
+        config["preferences"].update(selected_targets=["samsung:fixture-a"], composition="free", matte="off")
+        with patch.object(runtime, "protocol", stalled_save_protocol), patch.object(runtime.cadence, "due", lambda *args: True):
+            cancelled_save = asyncio.create_task(runtime.safe_run("profile-a", manager.current_active("profile-a"), config, state))
+            while not save_started.is_set():
+                assert not cancelled_save.done(), runtime.states
+                await asyncio.sleep(0.001)
+            try:
+                for _ in range(3):
+                    cancelled_save.cancel()
+                    await asyncio.sleep(0.01)
+                    assert not cancelled_save.done() and runtime.inflight_files and runtime.asset_lock.locked()
+            finally:
+                save_release.set()
+            try:
+                await cancelled_save
+            except asyncio.CancelledError:
+                pass
+        assert not runtime.inflight_files and not runtime.asset_lock.locked()
+        await runtime.cleanup_assets()
+        assert set(runtime.asset_root.glob("*.jpg")) == files_before_cancel
         # Genuine Session end fences an already pending model completion.
         begun, release = asyncio.Event(), asyncio.Event()
         async def delayed(_hass, prompt):
@@ -329,6 +364,27 @@ async def qualify(hass, manager, history, request, client):
         await storage.async_set_profile_mapping("ha_user", admin.id, "profile-a")
         privileged, code = await call("read")
         assert code == 200 and privileged["can_manage_devices"]
+        # A delayed private preview cannot survive global target forgetting.
+        image_started, image_release = asyncio.Event(), asyncio.Event()
+        original_executor = hass.async_add_executor_job
+        snapshot = await runtime.repository.read()
+        portrait = snapshot["devices"]["switchbot:fixture-p"]
+        async def delayed_preview_io(action, *args):
+            if getattr(action, "__name__", None) == "read_bytes" and getattr(action, "__self__", None) == runtime.asset_root/portrait["preview"]:
+                data = await original_executor(action, *args)
+                image_started.set()
+                await image_release.wait()
+                return data
+            return await original_executor(action, *args)
+        with patch.object(hass, "async_add_executor_job", delayed_preview_io):
+            pending_preview = asyncio.create_task(call("preview", {"target_id": "switchbot:fixture-p"}))
+            await asyncio.wait_for(image_started.wait(), timeout=5)
+            forgotten, code = await call("forget", dict(binding=binding, operation_id=str(uuid.uuid4()),
+                target_id="switchbot:fixture-p", cleanup_remote=False, allow_remaining_art=False))
+            assert code == 200 and forgotten["state"] == "confirmed"
+            image_release.set()
+            late_preview, code = await pending_preview
+            assert code == 404 and not late_preview["success"], late_preview
         # Real HA action errors carry translation keys rather than English copy.
         from homeassistant.core import Context
         from homeassistant.exceptions import ServiceValidationError
@@ -375,7 +431,7 @@ async def qualify(hass, manager, history, request, client):
         state = await runtime.repository.read()
         assert "samsung:fixture-a" not in state["devices"]
         assert state["profiles"]["profile-a"]["preferences"]["enabled"]
-        assert state["profiles"]["profile-a"]["preferences"]["selected_targets"] == list(targets)[1:]
+        assert state["profiles"]["profile-a"]["preferences"]["selected_targets"] == ["samsung:fixture-b"]
         assert state["devices"]["samsung:fixture-b"]["token"] == "synthetic"
         # Interrupted hardware outcome: reserve/fence durably, cancel the work,
         # then close the actual SQLite provider and construct a new Canvas runtime.
@@ -444,6 +500,8 @@ async def qualify(hass, manager, history, request, client):
             "unknown_forget_requires_new_explicit_admin_decision": True,
             "preserve_reload_retains_runtime_final_unload_recreates_it": True,
             "asset_configuration_uses_localized_ha_errors": True,
+            "late_private_preview_after_forget_is_denied": True,
+            "cancelled_private_save_drains_and_releases_all_references": True,
             "session_end_preserves_enabled_and_targets": True,
             "real_model_calls": 0, "physical_hardware": "NOT_RUN"}
 

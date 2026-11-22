@@ -26,6 +26,7 @@ class CanvasRuntime:
         self.repository = CanvasRepository(persistence_service(hass))
         self.lock = asyncio.Lock()
         self.effect_lock = asyncio.Lock()
+        self.asset_lock = asyncio.Lock()
         self.cadence = Cadence()
         self.jobs = {}
         self.states = {}
@@ -246,23 +247,30 @@ class CanvasRuntime:
         need(device and device.get("preview") and device.get("preview_owner") == owner
              and not device.get("forgetting"), "canvas_preview_unavailable", 404)
         data = await self.hass.async_add_executor_job((self.asset_root/device["preview"]).read_bytes)
+        current = await self.repository.read(authorize)
+        after = current["devices"].get(target)
+        need(after and not after.get("forgetting") and after["epoch"] == device["epoch"]
+             and after.get("preview") == device["preview"] and after.get("preview_owner") == owner
+             and target in profile(current, owner)["preferences"]["selected_targets"],
+             "canvas_preview_unavailable", 404)
         need(authorize(), "unauthorized", 401)
         return data
 
     async def cleanup_assets(self):
-        state = await self.repository.read()
-        live = {x["preview"] for x in state["devices"].values() if x.get("preview")}
-        live |= {x["source_image"] for x in state["devices"].values() if x.get("source_image")}
-        now = time.time()
-        self.leases = {k: v for k, v in self.leases.items() if v["expires"] > now}
-        live |= {v["file"] for v in self.leases.values()}
-        live |= self.inflight_files
-        def clean():
-            if self.asset_root.is_dir():
-                for path in self.asset_root.glob("*.jpg"):
-                    if path.name not in live:
-                        path.unlink(missing_ok=True)
-        await self.hass.async_add_executor_job(clean)
+        async with self.asset_lock:
+            state = await self.repository.read()
+            live = {x["preview"] for x in state["devices"].values() if x.get("preview")}
+            live |= {x["source_image"] for x in state["devices"].values() if x.get("source_image")}
+            now = time.time()
+            self.leases = {k: v for k, v in self.leases.items() if v["expires"] > now}
+            live |= {v["file"] for v in self.leases.values()}
+            live |= self.inflight_files
+            def clean():
+                if self.asset_root.is_dir():
+                    for path in self.asset_root.glob("*.jpg"):
+                        if path.name not in live:
+                            path.unlink(missing_ok=True)
+            await self.protocol(clean)
 
     async def tick(self, _now=None):
         if self.stopped or self.lock.locked():
@@ -475,8 +483,9 @@ class CanvasRuntime:
                     if not source.exists():
                         source.write_bytes(raw)
                         source.chmod(0o600)
-                await self.hass.async_add_executor_job(save)
                 try:
+                    async with self.asset_lock:
+                        await self.protocol(save)
                     for target, device, _key in targets:
                         try:
                             await self.deliver(owner, config, active, target, device, filename, art, current_scope, source_file)
@@ -485,6 +494,8 @@ class CanvasRuntime:
                         except Exception:
                             self.states[target] = "unavailable"
                 finally:
+                    # No cancellable await may strand these bounded references.
+                    # Added durable references commit under asset_lock first.
                     self.inflight_files.discard(filename)
                     self.inflight_files.discard(source_file)
         except asyncio.CancelledError:
@@ -566,7 +577,8 @@ class CanvasRuntime:
                 state["devices"][target]["provenance"] = {
                     "input": "bounded_confirmed_title_only", "external_attachments": False,
                     "generated": True, "native_model_resolution_qualified": False}
-            await self.repository.mutate(commit, authorized)
+            async with self.asset_lock:
+                await self.repository.mutate(commit, authorized)
             self.states[target] = observed
 
 
