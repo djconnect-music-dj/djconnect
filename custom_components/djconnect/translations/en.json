@@ -1786,6 +1786,27 @@
           "description": "Keep completed or interrupted sessions for this many days after they end. Active sessions remain intact. Applies to all Profiles on this installation."
         }
       }
+    },
+    "music_canvas_asset_access": {
+      "name": "Music Canvas temporary image access",
+      "description": "Explicitly configure the external HTTPS origin for short-lived, file-scoped frame downloads. Requires a Home Assistant administrator.",
+      "fields": {
+        "https_origin": {
+          "name": "HTTPS origin",
+          "description": "Existing externally reachable Home Assistant HTTPS origin."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "canvas_admin_required": {
+      "message": "Home Assistant administrator permissions are required."
+    },
+    "canvas_https_origin_required": {
+      "message": "Use an explicitly configured external HTTPS origin without a path, query or credentials."
+    },
+    "canvas_unavailable": {
+      "message": "Music Canvas is unavailable."
     }
   }
 }

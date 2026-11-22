@@ -16,7 +16,7 @@ class HostWakeChildMigrationTests(unittest.IsolatedAsyncioTestCase):
         # an original installed HA20 database or an operational backup receipt.
         legacy = PersistenceService(path, SQLitePersistenceProvider())
         required = {k: v for k, v in schema.REQUIRED_TABLES.items() if not k.startswith("djconnect_host_wake_")
-                    and k not in {"djconnect_native_pair_retirements", "djconnect_native_widget_consent"}}
+                    and k not in {"djconnect_native_pair_retirements", "djconnect_native_widget_consent", "djconnect_music_canvas"}}
         try:
             with patch.object(service_module, "CURRENT_SCHEMA_VERSION", 20), \
                     patch.object(service_module, "MIGRATIONS", schema.MIGRATIONS[:20]), \
@@ -43,7 +43,7 @@ class HostWakeChildMigrationTests(unittest.IsolatedAsyncioTestCase):
                         patch.object(service_module, "MIGRATIONS", schema.MIGRATIONS[:21]), \
                         patch.object(service_module, "REQUIRED_TABLES", {
                             k: v for k, v in schema.REQUIRED_TABLES.items()
-                            if k not in {"djconnect_native_pair_retirements", "djconnect_native_widget_consent"}
+                            if k not in {"djconnect_native_pair_retirements", "djconnect_native_widget_consent", "djconnect_music_canvas"}
                         }):
                     await previous.async_initialize()
                 old_history = await previous.async_in_transaction(lambda tx:
@@ -71,7 +71,7 @@ class HostWakeChildMigrationTests(unittest.IsolatedAsyncioTestCase):
                         patch.object(service_module, "MIGRATIONS", schema.MIGRATIONS[:21]), \
                         patch.object(service_module, "REQUIRED_TABLES", {
                             k: v for k, v in schema.REQUIRED_TABLES.items()
-                            if k not in {"djconnect_native_pair_retirements", "djconnect_native_widget_consent"}
+                            if k not in {"djconnect_native_pair_retirements", "djconnect_native_widget_consent", "djconnect_music_canvas"}
                         }):
                     readiness = await current.async_initialize()
                 self.assertEqual(readiness.schema_version, 21)

@@ -117,8 +117,11 @@ MIGRATIONS = (
     Migration(22, "0022_native_pair_retirement",
         hashlib.sha256((NATIVE_PAIR_RETIREMENT_DDL + NATIVE_WIDGET_CONSENT_DDL).encode()).hexdigest()[:8]),
 )
+MUSIC_CANVAS_DDL = "CREATE TABLE djconnect_music_canvas (singleton INTEGER PRIMARY KEY CHECK(singleton=1),body TEXT NOT NULL CHECK(length(body)<=262144))"
+MIGRATIONS = (*MIGRATIONS, Migration(23, "0023_music_canvas", hashlib.sha256(MUSIC_CANVAS_DDL.encode()).hexdigest()[:8]))
 CURRENT_SCHEMA_VERSION = MIGRATIONS[-1].version
 REQUIRED_TABLES = {
+    "djconnect_music_canvas": {"singleton", "body"},
     "djconnect_native_widget_consent": {"local_binding", "operation_id", "enabled", "revision"},
     "djconnect_native_pair_retirements": {"event_id", "local_binding", "origin", "original", "consent_revision", "publisher_origin", "withdrawn", "delivered"},
     "djconnect_host_wake_children": {"parent_purpose_id", "native_operation_id", "generation", "native_revision",
@@ -514,6 +517,8 @@ def apply_migration(transaction: ProviderTransaction, version: int) -> None:
     elif version == 21:
         transaction.execute(HOST_WAKE_CHILD_DDL)
         transaction.execute(HOST_WAKE_ATTEMPT_DDL)
+    elif version == 23:
+        transaction.execute(MUSIC_CANVAS_DDL)
     elif version == 22:
         transaction.execute(NATIVE_PAIR_RETIREMENT_DDL)
         transaction.execute(NATIVE_WIDGET_CONSENT_DDL)

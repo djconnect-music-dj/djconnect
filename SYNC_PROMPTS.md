@@ -1,3 +1,7 @@
+## Music Canvas v1 — active cross-repository contract
+
+Core owns `docs/product/MUSIC_CANVAS_V1.md` and `docs/technical/MUSIC_CANVAS_V1_CONTRACT.md`. Apple consumes only version-1 capability and paired routes. Profile preferences, image generation, scheduler, device secrets and adapters are Core-owned; no Apple timer/provider or Cast route. Source implementation and physical/provider acceptance are reported separately.
+
 ## 2026-11-22 — Music Origin Moment v1 consumer contract
 
 Core #1581 selects `music_origin` / `music_origin_story` on existing requested-Moments operations, with schema1 relation/direction/uncertainty and original track subject. Apple consumes the same avatar, persistence/history and speech owners, preserving nuance; one shared disclaimer above both composers. See [design](docs/product/MUSIC_ORIGIN_MOMENT_V1.md). No new API or proactive selection. Source qualification and actual provider/native acceptance are separate.

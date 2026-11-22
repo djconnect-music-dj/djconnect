@@ -84,6 +84,9 @@ def validate_delta(plan: dict[str, Any]) -> list[str]:
             errors.append("maintenance: " + reason)
 
     version = d.get("schema_version")
+    if version == "djconnect-federated-planning-delta/23":
+        from music_canvas_delta import validate as validate_canvas
+        return validate_canvas(plan, validate_delta)
     if version == "djconnect-federated-planning-delta/22":
         from music_origin_finalization_delta import validate as validate_origin_finalization
         return validate_origin_finalization(plan, validate_delta)
@@ -1049,6 +1052,8 @@ def render_delta(p):
         state = ('protected source delivered contract3 (Core producer only)' if r['source_delivery'] == 'PROTECTED_MERGED'
                  else 'implemented local contract3 (runtime checkpoint3, unpublished until protected delivery)')
         intro += f"Selected shared Profile/Session settings consolidation: {r['assignment_id']}; six shared Persona/voice/gender/Mood/Presence/announcement_output, {state}, last explicit accepted choice becomes default, atomic active+default acceptance. Source {r['source_delivery']}; Core producer and migration work only; Apple/other consumers/joint separately open, no automatic dispatch or whole-family completion. Delivered v13 preserved.\n\n"
+    if d.get("music_canvas_receipt"):
+        intro += "Music Canvas v1 owner-selected implementation is LOCAL / NOT_MERGED. Core contracts, persistent preferences, lifecycle, composition and Samsung/SwitchBot adapters feed the native Apple panel. Joint real-provider/native/hardware acceptance stays Planned/OPEN; no Cast route, deployment or automatic dispatch.\n\n"
     if d.get("music_origin_finalization_receipt"):
         intro += "Music Origin SOURCE_DELIVERED: Core #1669 and Apple #405 protected merged with their own exact-main software/publication evidence. Avatar-menu/native/history source is delivered; MO01–MO18 real-provider, editorial and physical-device/accessibility acceptance remains OPEN. No installation, deployment, new writer or automatic dispatch.\n\n"
     if d.get("moments_avatar_receipt"):

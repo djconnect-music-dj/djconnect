@@ -1,3 +1,9 @@
+## Music Canvas v1 runtime dependencies (2026-11-22)
+
+- samsungtvws (minimum 3.0.7; actual HA2026.11.1 qualification uses 3.0.7): https://github.com/xchwarze/samsung-tv-ws-api ; LGPL-3.0 (installed wheel License-Expression). Unmodified separate Python dependency; no HACS integration or upstream source is copied. The wrapper uses Art Mode only, with independent DJConnect pairing. Preserve upstream license and source availability when distributing this dependency.
+- Pillow 13.0.0: https://pillow.readthedocs.io/en/stable/about.html#license ; MIT-CMU/HPND. Executor-side Canvas composition uses the Pillow dependency supplied by Home Assistant; custom integrations must not redeclare it. The developer environment pins13.0.0 and HA2026.11.1 provides that exact version. No fonts, owner photos, Spotify covers or third-party reference images are bundled for Canvas.
+- HA AI Task and SwitchBot Cloud remain existing HA integration/provider boundaries. No provider credentials or SwitchBot implementation are copied. Model/provider terms and generated-output rights remain deployment qualifications; fixtures use synthetic images only.
+
 ## Developer verification tools (1 November 2026)
 
 The developer verification environment pins [coverage.py 7.17.0](https://pypi.org/project/coverage/7.17.0/), requiring Python 3.11 or newer, under [Apache-2.0](https://github.com/coveragepy/coveragepy/blob/7.17.0/LICENSE.txt). The isolated Pico developer environment pins [Ruff 0.17.2](https://github.com/astral-sh/ruff/releases/tag/0.17.2), requiring Python 3.7 or newer, under [MIT](https://github.com/astral-sh/ruff/blob/0.17.2/LICENSE). No upstream source is vendored or modified. Neither tool ships in the Home Assistant integration or Pico firmware. Older notices below retain their historical scopes.

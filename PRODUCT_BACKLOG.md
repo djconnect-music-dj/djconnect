@@ -1,3 +1,7 @@
+## Selected 2026-11-22 — Music Canvas v1
+
+Owner selected integral implementation of the existing 15November Core/Apple assignment. Canonical [product design](docs/product/MUSIC_CANVAS_V1.md), [contract](docs/technical/MUSIC_CANVAS_V1_CONTRACT.md) and maintenance23 roadmap own the scope. Core profile/lifecycle/producer, Samsung and SwitchBot adapters and Apple consumer are In progress; joint provider/native/hardware acceptance remains Planned/OPEN. No API/Watch/VibeCast writer, deployment, signing or paid model execution is selected by this source increment. Historical backlog entries below retain their original scope.
+
 ## Current explicit selection — Ask DJ: Moments (20 November2026)
 
 The user selected existing Interactive DJMoments through owner comment6849511889 for integral Core+Apple source implementation. The current bounded maintenance19 leaves are ASK-DJ-MOMENTS::{CONTRACT,PRODUCER,APPLE,ACCEPTANCE}; source delivery and joint AM01–AM12 acceptance are separate. This supersedes the former settings-only execution horizon without modifying the immutable original top-level roadmap or dispatching unrelated lanes. See [canonical product](docs/product/ASK_DJ_MOMENTS_V1.md), [technical contract](docs/technical/ASK_DJ_MOMENTS_AVATAR_CONTRACT_V1.md) and [planning JSON](docs/roadmap/v1/djconnect-platform-v1.json).

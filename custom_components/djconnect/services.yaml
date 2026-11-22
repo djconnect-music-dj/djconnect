@@ -1836,3 +1836,11 @@ clear_profile_state:
       default: false
       selector:
         boolean:
+
+music_canvas_asset_access:
+  fields:
+    https_origin:
+      required: true
+      example: "https://ha.example.org"
+      selector:
+        text:

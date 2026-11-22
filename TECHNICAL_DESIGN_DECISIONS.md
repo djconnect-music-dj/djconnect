@@ -1,3 +1,7 @@
+## 2026-11-22 — Music Canvas v1
+
+Reuse canonical Profile binding, PersistenceService/SQLite (forward migration23), SessionRuntimeManager and HA's configured AI Task image entity. A bounded executor compositor produces native target proportions and matte without UI overlays. samsungtvws3.0.7 is an unmodified LGPL-3.0 dependency, Pillow13.0.0 is MIT-CMU/HPND; these match the inspected HA2026.11.1 image. This does not upgrade unrelated dependencies or change the earlier HA2026.10 decoder qualification. Native SwitchBot Cloud upload consumes registry device IDs and explicitly configured temporary HTTPS leases; accepted cloud submission remains display-unconfirmed. No Cast, separate inference service, client timer or credential copy. See docs/technical/MUSIC_CANVAS_V1_CONTRACT.md.
+
 ## 2026-11-05 — For-you reuses existing Session/dialogue/effect ownership
 
 Prepare one bounded nonarchival dialogue result at genuine Session start; no

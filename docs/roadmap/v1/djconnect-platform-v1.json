@@ -37594,7 +37594,7 @@
     }
   ],
   "planning_maintenance": {
-    "schema_version": "djconnect-federated-planning-delta/22",
+    "schema_version": "djconnect-federated-planning-delta/23",
     "decision_id": "DJC-DJ-PRESENCE-ROADMAP-DESIGN-V1-20261011",
     "decision_url": "https://github.com/pcvantol/djconnect/issues/1101#issuecomment-6110375785",
     "design_date": "2026-10-11",
@@ -40066,6 +40066,191 @@
             ]
           }
         ]
+      },
+      {
+        "id": "MUSIC-CANVAS::CONTRACT",
+        "title": "Music Canvas product, source policy and native v1 contract",
+        "lane": "DJC-CORE",
+        "repository": "djconnect-music-dj/djconnect",
+        "status": "In progress",
+        "assignment_status": "USER_SELECTED",
+        "scope": "Music Canvas v1 only; no Cast/API/Watch or implicit deployment",
+        "acceptance_boundary": "Software, installed, real provider, native and physical hardware are separate",
+        "contract_binding": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+        "source_ids": [
+          "OWNER-MUSIC-CANVAS-20261115"
+        ],
+        "parent_reference": "PROJ::ROADMAP::INTERACTIVE",
+        "family_reference": "Existing Profile / Session / provider / native client owners",
+        "prerequisite_groups": []
+      },
+      {
+        "id": "MUSIC-CANVAS::PROFILE",
+        "title": "Durable Profile preferences and independent Session lifecycle",
+        "lane": "DJC-CORE",
+        "repository": "djconnect-music-dj/djconnect",
+        "status": "In progress",
+        "assignment_status": "USER_SELECTED",
+        "scope": "Music Canvas v1 only; no Cast/API/Watch or implicit deployment",
+        "acceptance_boundary": "Software, installed, real provider, native and physical hardware are separate",
+        "contract_binding": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+        "source_ids": [
+          "OWNER-MUSIC-CANVAS-20261115"
+        ],
+        "parent_reference": "PROJ::ROADMAP::INTERACTIVE",
+        "family_reference": "Existing Profile / Session / provider / native client owners",
+        "prerequisite_groups": [
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "MUSIC-CANVAS-1"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "MUSIC-CANVAS::PRODUCER",
+        "title": "Bounded image generation, native composition and shared asset lifecycle",
+        "lane": "DJC-CORE",
+        "repository": "djconnect-music-dj/djconnect",
+        "status": "In progress",
+        "assignment_status": "USER_SELECTED",
+        "scope": "Music Canvas v1 only; no Cast/API/Watch or implicit deployment",
+        "acceptance_boundary": "Software, installed, real provider, native and physical hardware are separate",
+        "contract_binding": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+        "source_ids": [
+          "OWNER-MUSIC-CANVAS-20261115"
+        ],
+        "parent_reference": "PROJ::ROADMAP::INTERACTIVE",
+        "family_reference": "Existing Profile / Session / provider / native client owners",
+        "prerequisite_groups": [
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "MUSIC-CANVAS-2"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "MUSIC-CANVAS::SAMSUNG",
+        "title": "Standalone Samsung Art Mode discovery, pairing and observed delivery",
+        "lane": "DJC-CORE",
+        "repository": "djconnect-music-dj/djconnect",
+        "status": "In progress",
+        "assignment_status": "USER_SELECTED",
+        "scope": "Music Canvas v1 only; no Cast/API/Watch or implicit deployment",
+        "acceptance_boundary": "Software, installed, real provider, native and physical hardware are separate",
+        "contract_binding": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+        "source_ids": [
+          "OWNER-MUSIC-CANVAS-20261115"
+        ],
+        "parent_reference": "PROJ::ROADMAP::INTERACTIVE",
+        "family_reference": "Existing Profile / Session / provider / native client owners",
+        "prerequisite_groups": [
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "MUSIC-CANVAS-3"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "MUSIC-CANVAS::SWITCHBOT",
+        "title": "Existing HA SwitchBot Cloud native upload and temporary asset lease",
+        "lane": "DJC-CORE",
+        "repository": "djconnect-music-dj/djconnect",
+        "status": "In progress",
+        "assignment_status": "USER_SELECTED",
+        "scope": "Music Canvas v1 only; no Cast/API/Watch or implicit deployment",
+        "acceptance_boundary": "Software, installed, real provider, native and physical hardware are separate",
+        "contract_binding": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+        "source_ids": [
+          "OWNER-MUSIC-CANVAS-20261115"
+        ],
+        "parent_reference": "PROJ::ROADMAP::INTERACTIVE",
+        "family_reference": "Existing Profile / Session / provider / native client owners",
+        "prerequisite_groups": [
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "MUSIC-CANVAS-4"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "MUSIC-CANVAS::APPLE",
+        "title": "Native Music Canvas controls, per-screen state and confirmed preference writes",
+        "lane": "DJC-APPLE",
+        "repository": "djconnect-music-dj/djconnect-app",
+        "status": "In progress",
+        "assignment_status": "USER_SELECTED",
+        "scope": "Music Canvas v1 only; no Cast/API/Watch or implicit deployment",
+        "acceptance_boundary": "Software, installed, real provider, native and physical hardware are separate",
+        "contract_binding": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+        "source_ids": [
+          "OWNER-MUSIC-CANVAS-20261115"
+        ],
+        "parent_reference": "PROJ::ROADMAP::INTERACTIVE",
+        "family_reference": "Existing Profile / Session / provider / native client owners",
+        "prerequisite_groups": [
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "MUSIC-CANVAS-5"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "MUSIC-CANVAS::ACCEPTANCE",
+        "title": "Joint real-provider, Samsung/SwitchBot and native device acceptance",
+        "lane": "DJC-CORE",
+        "repository": "djconnect-music-dj/djconnect",
+        "status": "Planned",
+        "assignment_status": "OPEN_ACCEPTANCE",
+        "scope": "Music Canvas v1 only; no Cast/API/Watch or implicit deployment",
+        "acceptance_boundary": "Software, installed, real provider, native and physical hardware are separate",
+        "contract_binding": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+        "source_ids": [
+          "OWNER-MUSIC-CANVAS-20261115"
+        ],
+        "parent_reference": "PROJ::ROADMAP::INTERACTIVE",
+        "family_reference": "Existing Profile / Session / provider / native client owners",
+        "prerequisite_groups": [
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "MUSIC-CANVAS-6"
+            ]
+          },
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "MUSIC-CANVAS-7"
+            ]
+          },
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "MUSIC-CANVAS-8"
+            ]
+          },
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "MUSIC-CANVAS-9"
+            ]
+          },
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "MUSIC-CANVAS-10"
+            ]
+          }
+        ]
       }
     ],
     "edges": [
@@ -42297,6 +42482,166 @@
         "required_subset": "Versioned actual producer/native contract; source and joint acceptance separate",
         "contract_or_evidence": "docs/product/MUSIC_ORIGIN_MOMENT_V1.md",
         "reason": "Bounded functional dependency for owner-selected #1581; existing Moments source is delivered"
+      },
+      {
+        "id": "MUSIC-CANVAS-1",
+        "producer": "MUSIC-CANVAS::CONTRACT",
+        "consumer": "MUSIC-CANVAS::PROFILE",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-MUSIC-CANVAS-20261115"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Versioned Canvas contract and actual producer/consumer subset",
+        "contract_or_evidence": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+        "reason": "Adapters may be prepared independently; joint acceptance requires both outputs and native adoption"
+      },
+      {
+        "id": "MUSIC-CANVAS-2",
+        "producer": "MUSIC-CANVAS::CONTRACT",
+        "consumer": "MUSIC-CANVAS::PRODUCER",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-MUSIC-CANVAS-20261115"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Versioned Canvas contract and actual producer/consumer subset",
+        "contract_or_evidence": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+        "reason": "Adapters may be prepared independently; joint acceptance requires both outputs and native adoption"
+      },
+      {
+        "id": "MUSIC-CANVAS-3",
+        "producer": "MUSIC-CANVAS::CONTRACT",
+        "consumer": "MUSIC-CANVAS::SAMSUNG",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-MUSIC-CANVAS-20261115"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Versioned Canvas contract and actual producer/consumer subset",
+        "contract_or_evidence": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+        "reason": "Adapters may be prepared independently; joint acceptance requires both outputs and native adoption"
+      },
+      {
+        "id": "MUSIC-CANVAS-4",
+        "producer": "MUSIC-CANVAS::CONTRACT",
+        "consumer": "MUSIC-CANVAS::SWITCHBOT",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-MUSIC-CANVAS-20261115"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Versioned Canvas contract and actual producer/consumer subset",
+        "contract_or_evidence": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+        "reason": "Adapters may be prepared independently; joint acceptance requires both outputs and native adoption"
+      },
+      {
+        "id": "MUSIC-CANVAS-5",
+        "producer": "MUSIC-CANVAS::CONTRACT",
+        "consumer": "MUSIC-CANVAS::APPLE",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-MUSIC-CANVAS-20261115"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Versioned Canvas contract and actual producer/consumer subset",
+        "contract_or_evidence": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+        "reason": "Adapters may be prepared independently; joint acceptance requires both outputs and native adoption"
+      },
+      {
+        "id": "MUSIC-CANVAS-6",
+        "producer": "MUSIC-CANVAS::PROFILE",
+        "consumer": "MUSIC-CANVAS::ACCEPTANCE",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-MUSIC-CANVAS-20261115"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Versioned Canvas contract and actual producer/consumer subset",
+        "contract_or_evidence": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+        "reason": "Adapters may be prepared independently; joint acceptance requires both outputs and native adoption"
+      },
+      {
+        "id": "MUSIC-CANVAS-7",
+        "producer": "MUSIC-CANVAS::PRODUCER",
+        "consumer": "MUSIC-CANVAS::ACCEPTANCE",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-MUSIC-CANVAS-20261115"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Versioned Canvas contract and actual producer/consumer subset",
+        "contract_or_evidence": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+        "reason": "Adapters may be prepared independently; joint acceptance requires both outputs and native adoption"
+      },
+      {
+        "id": "MUSIC-CANVAS-8",
+        "producer": "MUSIC-CANVAS::SAMSUNG",
+        "consumer": "MUSIC-CANVAS::ACCEPTANCE",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-MUSIC-CANVAS-20261115"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Versioned Canvas contract and actual producer/consumer subset",
+        "contract_or_evidence": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+        "reason": "Adapters may be prepared independently; joint acceptance requires both outputs and native adoption"
+      },
+      {
+        "id": "MUSIC-CANVAS-9",
+        "producer": "MUSIC-CANVAS::SWITCHBOT",
+        "consumer": "MUSIC-CANVAS::ACCEPTANCE",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-MUSIC-CANVAS-20261115"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Versioned Canvas contract and actual producer/consumer subset",
+        "contract_or_evidence": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+        "reason": "Adapters may be prepared independently; joint acceptance requires both outputs and native adoption"
+      },
+      {
+        "id": "MUSIC-CANVAS-10",
+        "producer": "MUSIC-CANVAS::APPLE",
+        "consumer": "MUSIC-CANVAS::ACCEPTANCE",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-MUSIC-CANVAS-20261115"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Versioned Canvas contract and actual producer/consumer subset",
+        "contract_or_evidence": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+        "reason": "Adapters may be prepared independently; joint acceptance requires both outputs and native adoption"
       }
     ],
     "document_references": [
@@ -42306,7 +42651,7 @@
       },
       {
         "path": "PRODUCT_BACKLOG.md",
-        "sha256": "735828e91a7cdf368ab9f4d77db800151e15bd88379213d85e3d71384d05bc40"
+        "sha256": "3e40fff3228effdabd7a82581c3592b15456568e0fbb4b6dca408d4dd923f8fd"
       },
       {
         "path": "docs/product/DJ_PRESENCE_V1.md",
@@ -42342,7 +42687,7 @@
       },
       {
         "path": "API_CONTRACT.md",
-        "sha256": "21f8c235eecc9f6256450ec87285f3da1d20def3fb2613125a815cd4f3e2b68f"
+        "sha256": "596879fd36dc1e9336248f2822c7c3f0be896d831cc4111a2bbc823107c0e977"
       },
       {
         "path": "docs/product/NARRATIVE_ALBUM_CONTINUITY_V1.md",
@@ -43728,6 +44073,46 @@
       ],
       "physical_acceptance": "OPEN",
       "installation_receipt_sha256": "9d8c4663f9f30c8c1128be0154baf8397d59015e466f802f79d761d60a3e106f"
+    },
+    "music_canvas_receipt": {
+      "assignment_id": "DJC-MUSIC-CANVAS-V1-20261115",
+      "predecessor_sha256": "6e7be7cd5438f4e26d58af464f2ac3db1a1035b972cc2647b3aacd4b04e9f8bf",
+      "source_delivery": "LOCAL_IMPLEMENTATION_NOT_MERGED",
+      "overall_acceptance": "OPEN",
+      "installed": "NOT_RUN",
+      "live_model": "NOT_RUN",
+      "automatic_dispatch": false,
+      "product_manifest_sha256": "65b70b4cb5aefc0f26db19061b39330827e2612ea673992a19e8b8953530c958",
+      "documents": [
+        {
+          "path": "docs/product/MUSIC_CANVAS_V1.md",
+          "sha256": "2267cefdd533e17cc5e33222f521b702359d16053b2544eeb3689a330c136a9a"
+        },
+        {
+          "path": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+          "sha256": "142e8d77c93be69a689ed45ba8c2ef275029b55c3f31b8d923434084313703f5"
+        },
+        {
+          "path": "API_CONTRACT.md",
+          "sha256": "596879fd36dc1e9336248f2822c7c3f0be896d831cc4111a2bbc823107c0e977"
+        },
+        {
+          "path": "PRODUCT_BACKLOG.md",
+          "sha256": "3e40fff3228effdabd7a82581c3592b15456568e0fbb4b6dca408d4dd923f8fd"
+        }
+      ],
+      "predecessor_documents": [
+        {
+          "path": "API_CONTRACT.md",
+          "snapshot": "docs/roadmap/v1/history/20261122/music-canvas-predecessor-documents/API_CONTRACT.md",
+          "sha256": "21f8c235eecc9f6256450ec87285f3da1d20def3fb2613125a815cd4f3e2b68f"
+        },
+        {
+          "path": "PRODUCT_BACKLOG.md",
+          "snapshot": "docs/roadmap/v1/history/20261122/music-canvas-predecessor-documents/PRODUCT_BACKLOG.md",
+          "sha256": "735828e91a7cdf368ab9f4d77db800151e15bd88379213d85e3d71384d05bc40"
+        }
+      ]
     }
   }
 }

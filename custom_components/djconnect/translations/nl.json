@@ -1786,6 +1786,27 @@
           "description": "Bewaar afgeronde of onderbroken sessies zoveel dagen na afloop. Actieve sessies blijven intact. Geldt voor alle profielen op deze installatie."
         }
       }
+    },
+    "music_canvas_asset_access": {
+      "name": "Music Canvas tijdelijke beeldtoegang",
+      "description": "Stel expliciet de externe HTTPS-origin in voor tijdelijke toegang tot één kunstbestand per frame. Vereist een Home Assistant-beheerder.",
+      "fields": {
+        "https_origin": {
+          "name": "HTTPS origin",
+          "description": "Bestaande extern bereikbare HTTPS-origin van Home Assistant."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "canvas_admin_required": {
+      "message": "Beheerdersrechten voor Home Assistant zijn vereist."
+    },
+    "canvas_https_origin_required": {
+      "message": "Gebruik een expliciet ingesteld extern HTTPS-adres zonder pad, query of inloggegevens."
+    },
+    "canvas_unavailable": {
+      "message": "Music Canvas is niet beschikbaar."
     }
   }
 }

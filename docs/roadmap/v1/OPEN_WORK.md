@@ -12,6 +12,8 @@ Selected passive Session projection: DJC-CORE-PASSIVE-SESSION-PROJECTION-V1-2026
 
 Selected shared Profile/Session settings consolidation: DJC-PROFILE-SESSION-SETTINGS-CONSOLIDATION-V1-20261016; six shared Persona/voice/gender/Mood/Presence/announcement_output, protected source delivered contract3 (Core producer only), last explicit accepted choice becomes default, atomic active+default acceptance. Source PROTECTED_MERGED; Core producer and migration work only; Apple/other consumers/joint separately open, no automatic dispatch or whole-family completion. Delivered v13 preserved.
 
+Music Canvas v1 owner-selected implementation is LOCAL / NOT_MERGED. Core contracts, persistent preferences, lifecycle, composition and Samsung/SwitchBot adapters feed the native Apple panel. Joint real-provider/native/hardware acceptance stays Planned/OPEN; no Cast route, deployment or automatic dispatch.
+
 Music Origin SOURCE_DELIVERED: Core #1669 and Apple #405 protected merged with their own exact-main software/publication evidence. Avatar-menu/native/history source is delivered; MO01–MO18 real-provider, editorial and physical-device/accessibility acceptance remains OPEN. No installation, deployment, new writer or automatic dispatch.
 
 Ask DJ Moments SOURCE_DELIVERED: Core #1664 and Apple #400 protected merged; both exact-main/publication records independently qualified. Three software leaves Completed; joint AM01–AM12 ACCEPTANCE stays Planned/OPEN, actual installed/model/editorial/a11y acceptance unclaimed. New and inherited TDE maintainability risks remain OPEN, actual assessment FAIL. Original maintenance19 and every earlier receipt remain immutable; no new consumer dispatch.
@@ -91,5 +93,12 @@ A product choice: LIMITED_APP_ATTESTED_REPORTED_ROUTE selected with the stated c
 - `LIVE-IMPRESSION::ACCEPTANCE` — Planned: Software/source delivery distinct from real sources, HA model, native and physical acceptance.
 - `ASK-DJ-MOMENTS::ACCEPTANCE` — Planned: Software/source, actual HA fixture, native/model/editorial/device AM12 acceptance remain separate.
 - `MUSIC-ORIGIN::ACCEPTANCE` — Planned: Software/source, actual HA fixture, native/model/editorial/device AM12 acceptance remain separate.
+- `MUSIC-CANVAS::CONTRACT` — In progress: Software, installed, real provider, native and physical hardware are separate.
+- `MUSIC-CANVAS::PROFILE` — In progress: Software, installed, real provider, native and physical hardware are separate.
+- `MUSIC-CANVAS::PRODUCER` — In progress: Software, installed, real provider, native and physical hardware are separate.
+- `MUSIC-CANVAS::SAMSUNG` — In progress: Software, installed, real provider, native and physical hardware are separate.
+- `MUSIC-CANVAS::SWITCHBOT` — In progress: Software, installed, real provider, native and physical hardware are separate.
+- `MUSIC-CANVAS::APPLE` — In progress: Software, installed, real provider, native and physical hardware are separate.
+- `MUSIC-CANVAS::ACCEPTANCE` — Planned: Software, installed, real provider, native and physical hardware are separate.
 
 Policy values/budgets/default and exact presence route/schema remain unqualified design details. No runtime/native/browser/installed/hardware PASS.
