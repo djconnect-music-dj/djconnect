@@ -111,6 +111,11 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
         raise SessionConversationError("invalid_conversation_text", 400)
     from . import classify_ask_dj
     intent = classify_ask_dj(text)
+    if intent.intent == "session_lifecycle":
+        # Lifecycle captures its exact target inside the reserved common turn.
+        # A response retry must not acquire a different digest merely because
+        # this same accepted operation created or ended the active Session.
+        context = {key: value for key, value in context.items() if key == "thread_id"}
     historical_play = (payload.get("_command_action") or (None,))[0] == "play_history_item"
     fast = not historical_play and intent.category == "action"
     explicit_action = intent.category in {"action", "hybrid"} and intent.action not in {None, "none", "announce"}
@@ -156,7 +161,17 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
         # active Session. Never relabel or accept old prose after a live CAS.
         style_session = active.session_id if active else ""
         style_revision = active.persona_revision if active else None
+        def disposed_by_this_turn(identifier):
+            return (turn is not None and turn.accepted_lifecycle == ("session_end", identifier)
+                    and manager.current_active(profile_id) is None)
         def validate_persona():
+            if turn is not None and turn.accepted_lifecycle is not None:
+                action, accepted_session = turn.accepted_lifecycle
+                current = manager.current_active(profile_id)
+                if ((action == "session_end" and current is not None)
+                        or (action == "session_start" and (current is None or current.session_id != accepted_session))):
+                    raise SessionConversationError("session_context_changed")
+                return
             if settings_token is not None and manager.dj_settings_fence_token(profile_id) != settings_token:
                 raise SessionConversationError('conversation_context_changed')
             if style_session:
@@ -359,7 +374,7 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
                 raise SessionConversationError("conversation_context_changed")
             if check_runtime:
                 current = await manager.async_get_active(profile_id)
-                if playback_fence_session and (current is None or current.session_id != playback_fence_session
+                if playback_fence_session and not disposed_by_this_turn(playback_fence_session) and (current is None or current.session_id != playback_fence_session
                     or (track_bound and not explicit_action and current.broadcast.state.playback.item_id != captured)):
                     raise SessionConversationError("session_context_changed")
             for dependency in dependencies:
@@ -375,7 +390,7 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
                 raise SessionConversationError("conversation_history_changed")
             if history_grant_revision(hass, profile_id) != grant:
                 raise SessionConversationError("conversation_context_changed")
-            if playback_fence_session:
+            if playback_fence_session and not disposed_by_this_turn(playback_fence_session):
                 current = manager.current_active(profile_id)
                 if current is None or current.session_id != playback_fence_session or (
                     track_bound and not explicit_action and current.broadcast.state.playback.item_id != captured):
@@ -548,7 +563,7 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
                         session_turn=turn_record, commit_guard=persistence_guard)
                 entries = []
                 try:
-                    if session_id:
+                    if session_id and not disposed_by_this_turn(session_id):
                         entries = await query()._repository.async_append_entries(profile_id, session_id, [
                             {"kind": kind, "reference_id": turn_record["turn_id"] + ":" + role,
                              "body": {"turn_id": turn_record["turn_id"], "message_id": saved[role]["id"], "history_scope": scope},
@@ -585,7 +600,7 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
                         await history_manager.async_discard_session_exchange(scope, client_id, turn_record["turn_id"])
                     raise
                 return entries
-            if style_session or settings_token is not None:
+            if (style_session or settings_token is not None) and turn.accepted_lifecycle is None:
                 ids = await manager.async_accept_conversation(owner_profile_id=profile_id, session_id=style_session,
                     playback_item_id=captured, track_bound=track_bound and not explicit_action,
                     persona_revision=style_revision, settings_token=settings_token, commit=finish)
@@ -603,13 +618,15 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
             result.pop("_dialogue_question", None)
             result.pop("_consume_pending", None)
             if (turn.first_play_request and result.get('first_play', {}).get('state') == 'genres'
+                    and turn.reused_result_set is None
                     and active is not None and active.session_id == turn.session_id
                     and not active.broadcast.first_play_dismissed_offer_id):
                 active.broadcast.first_play_offer = _for_you_offer_projection(active, thread, result)
                 active.broadcast.first_play_continuation = None
         from ..request_auth import runtime_client_type
+        from ..native_voice import active_for as native_voice_for
         if (active is not None and active.session_id == turn.session_id and 'first_play' in result
-                and runtime_client_type(runtime) in {'ios', 'macos'}):
+                and (runtime_client_type(runtime) in {'ios', 'macos'} or native_voice_for(hass, runtime) is not None)):
             if (result['first_play'].get('state') != 'genres'
                     and not active.broadcast.first_play_dismissed_offer_id):
                 active.broadcast.first_play_continuation = {

@@ -22,7 +22,7 @@ def sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
-def validate(plan, previous_validator):
+def validate(plan, previous_validator, *, historical_product=False):
     delta = plan["planning_maintenance"]
     receipt = delta.get("music_canvas_finalization_receipt", {})
     raw = (Path(__file__).parent/FREEZE).read_bytes()
@@ -92,7 +92,7 @@ def validate(plan, previous_validator):
             check(durable.get("commit_sha") == identity[2] and row.get("durable_sha256") == sha(encoded)
                   and module.validate_record(durable, expected_policy_source=expected) == [],
                   name + " original twelve-check qualification")
-        actual = {str(p.relative_to(ROOT)): sha(p.read_bytes()) for p in (ROOT/"custom_components/djconnect").rglob("*")
+        actual = json.loads((ROOT/"docs/verification/music-canvas-product-manifest.json").read_bytes()) if historical_product else {str(p.relative_to(ROOT)): sha(p.read_bytes()) for p in (ROOT/"custom_components/djconnect").rglob("*")
                   if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"}
         check(len(actual) == 328 and readback.get("core", {}).get("archive_product_files") == actual,
               "actual published product identity")

@@ -450,6 +450,15 @@
           "client_type": "Device type",
           "require_profile": "Require a profile"
         }
+      },
+      "native_voice_access": {
+        "title": "Personal voice access",
+        "description": "Only enable this for a trusted personal device. Anyone using it can access the selected profile’s private DJ conversation and playback controls. Shared room devices must stay disabled. Uncheck to withdraw access.",
+        "data": {
+          "ha_device_id": "Voice device",
+          "profile_id": "DJConnect profile",
+          "allow_personal_access": "Allow personal access"
+        }
       }
     },
     "error": {

@@ -90,11 +90,11 @@ class RecordingProductionTests(unittest.IsolatedAsyncioTestCase):
     async def test_current_actual_ha_receipt_binds_all_products_without_quality_or_native_claim(self):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads((root/'examples/client_contracts/ask_dj_recording_production_v1/actual-ha-wire-live-impression-20261119-requested-moments-20261120.json').read_text())
-        current = json.loads((root / 'examples/client_contracts/ask_dj_recording_production_v1/music-canvas-recovery-20261122-music-canvas-20261122-ac-b8a25dea.json').read_text())
+        current = json.loads((root / 'examples/client_contracts/ask_dj_recording_production_v1/ha-native-voice-20261122-music-canvas-recovery-20-4c4dddc0.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
         self.assertEqual(current['harness'], proof['harness'])
         self.assertEqual(current['harness_sha256'], proof['harness_sha256'])
-        self.assertEqual(len(current['source_pins']), 328)
+        self.assertEqual(len(current['source_pins']), 331)
         for name, digest in current['source_pins'].items():
             self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), digest, name)
         self.assertEqual(hashlib.sha256((root/proof['harness']).read_bytes()).hexdigest(), proof['harness_sha256'])

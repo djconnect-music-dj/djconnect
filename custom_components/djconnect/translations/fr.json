@@ -450,6 +450,15 @@
           "client_type": "Type d’appareil",
           "require_profile": "Profil obligatoire"
         }
+      },
+      "native_voice_access": {
+        "title": "Accès vocal personnel",
+        "description": "Activez uniquement pour un appareil personnel de confiance. Toute personne qui l’utilise peut accéder aux conversations privées et aux commandes de lecture de ce profil. Laissez les appareils partagés désactivés. Décochez pour retirer l’accès.",
+        "data": {
+          "ha_device_id": "Appareil vocal",
+          "profile_id": "Profil DJConnect",
+          "allow_personal_access": "Autoriser l’accès personnel"
+        }
       }
     },
     "error": {

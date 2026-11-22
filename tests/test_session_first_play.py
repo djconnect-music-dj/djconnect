@@ -132,6 +132,36 @@ class FirstPlayTests(IsolatedAsyncioTestCase):
         self.history.dialogue.complete(self.turn, result)
         return result
 
+    async def test_personal_voice_reuses_exact_offer_actions_and_one_completion(self):
+        from custom_components.djconnect.ask_dj.service import _for_you_offer_projection
+        response = await self.offer()
+        canonical = self.frame
+        self.history.dialogue.owners['profile:synthetic-owner'] = {'canonical': canonical}
+        offer = _for_you_offer_projection(self.active, 'canonical', response)
+        self.active.broadcast.first_play_offer = offer
+        before = list(self.reads)
+        self.frame = None
+        self.new_turn('voice-offer')
+        self.turn.thread_id = 'voice-thread'
+        reused = self.steering.reuse_for_you_offer(self.hass, self.runtime, self.turn)
+        self.history.dialogue.complete(self.turn, reused)
+        self.assertEqual(self.reads, before)
+        self.assertEqual(reused['result_set']['result_set_id'], response['result_set']['result_set_id'])
+        self.assertEqual(reused['result_set']['items'], response['result_set']['items'])
+        self.assertEqual(self.frame.result_set['deadline'], canonical.result_set['deadline'])
+        self.assertIs(self.frame.result_set['first_play_admission'], canonical.result_set['first_play_admission'])
+        self.assertIsNot(self.frame.result_set, canonical.result_set)
+        self.assertIsNone(canonical.pending)
+        selected = await self.choose(1, 'voice-second')
+        self.assertTrue(selected['success'], selected)
+        self.assertEqual(len(self.effects), 1)
+        self.assertEqual(self.effects[0][1], response['result_set']['items'][1]['uris'])
+        self.assertFalse(self.steering.for_you_projection(self.hass, self.runtime,
+            'synthetic-owner', self.active)['visible'])
+        with self.assertRaises(self.dialogue.DialogueError):
+            await self.choose(1, 'voice-no-replay')
+        self.assertEqual(len(self.effects), 1)
+
     async def test_all_four_moods_five_languages_return_exact_three_backed_genres_without_effect(self):
         for mood in ("chill", "groove", "energy", "party"):
             for locale in self.steering.FIRST_PLAY_COPY:
@@ -541,9 +571,9 @@ class FirstPlayWireEvidenceTests(IsolatedAsyncioTestCase):
         from pathlib import Path
         root = Path(__file__).resolve().parents[1]
         fixture = json.loads((root/'examples/client_contracts/session_first_play_v2/actual-ha-wire.json').read_text())
-        current = json.loads((root / 'examples/client_contracts/session_for_you_v1/music-canvas-recovery-20261122-music-canvas-20261122-ac-6ac77735.json').read_text())
+        current = json.loads((root / 'examples/client_contracts/session_for_you_v1/ha-native-voice-20261122-music-canvas-recovery-20-c46cbe12.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
-        self.assertEqual(len(current['source_pins']), 328)
+        self.assertEqual(len(current['source_pins']), 331)
         self.assertEqual(hashlib.sha256((root / current['harness']).read_bytes()).hexdigest(), current['harness_sha256'])
         extension = current['receipt']['extension']
         self.assertEqual(extension['model_provider_calls'], 0)

@@ -1,0 +1,53 @@
+{
+  "assignment_id": "DJC-HA-VOICE-CORE-CONVERGENCE-V1-20261107",
+  "base_sha": "d987f79f8c281dab3cbcc1dc4bc5981d129f5d23",
+  "source": "LOCAL_IMPLEMENTED_NOT_MERGED",
+  "whole_assignment": "OPEN",
+  "shared_guest_request_display": "NOT_IMPLEMENTED_DEPENDENCIES",
+  "unit_regression": {
+    "success": true,
+    "tests_success": true,
+    "coverage_requested": false,
+    "discovered": 4901,
+    "tests_run": 4901,
+    "accounted": 4901,
+    "workers": 4,
+    "exit_codes": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "skipped": 11,
+    "elapsed_seconds": 72.94194129099196
+  },
+  "unit_command": "../venv/bin/python tools/run_parallel_unittest.py --jobs 4",
+  "unit_log_sha256": "1fda9c91d81f951f9552abf793a05cc6bad29a2f5f82a42a3583f9b8713b0811",
+  "planning": {
+    "run": 216,
+    "skipped": 1,
+    "status": "PASS"
+  },
+  "ruff": "PASS_SOURCE_TESTS_AND_CHANGED_HELPERS",
+  "projection": "PASS_OFFLINE",
+  "open_work_audit": "PASS_AUDIT_ONLY",
+  "source_pins": {
+    "docs/verification/ha-native-voice-product-manifest.json": "7feaacf975eab049e89bb768a73eabf5dcec87f7db3fc643194e029cbb111653",
+    "docs/verification/ha-native-voice-actual-ha-matrix-20261122.json": "e19b16cca3bf66db9154a6f6ce1888a9b60511c4db4b3c0339b95449df547e2f",
+    "examples/client_contracts/ha_native_voice_v1/actual-ha.json": "f1292747d9eda7fc9ad17e5101e08e841800adeadccdc71a4fbc175c82507302"
+  },
+  "independent_exact_head_review": "PENDING",
+  "protected_ci": "PENDING",
+  "merge": "NOT_AUTHORIZED",
+  "internal_publication": "NOT_AUTHORIZED",
+  "installed": "NOT_RUN",
+  "deployment": "NOT_RUN",
+  "physical_satellite": "NOT_RUN",
+  "real_provider": "NOT_RUN",
+  "external_logs": "/Volumes/Shared Data/tmp/pcvantol/music-canvas-20261122-7lp9044s/ha-native-voice",
+  "retained_failed_runs": [
+    "unit-final",
+    "unit-final-2",
+    "unit-final-3"
+  ]
+}

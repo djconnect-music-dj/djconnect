@@ -450,6 +450,15 @@
           "client_type": "Apparaattype",
           "require_profile": "Profiel verplicht"
         }
+      },
+      "native_voice_access": {
+        "title": "Persoonlijke spraaktoegang",
+        "description": "Zet dit alleen aan voor een vertrouwd persoonlijk apparaat. Iedereen die het gebruikt krijgt toegang tot het privégesprek en de afspeelbediening van dit profiel. Laat gedeelde kamerapparaten uitgeschakeld. Vink uit om toegang in te trekken.",
+        "data": {
+          "ha_device_id": "Spraakapparaat",
+          "profile_id": "DJConnect-profiel",
+          "allow_personal_access": "Persoonlijke toegang toestaan"
+        }
       }
     },
     "error": {

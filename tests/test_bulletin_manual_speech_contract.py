@@ -9,9 +9,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class BulletinManualSpeechContractTests(unittest.TestCase):
     def test_actual_paired_manual_use_denial_and_withdrawal_join_current_source(self):
-        wire = json.loads((ROOT / 'examples/client_contracts/bulletin_manual_speech_v1/music-canvas-recovery-20261122-music-canvas-20261122-ac-f672a392.json').read_text())
+        wire = json.loads((ROOT / 'examples/client_contracts/bulletin_manual_speech_v1/ha-native-voice-20261122-music-canvas-recovery-20-c473abaa.json').read_text())
         self.assertTrue(wire["source_before_after_equal"])
-        self.assertEqual(len(wire["source_pins"]), 328)
+        self.assertEqual(len(wire["source_pins"]), 331)
         for name, digest in wire["source_pins"].items():
             self.assertEqual(hashlib.sha256((ROOT / name).read_bytes()).hexdigest(), digest, name)
         for name, digest in wire["harness_pins"].items():

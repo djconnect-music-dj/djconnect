@@ -9,8 +9,8 @@ from pathlib import Path
 import re
 
 ROOT = Path(__file__).resolve().parents[2]
-REGISTER = ROOT / 'docs/governance/djconnect-open-work-music-canvas-finalization-20261122.json'
-REPORT = REGISTER.with_name('DJC_PLATFORM_OPEN_WORK_MUSIC_CANVAS_FINALIZATION_20261122.md')
+REGISTER = ROOT / 'docs/governance/djconnect-open-work-ha-native-voice-20261122.json'
+REPORT = REGISTER.with_name('DJC_PLATFORM_OPEN_WORK_HA_NATIVE_VOICE_20261122.md')
 # Immutable dated source snapshot, independently compared with Git cc9b49fe.
 SOURCE_MANIFEST = REGISTER.with_name('core-source-manifest-cc9b49fe.json')
 SOURCE_MANIFEST_SHA256 = '780022ac088d59f5ac46fde6846e151de40c0e1c5fd3cdfda5dbb23550080eb4'
@@ -177,6 +177,7 @@ def render(data: dict) -> str:
     """One readable view from the evidence register, without duplicating roadmap authority."""
     github = data['github_open']
     combined = data.get('combined_branch_status_reconciliation', {})
+    native = data.get('ha_native_voice_delta_20261122', {})
     count = Counter(r['kind'] for r in github)
     proofs = {r['id']: r for r in data['proofs']}
     dev_count = len(proofs['installed-dev']['files'])
@@ -184,7 +185,13 @@ def render(data: dict) -> str:
     regression = proofs['local-corrective-regressions']
     quality = proofs['local-real-model-quality']
     out = [
-        '# DJConnect integral open-work reconciliation — 17 October 2026\n\n',
+        '# DJConnect integral open-work reconciliation — historical inventory with bounded updates\n\n',
+        (f"22 November native voice update: {native['source_delivery']}; "
+         f"shared guest/request/display {native['shared_guest_request_display']}; "
+         f"whole-task acceptance {native['overall_acceptance']}. "
+         "See `docs/verification/HA_NATIVE_VOICE_SOURCE_STATUS_20261122.md`. "
+         "The inventory below remains dated; installation/provider/satellite evidence was not refreshed.\n\n"
+         if native else ''),
         ("Current combined local checkpoint: "
          f"{combined['reported_issues']} reported issues, {combined['conversation_families']} families, "
          f"{combined['conversation_steps']} steps; {combined['open_core_findings']} Core findings and "

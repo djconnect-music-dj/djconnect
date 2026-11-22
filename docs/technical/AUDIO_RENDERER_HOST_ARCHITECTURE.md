@@ -1,3 +1,15 @@
+## HA-native conversation implementation — 22 November 2026
+
+Owner #1532 now selects the native HA adapter to the same Core Ask DJ service.
+See [canonical design](HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md). Personal endpoints require explicit installation
+consent and separate HA/agent/thread/Profile/Session identity. The ordinary
+lifecycle and exact existing Voor jou offer are reused; Apple keeps the same
+completion/privacy/audio rules and Watch gains no start/card. Reactive HA
+conversation is selected; autonomous room routing and shared guest/request/
+display authority remain separately qualified. Local implementation and actual
+isolated HA software evidence do not establish merge, installation, provider
+quality or physical satellite/audio/display acceptance.
+
 # Audio Renderer Host Architecture
 
 ## Status

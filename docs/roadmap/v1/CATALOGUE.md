@@ -12,7 +12,9 @@ Selected passive Session projection: DJC-CORE-PASSIVE-SESSION-PROJECTION-V1-2026
 
 Selected shared Profile/Session settings consolidation: DJC-PROFILE-SESSION-SETTINGS-CONSOLIDATION-V1-20261016; six shared Persona/voice/gender/Mood/Presence/announcement_output, protected source delivered contract3 (Core producer only), last explicit accepted choice becomes default, atomic active+default acceptance. Source PROTECTED_MERGED; Core producer and migration work only; Apple/other consumers/joint separately open, no automatic dispatch or whole-family completion. Delivered v13 preserved.
 
-Music Canvas v1 owner-selected implementation is LOCAL / NOT_MERGED. Core contracts, persistent preferences, lifecycle, composition and Samsung/SwitchBot adapters feed the native Apple panel. Joint real-provider/native/hardware acceptance stays Planned/OPEN; no Cast route, deployment or automatic dispatch.
+Music Canvas v1 owner-selected implementation is SOURCE_DELIVERED / PROTECTED_MERGED. Core contracts, persistent preferences, lifecycle, composition and Samsung/SwitchBot adapters feed the native Apple panel. Joint real-provider/native/hardware acceptance stays Planned/OPEN; no Cast route, deployment or automatic dispatch.
+
+HA-native DJ conversation is owner-selected IN_PROGRESS: personal ingress, explicit endpoint/Profile admission and the existing lifecycle/Voor jou service are implemented locally. Shared guest/request/display owners remain dependencies; no whole-assignment completion, physical satellite/provider acceptance, installation or deployment is claimed.
 
 Music Origin SOURCE_DELIVERED: Core #1669 and Apple #405 protected merged with their own exact-main software/publication evidence. Avatar-menu/native/history source is delivered; MO01–MO18 real-provider, editorial and physical-device/accessibility acceptance remains OPEN. No installation, deployment, new writer or automatic dispatch.
 
@@ -137,3 +139,5 @@ A product choice: LIMITED_APP_ATTESTED_REPORTED_ROUTE selected with the stated c
 | `MUSIC-CANVAS::SWITCHBOT` | DJC-CORE | Completed | Existing HA SwitchBot Cloud native upload and temporary asset lease |
 | `MUSIC-CANVAS::APPLE` | DJC-APPLE | Completed | Native Music Canvas controls, per-screen state and confirmed preference writes |
 | `MUSIC-CANVAS::ACCEPTANCE` | DJC-CORE | Planned | Joint real-provider, Samsung/SwitchBot and native device acceptance |
+| `HA-NATIVE-VOICE::ADOPTION` | DJC-CORE | In progress | Native HA adoption of the one Core Ask DJ application service |
+| `HA-NATIVE-VOICE::ACCEPTANCE` | DJC-CORE | Planned | Personal, shared, native satellite and physical audio/display qualification |

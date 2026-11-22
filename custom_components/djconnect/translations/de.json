@@ -450,6 +450,15 @@
           "client_type": "Gerätetyp",
           "require_profile": "Profil erforderlich"
         }
+      },
+      "native_voice_access": {
+        "title": "Persönlicher Sprachzugriff",
+        "description": "Nur für ein vertrauenswürdiges persönliches Gerät aktivieren. Jeder Nutzer kann auf private DJ-Gespräche und Wiedergabesteuerung dieses Profils zugreifen. Gemeinsam genutzte Raumgeräte deaktiviert lassen. Zum Widerrufen abwählen.",
+        "data": {
+          "ha_device_id": "Sprachgerät",
+          "profile_id": "DJConnect-Profil",
+          "allow_personal_access": "Persönlichen Zugriff erlauben"
+        }
       }
     },
     "error": {

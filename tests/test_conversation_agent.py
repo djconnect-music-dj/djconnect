@@ -1,337 +1,119 @@
+"""Native transport unit tests with private HA stubs; real SDK is qualified separately."""
 from __future__ import annotations
-
-import asyncio
-import importlib
+import importlib.util
 from pathlib import Path
 import sys
 import types
 import unittest
-
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def install_conversation_stubs() -> None:
-    homeassistant = sys.modules.setdefault(
-        "homeassistant",
-        types.ModuleType("homeassistant"),
-    )
-    components = sys.modules.setdefault(
-        "homeassistant.components",
-        types.ModuleType("homeassistant.components"),
-    )
-    conversation = sys.modules.setdefault(
-        "homeassistant.components.conversation",
-        types.ModuleType("homeassistant.components.conversation"),
-    )
-    config_entries = sys.modules.setdefault(
-        "homeassistant.config_entries",
-        types.ModuleType("homeassistant.config_entries"),
-    )
-    core = sys.modules.setdefault(
-        "homeassistant.core",
-        types.ModuleType("homeassistant.core"),
-    )
-    helpers = sys.modules.setdefault(
-        "homeassistant.helpers",
-        types.ModuleType("homeassistant.helpers"),
-    )
-    intent = sys.modules.setdefault(
-        "homeassistant.helpers.intent",
-        types.ModuleType("homeassistant.helpers.intent"),
-    )
-    entity_platform = sys.modules.setdefault(
-        "homeassistant.helpers.entity_platform",
-        types.ModuleType("homeassistant.helpers.entity_platform"),
-    )
-
+def install_conversation_stubs():
+    names = ('homeassistant', 'homeassistant.components', 'homeassistant.components.conversation',
+             'homeassistant.config_entries', 'homeassistant.core', 'homeassistant.helpers',
+             'homeassistant.helpers.intent', 'homeassistant.helpers.entity_platform')
+    modules = {name: types.ModuleType(name) for name in names}
+    sys.modules.update(modules)
+    for name, value in modules.items():
+        if '.' in name:
+            parent, attr = name.rsplit('.', 1)
+            if parent in modules:
+                setattr(modules[parent], attr, value)
     class ConversationEntity:
         pass
-
-    class ConversationInput:
-        pass
-
     class ConversationResult:
-        def __init__(self, *, response, conversation_id=None):
-            self.response = response
-            self.conversation_id = conversation_id
-
+        def __init__(self, *, response, conversation_id=None, continue_conversation=False):
+            self.response, self.conversation_id = response, conversation_id
+            self.continue_conversation = continue_conversation
     class IntentResponse:
         def __init__(self, language):
-            self.language = language
-            self.speech = None
-
-        def async_set_speech(self, speech):
-            self.speech = speech
-
-    conversation.ConversationEntity = ConversationEntity
-    conversation.ConversationInput = ConversationInput
-    conversation.ConversationResult = ConversationResult
-    config_entries.ConfigEntry = object
-    core.HomeAssistant = object
-    intent.IntentResponse = IntentResponse
-    entity_platform.AddEntitiesCallback = object
-    homeassistant.components = components
-    components.conversation = conversation
-    homeassistant.config_entries = config_entries
-    homeassistant.core = core
-    homeassistant.helpers = helpers
-
-    package = types.ModuleType("custom_components.djconnect")
-    package.__path__ = [str(ROOT / "custom_components" / "djconnect")]
-    sys.modules["custom_components.djconnect"] = package
-    use_cases = types.ModuleType("custom_components.djconnect.use_cases")
-
-    async def run_text_command(*args, **kwargs):
-        return {"dj_text": ""}
-
-    async def run_music_command(*args, **kwargs):
-        return {"success": True}
-
-    def music_backend_metadata(*args, **kwargs):
-        return {}
-
-    use_cases.run_text_command = run_text_command
-    use_cases.run_music_command = run_music_command
-    use_cases.music_backend_metadata = music_backend_metadata
-    sys.modules["custom_components.djconnect.use_cases"] = use_cases
+            self.language, self.speech = language, None
+        def async_set_speech(self, text):
+            self.speech = text
+    modules['homeassistant.components.conversation'].ConversationEntity = ConversationEntity
+    modules['homeassistant.components.conversation'].ConversationResult = ConversationResult
+    modules['homeassistant.helpers.intent'].IntentResponse = IntentResponse
+    modules['homeassistant.config_entries'].ConfigEntry = object
+    modules['homeassistant.core'].HomeAssistant = object
+    modules['homeassistant.helpers.entity_platform'].AddEntitiesCallback = object
+    if 'custom_components.djconnect' not in sys.modules:
+        package = types.ModuleType('custom_components.djconnect')
+        package.__path__ = [str(ROOT/'custom_components/djconnect')]
+        sys.modules['custom_components.djconnect'] = package
 
 
-class ConversationAgentTest(unittest.TestCase):
+class ConversationAgentTest(unittest.IsolatedAsyncioTestCase):
     @classmethod
-    def setUpClass(cls) -> None:
+    def setUpClass(cls):
+        cls.before = dict(sys.modules)
         install_conversation_stubs()
-        if str(ROOT) not in sys.path:
-            sys.path.insert(0, str(ROOT))
-        cls.const = importlib.import_module("custom_components.djconnect.const")
-        cls.conversation = importlib.import_module(
-            "custom_components.djconnect.conversation"
-        )
+        spec = importlib.util.spec_from_file_location("custom_components.djconnect._conversation_unit", ROOT/'custom_components/djconnect/conversation.py')
+        cls.module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.module)
 
     @classmethod
-    def tearDownClass(cls) -> None:
-        for module_name in (
-            "custom_components.djconnect.conversation",
-            "custom_components.djconnect.use_cases",
-            "custom_components.djconnect.processor",
-            "custom_components.djconnect.const",
-            "custom_components.djconnect",
-        ):
-            sys.modules.pop(module_name, None)
+    def tearDownClass(cls):
+        for name in list(sys.modules):
+            if name == 'homeassistant' or name.startswith('homeassistant.'):
+                if name in cls.before:
+                    sys.modules[name] = cls.before[name]
+                else:
+                    sys.modules.pop(name, None)
 
-    def test_setup_entry_adds_conversation_agent(self) -> None:
-        entry = types.SimpleNamespace(entry_id="entry-1")
-        runtime = types.SimpleNamespace(
-            entry=entry,
-            config={self.const.CONF_DEVICE_NAME: "Studio"},
-        )
-        hass = types.SimpleNamespace(data={self.const.DOMAIN: {entry.entry_id: runtime}})
-        added = []
-
-        asyncio.run(
-            self.conversation.async_setup_entry(
-                hass,
-                entry,
-                lambda entities: added.extend(entities),
-            )
-        )
-
-        self.assertEqual(len(added), 1)
-        self.assertEqual(added[0]._attr_unique_id, "entry-1_conversation")
-        self.assertEqual(added[0]._attr_name, "DJConnect DJ")
-        self.assertFalse(added[0]._attr_has_entity_name)
-        self.assertTrue(added[0].available)
-        self.assertEqual(added[0].state, "ready")
-
-    def test_agent_exposes_track_insight_conversation_tool(self) -> None:
-        runtime = types.SimpleNamespace(
-            entry=types.SimpleNamespace(entry_id="entry-1"),
-            config={},
-        )
-        agent = self.conversation.DJConnectConversationAgent(runtime)
-
-        names = {tool["name"] for tool in agent.conversation_tools}
-
-        self.assertEqual(
-            names,
-            {
-                "djconnect_track_insight",
-                "djconnect_now_playing",
-                "djconnect_music_dna_profile",
-                "djconnect_music_dna_summary",
-                "djconnect_music_discovery_feed",
-                "djconnect_vibecast_feed",
-                "djconnect_music_backend_status",
-                "djconnect_recently_played",
-                "djconnect_search_music",
-                "djconnect_list_outputs",
-                "djconnect_build_recommendations",
-                "djconnect_prepare_playback_action",
-                "djconnect_execute_confirmed_action",
-            },
-        )
-        self.assertTrue(all("parameters" in tool for tool in agent.conversation_tools))
-
-    def test_agent_calls_track_insight_conversation_tool(self) -> None:
-        calls = []
-        track_insight = types.ModuleType("custom_components.djconnect.track_insight")
-
-        async def async_track_insight_tool(hass, runtime, **parameters):
-            calls.append((hass, runtime, parameters))
-            return {"success": True, "type": "track_insight"}
-
-        track_insight.async_track_insight_tool = async_track_insight_tool
-        sys.modules["custom_components.djconnect.track_insight"] = track_insight
-        runtime = types.SimpleNamespace(
-            entry=types.SimpleNamespace(entry_id="entry-1"),
-            config={},
-        )
-        agent = self.conversation.DJConnectConversationAgent(runtime)
-        hass = object()
-        agent.hass = hass
-
-        try:
-            result = asyncio.run(
-                agent.async_call_tool(
-                    "djconnect_track_insight",
-                    {"title": "Strobe", "artist": "Deadmau5"},
-                )
-            )
-        finally:
-            sys.modules.pop("custom_components.djconnect.track_insight", None)
-
-        self.assertEqual(result, {"success": True, "type": "track_insight"})
-        self.assertEqual(
-            calls,
-            [(hass, runtime, {"title": "Strobe", "artist": "Deadmau5"})],
-        )
-
-    def test_process_returns_dj_text_from_command_flow(self) -> None:
-        calls = []
-
-        async def run_text_command(
-            hass,
-            runtime,
-            text,
-            *,
-            play,
-            correct_stt,
-            user_id=None,
-            memory_payload=None,
-        ):
-            calls.append((hass, runtime, text, play, correct_stt, user_id, memory_payload))
-            return {"dj_text": "Daar is Strobe van Deadmau5."}
-
-        runtime = types.SimpleNamespace(
-            entry=types.SimpleNamespace(entry_id="entry-1"),
-            config={},
-            update=lambda **kwargs: None,
-        )
-        agent = self.conversation.DJConnectConversationAgent(runtime)
-        hass = object()
-        agent.hass = hass
-        user_input = types.SimpleNamespace(
-            text="speel Strobe van Deadmau5",
-            language="nl-NL",
-            conversation_id="conv-1",
-        )
-        original = self.conversation.run_text_command
-        self.conversation.run_text_command = run_text_command
-        try:
-            result = asyncio.run(agent.async_process(user_input))
-        finally:
-            self.conversation.run_text_command = original
-
-        self.assertEqual(result.response.speech, "Daar is Strobe van Deadmau5.")
-        self.assertEqual(result.conversation_id, "conv-1")
-        self.assertEqual(
-            calls,
-            [
-                (
-                    hass,
-                    runtime,
-                    "speel Strobe van Deadmau5",
-                    True,
-                    False,
-                    None,
-                    {"request_source": "voice_endpoint", "session_id": "conv-1"},
-                )
-            ],
-        )
-
-    def test_voice_endpoint_request_context_extracts_available_assist_fields(self) -> None:
-        user_input = types.SimpleNamespace(
-            conversation_id="conv-1",
-            agent_id="pipeline-1",
-            device_id="ha-device-1",
-            area_id="kitchen",
-            context=types.SimpleNamespace(
-                user_id="ha-user",
-                entity_id="assist_satellite.kitchen",
-            ),
-            extra_system_prompt={
-                "satellite_id": "satellite-kitchen",
-                "player_id": "media_player.kitchen",
-            },
-        )
-
-        payload = self.conversation._voice_endpoint_request_context(user_input)
-
-        self.assertEqual(
-            payload,
-            {
-                "request_source": "voice_endpoint",
-                "session_id": "conv-1",
-                "assist_pipeline_id": "pipeline-1",
-                "ha_device_id": "ha-device-1",
-                "area_id": "kitchen",
-                "voice_endpoint_id": "assist_satellite.kitchen",
-                "satellite_id": "satellite-kitchen",
-                "player_id": "media_player.kitchen",
-            },
-        )
-
-    def test_process_error_returns_friendly_speech(self) -> None:
-        async def run_text_command(
-            hass,
-            runtime,
-            text,
-            *,
-            play,
-            correct_stt,
-            user_id=None,
-            memory_payload=None,
-        ):
-            raise RuntimeError("boom")
-
-        updates = []
-        runtime = types.SimpleNamespace(
-            entry=types.SimpleNamespace(entry_id="entry-1"),
-            config={},
-            update=lambda **kwargs: updates.append(kwargs),
-        )
-        agent = self.conversation.DJConnectConversationAgent(runtime)
+    def agent(self):
+        runtime = types.SimpleNamespace(entry=types.SimpleNamespace(entry_id="entry-1"), config={})
+        agent = self.module.DJConnectConversationAgent(runtime)
         agent.hass = object()
-        user_input = types.SimpleNamespace(
-            text="play something",
-            language="en-US",
-            conversation_id=None,
-        )
-        original = self.conversation.run_text_command
-        self.conversation.run_text_command = run_text_command
-        try:
-            result = asyncio.run(agent.async_process(user_input))
-        finally:
-            self.conversation.run_text_command = original
+        return agent
 
-        self.assertEqual(
-            result.response.speech,
-            "Sorry, DJConnect could not process your request.",
-        )
-        self.assertEqual(
-            updates,
-            [{"last_error": "Assist conversation failed: boom"}],
-        )
+    async def test_thin_entity_returns_common_service_speech_and_pending(self):
+        from unittest.mock import patch, AsyncMock
+        agent = self.agent()
+        user = types.SimpleNamespace(text="Why that album?", language="en", conversation_id="ha-thread")
+        with patch.object(self.module, "exchange", AsyncMock(return_value=(
+                {"text": "Which recording do you mean?"}, "ha-thread", True))) as common:
+            reply = await agent._async_handle_message(user, object())
+        common.assert_awaited_once_with(agent.hass, agent._runtime, user)
+        self.assertEqual(reply.response.speech, "Which recording do you mean?")
+        self.assertEqual(reply.conversation_id, "ha-thread")
+        self.assertTrue(reply.continue_conversation)
+        self.assertFalse(hasattr(agent, "conversation_tools"))
+        self.assertFalse(hasattr(self.module, "run_text_command"))
+
+    async def test_empty_input_never_enters_common_service(self):
+        from unittest.mock import patch, AsyncMock
+        for locale in ("nl", "en", "de", "fr", "es"):
+            with patch.object(self.module, "exchange", AsyncMock()) as common:
+                result = await self.agent().async_process(types.SimpleNamespace(text="", language=locale))
+            self.assertFalse(result.continue_conversation)
+            self.assertTrue(result.response.speech)
+            common.assert_not_awaited()
+
+    async def test_failures_do_not_claim_playback_or_log_private_exception(self):
+        from unittest.mock import patch, AsyncMock
+        from custom_components.djconnect.session_conversation import SessionConversationError
+        for code in ("native_voice_personal_access_required", "native_voice_backend_agent_required", "native_voice_authority_changed"):
+            with patch.object(self.module, "exchange", AsyncMock(side_effect=SessionConversationError(code))), self.assertLogs(self.module._LOGGER, level="WARNING") as logs:
+                result = await self.agent().async_process(types.SimpleNamespace(text="private input", language="en"))
+            self.assertFalse(result.continue_conversation)
+            self.assertNotIn("private input", str(logs.output))
+            self.assertNotIn("start it", result.response.speech)
+
+    def test_availability_requires_loaded_transport_and_separate_backend(self):
+        from unittest.mock import patch
+        agent = self.agent()
+        agent_api = types.SimpleNamespace(_ha_native_service_identity=lambda *a: {})
+        pipeline = types.SimpleNamespace(_assist_context=lambda *a: {"agent_id": "conversation.backend"})
+        conversation = sys.modules["homeassistant.components.conversation"]
+        with patch.dict(sys.modules, {"custom_components.djconnect.api_handlers": agent_api,
+                                     "custom_components.djconnect.pipeline": pipeline}), patch.object(conversation, "async_get_agent", return_value=agent, create=True):
+            self.assertFalse(agent.available)
+            self.assertEqual(agent.state, "unavailable")
+        with patch.dict(sys.modules, {"custom_components.djconnect.api_handlers": agent_api,
+                                     "custom_components.djconnect.pipeline": pipeline}), patch.object(conversation, "async_get_agent", return_value=object(), create=True):
+            self.assertTrue(agent.available)
+            self.assertEqual(agent.state, "ready")
+        self.assertEqual(agent.supported_languages, ["nl", "en", "de", "fr", "es"])
 
 
 if __name__ == "__main__":

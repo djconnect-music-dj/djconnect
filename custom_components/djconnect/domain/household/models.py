@@ -28,6 +28,8 @@ class SharedConfiguration:
     room_profile_ids: dict[str, str] = field(default_factory=dict)
     area_profile_ids: dict[str, str] = field(default_factory=dict)
     voice_endpoint_profile_ids: dict[str, str] = field(default_factory=dict)
+    # Explicit installation-owned personal access, separate from room routing.
+    personal_voice_endpoint_profile_ids: dict[str, str] = field(default_factory=dict)
     ha_device_profile_ids: dict[str, str] = field(default_factory=dict)
     ha_user_profile_ids: dict[str, str] = field(default_factory=dict)
     player_profile_ids: dict[str, str] = field(default_factory=dict)

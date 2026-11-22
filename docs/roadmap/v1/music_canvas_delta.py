@@ -15,7 +15,7 @@ def sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
-def validate(plan, previous_validator):
+def validate(plan, previous_validator, *, historical_product=False):
     from music_origin_finalization_delta import validate as validate_previous
     from experience_reconciliation_delta import HISTORICAL_DOCUMENT_SOURCES
     d = plan["planning_maintenance"]
@@ -60,7 +60,7 @@ def validate(plan, previous_validator):
         "canonical design/contract")
     manifest_path = ROOT/"docs/verification/music-canvas-product-manifest.json"
     manifest = json.loads(manifest_path.read_bytes())
-    actual = {str(p.relative_to(ROOT)): sha(p.read_bytes())
+    actual = manifest if historical_product else {str(p.relative_to(ROOT)): sha(p.read_bytes())
         for p in (ROOT/"custom_components/djconnect").rglob("*")
         if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"}
     check(manifest == actual and receipt.get("product_manifest_sha256") == sha(manifest_path.read_bytes()),
@@ -77,7 +77,8 @@ def validate(plan, previous_validator):
               and r.get("snapshot") == "docs/roadmap/v1/history/20261122/music-canvas-predecessor-documents/"+r["path"]
               and sha((ROOT/r["snapshot"]).read_bytes()) == r["sha256"] for r in archived),
           "immutable predecessor document source")
-    token = HISTORICAL_DOCUMENT_SOURCES.set({r["path"]: ROOT/r["snapshot"] for r in archived})
+    token = HISTORICAL_DOCUMENT_SOURCES.set({**HISTORICAL_DOCUMENT_SOURCES.get(),
+        **{r["path"]: ROOT/r["snapshot"] for r in archived}})
     try:
         return errors + validate_previous(previous, previous_validator, historical_product=True)
     finally:

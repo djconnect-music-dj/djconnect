@@ -609,6 +609,7 @@ class ProfilePlatformStorage:
             household.shared.room_profile_ids,
             household.shared.area_profile_ids,
             household.shared.voice_endpoint_profile_ids,
+            household.shared.personal_voice_endpoint_profile_ids,
             household.shared.ha_device_profile_ids,
             household.shared.ha_user_profile_ids,
             household.shared.player_profile_ids,
@@ -713,6 +714,10 @@ def _reassign_shared_profile_references(
         voice_endpoint_profile_ids=_reassign_profile_mapping(
             shared.voice_endpoint_profile_ids, profile_id, replacement_id
         ),
+        personal_voice_endpoint_profile_ids={
+            key: value for key, value in shared.personal_voice_endpoint_profile_ids.items()
+            if value != profile_id
+        },
         ha_device_profile_ids=_reassign_profile_mapping(
             shared.ha_device_profile_ids, profile_id, replacement_id
         ),
@@ -760,6 +765,7 @@ def _mapping_field_name(mapping_type: str) -> str:
         "room": "room_profile_ids",
         "area": "area_profile_ids",
         "voice_endpoint": "voice_endpoint_profile_ids",
+        "personal_voice_endpoint": "personal_voice_endpoint_profile_ids",
         "satellite": "voice_endpoint_profile_ids",
         "ha_device": "ha_device_profile_ids",
         "ha_user": "ha_user_profile_ids",
@@ -771,6 +777,7 @@ def _mapping_field_name(mapping_type: str) -> str:
         "room_profile_ids",
         "area_profile_ids",
         "voice_endpoint_profile_ids",
+        "personal_voice_endpoint_profile_ids",
         "ha_device_profile_ids",
         "ha_user_profile_ids",
         "player_profile_ids",
@@ -835,6 +842,10 @@ def household_from_storage(data: Any, *, trusted_bindings=True) -> Household:
                 or shared_raw.get("satellite_profile_ids")
             ),
             ha_device_profile_ids=_clean_mapping(shared_raw.get("ha_device_profile_ids")),
+            personal_voice_endpoint_profile_ids=(
+                _clean_mapping(shared_raw.get("personal_voice_endpoint_profile_ids"))
+                if trusted_bindings else {}
+            ),
             ha_user_profile_ids=_clean_mapping(shared_raw.get("ha_user_profile_ids")),
             player_profile_ids=_clean_mapping(shared_raw.get("player_profile_ids")),
             playback_zone_profile_ids=_clean_mapping(
@@ -892,6 +903,9 @@ def household_to_storage(household: Household) -> dict[str, Any]:
                     household.shared.voice_endpoint_profile_ids
                 ),
                 "ha_device_profile_ids": dict(household.shared.ha_device_profile_ids),
+                "personal_voice_endpoint_profile_ids": dict(
+                    household.shared.personal_voice_endpoint_profile_ids
+                ),
                 "ha_user_profile_ids": dict(household.shared.ha_user_profile_ids),
                 "player_profile_ids": dict(household.shared.player_profile_ids),
                 "playback_zone_profile_ids": dict(
