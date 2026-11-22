@@ -201,7 +201,7 @@ class SettingsConfirmationTests(unittest.IsolatedAsyncioTestCase):
         for key in ('installed','native','audible'):
             self.assertEqual(d[key],'NOT_RUN')
         self.assertEqual(hashlib.sha256((root/'scripts/verification/verify_settings_confirmation_http.py').read_bytes()).hexdigest(),d['harness_sha256'])
-        current = json.loads((root / 'examples/client_contracts/settings_confirmation_v1/settings_confirmation_http-requalification-bulletin-diagnostics-current-live-impression-20261119-requested-moments-20261120-technical-debt-20261122-music-origin-20261122.json').read_text())
+        current = json.loads((root / 'examples/client_contracts/settings_confirmation_v1/settings_confirmation_http-requalification-bulletin-diagnostics-current-live-impression-20261119-requested-moments-20261120-technical-debt-20261122-music-origin-20261122-url-boundary-20261122.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
         self.assertEqual(len(current['source_pins']), 322)
         self.assertEqual(hashlib.sha256((root / current['harness']).read_bytes()).hexdigest(), current['harness_sha256'])

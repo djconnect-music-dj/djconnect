@@ -1,4 +1,5 @@
 """Real HA/TLS/paired-operation/SQLite origin gate; public/model inputs synthetic."""
+from urllib.parse import urlsplit
 
 import asyncio
 import importlib
@@ -45,7 +46,7 @@ async def qualify(hass, manager, history, request, client):
         urls.append(url)
         if url.endswith("/robots.txt"):
             return 200, "User-agent: *\nAllow: /\n", url
-        if "duckduckgo.com" in url:
+        if urlsplit(url).hostname == "html.duckduckgo.com":
             return (
                 200,
                 '<a class="result__a" href="https://example.org/origin">Synthetic origin interview</a><a class="result__snippet">A possible interpolation of Original Light by Source Artist.</a>',

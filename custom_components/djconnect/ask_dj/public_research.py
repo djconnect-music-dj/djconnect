@@ -2313,7 +2313,7 @@ async def music_origin_sources(title, artist, locale, guard):
             if urlsplit(url).hostname in {'duckduckgo.com', 'html.duckduckgo.com'}:
                 url = parse_qs(urlsplit(url).query).get('uddg', [''])[0]
             host = urlsplit(url).hostname
-            if not public_url(url) or not host or host in origins or host.endswith('duckduckgo.com'):
+            if not public_url(url) or not host or host in origins or host == 'duckduckgo.com' or host.endswith('.duckduckgo.com'):
                 continue
             # WhoSampled scraping is deliberately outside this producer.
             if host == 'whosampled.com' or host.endswith('.whosampled.com'):

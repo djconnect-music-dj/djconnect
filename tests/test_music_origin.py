@@ -1,4 +1,5 @@
 """Bounded best-effort producer semantics; public/model responses are synthetic."""
+from urllib.parse import urlsplit
 
 import json
 import unittest
@@ -38,7 +39,7 @@ class MusicOriginResearchTest(unittest.IsolatedAsyncioTestCase):
                     await self.guard()
                     self.requests += 1
                     seen.append(url)
-                    if "duckduckgo.com" in url:
+                    if urlsplit(url).hostname == "html.duckduckgo.com":
                         return (
                             200,
                             '<a class="result__a" href="https://example.org/interview">Artist interview</a><a class="result__snippet">The song may cover Original Light by Source Artist.</a>',
@@ -162,7 +163,7 @@ class MusicOriginActualHAProofTest(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads(
             (
-                root / "examples/client_contracts/music_origin_v1/actual-ha-origin-20261122.json"
+                root / "examples/client_contracts/music_origin_v1/actual-ha-origin-20261122-url-boundary-20261122.json"
             ).read_text()
         )
         self.assertEqual(len(proof["source_pins"]), 322)
