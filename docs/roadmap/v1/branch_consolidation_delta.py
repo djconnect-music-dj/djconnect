@@ -84,7 +84,7 @@ def validate(plan, previous_validator):
             prior_nodes = {n['id']: n for n in original['nodes']}
             view['nodes'] = [deepcopy(prior_nodes[n['id']])
                              if n['id'] in DISPLAY_NODES else n for n in view['nodes']]
-        child = deepcopy(plan)
+        child = dict(plan)
         child['planning_maintenance'] = view
         errors.extend(previous_validator(child))
     return errors

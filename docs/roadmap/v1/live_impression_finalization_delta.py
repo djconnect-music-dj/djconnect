@@ -130,7 +130,7 @@ def validate(plan, previous_validator):
     _check_publications(receipt, check)
     _check_source_leaves(d, check)
     restored = _restore_predecessor(d, frozen, check)
-    prior = deepcopy(plan)
+    prior = dict(plan)
     prior["planning_maintenance"] = restored
     errors.extend(previous_validator(prior))
     return errors

@@ -236,7 +236,7 @@ def validate(plan, previous_validator):
     _provenance(receipt, raw, check)
     _acceptance(receipt, check)
     _readback(d, receipt, check)
-    prior = deepcopy(plan)
+    prior = dict(plan)
     prior["planning_maintenance"] = _restore(d, json.loads(raw), check)
     errors.extend(previous_validator(prior))
     return errors

@@ -96,6 +96,6 @@ def validate(plan, previous_validator):
                   if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"}
         check(len(actual) == 328 and readback.get("core", {}).get("archive_product_files") == actual,
               "actual published product identity")
-    previous = deepcopy(plan)
+    previous = dict(plan)
     previous["planning_maintenance"] = restored
     return errors + previous_validator(previous)

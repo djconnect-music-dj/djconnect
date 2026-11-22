@@ -181,7 +181,8 @@ def validate(plan, legacy_validator, previous_validator):
     prior = load_prior()
     # Delegate all predecessor checks to the unchanged version1 semantics with
     # only this declared WEB delta restored; document hashes still validate current docs.
-    old = deepcopy(plan)
+    old = dict(plan)
+    old["planning_maintenance"] = deepcopy(plan["planning_maintenance"])
     od = old["planning_maintenance"]
     od["web_first_receipt"] = deepcopy(prior["receipt"])
     od["nodes"] = [n for n in od["nodes"] if not n["id"].startswith("WEB::")] + deepcopy(

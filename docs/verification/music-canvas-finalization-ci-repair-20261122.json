@@ -1,0 +1,89 @@
+{
+  "scope": "Governance validator copy-cost correction; no production change, predicate removal, cache or timeout increase",
+  "failed_main": "a9e79b36c24a80aed37b0401a3415cbda46b38b9",
+  "failed_workflow": 45050485309,
+  "failed_attempts": [
+    1,
+    2
+  ],
+  "failure": "Roadmap subprocess TimeoutExpired after300seconds; no failing assertion reported; same-SHA coverage job passed",
+  "failure_log_sha256": {
+    "core-final-main-failure.log": "df2d74c6fa5b9541e7241f2bfe3a8cea65be677f11f4586aef9dbe511bb04b04",
+    "core-final-main-failure-attempt2.log": "7d42c51d9fa4b10cec0b57a10c9bec3313530e345c390e97b51b4225e7a885bc"
+  },
+  "partial_profile": {
+    "qualification": false,
+    "interrupted_after_sample": true,
+    "function_calls": 958977403,
+    "seconds": 139.693,
+    "deepcopy_cumulative_seconds": 107.162,
+    "profile_sha256": "52f40cf339e3736c06da884b4eee262ad018817c37e474a1f1f203e759efdd4f"
+  },
+  "before": {
+    "iterations": 8,
+    "seconds": 1.480569082996226,
+    "python": "3.14.10 (main, Oct 25 2026, 17:12:00) [Clang 21.0.0 (clang-2100.3.34.2)]",
+    "validator_sha256": "79e27c73d84224056377b88e57105fa0417e8cf389cad36bfa2dbba9701d629a",
+    "snapshot_sha256": "e38bc4690599fee192e15071b924cbd4409abc9e19a528c3d387303fb5bfe7e6",
+    "scope": "Unchanged complete snapshot validation; all checks and historical validators execute"
+  },
+  "after": {
+    "iterations": 8,
+    "seconds": 0.763219874992501,
+    "python": "3.14.10 (main, Oct 25 2026, 17:12:00) [Clang 21.0.0 (clang-2100.3.34.2)]",
+    "validator_sha256": "42e0953170c7658dd78f5c173b6e1e34bff40509effbe19ac873057af48c856c",
+    "snapshot_sha256": "e38bc4690599fee192e15071b924cbd4409abc9e19a528c3d387303fb5bfe7e6",
+    "scope": "Unchanged complete snapshot validation; all checks and historical validators execute"
+  },
+  "measured_reduction_percent": 48.45,
+  "changed_validators": {
+    "docs/roadmap/v1/branch_consolidation_delta.py": "4c461cd0ad81158d1add287172d2008b5556188d8f92044474a2fb930b40fc10",
+    "docs/roadmap/v1/display_admission_delta.py": "a1f056ca22ffb2aa4d58824edc63f75fc3685e22b1bc8bf5e8870424ec105c40",
+    "docs/roadmap/v1/experience_reconciliation_delta.py": "fa2efbe8148aa7b6a87ee5aeddc7b1149ccd02bea0ba0a03fe30a16f509b448c",
+    "docs/roadmap/v1/live_impression_delta.py": "8bb737cea0cda6efa97c71dc71d01a81e7ac76ec358a94738aeca2e6b6e882b0",
+    "docs/roadmap/v1/live_impression_finalization_delta.py": "1d643661b3c2ad4b45974c048184edb41013e107396e485b51ef5af6ee7925f8",
+    "docs/roadmap/v1/moments_avatar_delta.py": "295aee427d04c9cdfa0cc4c06ce77ca8d183e4a09d016d3b4a71ca66c87ce1f1",
+    "docs/roadmap/v1/moments_avatar_finalization_delta.py": "f698447550b770404a3afe97fbcb06ad5068ff46af853e6cbcb7e681d3f0387a",
+    "docs/roadmap/v1/music_canvas_delta.py": "f1251c394b4c3631e0b957c54bd897277c676b195cb66fe296fd1b64ae550eb1",
+    "docs/roadmap/v1/music_canvas_finalization_delta.py": "42e0953170c7658dd78f5c173b6e1e34bff40509effbe19ac873057af48c856c",
+    "docs/roadmap/v1/music_origin_delta.py": "49c863f1e5a05d2d585918d113615fc4d65037e9c3e49172f62d8411cd271345",
+    "docs/roadmap/v1/music_origin_finalization_delta.py": "6a2ccaaacf9edb8b27d01cfe364e5a9438f2a5700cbfa45ad73ab7a82cabd4a1",
+    "docs/roadmap/v1/passive_surface_delta.py": "fdfe6811471bf6d0eb148aa00c90d7aa14bf59a18df0bcc75ed2334f6e524ef3",
+    "docs/roadmap/v1/session_artwork_delta.py": "d514305ea15d259b0582d630bb18408a0c59d480f0f020293573f1bc20488aaf",
+    "docs/roadmap/v1/settings_consolidation_delta.py": "a6a3ca6ebfbace1d5d1198f56f0a6312edcf705d53aba9e2a4c9d3cb23762064",
+    "docs/roadmap/v1/speech_persona_delta.py": "d950e9f4b7c48e54c521ce82861cd7727c6205ebe464cf85bbdbaaad515c84fc",
+    "docs/roadmap/v1/web_first_decisions_delta.py": "cc9e14de5d2ad1d1790c400ac9accd2e36c9055daa5ebcbb56d111a266024d5d",
+    "docs/roadmap/v1/web_first_delta.py": "b8ee3d1c5e544d8e08bb30ac0abd35bdf1a9ceaf1f02957c6069424e3209a9f9"
+  },
+  "roadmap_suite": {
+    "tests": 213,
+    "result": "PASS",
+    "log_sha256": "de173239f9fb6c5a86737dbeab1ccf920809ef2670adf2f27fe86f176ae0b5e0"
+  },
+  "input_immutability": "Accepted and rejected snapshots plus mutable predecessor projections preserve caller data",
+  "timeout_seconds": 300,
+  "historical_validators": "All predecessor predicates and negative cases remain executed; only redundant parent-envelope copies change",
+  "product_manifest_sha256": "65b70b4cb5aefc0f26db19061b39330827e2612ea673992a19e8b8953530c958",
+  "product_files": 328,
+  "installed": "NOT_RUN",
+  "paid_provider": "NOT_RUN",
+  "overall_acceptance": "OPEN",
+  "full_unittest": {
+    "success": true,
+    "tests_success": true,
+    "coverage_requested": false,
+    "discovered": 4886,
+    "tests_run": 4886,
+    "accounted": 4886,
+    "workers": 4,
+    "exit_codes": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "skipped": 11,
+    "elapsed_seconds": 67.35177391600155
+  },
+  "full_unittest_log_sha256": "adbfdbfd0836e1d8123f2b0671c1c6a056055987b038d9c9cbfb2fac458403c9"
+}

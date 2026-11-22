@@ -65,7 +65,7 @@ def validate(plan, previous_validator):
     stripped['document_references'] = prior['document_references']
     check(stripped == prior, 'historical receipts and unrelated lanes unchanged')
     stripped['document_references'] = current_references
-    previous = deepcopy(plan)
+    previous = dict(plan)
     previous['planning_maintenance'] = stripped
     # The frozen delivery receipt retains its original inventory hash. The
     # current correction owns a separate hash for the now-evolved inventory;

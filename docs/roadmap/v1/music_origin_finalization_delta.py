@@ -114,6 +114,6 @@ def validate(plan, previous_validator, *, historical_product=False):
                   for p in (ROOT / "custom_components/djconnect").rglob("*")
                   if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"}
         check(len(product) == 322 and (historical_product or product == actual), "published product identity")
-    previous = deepcopy(plan)
+    previous = dict(plan)
     previous["planning_maintenance"] = restored
     return errors + previous_validator(previous)

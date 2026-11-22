@@ -193,7 +193,8 @@ def digest(value):
 
 
 def strip(plan):
-    old = deepcopy(plan)
+    old = dict(plan)
+    old["planning_maintenance"] = deepcopy(plan["planning_maintenance"])
     d = old["planning_maintenance"]
     d.pop("web_first_receipt", None)
     d["nodes"] = [n for n in d["nodes"] if not n.get("id", "").startswith(PREFIX)]
