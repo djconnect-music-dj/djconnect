@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "kind": "music_origin_canonical_freeform_route_correction",
+  "base_main": "9758cbea19e2af153f192cd53480e11a3f9c482b",
+  "scope": "Bounded remediation of the current owner-selected Music Origin source before its pending Finalization; no new roadmap capability or writer",
+  "production_change": [
+    "custom_components/djconnect/music_origin.py"
+  ],
+  "product_files": 322,
+  "product_manifest_sha256": "993082460ec9a58a379d0f07eaaad329df29affb648779130121c9738d43b080",
+  "original_canonical_routes": {
+    "en": {
+      "label": "Where do I know this song from?",
+      "old_recognized": false
+    },
+    "nl": {
+      "label": "Waar ken ik dit nummer van?",
+      "old_recognized": true
+    },
+    "de": {
+      "label": "Woher kenne ich dieses Lied?",
+      "old_recognized": true
+    },
+    "fr": {
+      "label": "D’où est-ce que je connais ce morceau ?",
+      "old_recognized": false
+    },
+    "es": {
+      "label": "¿De qué me suena esta canción?",
+      "old_recognized": false
+    }
+  },
+  "new_canonical_http_languages": [
+    "en",
+    "nl",
+    "de",
+    "fr",
+    "es"
+  ],
+  "actual_ha_model_fixture_calls": 6,
+  "actual_ha_real_provider_calls": 0,
+  "actual_ha_regression_harnesses": 47,
+  "full_unittest": {
+    "success": true,
+    "tests_success": true,
+    "coverage_requested": true,
+    "discovered": 4876,
+    "tests_run": 4876,
+    "accounted": 4876,
+    "workers": 4,
+    "exit_codes": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "skipped": 11,
+    "elapsed_seconds": 106.78853649999655
+  },
+  "remaining": {
+    "real_provider_model": "NOT_RUN",
+    "editorial": "OPEN",
+    "physical_device": "NOT_RUN",
+    "merge": "PENDING_HUMAN_DECISION",
+    "finalizations": "Core1670/Apple406 draft pending corrected source readback",
+    "installation_deployment": "NOT_RUN"
+  },
+  "evidence": {
+    "candidate-product-manifest-v4.json": {
+      "path": "/Volumes/Shared Data/tmp/pcvantol/music-origin-moment-20261122-32wcosm7/candidate-product-manifest-v4.json",
+      "sha256": "993082460ec9a58a379d0f07eaaad329df29affb648779130121c9738d43b080"
+    },
+    "original-canonical-route-readback.json": {
+      "path": "/Volumes/Shared Data/tmp/pcvantol/music-origin-moment-20261122-32wcosm7/original-canonical-route-readback.json",
+      "sha256": "63b5fcf672cafae8df252d1fa7f9232a9b1ce5a6461913ab2f96ae200c15525f"
+    },
+    "ha-matrix-v4/summary.json": {
+      "path": "/Volumes/Shared Data/tmp/pcvantol/music-origin-moment-20261122-32wcosm7/ha-matrix-v4/summary.json",
+      "sha256": "4c53a9af6864ca63eb9a0b09ffe112f8b7db0a147dd2677a93b74099ec729735"
+    },
+    "ha-origin-v4-2026.11.1/status.json": {
+      "path": "/Volumes/Shared Data/tmp/pcvantol/music-origin-moment-20261122-32wcosm7/ha-origin-v4-2026.11.1/status.json",
+      "sha256": "1da13f6eb86d4aff9a2ee8531b0cc84161a6dba6fba61a65c83be14634d5a016"
+    },
+    "ha-requested-v4-2026.11.1/status.json": {
+      "path": "/Volumes/Shared Data/tmp/pcvantol/music-origin-moment-20261122-32wcosm7/ha-requested-v4-2026.11.1/status.json",
+      "sha256": "9af29f3873b8f4fd775e4983acdcbf40260621518e4ffaba153c84383205b29f"
+    },
+    "receipt-derivation-v4-applied.json": {
+      "path": "/Volumes/Shared Data/tmp/pcvantol/music-origin-moment-20261122-32wcosm7/receipt-derivation-v4-applied.json",
+      "sha256": "8f3ec87730096f7acd13bf56f6a3b695c774e146d63b5ff9884898ab8287c2c3"
+    },
+    "core-full-locale-routing/summary.json": {
+      "path": "/Volumes/Shared Data/tmp/pcvantol/music-origin-moment-20261122-32wcosm7/core-full-locale-routing/summary.json",
+      "sha256": "54c9dca7a0f18d22023ac21f719ca99b694a00323edc931f4422d07ef6c6da13"
+    },
+    "core-full-locale-routing/coverage.xml": {
+      "path": "/Volumes/Shared Data/tmp/pcvantol/music-origin-moment-20261122-32wcosm7/core-full-locale-routing/coverage.xml",
+      "sha256": "3eae5ea1433983d5c65016fd0060457da9094d520e73997de47ea38decc40fb5"
+    }
+  }
+}

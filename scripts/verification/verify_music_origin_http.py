@@ -129,23 +129,26 @@ async def qualify(hass, manager, history, request, client):
         patch.object(public_research.PublicFetch, "request", fetch),
         patch.object(pipeline, "_call_conversation_process_transport", model),
     ):
-        freeform, code = await http(
-            "/api/djconnect/v1/ask_dj/message",
-            {
-                "client_message_id": "origin-freeform-original-subject",
-                "text": "Waar ken ik dit nummer van?",
-                "language": "nl",
-                "conversation_context": {
-                    "session_id": active.session_id,
-                    "selected_entry": {
+        from custom_components.djconnect.requested_moment_inventory import FAMILIES, LANGUAGES
+        labels = next(labels for kind, _, labels in FAMILIES if kind == "music_origin")
+        for language, label in zip(LANGUAGES, labels, strict=True):
+            freeform, code = await http(
+                "/api/djconnect/v1/ask_dj/message",
+                {
+                    "client_message_id": "origin-freeform-original-subject-" + language,
+                    "text": label,
+                    "language": language,
+                    "conversation_context": {
                         "session_id": active.session_id,
-                        "entry_id": rich["entry_id"],
+                        "selected_entry": {
+                            "session_id": active.session_id,
+                            "entry_id": rich["entry_id"],
+                        },
                     },
                 },
-            },
-        )
-        assert code == 200 and "Original Light" in freeform.get("text", ""), freeform
-        assert len(calls) == 2, calls
+            )
+            assert code == 200 and "Original Light" in freeform.get("text", ""), (language, freeform)
+        assert len(calls) == 6, calls
     baseline["music_origin"] = {
         "requests": requests,
         "model_fixture_calls": len(calls),
@@ -155,6 +158,7 @@ async def qualify(hass, manager, history, request, client):
         "direct_sqlite_commit": True,
         "duplicate_did_not_regenerate": True,
         "freeform_same_producer": True,
+        "canonical_freeform_languages": list(LANGUAGES),
         "real_model_calls": 0,
         "real_provider_calls": 0,
         "native_installed_acceptance": "NOT_RUN",

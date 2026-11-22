@@ -239,6 +239,16 @@ def create_moment(active, identifier, text):
 
 
 def is_origin_question(text):
+    from .requested_moment_inventory import FAMILIES
+
+    def question(value):
+        return " ".join(value.casefold().replace("’", "'").split()).strip("¿¡?!. ")
+
+    # Menu selections use type IDs. Equivalent typed questions must recognize
+    # the same owner-supplied labels, including French spacing/Spanish marks.
+    labels = next(labels for kind, _, labels in FAMILIES if kind == "music_origin")
+    if question(text) in {question(label) for label in labels}:
+        return True
     return bool(
         re.fullmatch(
             r"(?:waar (?:ken|herken) ik (?:dit|dat|het) (?:nummer|lied)(?: toch)? van|waar komt (?:deze|die|de) (?:sample|melodie) vandaan|which (?:song|track) (?:does|did) this sample|where (?:do i know|have i heard) this (?:song|track)|woher kenne ich dieses lied|d[’']où .*connais.*(?:morceau|chanson)|de qu[eé] me suena esta canci[oó]n)[?.!]*",
