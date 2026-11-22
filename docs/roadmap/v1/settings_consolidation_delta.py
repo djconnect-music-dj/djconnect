@@ -121,7 +121,7 @@ def validate(plan, previous_validator):
     stripped['edges'] = deepcopy(prior['edges'])
     for key in prior.keys() - {'document_references'}:
         check(stripped.get(key) == prior[key], 'prior receipt ' + key)
-    previous = deepcopy(plan)
+    previous = dict(plan)
     previous['planning_maintenance'] = stripped
     errors.extend(previous_validator(previous))
     return errors

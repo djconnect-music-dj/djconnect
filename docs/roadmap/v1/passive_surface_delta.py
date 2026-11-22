@@ -61,7 +61,7 @@ def validate(plan, previous_validator):
     stripped['nodes'] = deepcopy(previous['nodes'])
     for key in previous.keys() - {'document_references'}:
         check(stripped.get(key) == previous[key], 'prior receipt/edges changed: ' + key)
-    old = deepcopy(plan)
+    old = dict(plan)
     old['planning_maintenance'] = stripped
     errors.extend(previous_validator(old))
     return errors

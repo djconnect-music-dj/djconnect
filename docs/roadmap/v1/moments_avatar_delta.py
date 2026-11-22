@@ -115,7 +115,7 @@ def validate(plan, previous_validator):
         == [r["path"] for r in frozen["document_references"]],
         "prior document references preserved",
     )
-    prior = deepcopy(plan)
+    prior = dict(plan)
     prior["planning_maintenance"] = restored
     errors.extend(previous_validator(prior))
     return errors

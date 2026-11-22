@@ -59,7 +59,7 @@ def validate(plan, previous_validator):
     stripped["edges"] = [e for e in d["edges"] if not e["id"].startswith("SPEECH-")]
     for key in previous.keys() - {"document_references"}:
         check(stripped.get(key) == previous[key], "delivered predecessor changed: " + key)
-    old = deepcopy(plan)
+    old = dict(plan)
     old["planning_maintenance"] = stripped
     errors.extend(previous_validator(old))
     delivered = r.get("phase") == "SOURCE_PROTECTED_MERGED"

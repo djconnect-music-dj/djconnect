@@ -45,7 +45,7 @@ def validate(plan, previous_validator):
     stripped['edges'] = [e for e in d.get('edges', []) if not e.get('id', '').startswith('SESSION-MEDIA-')]
     for k in previous.keys()-{'document_references'}:
         check(stripped.get(k) == previous[k], 'previous delivered state changed: '+k)
-    old = deepcopy(plan)
+    old = dict(plan)
     old['planning_maintenance'] = stripped
     errors.extend(previous_validator(old))
     successor = r.get('selected_successor')

@@ -65,7 +65,7 @@ def validate(plan, previous_validator):
         if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"}
     check(manifest == actual and receipt.get("product_manifest_sha256") == sha(manifest_path.read_bytes()),
           "current candidate product manifest")
-    previous = deepcopy(plan)
+    previous = dict(plan)
     previous["planning_maintenance"] = restored
     # The original exact source proof remains verified against its immutable
     # readback. Current candidate bytes are independently checked above; they

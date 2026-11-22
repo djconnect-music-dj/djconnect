@@ -58,7 +58,7 @@ def validate(plan, previous_validator):
             for n in nodes
         )
     )
-    previous = deepcopy(plan)
+    previous = dict(plan)
     previous["planning_maintenance"] = restored
     return (
         [] if valid else ["maintenance: invalid Music Origin scope or altered predecessor"]

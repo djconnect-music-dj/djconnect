@@ -29,7 +29,7 @@ def validate(plan, previous_validator):
         and len(edges)==4 and all(e['hard_precedence'] is True for e in edges), 'functional dependencies')
     refs=[r for r in d['document_references'] if r['path'] in {'docs/product/LIVE_IMPRESSION_EXPERIENCE_V1.md','docs/technical/LIVE_IMPRESSION_RESEARCH_MEDIA_CONTRACT_V1.md'}]
     check(len(refs)==2 and all(hashlib.sha256((Path(__file__).parents[3]/r['path']).read_bytes()).hexdigest()==r['sha256'] for r in refs), 'versioned design documents')
-    prior=deepcopy(plan)
+    prior=dict(plan)
     stripped=deepcopy(d)
     stripped['schema_version']='djconnect-federated-planning-delta/16'
     stripped.pop('live_impression_receipt',None)
