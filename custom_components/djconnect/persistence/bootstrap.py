@@ -99,6 +99,12 @@ async def async_shutdown_persistence(hass: Any, *, preserve_for_reload: bool = F
             await pending
         except asyncio.CancelledError:
             pass
+    # Canvas must relinquish timers, leases and physical work before SQLite closes.
+    canvas_lock = domain_data.setdefault("music_canvas_setup_lock", asyncio.Lock())
+    async with canvas_lock:
+        canvas = domain_data.pop("music_canvas", None)
+        if canvas is not None:
+            await canvas.shutdown()
     service = domain_data.pop(PERSISTENCE_SERVICE_KEY, None)
     domain_data.pop(_PERSISTENCE_LOCK_KEY, None)
     # Keep the boot receipt for this HA process: a final-entry options reload

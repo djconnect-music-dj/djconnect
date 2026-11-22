@@ -380,12 +380,15 @@ async def qualify(hass, manager, history, request, client):
                 pass
         orphaned, code = await call("operation", {k: unknown[k] for k in ("binding", "operation_id")})
         assert code == 200 and orphaned["state"] == "unknown"
-        runtime.stop()
         from custom_components.djconnect.persistence import async_shutdown_persistence, async_initialize_persistence
+        old_runtime = runtime
+        await async_shutdown_persistence(hass, preserve_for_reload=True)
+        assert await setup(hass) is old_runtime and not old_runtime.stopped
         await async_shutdown_persistence(hass)
-        hass.data["djconnect"].pop("music_canvas")
+        assert old_runtime.stopped and "music_canvas" not in hass.data["djconnect"]
         await async_initialize_persistence(hass)
         runtime = await setup(hass)
+        assert runtime is not old_runtime
         runtime.unsubscribe()
         restarted, code = await call("read")
         assert code == 200 and restarted["preferences"]["enabled"]
@@ -415,6 +418,7 @@ async def qualify(hass, manager, history, request, client):
             "failed_cleanup_and_explicit_forget_anyway": True,
             "unknown_forget_survives_actual_sqlite_and_runtime_restart": True,
             "unknown_forget_requires_new_explicit_admin_decision": True,
+            "preserve_reload_retains_runtime_final_unload_recreates_it": True,
             "session_end_preserves_enabled_and_targets": True,
             "real_model_calls": 0, "physical_hardware": "NOT_RUN"}
 

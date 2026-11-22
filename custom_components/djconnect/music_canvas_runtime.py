@@ -58,6 +58,13 @@ class CanvasRuntime:
             task.cancel()
         self.leases.clear()
 
+    async def shutdown(self):
+        """Drain work before its persistence owner is closed on final unload."""
+        self.stop()
+        await asyncio.gather(*self.jobs.values(), return_exceptions=True)
+        async with self.lock, self.effect_lock:
+            pass
+
     async def snapshot(self, owner, authorize):
         state = await self.repository.read(authorize)
         need(authorize(), "unauthorized", 401)
@@ -567,6 +574,11 @@ async def setup(hass):
     domain = hass.data.setdefault("djconnect", {})
     lock = domain.setdefault("music_canvas_setup_lock", asyncio.Lock())
     async with lock:
+        existing = domain.get(KEY)
+        if existing is not None and (existing.stopped or
+                existing.repository._persistence is not persistence_service(hass)):
+            await existing.shutdown()
+            domain.pop(KEY, None)
         if KEY not in domain:
             runtime = CanvasRuntime(hass)
             await runtime.start()
