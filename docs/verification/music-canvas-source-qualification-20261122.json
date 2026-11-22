@@ -1,0 +1,54 @@
+{
+  "scope": "Music Canvas v1 source qualification; not installed or provider/physical/editorial acceptance",
+  "product_manifest": {
+    "path": "docs/verification/music-canvas-product-manifest.json",
+    "sha256": "65b70b4cb5aefc0f26db19061b39330827e2612ea673992a19e8b8953530c958",
+    "product_files": 328
+  },
+  "core_unit": {
+    "success": true,
+    "tests_success": true,
+    "coverage_requested": false,
+    "discovered": 4886,
+    "tests_run": 4886,
+    "accounted": 4886,
+    "workers": 4,
+    "exit_codes": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "skipped": 11,
+    "elapsed_seconds": 87.62767233299382
+  },
+  "actual_ha": {
+    "drivers": 49,
+    "all_exit_zero": true,
+    "source_before_after_equal": true,
+    "images": [
+      "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
+      "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82"
+    ],
+    "matrix_path": "docs/verification/music-canvas-actual-ha-matrix-20261122.json",
+    "raw_matrix_summary_sha256": "94e681e498e541b8a7b6114dbf485b275c2871dec0320348780514810c146de3",
+    "canvas_proof": "examples/client_contracts/music_canvas_v1/actual-ha-reviewed-20261122.json",
+    "canvas_proof_sha256": "5eefd3d09c23a7864b4ddb482bf644a1d7addd6a086b23eb4ac195a0ebeeee58",
+    "scope": "Real isolated HA SDK, actual paired TLS HTTP and SQLite; explicit synthetic model/hardware boundaries; no external network/provider/device calls"
+  },
+  "checks": {
+    "ruff-private-final.log": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "roadmap-private-final.log": "91d23cf7ceadaee1c5a9808f3d906de6c16e6594c355a7d3b2effa9015f24b35",
+    "open-work-private-final.log": "542e807a70eac9715e7b356cbd9149696f8e693779aa1cf9a031ae010016591b",
+    "core-private-all.log": "70e059195752c76956514ebc1960a20d998122994e8555ec105776922f97ab14"
+  },
+  "review": "Must independently match current PR head; authoritative review receipt lives on PR1672",
+  "merge": "NOT_MERGED",
+  "installation": "NOT_RUN",
+  "real_provider": "NOT_RUN",
+  "physical_screen": "NOT_RUN",
+  "native_accessibility": "OPEN",
+  "editorial": "OPEN",
+  "overall_acceptance": "OPEN",
+  "automatic_dispatch": false
+}

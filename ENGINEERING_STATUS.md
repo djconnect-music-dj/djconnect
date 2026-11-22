@@ -1,10 +1,10 @@
 ## 2026-11-22 — Music Canvas v1 source candidate
 
-`DJC-MUSIC-CANVAS-V1-20261115` is owner-selected and implemented as a Core/Apple source candidate. Status: `IN_PROGRESS / NOT_MERGED`; independent review and final exact-source qualification remain pending. This record does not claim installation, paid provider execution, physical screen acceptance or deployment.
+`DJC-MUSIC-CANVAS-V1-20261115`: `SOURCE_CANDIDATE / NOT_MERGED`. Core #1672 and Apple #407 implement the owner-selected Music Canvas v1 product and contract. Core owns Profile preferences, paired versioned operations, Session lifecycle/cadence, bounded private image assets and Samsung/SwitchBot adapters; Apple renders one compact active-Session panel.
 
-Core owns persistent Profile preferences, versioned paired operations, lifecycle/cadence, shared image assets, executor composition, Samsung Art Mode and the native HA SwitchBot Cloud adapter. Apple owns the existing Session toolbar/menu and compact native controls, confirmed revisions, preview and per-screen status. VibeScape/VibeCast/playback/Watch retain their scopes. See the canonical Music Canvas design/contract and qualification record.
+Current328-file product qualification passed all49 isolated actual-HA SDK drivers and4886 unittest cases (11 existing skips); all workers exit0. Apple passed85 XCTest (5 existing skips),1795 Swift Testing cases and an unsigned iPhone/iPad Release build. Source, authority, recovery and physical-effect regression proof is documented in `docs/verification/MUSIC_CANVAS_SOURCE_QUALIFICATION_20261122.md` and its JSON record. Historical proofs remain unchanged; successors bind actual new executions.
 
-The 328-file candidate has a full source manifest. Historical source receipts remain immutable; successor receipts require real isolated HA execution, never copied PASS flags. A separate recovery correction handles uncertain device forgetting and cold SQLite/runtime readback. Final current-source requalification is still running. Human merge remains a separate decision; no automatic successor dispatch.
+Independent review must match each current PR head. Merge remains a separate explicit human decision. Physical Samsung/SwitchBot, actual-provider, editorial and native-accessibility acceptance remain OPEN. No installation/deployment or automatic successor dispatch. VibeScape, VibeCast, playback and Watch retain their existing scopes.
 
 ## 2026-11-22 — Corrected Music Origin source Finalization and scoped installation
 

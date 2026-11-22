@@ -33,18 +33,35 @@ class CanvasDomainTests(unittest.TestCase):
         import hashlib
         import json
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/actual-ha.json").read_text())
+        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/actual-ha-reviewed-20261122.json").read_text())
         self.assertEqual(len(proof["source_pins"]), 328)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), expected, name)
         self.assertTrue(proof["source_before_after_equal"])
+        matrix = json.loads((root/"docs/verification/music-canvas-actual-ha-matrix-20261122.json").read_text())
+        self.assertEqual(matrix["source_pins"], proof["source_pins"])
+        self.assertTrue(matrix["source_before_after_equal"])
+        self.assertEqual(len(matrix["results"]), 49)
+        for row in matrix["results"]:
+            self.assertEqual(row["exit_code"], 0, row["harness"])
+            self.assertEqual(hashlib.sha256((root/row["harness"]).read_bytes()).hexdigest(), row["harness_sha256"])
         actual = proof["receipt"]["extension"]
         for field in ("actual_sqlite", "paired_tls", "native_switchbot_schema",
                       "samsung_upload_select_separate", "samsung_off_no_upload",
                       "shared_samsung_generation", "matte_reuses_source",
                       "cross_profile_preview_denied", "offline_target_isolated",
                       "late_model_after_session_end_denied", "admin_deletion_withdraws_management",
-                      "failed_cleanup_and_explicit_forget_anyway"):
+                      "failed_cleanup_and_explicit_forget_anyway",
+                      "unknown_forget_survives_actual_sqlite_and_runtime_restart",
+                      "unknown_forget_requires_new_explicit_admin_decision",
+                      "executor_drains_through_repeated_cancellation",
+                      "manual_artwork_takeover_suspends_without_generation",
+                      "interval_survives_track_transition_but_per_track_does_not",
+                      "withdrawal_during_select_prevents_cleanup",
+                      "preserve_reload_retains_runtime_final_unload_recreates_it",
+                      "asset_configuration_uses_localized_ha_errors",
+                      "late_private_preview_after_forget_is_denied",
+                      "cancelled_private_save_drains_and_releases_all_references"):
             self.assertTrue(actual[field], field)
         self.assertEqual(actual["real_model_calls"], 0)
         self.assertEqual(actual["physical_hardware"], "NOT_RUN")

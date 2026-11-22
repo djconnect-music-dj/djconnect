@@ -285,7 +285,7 @@ class CurrentTrackInsightTests(IsolatedAsyncioTestCase):
         import json
         from pathlib import Path
         root = Path(__file__).resolve().parents[1]
-        fixture = json.loads((root / 'examples/client_contracts/track_insight/music-canvas-20261122-current-subject-actual-h-d3c91045.json').read_text())
+        fixture = json.loads((root / 'examples/client_contracts/track_insight/music-canvas-recovery-20261122-music-canvas-20261122-cu-886b8355.json').read_text())
         self.assertEqual(len(fixture["source_files_sha256"]), 328)
         for relative, digest in fixture["source_files_sha256"].items():
             self.assertEqual(hashlib.sha256((root / relative).read_bytes()).hexdigest(), digest, relative)

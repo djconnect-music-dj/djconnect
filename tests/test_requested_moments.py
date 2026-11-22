@@ -1444,7 +1444,7 @@ class RequestedMomentsTest(unittest.IsolatedAsyncioTestCase):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads(
             (
-                root / 'examples/client_contracts/requested_moments_v1/music-canvas-20261122-actual-ha-wire-technical-c55a0543.json'
+                root / 'examples/client_contracts/requested_moments_v1/music-canvas-recovery-20261122-music-canvas-20261122-ac-83911e42.json'
             ).read_text()
         )
         self.assertTrue(proof["source_before_after_equal"])
