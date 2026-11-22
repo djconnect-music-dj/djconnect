@@ -1797,5 +1797,16 @@
         }
       }
     }
+  },
+  "exceptions": {
+    "canvas_admin_required": {
+      "message": "Home-Assistant-Administratorrechte sind erforderlich."
+    },
+    "canvas_https_origin_required": {
+      "message": "Verwende einen ausdrücklich eingerichteten externen HTTPS-Ursprung ohne Pfad, Abfrage oder Zugangsdaten."
+    },
+    "canvas_unavailable": {
+      "message": "Music Canvas ist nicht verfügbar."
+    }
   }
 }

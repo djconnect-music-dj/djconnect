@@ -183,17 +183,21 @@ def register_asset_configuration(hass):
     async def configure(call):
         user = await hass.auth.async_get_user(call.context.user_id) if call.context.user_id else None
         if not user or not current_admin(hass, user):
-            raise ServiceValidationError("Home Assistant administrator required")
+            raise ServiceValidationError(translation_domain="djconnect", translation_key="canvas_admin_required")
         origin = call.data["https_origin"].rstrip("/")
-        parts = urlsplit(origin)
+        try:
+            parts = urlsplit(origin)
+            parts.port  # Validate a supplied numeric port as part of the origin.
+        except ValueError:
+            raise ServiceValidationError(translation_domain="djconnect", translation_key="canvas_https_origin_required") from None
         if origin and (parts.scheme != "https" or not parts.hostname or parts.username or parts.password
                 or parts.path or parts.query or parts.fragment):
-            raise ServiceValidationError("Use an explicitly configured external HTTPS origin")
+            raise ServiceValidationError(translation_domain="djconnect", translation_key="canvas_https_origin_required")
         # The operator qualifies cloud reachability; configuration is not a probe
         # or an assertion that a URL can already be fetched by a physical frame.
         runtime = hass.data.get("djconnect", {}).get(KEY)
         if runtime is None or runtime.stopped:
-            raise ServiceValidationError("Music Canvas unavailable")
+            raise ServiceValidationError(translation_domain="djconnect", translation_key="canvas_unavailable")
         def save(state):
             state["asset_origin"] = origin or None
         await runtime.repository.mutate(save,

@@ -1797,5 +1797,16 @@
         }
       }
     }
+  },
+  "exceptions": {
+    "canvas_admin_required": {
+      "message": "Les droits d’administration Home Assistant sont requis."
+    },
+    "canvas_https_origin_required": {
+      "message": "Utilisez une origine HTTPS externe explicitement configurée, sans chemin, requête ni identifiants."
+    },
+    "canvas_unavailable": {
+      "message": "Music Canvas est indisponible."
+    }
   }
 }

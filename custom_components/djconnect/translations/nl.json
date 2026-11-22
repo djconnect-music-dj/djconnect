@@ -1797,5 +1797,16 @@
         }
       }
     }
+  },
+  "exceptions": {
+    "canvas_admin_required": {
+      "message": "Beheerdersrechten voor Home Assistant zijn vereist."
+    },
+    "canvas_https_origin_required": {
+      "message": "Gebruik een expliciet ingesteld extern HTTPS-adres zonder pad, query of inloggegevens."
+    },
+    "canvas_unavailable": {
+      "message": "Music Canvas is niet beschikbaar."
+    }
   }
 }

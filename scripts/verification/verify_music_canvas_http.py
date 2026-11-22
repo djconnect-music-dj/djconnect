@@ -329,6 +329,30 @@ async def qualify(hass, manager, history, request, client):
         await storage.async_set_profile_mapping("ha_user", admin.id, "profile-a")
         privileged, code = await call("read")
         assert code == 200 and privileged["can_manage_devices"]
+        # Real HA action errors carry translation keys rather than English copy.
+        from homeassistant.core import Context
+        from homeassistant.exceptions import ServiceValidationError
+        from custom_components.djconnect.music_canvas_http import register_asset_configuration
+        register_asset_configuration(hass)
+        for origin, context, expected in (
+            ("https://canvas.fixture.invalid", Context(), "canvas_admin_required"),
+            ("http://invalid.fixture.invalid/path", Context(user_id=admin.id), "canvas_https_origin_required"),
+            ("https://invalid.fixture.invalid:bad", Context(user_id=admin.id), "canvas_https_origin_required"),
+            ("https://[invalid", Context(user_id=admin.id), "canvas_https_origin_required"),
+        ):
+            try:
+                await hass.services.async_call("djconnect", "music_canvas_asset_access",
+                    {"https_origin": origin}, blocking=True, context=context)
+                raise AssertionError("invalid asset setup accepted")
+            except ServiceValidationError as exc:
+                assert exc.translation_domain == "djconnect" and exc.translation_key == expected
+        with patch.object(runtime, "stopped", True):
+            try:
+                await hass.services.async_call("djconnect", "music_canvas_asset_access",
+                    {"https_origin": "https://canvas.fixture.invalid"}, blocking=True, context=Context(user_id=admin.id))
+                raise AssertionError("stopped runtime accepted setup")
+            except ServiceValidationError as exc:
+                assert exc.translation_key == "canvas_unavailable"
         # Explicit simulated hardware capability for the cleanup-failure cases;
         # this is not a qualification of any installed Samsung model.
         await runtime.repository.mutate(
@@ -419,6 +443,7 @@ async def qualify(hass, manager, history, request, client):
             "unknown_forget_survives_actual_sqlite_and_runtime_restart": True,
             "unknown_forget_requires_new_explicit_admin_decision": True,
             "preserve_reload_retains_runtime_final_unload_recreates_it": True,
+            "asset_configuration_uses_localized_ha_errors": True,
             "session_end_preserves_enabled_and_targets": True,
             "real_model_calls": 0, "physical_hardware": "NOT_RUN"}
 
