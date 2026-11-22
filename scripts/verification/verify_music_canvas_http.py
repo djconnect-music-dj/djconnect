@@ -149,6 +149,8 @@ async def qualify(hass, manager, history, request, client):
         state="playing", media_identity="fixture-recording", title="Synthetic liquid shapes", artist="Fixture",
         duration_ms=240000, position_ms=1000)
     generations, deliveries = [], []
+    observed_content = {}
+    upload_serial = [0]
     failing = set()
     async def generate(_hass, prompt):
         generations.append(prompt)
@@ -157,7 +159,14 @@ async def qualify(hass, manager, history, request, client):
         deliveries.append((device["id"], action))
         if device["id"] in failing:
             raise CanvasError("canvas_device_offline", 503)
-        return {"content_id": "owned-"+device["id"], "displayed": True, "deleted": True}
+        if action == "observe":
+            return {"current": {"content_id": observed_content.get(device["id"])}}
+        if action == "upload":
+            upload_serial[0] += 1
+            return {"content_id": "owned-" + str(upload_serial[0])}
+        if action == "select":
+            observed_content[device["id"]] = kwargs["content_id"]
+        return {"displayed": True, "deleted": True}
     async def cloud(_hass, device, image_url, authorize):
         assert authorize() and image_url.startswith("https://canvas.fixture.invalid/")
         deliveries.append((device["id"], "cloud_upload"))
@@ -205,12 +214,97 @@ async def qualify(hass, manager, history, request, client):
         assert runtime.states["samsung:fixture-a"] == "canvas_device_offline"
         assert runtime.states["samsung:fixture-b"] == "displayed", "one offline screen blocked another"
         failing.clear()
+        runtime.next_probe.clear()  # Isolate later cases from the deliberate offline backoff.
+        # A physically running executor retains its effect slot through repeated cancellation.
+        import threading
+        from copy import deepcopy
+        started_thread, finish_thread = threading.Event(), threading.Event()
+        def blocking_hardware():
+            started_thread.set()
+            assert finish_thread.wait(5)
+        async def effect():
+            async with runtime.effect_lock:
+                await runtime.protocol(blocking_hardware)
+        job = asyncio.create_task(effect())
+        while not started_thread.is_set():
+            await asyncio.sleep(0.001)
+        try:
+            for _ in range(3):
+                job.cancel()
+                await asyncio.sleep(0.01)
+                assert runtime.effect_lock.locked() and not job.done()
+        finally:
+            finish_thread.set()
+        try:
+            await job
+        except asyncio.CancelledError:
+            pass
+        assert not runtime.effect_lock.locked()
+        # A manual art selection suspends Canvas durably, without paid generation.
+        current = await runtime.repository.read()
+        device = current["devices"]["samsung:fixture-a"]
+        observed_content[device["id"]] = "manually-selected-art"
+        try:
+            async with runtime.effect_lock:
+                await runtime.observe_samsung(device, lambda: True)
+            raise AssertionError("manual takeover ignored")
+        except CanvasError as exc:
+            assert exc.code == "canvas_manual_takeover"
+        before_manual = len(generations)
+        await runtime.tick()
+        await runtime.jobs["profile-a"]
+        assert runtime.states[device["id"]] == "canvas_manual_takeover"
+        assert len(generations) == before_manual
+        # Explicit lab reset, not a claim that user art is automatically overridden.
+        await runtime.repository.mutate(lambda state: state["devices"][device["id"]].update(manual_takeover=False), lambda: True)
+        observed_content[device["id"]] = device["last_selected_content"]
+        # A settings-independent track change can complete an interval render;
+        # the same late track is rejected in per-track mode. Force only due-time.
+        for mode in ("1800", "track"):
+            state = await runtime.repository.read()
+            config = deepcopy(state["profiles"]["profile-a"])
+            config["preferences"].update(selected_targets=["samsung:fixture-a"], cadence=mode, cadence_overrides={})
+            before_select = sum(action == "select" for _, action in deliveries)
+            async def transition(_hass, prompt, mode=mode):
+                await manager.async_update_playback_projection(owner_profile_id="profile-a", session_id=session.session_id,
+                    state="playing", media_identity="transition-"+mode, title="Next track "+mode,
+                    artist="Fixture", duration_ms=240000, position_ms=1000)
+                return await generate(_hass, prompt)
+            with patch.object(render, "generate", transition), patch.object(runtime.cadence, "due", lambda *args: True):
+                await runtime.run("profile-a", manager.current_active("profile-a"), config, state)
+            after_select = sum(action == "select" for _, action in deliveries)
+            assert after_select-before_select == (1 if mode == "1800" else 0), (mode, runtime.states)
+        # Withdrawal during select cannot start a subsequent cleanup effect.
+        state = await runtime.repository.read()
+        device = deepcopy(state["devices"]["samsung:fixture-a"])
+        config = state["profiles"]["profile-a"]
+        allowed = [True]
+        def withdraw_during_select(device, action, **kwargs):
+            result = hardware(device, action, **kwargs)
+            if action == "select":
+                allowed[0] = False
+            return result
+        before_cleanup = sum(action == "cleanup" for _, action in deliveries)
+        with patch.object(adapters, "samsung_action", withdraw_during_select):
+            try:
+                await runtime.deliver("profile-a", config, manager.current_active("profile-a"), device["id"],
+                    device, device["preview"], fixture_image.getvalue(), lambda: allowed[0], device["source_image"])
+                raise AssertionError("withdrawn select committed")
+            except CanvasError as exc:
+                assert exc.code == "canvas_context_changed"
+        assert sum(action == "cleanup" for _, action in deliveries) == before_cleanup
+        # Restore this declared synthetic hardware scenario for unrelated end tests.
+        await runtime.repository.mutate(lambda current: current["devices"].update({device["id"]: device}), lambda: True)
+        observed_content[device["id"]] = device["last_selected_content"]
         # Genuine Session end fences an already pending model completion.
         begun, release = asyncio.Event(), asyncio.Event()
         async def delayed(_hass, prompt):
             begun.set()
             await release.wait()
             return fixture_image.getvalue()
+        await runtime.tick()
+        await runtime.jobs["profile-a"]
+        await asyncio.sleep(5.1)  # Stable new track after the transition scenarios.
         runtime.cadence.completed = {k: (v[0], 0) for k, v in runtime.cadence.completed.items()}
         with patch.object(render, "generate", delayed):
             await runtime.tick()
@@ -308,7 +402,11 @@ async def qualify(hass, manager, history, request, client):
         unprivileged, code = await call("read")
         assert code == 200 and not unprivileged["can_manage_devices"]
     runtime.stop()
-    return {"requests": calls, "actual_sqlite": True, "paired_tls": True,
+    return {"executor_drains_through_repeated_cancellation": True,
+            "manual_artwork_takeover_suspends_without_generation": True,
+            "interval_survives_track_transition_but_per_track_does_not": True,
+            "withdrawal_during_select_prevents_cleanup": True,
+            "requests": calls, "actual_sqlite": True, "paired_tls": True,
             "native_switchbot_schema": True, "samsung_upload_select_separate": True,
             "samsung_off_no_upload": True, "synthetic_image_generations": len(generations),
             "shared_samsung_generation": True, "matte_reuses_source": True,

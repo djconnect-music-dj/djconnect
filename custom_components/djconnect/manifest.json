@@ -35,8 +35,7 @@
   "requirements": [
     "segno>=1.6.1",
     "defusedxml>=0.7.1",
-    "samsungtvws==3.0.7",
-    "Pillow==13.0.0"
+    "samsungtvws>=3.0.7"
   ],
   "version": "4.1.0"
 }

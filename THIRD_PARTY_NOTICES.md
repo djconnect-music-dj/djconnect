@@ -1,7 +1,7 @@
 ## Music Canvas v1 runtime dependencies (2026-11-22)
 
-- samsungtvws 3.0.7: https://github.com/xchwarze/samsung-tv-ws-api ; LGPL-3.0 (installed wheel License-Expression). Unmodified separate Python dependency; no HACS integration or upstream source is copied. The wrapper uses Art Mode only, with independent DJConnect pairing. Preserve upstream license and source availability when distributing this dependency.
-- Pillow 13.0.0: https://pillow.readthedocs.io/en/stable/about.html#license ; MIT-CMU/HPND. Existing developer dependency is now also declared for executor-side Canvas composition. HA2026.11.1 already provides this exact version. No fonts, owner photos, Spotify covers or third-party reference images are bundled for Canvas.
+- samsungtvws (minimum 3.0.7; actual HA2026.11.1 qualification uses 3.0.7): https://github.com/xchwarze/samsung-tv-ws-api ; LGPL-3.0 (installed wheel License-Expression). Unmodified separate Python dependency; no HACS integration or upstream source is copied. The wrapper uses Art Mode only, with independent DJConnect pairing. Preserve upstream license and source availability when distributing this dependency.
+- Pillow 13.0.0: https://pillow.readthedocs.io/en/stable/about.html#license ; MIT-CMU/HPND. Executor-side Canvas composition uses the Pillow dependency supplied by Home Assistant; custom integrations must not redeclare it. The developer environment pins13.0.0 and HA2026.11.1 provides that exact version. No fonts, owner photos, Spotify covers or third-party reference images are bundled for Canvas.
 - HA AI Task and SwitchBot Cloud remain existing HA integration/provider boundaries. No provider credentials or SwitchBot implementation are copied. Model/provider terms and generated-output rights remain deployment qualifications; fixtures use synthetic images only.
 
 ## Developer verification tools (1 November 2026)

@@ -162,6 +162,8 @@ class CanvasRuntime:
                                 import functools
                                 updates.update(await self.protocol(functools.partial(adapters.samsung_action, device, "pair")))
                         updates["state"] = "ready"
+                        updates["manual_takeover"] = False
+                        updates["last_selected_content"] = None
                     else:
                         remaining = False
                         if data["cleanup_remote"]:
@@ -324,7 +326,17 @@ class CanvasRuntime:
         try:
             return await asyncio.shield(task)
         except asyncio.CancelledError:
-            await task
+            # Every cancellation (including repeated tick cancellation) must leave
+            # the executor future shielded until the physical action has ended.
+            while not task.done():
+                try:
+                    await asyncio.shield(task)
+                except asyncio.CancelledError:
+                    continue
+                except Exception:
+                    break
+            if not task.cancelled():
+                task.exception()
             raise
 
     async def run(self, owner, active, config, state):
@@ -345,21 +357,25 @@ class CanvasRuntime:
         occurrence = digest([active.session_id,
             started.occurrence_id if started is not None else playback.item_id])
         source_context = deepcopy(manager._history_source_contexts.get(active.session_id))
-        def scope_current():
+        def scope_current(per_track=False):
             return (not self.stopped and storage.authority_revision == authority_revision
                     and self.revisions.get(owner) == config["revision"]
                     and str(active.runtime_state) == "active"
                     and (owner, active.session_id) not in manager._visual_ending
                     and manager._history_source_contexts.get(active.session_id) == source_context
-                    and (started is None or announcements.current_occurrence is started)
+                    and (not per_track or started is None or announcements.current_occurrence is started)
                     and manager.current_active(owner) is active and active.broadcast.passive_observation
                     and active.broadcast.passive_observation[2].state == "playing"
-                    and active.broadcast.passive_observation[2].item_id == playback.item_id
+                    and (not per_track or active.broadcast.passive_observation[2].item_id == playback.item_id)
                     and time.monotonic()-active.broadcast.passive_observation[0] <= 30)
         groups = {}
         for target in prefs["selected_targets"]:
             device = state["devices"].get(target)
             if not device or device.get("forgetting"):
+                continue
+            if device.get("manual_takeover"):
+                self.claims[target] = owner
+                self.states[target] = "canvas_manual_takeover"
                 continue
             if device.get("upload_pending"):
                 self.states[target] = "canvas_upload_unknown"
@@ -391,13 +407,12 @@ class CanvasRuntime:
                 if self.next_probe.get(target, 0) > time.monotonic():
                     continue
                 try:
-                    import functools
                     async with self.effect_lock:
                         current = await self.repository.read()
                         row = current["devices"].get(target)
-                        need(scope_current() and row and row["epoch"] == device["epoch"]
+                        need(scope_current(cadence == "track") and row and row["epoch"] == device["epoch"]
                              and not row.get("forgetting"), "canvas_context_changed", 409)
-                        await self.protocol(functools.partial(adapters.samsung_action, device, "observe"))
+                        await self.observe_samsung(device, lambda: scope_current(cadence == "track"))
                 except asyncio.CancelledError:
                     raise
                 except Exception as exc:
@@ -405,13 +420,15 @@ class CanvasRuntime:
                     self.states[target] = exc.code if isinstance(exc, CanvasError) else "unavailable"
                     continue
             self.claims[target] = owner
-            groups.setdefault((screen["width"], screen["height"], cached), []).append((target, device, key))
+            groups.setdefault((screen["width"], screen["height"], cached, cadence == "track"), []).append((target, device, key))
         if not groups:
             return
 
         try:
-            for (width, height, cached), targets in groups.items():
-                need(scope_current(), "canvas_context_changed", 409)
+            for (width, height, cached, per_track), targets in groups.items():
+                def current_scope():
+                    return scope_current(per_track)
+                need(current_scope(), "canvas_context_changed", 409)
                 if not cached and not render.generation_available(self.hass):
                     for target, _, _ in targets:
                         self.states[target] = "image_provider_required"
@@ -434,7 +451,7 @@ class CanvasRuntime:
                         month=__import__("datetime").datetime.now().month)
                     async with asyncio.timeout(120):
                         raw = await render.generate(self.hass, prompt)
-                need(scope_current(), "canvas_context_changed", 409)
+                need(current_scope(), "canvas_context_changed", 409)
                 art = await self.hass.async_add_executor_job(
                     render.compose, raw, width, height, prefs["composition"], prefs["matte"])
                 filename = hashlib.sha256(art).hexdigest()+".jpg"
@@ -455,7 +472,7 @@ class CanvasRuntime:
                 try:
                     for target, device, _key in targets:
                         try:
-                            await self.deliver(owner, config, active, target, device, filename, art, scope_current, source_file)
+                            await self.deliver(owner, config, active, target, device, filename, art, current_scope, source_file)
                         except CanvasError as exc:
                             self.states[target] = exc.code
                         except Exception:
@@ -470,6 +487,19 @@ class CanvasRuntime:
                 for target, _, _ in targets:
                     self.states[target] = exc.code if isinstance(exc, CanvasError) else "unavailable"
 
+    async def observe_samsung(self, device, authorize):
+        """Respect manual artwork until an admin explicitly reconnects Canvas."""
+        import functools
+        need(authorize(), "canvas_context_changed", 409)
+        observed = await self.protocol(functools.partial(adapters.samsung_action, device, "observe"))
+        need(authorize(), "canvas_context_changed", 409)
+        expected = device.get("last_selected_content")
+        current = observed.get("current")
+        if expected and (not isinstance(current, dict) or current.get("content_id") != expected):
+            await self.repository.mutate(
+                lambda state: state["devices"][device["id"]].update(manual_takeover=True), authorize)
+            raise CanvasError("canvas_manual_takeover", 409)
+
     async def deliver(self, owner, config, active, target, device, filename, art, scope_current, source_file):
         async with self.effect_lock:
             current = await self.repository.read()
@@ -481,6 +511,7 @@ class CanvasRuntime:
             self.states[target] = "delivering"
             if device["adapter"] == "samsung":
                 import functools
+                await self.observe_samsung(device, authorized)
                 need(len(device["owned_content"]) < 2, "canvas_cleanup_required", 409)
                 def reserve_upload(state):
                     state["devices"][target]["upload_pending"] = True
@@ -499,6 +530,7 @@ class CanvasRuntime:
                 observed = "displayed" if result["displayed"] else "delivered_unknown"
                 if result["displayed"]:
                     for previous in device["owned_content"]:
+                        need(authorized(), "canvas_context_changed", 409)
                         cleanup = await self.protocol(functools.partial(
                             adapters.samsung_action, device, "cleanup", content_id=previous))
                         if cleanup["deleted"]:
@@ -517,6 +549,8 @@ class CanvasRuntime:
                 observed = result["state"]
             def commit(state):
                 need(authorized(), "canvas_context_changed", 409)
+                if device["adapter"] == "samsung" and observed == "displayed":
+                    state["devices"][target]["last_selected_content"] = content_id
                 state["devices"][target]["preview"] = filename
                 state["devices"][target]["preview_owner"] = owner
                 state["devices"][target]["source_image"] = source_file

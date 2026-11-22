@@ -70,7 +70,7 @@ installation-owned and is not deleted with an unrelated Profile.
 
 Samsung upload and select are separate. Only an already-on Art Mode target may
 receive an upload; qualification of no-wake behavior is a hardware admission,
-not inferred from show=false. Manual takeover stops delivery. Track owned content
+not inferred from show=false. Manual artwork takeover is persisted and stops delivery. Resume requires explicit HA-admin setup/reconnect; a background tick, restart or new track cannot resume it. Setup retains the existing token and screen values and clears only this takeover fence. Interval jobs freeze their chosen track but retain all Session/Profile/settings/device authority checks; per-track jobs also fence the original occurrence. Repeated cancellation drains a shielded physical executor before releasing its effect slot. Track owned content
 IDs durably, never delete by prefix. Unknown upload outcome is not automatically
 retried. Local token removal does not claim TV-side revocation.
 
