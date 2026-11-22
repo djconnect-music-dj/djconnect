@@ -8,10 +8,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 FREEZE = "history/20261122/music-origin-source-freeze-maintenance-v21.json"
-READBACK = "docs/verification/music-origin-source-publication-readback-20261122.json"
-READBACK_SHA = "bfa53124c4ecb369b763c0014349d4734a3a8516933449121038e96010986737"
+READBACK = "docs/verification/music-origin-corrected-source-publication-readback-20261122.json"
+READBACK_SHA = "22ac24df11e7ce0a8aa4dbc4864e479c6b3c87eb03feced9bc9e0df8bcd7688e"
 SOURCES = {
-    "core": ("djconnect-music-dj/djconnect", "5f4b8be750891869ac6b8ea3a5474473f1aac5dd", "9758cbea19e2af153f192cd53480e11a3f9c482b", "d9739df30d6d46273288b9cdfce54b1cb3e582b0"),
+    "core": ("djconnect-music-dj/djconnect", "e1697270dd71f87831f280158b5086fcd29e1d8b", "0cfff07002dc13d05d768212d09c71e894da3282", "38fbb906afb1865ada1ccb12b5e8efb53d576b38"),
     "apple": ("djconnect-music-dj/djconnect-app", "f489aa2cf8b66fe5bb8972f9cc7def5eca57f63c", "e0fa68b870893343f4660f42786e3697d0c8e35d", "cd072ef748cfa4a77967b8c17383e28a6aef902c"),
 }
 POLICY = "3fba299f26c75e47804e66218cabea8fd50627bd2a84a1dd294d59009714466f"
@@ -43,13 +43,16 @@ def validate(plan, previous_validator):
           and receipt.get("consumer_writes") is False, "bounded source authority")
     check(receipt.get("overall_acceptance") == "OPEN"
           and receipt.get("native") == "SOURCE_SOFTWARE_ONLY_PHYSICAL_OPEN"
-          and all(receipt.get(k) == "NOT_RUN" for k in ("installed", "deployment", "live_model")),
+          and receipt.get("live_model") == "NOT_RUN"
+          and receipt.get("installed") == "SEPARATE_AUTHORIZED_OPERATION"
+          and receipt.get("deployment") == "SEPARATE_AUTHORIZED_HA_DEV_OPERATION"
+          and receipt.get("physical_acceptance") == "OPEN",
           "open real-provider/editorial/device acceptance")
     documents = receipt.get("documents", [])
     check(isinstance(documents, list) and len(documents) == 2
           and {row.get("path") for row in documents} == {
-              "docs/technical/MUSIC_ORIGIN_SOURCE_FINALIZATION_20261122.md",
-              "docs/history/prompts/2026-11-22-music-origin-source-finalization.md"}
+              "docs/technical/MUSIC_ORIGIN_CORRECTED_SOURCE_FINALIZATION_20261122.md",
+              "docs/history/prompts/2026-11-22-music-origin-corrected-source-finalization.md"}
           and all(digest((ROOT / row["path"]).read_bytes()) == row.get("sha256") for row in documents),
           "exact separate Finalization documents")
     restored = deepcopy(d)
@@ -75,6 +78,17 @@ def validate(plan, previous_validator):
               and receipt.get("source_readback_sha256") == digest(raw) == READBACK_SHA,
               "immutable actual publication readback")
         evidence = json.loads(raw)
+        installation = evidence.get("separate_authorized_installation", {})
+        encoded_installation = (json.dumps(installation, indent=2) + "\n").encode()
+        check(receipt.get("installation_receipt_sha256") == digest(encoded_installation)
+              and installation.get("installed_targets") == ["iphone", "macbook", "ha-dev"]
+              and installation.get("core_source") == SOURCES["core"][2]
+              and installation.get("apple_source") == SOURCES["apple"][2]
+              and installation.get("apple_build") == "40532"
+              and installation.get("ha_dev", {}).get("exact_actual_runtime_files") == 322
+              and installation.get("ha_dev", {}).get("existing_principals_preserved") == 13
+              and installation.get("ha_dev", {}).get("music_origin_advertised") is True,
+              "separate authorized installation identity and scope")
         policy = ROOT / "tools/trusted_delivery/evidence_preservation.py"
         check(digest(policy.read_bytes()) == POLICY, "original canonical validator")
         spec = importlib.util.spec_from_file_location("music_origin_durable_policy", policy)

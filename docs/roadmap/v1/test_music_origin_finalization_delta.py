@@ -21,7 +21,8 @@ class MusicOriginFinalizationTest(unittest.TestCase):
     def test_wrong_source_dispatch_installation_or_rehashed_readback_is_rejected(self):
         for field, value in [("documents", []), ("source_delivery", "LOCAL"), ("automatic_dispatch", True),
                              ("automatic_dispatch", 0), ("consumer_writes", True),
-                             ("installed", "PASS"), ("live_model", "PASS"),
+                             ("installed", "PASS"), ("physical_acceptance", "PASS"),
+                             ("installation_receipt_sha256", "0" * 64), ("live_model", "PASS"),
                              ("overall_acceptance", "PASS"), ("source_readback_sha256", "0" * 64),
                              ("predecessor_sha256", "0" * 64)]:
             with self.subTest(field=field, value=value):

@@ -43710,22 +43710,24 @@
       "automatic_dispatch": false,
       "consumer_writes": false,
       "overall_acceptance": "OPEN",
-      "installed": "NOT_RUN",
-      "deployment": "NOT_RUN",
+      "installed": "SEPARATE_AUTHORIZED_OPERATION",
+      "deployment": "SEPARATE_AUTHORIZED_HA_DEV_OPERATION",
       "live_model": "NOT_RUN",
       "native": "SOURCE_SOFTWARE_ONLY_PHYSICAL_OPEN",
-      "source_readback_path": "docs/verification/music-origin-source-publication-readback-20261122.json",
-      "source_readback_sha256": "bfa53124c4ecb369b763c0014349d4734a3a8516933449121038e96010986737",
+      "source_readback_path": "docs/verification/music-origin-corrected-source-publication-readback-20261122.json",
+      "source_readback_sha256": "22ac24df11e7ce0a8aa4dbc4864e479c6b3c87eb03feced9bc9e0df8bcd7688e",
       "documents": [
         {
-          "path": "docs/technical/MUSIC_ORIGIN_SOURCE_FINALIZATION_20261122.md",
-          "sha256": "3df7b598de828dec4142cb8e3df112c892fecf582c9d02306a9ccbe54c10bdde"
+          "path": "docs/technical/MUSIC_ORIGIN_CORRECTED_SOURCE_FINALIZATION_20261122.md",
+          "sha256": "94c1da5412fadaf64030b7da3582015000656767079cbc7c43589523ecc8d312"
         },
         {
-          "path": "docs/history/prompts/2026-11-22-music-origin-source-finalization.md",
-          "sha256": "01c55598f6173ff6fe3b056cda4d6b09e9bd29ddf7621a183d7a8b5bd88790d8"
+          "path": "docs/history/prompts/2026-11-22-music-origin-corrected-source-finalization.md",
+          "sha256": "e9ea3917e5d2bd1f34900f2eccc5fbc2246a4159b153a838bff36c66b34ab502"
         }
-      ]
+      ],
+      "physical_acceptance": "OPEN",
+      "installation_receipt_sha256": "9d8c4663f9f30c8c1128be0154baf8397d59015e466f802f79d761d60a3e106f"
     }
   }
 }
