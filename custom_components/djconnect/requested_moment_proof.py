@@ -77,14 +77,20 @@ class RequestedMomentProof:
                 return False
         return True
 
+    def _bound_original(self, moment):
+        """The accepted identity, text and semantic content are one immutable binding."""
+        return (
+            moment.user_requested is self
+            and moment.moment_id == self.moment_id
+            and hashlib.sha256(moment.content.encode()).hexdigest() == self.content_sha256
+            and self._semantic(moment) == self.semantic
+        )
+
     def valid(self, moment, *, require_committed=False):
         try:
             self.guard()
             return (
-                moment.user_requested is self
-                and moment.moment_id == self.moment_id
-                and hashlib.sha256(moment.content.encode()).hexdigest() == self.content_sha256
-                and self._semantic(moment) == self.semantic
+                self._bound_original(moment)
                 and self.sources_current(moment)
                 and time.monotonic() < self.deadline
                 and (self.committed or not require_committed)
@@ -145,13 +151,8 @@ def display_admission(moment):
     }
 
 
-def retained_provenance(entry):
-    """Recognize only original request metadata inside an admitted retained entry.
-
-    This never grants reading or processing: the existing history/source/owner
-    service must already have admitted the original row before speech prepare.
-    """
-    value = entry.get("user_requested")
+def _retained_request_metadata(entry, value):
+    """Recognize the exact stored metadata shape before reading its identity fields."""
     if (
         type(value) is not dict
         or set(value)
@@ -164,6 +165,18 @@ def retained_provenance(entry):
             for k in ("operation_id", "type_id", "subject_ref", "playback_item_id")
         )
     ):
+        return False
+    return True
+
+
+def retained_provenance(entry):
+    """Recognize only original request metadata inside an admitted retained entry.
+
+    This never grants reading or processing: the existing history/source/owner
+    service must already have admitted the original row before speech prepare.
+    """
+    value = entry.get("user_requested")
+    if not _retained_request_metadata(entry, value):
         return False
     from .requested_moment_inventory import MOMENT_TYPES
     from .transport_operations import operation_created_ms, OperationError

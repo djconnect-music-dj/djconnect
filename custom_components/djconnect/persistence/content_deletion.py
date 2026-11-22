@@ -26,43 +26,67 @@ def request_deleted_now(hass, owner, client_id):
     return _request_hash('profile:' + owner, client_id) in getattr(service, 'content_request_fences', {}).get(owner, set())
 
 
-def validate_scope(scope):
-    if (not isinstance(scope, dict) or set(scope) != {
-            'unit', 'sessions', 'entries', 'moments', 'turn_ids', 'request_hashes'}):
-        raise HistoryDeletionError('invalid_content_delete_request')
-    unit = scope['unit']
+def _validate_unit(unit):
     if (not isinstance(unit, dict) or set(unit) != {'kind', 'session_id', 'target_id'}
-            or unit['kind'] not in {'moment', 'exchange', 'attempt'}
-            or not isinstance(unit['session_id'], str)
+            or unit['kind'] not in {'moment', 'exchange', 'attempt'}):
+        raise HistoryDeletionError('invalid_content_delete_request')
+    if (not isinstance(unit['session_id'], str)
             or (unit['session_id'] and not _ID.fullmatch(unit['session_id']))
             or not isinstance(unit['target_id'], str) or not _ID.fullmatch(unit['target_id'])):
         raise HistoryDeletionError('invalid_content_delete_request')
-    shapes = {'sessions': 2, 'entries': 5, 'moments': 2}
-    for key, size in shapes.items():
+
+
+def _validate_scope_row(key, row, size):
+    if type(row) is not list or len(row) != size:
+        raise HistoryDeletionError('invalid_content_delete_request')
+    strings = row[:-1] if key == 'sessions' else row
+    if any(not isinstance(v, str) or not _ID.fullmatch(v) for v in strings):
+        raise HistoryDeletionError('invalid_content_delete_request')
+    _validate_scope_row_fields(key, row)
+
+
+def _validate_scope_row_fields(key, row):
+    if key == 'sessions' and (type(row[1]) is not int or row[1] < 0):
+        raise HistoryDeletionError('invalid_content_delete_request')
+    if key == 'entries' and (row[4] not in {'remove', 'unavailable'} or row[2] not in {'dj_moment', 'dj_publication', 'dj_silence', 'conversation_user', 'conversation_dj'}):
+        raise HistoryDeletionError('invalid_content_delete_request')
+
+
+def _validate_scope_rows(scope):
+    for key, size in {'sessions': 2, 'entries': 5, 'moments': 2}.items():
         rows = scope[key]
         if type(rows) is not list or len(rows) > MAX_UNITS or len({json.dumps(r) for r in rows}) != len(rows):
             raise HistoryDeletionError('content_delete_capacity')
         for row in rows:
-            if type(row) is not list or len(row) != size:
-                raise HistoryDeletionError('invalid_content_delete_request')
-            strings = row[:-1] if key == 'sessions' else row
-            if any(not isinstance(v, str) or not _ID.fullmatch(v) for v in strings):
-                raise HistoryDeletionError('invalid_content_delete_request')
-            if key == 'sessions' and (type(row[1]) is not int or row[1] < 0):
-                raise HistoryDeletionError('invalid_content_delete_request')
-            if key == 'entries' and (row[4] not in {'remove', 'unavailable'} or row[2] not in {'dj_moment', 'dj_publication', 'dj_silence', 'conversation_user', 'conversation_dj'}):
-                raise HistoryDeletionError('invalid_content_delete_request')
+            _validate_scope_row(key, row, size)
+
+
+def _validate_scope_ids(scope):
     for key in ('turn_ids', 'request_hashes'):
         values = scope[key]
         if (type(values) is not list or len(values) > MAX_UNITS or len(set(values)) != len(values)
                 or any(not isinstance(v, str) or not (_HASH if key == 'request_hashes' else _ID).fullmatch(v) for v in values)):
             raise HistoryDeletionError('invalid_content_delete_request')
+
+
+def _validate_scope_membership(scope):
     sessions = {s for s, _ in scope['sessions']}
     if len(sessions) != len(scope['sessions']):
         raise HistoryDeletionError('invalid_content_delete_request')
     if (any(r[0] not in sessions for r in scope['entries'])
             or any(s not in sessions for s, _ in scope['moments'])):
         raise HistoryDeletionError('invalid_content_delete_request')
+
+
+def validate_scope(scope):
+    """Validate the exact unit, bounded row groups and their Session membership."""
+    if (not isinstance(scope, dict) or set(scope) != {
+            'unit', 'sessions', 'entries', 'moments', 'turn_ids', 'request_hashes'}):
+        raise HistoryDeletionError('invalid_content_delete_request')
+    _validate_unit(scope['unit'])
+    _validate_scope_rows(scope)
+    _validate_scope_ids(scope)
+    _validate_scope_membership(scope)
 
 
 class ContentDeletionRepository(HistoryDeletionRepository):
@@ -78,6 +102,31 @@ class ContentDeletionRepository(HistoryDeletionRepository):
                 raise HistoryDeletionError('content_delete_operation_conflict')
             return row, json.loads(kind[1])
         return None
+
+    def _validate_content_capacity(self, tx, owner, now, tombstones, scope):
+        count = tx.fetchone("SELECT count(*) FROM djconnect_history_deletions WHERE state!='completed' OR expires_ms>=?", (now,))[0]
+        if count >= self._max_records:
+            raise HistoryDeletionError('content_delete_capacity')
+        if (tx.fetchone('SELECT count(*) FROM djconnect_content_tombstones')[0] + len(tombstones) > MAX_TOMBSTONES
+                or tx.fetchone('SELECT count(*) FROM djconnect_content_request_fences WHERE owner_profile_id=?', (owner,))[0]
+                + len(scope['request_hashes']) > MAX_UNITS
+                or tx.fetchone('SELECT count(*) FROM djconnect_content_request_fences')[0] + len(scope['request_hashes']) > MAX_TOMBSTONES):
+            raise HistoryDeletionError('content_delete_capacity')
+
+    @staticmethod
+    def _validate_current_scope(tx, owner, scope):
+        for session, revision in scope['sessions']:
+            row = tx.fetchone('SELECT owner_profile_id,history_revision FROM djconnect_persistent_sessions WHERE session_id=?', (session,))
+            if not row or row[0] != owner:
+                raise HistoryDeletionError('content_unavailable')
+            if row[1] != revision:
+                raise HistoryDeletionError('content_delete_scope_conflict')
+            if tx.fetchone('SELECT 1 FROM djconnect_history_deletion_targets WHERE owner_profile_id=? AND session_id=?', (owner, session)):
+                raise HistoryDeletionError('content_delete_outcome_unknown')
+        for session, entry, kind, reference, _ in scope['entries']:
+            row = tx.fetchone('SELECT kind,reference_id FROM djconnect_session_entries WHERE owner_profile_id=? AND session_id=? AND entry_id=?', (owner, session, entry))
+            if row != (kind, reference):
+                raise HistoryDeletionError('content_delete_scope_conflict')
 
     async def async_reserve_content(self, *, owner, operation_id, binding, digest, scope,
                                     store_plan, authorize, now_ms=None):
@@ -104,26 +153,8 @@ class ContentDeletionRepository(HistoryDeletionRepository):
                     if old[0][1] != digest:
                         raise HistoryDeletionError('content_delete_operation_conflict')
                     return old
-                count = tx.fetchone("SELECT count(*) FROM djconnect_history_deletions WHERE state!='completed' OR expires_ms>=?", (now,))[0]
-                if count >= self._max_records:
-                    raise HistoryDeletionError('content_delete_capacity')
-                if (tx.fetchone('SELECT count(*) FROM djconnect_content_tombstones')[0] + len(tombstones) > MAX_TOMBSTONES
-                        or tx.fetchone('SELECT count(*) FROM djconnect_content_request_fences WHERE owner_profile_id=?', (owner,))[0]
-                        + len(scope['request_hashes']) > MAX_UNITS
-                        or tx.fetchone('SELECT count(*) FROM djconnect_content_request_fences')[0] + len(scope['request_hashes']) > MAX_TOMBSTONES):
-                    raise HistoryDeletionError('content_delete_capacity')
-                for session, revision in scope['sessions']:
-                    row = tx.fetchone('SELECT owner_profile_id,history_revision FROM djconnect_persistent_sessions WHERE session_id=?', (session,))
-                    if not row or row[0] != owner:
-                        raise HistoryDeletionError('content_unavailable')
-                    if row[1] != revision:
-                        raise HistoryDeletionError('content_delete_scope_conflict')
-                    if tx.fetchone('SELECT 1 FROM djconnect_history_deletion_targets WHERE owner_profile_id=? AND session_id=?', (owner, session)):
-                        raise HistoryDeletionError('content_delete_outcome_unknown')
-                for session, entry, kind, reference, _ in scope['entries']:
-                    row = tx.fetchone('SELECT kind,reference_id FROM djconnect_session_entries WHERE owner_profile_id=? AND session_id=? AND entry_id=?', (owner, session, entry))
-                    if row != (kind, reference):
-                        raise HistoryDeletionError('content_delete_scope_conflict')
+                self._validate_content_capacity(tx, owner, now, tombstones, scope)
+                self._validate_current_scope(tx, owner, scope)
                 return None
             try:
                 old = validate()
@@ -204,13 +235,7 @@ class ContentDeletionRepository(HistoryDeletionRepository):
         import time
         created = operation_created_ms(operation_id)
         def read(tx):
-            stored = tx.fetchone('SELECT high_water_ms FROM djconnect_history_deletion_clock WHERE singleton=1')[0]
-            advanced = (int(self._anchor_wall + max(0, self._monotonic() - self._anchor_mono) * 1000)
-                        if self._anchor_wall is not None else 0)
-            observed = max(int(time.time() * 1000), stored)
-            if self._anchor_wall is None or observed > advanced:
-                self._anchor_wall, self._anchor_mono = observed, self._monotonic()
-            now = max(observed, advanced)
+            now = self._status_now(tx, time)
             record = self._content_row(tx, owner, operation_id, binding)
             if created > now + FUTURE_SKEW_MS:
                 raise HistoryDeletionError('invalid_content_delete_request')
@@ -239,6 +264,19 @@ class ContentDeletionRepository(HistoryDeletionRepository):
         return await self._async_in_transaction(lambda tx: bool(tx.fetchone(
             'SELECT 1 FROM djconnect_content_request_fences WHERE owner_profile_id=? AND request_hash=?', (owner, key))))
 
+    @staticmethod
+    def _erase_scope_entries(tx, owner, entries):
+        for session, entry, kind, reference, mode in entries:
+            if mode == 'remove':
+                tx.execute('DELETE FROM djconnect_session_entries WHERE owner_profile_id=? AND session_id=? AND entry_id=?', (owner, session, entry))
+                if tx.fetchone('SELECT 1 FROM djconnect_session_entries WHERE owner_profile_id=? AND session_id=? AND entry_id=?', (owner, session, entry)):
+                    raise HistoryDeletionError('content_delete_outcome_unknown')
+            elif kind not in {'conversation_user', 'conversation_dj'}:
+                tx.execute("UPDATE djconnect_session_entries SET kind='dj_publication',body=? WHERE owner_profile_id=? AND session_id=? AND entry_id=?",
+                           (json.dumps({'moment_id': reference, 'content_state': 'unavailable', 'unavailable_reason': 'owner_deleted_dependency', 'text': None, 'speech_available': False}), owner, session, entry))
+            if mode == 'remove':
+                tx.execute('DELETE FROM djconnect_session_acceptances WHERE session_id=? AND entry_id=?', (session, entry))
+
     async def async_complete_content(self, intent, *, authorize=None):
         owner, operation, binding = (intent[k] for k in ('owner', 'operation_id', 'binding'))
         def complete(tx):
@@ -250,16 +288,7 @@ class ContentDeletionRepository(HistoryDeletionRepository):
                 return json.loads(row[6])
             if row[3] != 'store_erased':
                 raise HistoryDeletionError('content_delete_outcome_unknown')
-            for session, entry, kind, reference, mode in scope['entries']:
-                if mode == 'remove':
-                    tx.execute('DELETE FROM djconnect_session_entries WHERE owner_profile_id=? AND session_id=? AND entry_id=?', (owner, session, entry))
-                    if tx.fetchone('SELECT 1 FROM djconnect_session_entries WHERE owner_profile_id=? AND session_id=? AND entry_id=?', (owner, session, entry)):
-                        raise HistoryDeletionError('content_delete_outcome_unknown')
-                elif kind not in {'conversation_user', 'conversation_dj'}:
-                    tx.execute("UPDATE djconnect_session_entries SET kind='dj_publication',body=? WHERE owner_profile_id=? AND session_id=? AND entry_id=?",
-                               (json.dumps({'moment_id': reference, 'content_state': 'unavailable', 'unavailable_reason': 'owner_deleted_dependency', 'text': None, 'speech_available': False}), owner, session, entry))
-                if mode == 'remove':
-                    tx.execute('DELETE FROM djconnect_session_acceptances WHERE session_id=? AND entry_id=?', (session, entry))
+            self._erase_scope_entries(tx, owner, scope['entries'])
             for session, moment in scope['moments']:
                 tx.execute('DELETE FROM djconnect_historical_moments WHERE owner_profile_id=? AND originating_session_id=? AND originating_moment_id=?', (owner, session, moment))
             for session, _ in scope['sessions']:

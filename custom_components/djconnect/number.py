@@ -14,7 +14,7 @@ except ImportError:  # pragma: no cover - older HA/test stubs
 
 from .const import CLIENT_TYPE_ESP32, DOMAIN
 from .device_info import djconnect_device_info
-from .entity_ids import entry_unique_id
+from .entity_ids import entry_unique_id, remove_legacy_entities
 from .use_cases import run_music_command
 
 MIN_VOLUME = 0.0
@@ -72,25 +72,9 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-def _remove_legacy_entities(
-    hass: HomeAssistant,
-    runtime: Any,
-    platform: str,
-    keys: tuple[str, ...],
-) -> None:
-    if er is None:
-        return
-    registry = er.async_get(hass)
-    if registry is None:
-        return
-    get_entity_id = getattr(registry, "async_get_entity_id", None)
-    remove_entity = getattr(registry, "async_remove", None)
-    if not callable(get_entity_id) or not callable(remove_entity):
-        return
-    for key in keys:
-        entity_id = get_entity_id(platform, DOMAIN, entry_unique_id(runtime, key))
-        if entity_id:
-            remove_entity(entity_id)
+def _remove_legacy_entities(hass: HomeAssistant, runtime: Any, platform: str, keys: tuple[str, ...]) -> None:
+    remove_legacy_entities(hass, runtime, platform, keys,
+        registry_api=er, domain=DOMAIN, unique_id=entry_unique_id)
 
 
 class DJConnectVolumeNumber(NumberEntity):

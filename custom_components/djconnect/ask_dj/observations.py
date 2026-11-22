@@ -4,12 +4,14 @@ No Planner, cache, model input, playback mutation or independent conversation.
 A typed literal-metadata candidate may qualify through the existing archive owner.
 """
 from __future__ import annotations
+
 from dataclasses import dataclass
 
 from datetime import UTC, datetime, timedelta
 import re
 
 from .dialogue import current_turn, DialogueError, valid_uri
+from .responses import _core_answer
 
 COPY = {
     "en": {"queue": "Currently reported queue:", "known_empty": "The queue read succeeded and contains no upcoming items.", "unavailable": "I could not read the queue right now; I cannot tell whether it is empty.", "unsupported": "This backend does not support reading its queue.", "partial": "This is the available part of the reported queue.", "stale": "The available queue observation has expired.", "withdrawn": "Access to this queue observation has been withdrawn.", "not_requested": "The queue has not been read.", "play": "Play Now", "reason": "Reported queue item; viewing does not play it.", "order": "This is observed queue order, not a guarantee of what will play next.", "no_session": "There is no active DJ-session preview; I can report the queue.", "no_forecast": "A current DJ-session preview is not available.", "saved": "Last saved observation", "previous": "Last recorded different track", "unknown": "I do not have a qualified previous-track observation.", "coverage": "These are recorded observations, not an exact record of every playback instance."},
@@ -102,10 +104,10 @@ async def queue_read(hass, runtime):
     text = COPY[language()][key]
     if observation["state"] in {"present", "partial"}:
         text += " " + COPY[language()]["order"]
-    return {"success": True, "text": text, "dj_text": text, "action": "none", "items": items,
-            "intent": {"intent":"next_track_info", "category":"informational", "action":"queue"},
-            "playback_actions": actions, "images": [], "links": [], "queue_observation": observation,
-            "sources": [{"source": "spotify_queue", "title": "Spotify queue", "kind": "source"}]}
+    return _core_answer(text, action="none", items=items,
+            intent={"intent":"next_track_info", "category":"informational", "action":"queue"},
+            playback_actions=actions, images=[], links=[], queue_observation=observation,
+            sources=[{"source": "spotify_queue", "title": "Spotify queue", "kind": "source"}])
 
 
 async def forecast_read(hass, runtime):
@@ -186,13 +188,13 @@ async def previous_read(hass, runtime):
         refs = [{"session_id": entry["session_id"], "entry_id": entry["entry_id"]}]
         turn.dependencies.extend(refs)
         text = COPY[language()]["previous" if active else "saved"] + ": " + entry["text"] + ". " + COPY[language()]["coverage"]
-    return {"success": True, "text": text, "dj_text": text, "intent": {"intent": "previous_track_information"},
-            "playback_actions": [], "items": [], "images": [], "links": [], "text_source": "qualified_private_projection", "is_generated_text": False,
-            "previous_observation": {"schema_version": 1, "state": "observed" if entry else "unknown",
+    return _core_answer(text, intent={"intent": "previous_track_information"},
+            playback_actions=[], items=[], images=[], links=[], text_source="qualified_private_projection", is_generated_text=False,
+            previous_observation={"schema_version": 1, "state": "observed" if entry else "unknown",
                 "basis": "stage1_distinct_accepted_observations", "coverage": "partial", "revision": revision,
-                "as_of": datetime.now(UTC).isoformat(), "references": refs}, "_private_current_context": True,
-            "sources": [{"source": "session_playback_observed", "title": entry["playback"].get("provider", "Session history"),
-                "url": entry["playback"].get("source_url", "")} ] if entry else []}
+                "as_of": datetime.now(UTC).isoformat(), "references": refs}, _private_current_context=True,
+            sources=[{"source": "session_playback_observed", "title": entry["playback"].get("provider", "Session history"),
+                "url": entry["playback"].get("source_url", "")} ] if entry else [])
 
 
 def current_artist_question(text: str) -> bool:
@@ -593,10 +595,10 @@ async def release_read(hass,runtime,selected=None):
     if turn:
         await turn.guard()
         validate_deadline()
-    return {'success':True,'text':text,'dj_text':text,'action':'none','images':[],
-            'sources':sources,'links':[dict(source) for source in sources],'playback_actions':[],
-            'intent':{'category':'informational','intent':'current_release_information'},
-            'release_observation':{'state':'known' if value else 'unknown','release_date':value,
+    return _core_answer(text,action='none',images=[],
+            sources=sources,links=[dict(source) for source in sources],playback_actions=[],
+            intent={'category':'informational','intent':'current_release_information'},
+            release_observation={'state':'known' if value else 'unknown','release_date':value,
                                    'precision':metadata.get('release_date_precision') if value else None,
                                    'basis':'album_edition','original_release_verified':False},
-            '_private_current_context':True,'speech_processing_basis':'accepted_local_reply'}
+            _private_current_context=True,speech_processing_basis='accepted_local_reply')

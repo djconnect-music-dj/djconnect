@@ -1,7 +1,9 @@
 """Read-only Spotify collection offers backed by provider evidence."""
 
+
 import asyncio
 import re
+from .responses import _core_answer
 
 
 def collection_request(text):
@@ -82,8 +84,8 @@ async def collection_response(hass, runtime, kind, artist, *, turn):
     else:
         message = (f"I found {len(actions)} Spotify {noun}. Pick one to play." if actions
                    else f"I couldn't verify any Spotify {noun} for this request.")
-    return {"success": True, "text": message, "dj_text": message, "action": "none",
-            "images": [], "items": actions, "playback_actions": actions}
+    return _core_answer(message, action="none",
+            images=[], items=actions, playback_actions=actions)
 
 
 async def artist_collections_read(hass, runtime, artist, *, turn):
@@ -121,9 +123,9 @@ async def artist_collections_read(hass, runtime, artist, *, turn):
     for action in actions:
         action.update(label=copy[language][2], button_label=copy[language][2], reason=caption)
     text = catalogue_result_text(actions, language, caption=caption) if actions else caption
-    return {"success": True, "text": text, "dj_text": text, "action": "none", "images": [],
-            "items": actions, "playback_actions": actions,
-            "text_source": "qualified_catalog_result", "is_generated_text": False,
-            "knowledge_basis": "qualified_provider_result_fields", "_private_current_context": True,
-            "intent": {"category":"informational", "intent":"artist_collections_information"},
-            "sources": [{"source":"spotify_artist_collections", "title":"Spotify", "kind":"source"}] if actions else []}
+    return _core_answer(text, action="none", images=[],
+            items=actions, playback_actions=actions,
+            text_source="qualified_catalog_result", is_generated_text=False,
+            knowledge_basis="qualified_provider_result_fields", _private_current_context=True,
+            intent={"category":"informational", "intent":"artist_collections_information"},
+            sources=[{"source":"spotify_artist_collections", "title":"Spotify", "kind":"source"}] if actions else [])

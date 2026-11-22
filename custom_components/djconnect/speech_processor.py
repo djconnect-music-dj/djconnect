@@ -12,6 +12,27 @@ class ProcessorUnavailable(ValueError):
     pass
 
 
+def _local_service_address(service):
+    try:
+        address = ipaddress.ip_address(service.host) if service else None
+    except (ValueError, AttributeError):
+        return None, False
+    return address, True
+
+
+def _qualified_piper_program(address, programs):
+    if (not address or not (address.is_private or address.is_loopback) or address.is_unspecified
+        or address.is_multicast or len(programs) != 1 or programs[0].name.lower() != "piper"):
+        return None
+    return programs[0]
+
+
+def _installed_piper_voice(program, voice_id, language):
+    voice = next((v for v in program.voices
+                  if v.installed and v.name == voice_id and language in v.languages), None)
+    return voice
+
+
 def _local_processing(entity, language, voice_id):
     """Additional locality proof only for sources requiring local processing.
 
@@ -23,20 +44,18 @@ def _local_processing(entity, language, voice_id):
     except ImportError:
         return None
     service = entity.service if type(entity) is WyomingTtsProvider else None
-    try:
-        address = ipaddress.ip_address(service.host) if service else None
-    except (ValueError, AttributeError):
+    address, parsed = _local_service_address(service)
+    if not parsed:
         return None
     info = getattr(getattr(entity, "coordinator", None), "data", None)
     programs = [p for p in info.tts if p.installed] if service and info else []
-    if (not address or not (address.is_private or address.is_loopback) or address.is_unspecified
-        or address.is_multicast or len(programs) != 1 or programs[0].name.lower() != "piper"):
+    program = _qualified_piper_program(address, programs)
+    if program is None:
         return None
-    voice = next((v for v in programs[0].voices
-                  if v.installed and v.name == voice_id and language in v.languages), None)
+    voice = _installed_piper_voice(program, voice_id, language)
     if voice is None:
         return None
-    return {"provider_version": programs[0].version, "voice_version": voice.version}
+    return {"provider_version": program.version, "voice_version": voice.version}
 
 
 def _selected_pipeline(hass, conf):
@@ -55,6 +74,17 @@ def preference_context():
             "runtime_mutable": True, "session_end": "discard"}
 
 
+def _voice_identity(voice, seen):
+    identifier = getattr(voice, "voice_id", None)
+    name = getattr(voice, "name", None)
+    if (not isinstance(identifier, str) or not 0 < len(identifier) <= 128
+            or identifier != identifier.strip() or not identifier.isprintable()
+            or identifier in seen or not isinstance(name, str) or not name.strip()
+            or not name.isprintable()):
+        return None
+    return identifier, name
+
+
 def voice_inventory(entity, language, *, configured_voice=None):
     """Only supported HA Voice metadata; bounded, no inferred gender."""
     from itertools import islice
@@ -64,13 +94,10 @@ def voice_inventory(entity, language, *, configured_voice=None):
     result = []
     seen = set()
     for voice in islice(voices or [], 512):
-        identifier = getattr(voice, "voice_id", None)
-        name = getattr(voice, "name", None)
-        if (not isinstance(identifier, str) or not 0 < len(identifier) <= 128
-                or identifier != identifier.strip() or not identifier.isprintable()
-                or identifier in seen or not isinstance(name, str) or not name.strip()
-                or not name.isprintable()):
+        identity = _voice_identity(voice, seen)
+        if identity is None:
             continue
+        identifier, name = identity
         seen.add(identifier)
         explicit = getattr(voice, "gender", None)
         explicit = getattr(explicit, "value", explicit)
@@ -86,6 +113,17 @@ def voice_inventory(entity, language, *, configured_voice=None):
     priority = {configured_voice, *(cloud_genders or {})}
     result.sort(key=lambda v: v["voice_id"] not in priority)
     return result[:64]
+
+
+def _cloud_gender_metadata(key, identifier, language):
+    """Accept only the installed provider's typed locale/gender map entries."""
+    if not isinstance(key, tuple) or len(key) != 2:
+        return None
+    locale, gender = key
+    value = getattr(gender, "value", gender)
+    if locale == language and value in ("female", "male") and isinstance(identifier, str):
+        return identifier, value
+    return None
 
 
 def _cloud_voice_genders(entity, language):
@@ -105,12 +143,9 @@ def _cloud_voice_genders(entity, language):
         return None
     result = {}
     for key, identifier in MAP_VOICE.items():
-        if not isinstance(key, tuple) or len(key) != 2:
-            continue
-        locale, gender = key
-        value = getattr(gender, "value", gender)
-        if locale == language and value in ("female", "male") and isinstance(identifier, str):
-            result[identifier] = value
+        metadata = _cloud_gender_metadata(key, identifier, language)
+        if metadata is not None:
+            result[metadata[0]] = metadata[1]
     return result
 
 
@@ -124,15 +159,9 @@ def _gender_targets(inventory, configured_voice):
     return targets
 
 
-def configured_processor(hass, conf, locale, preference, *, selected_voice=None):
-    """Resolve only the selected HA provider, language and voice, without I/O."""
-    try:
-        from homeassistant.components import tts
-    except ImportError:
-        raise ProcessorUnavailable("processor_not_qualified") from None
+def _pipeline_speech_binding(pipeline, conf):
     from .tts import _first_attr
 
-    pipeline = _selected_pipeline(hass, conf)
     selected_id = str(conf.get("assist_pipeline_id") or "").strip()
     pipeline_id = str(_first_attr(pipeline, "id") or "")
     if selected_id and selected_id != pipeline_id:
@@ -142,8 +171,10 @@ def configured_processor(hass, conf, locale, preference, *, selected_voice=None)
     engine_id = str(_first_attr(pipeline, "tts_engine", "tts_engine_id") or "")
     language = str(_first_attr(pipeline, "tts_language", "language") or "")
     voice_id = str(_first_attr(pipeline, "tts_voice", "voice") or "")
-    configured_voice = voice_id
-    explicit_voice = bool(voice_id)
+    return pipeline_id, engine_id, language, voice_id
+
+
+def _qualified_tts_entity(tts, hass, engine_id, language, locale):
     try:
         entity = tts.get_engine_instance(hass, engine_id) if engine_id else None
     except (KeyError, ValueError, AttributeError):
@@ -155,14 +186,14 @@ def configured_processor(hass, conf, locale, preference, *, selected_voice=None)
     if (language.replace("_", "-").split("-", 1)[0] != locale
             or language not in entity.supported_languages):
         raise ProcessorUnavailable("no_matching_locale")
-    defaults = entity.default_options or {}
-    if not voice_id:
-        voice_id = str(defaults.get("voice") or "")
-    voices = voice_inventory(entity, language, configured_voice=voice_id)
-    if selected_voice is not None:
-        if not any(v["voice_id"] == selected_voice for v in voices):
-            raise ProcessorUnavailable("no_matching_voice")
-        voice_id = selected_voice
+    return entity
+
+
+def _inventory_voice(voices, voice_id):
+    return next((voice for voice in voices if voice["voice_id"] == voice_id), None)
+
+
+def _preferred_voice(voices, voice_id, preference, selected_voice):
     if preference != "default":
         targets = _gender_targets(voices, voice_id)
         if preference not in targets:
@@ -172,13 +203,25 @@ def configured_processor(hass, conf, locale, preference, *, selected_voice=None)
                 raise ProcessorUnavailable("no_matching_voice")
         else:
             voice_id = targets[preference]
-    actual = next((v for v in voices if v["voice_id"] == voice_id), None)
+    return voice_id
+
+
+def _qualified_voice_selection(voices, voice_id, preference, selected_voice, explicit_voice):
+    if selected_voice is not None:
+        if _inventory_voice(voices, selected_voice) is None:
+            raise ProcessorUnavailable("no_matching_voice")
+        voice_id = selected_voice
+    voice_id = _preferred_voice(voices, voice_id, preference, selected_voice)
+    actual = _inventory_voice(voices, voice_id)
     if voice_id and actual is None and (explicit_voice or voices):
         raise ProcessorUnavailable("no_matching_voice")
     if voices and not voice_id:
         # An inventory is not permission to pick its first voice.
         raise ProcessorUnavailable("no_matching_voice")
-    local = _local_processing(entity, language, voice_id)
+    return voice_id, actual
+
+
+def _provider_configuration_revision(entity, defaults, configured_voice, voices):
     # Opaque equality evidence: never expose entry data, prompts or secrets.
     entry = getattr(entity, "entry", None)
     subentry = getattr(entity, "subentry", None)
@@ -190,6 +233,11 @@ def configured_processor(hass, conf, locale, preference, *, selected_voice=None)
         "pipeline_voice": configured_voice,
         "voice_inventory": voices,
     }, sort_keys=True, default=str).encode()).hexdigest()[:24]
+    return revision, platform
+
+
+def _configured_voice_descriptor(entity, *, engine_id, pipeline_id, language, voice_id, actual,
+                                 selected_voice, preference, explicit_voice, revision, platform, local):
     return entity, {"processor": "ha_configured", "engine": engine_id,
                     "pipeline_id": pipeline_id,
                     "provider": str(getattr(platform, "platform_name", "") or engine_id.split(".")[0]),
@@ -201,6 +249,31 @@ def configured_processor(hass, conf, locale, preference, *, selected_voice=None)
                     "configuration_revision": revision, **(local or {})}
 
 
+def configured_processor(hass, conf, locale, preference, *, selected_voice=None):
+    """Resolve only the selected HA provider, language and voice, without I/O."""
+    try:
+        from homeassistant.components import tts
+    except ImportError:
+        raise ProcessorUnavailable("processor_not_qualified") from None
+
+    pipeline = _selected_pipeline(hass, conf)
+    pipeline_id, engine_id, language, voice_id = _pipeline_speech_binding(pipeline, conf)
+    configured_voice, explicit_voice = voice_id, bool(voice_id)
+    entity = _qualified_tts_entity(tts, hass, engine_id, language, locale)
+    defaults = entity.default_options or {}
+    if not voice_id:
+        voice_id = str(defaults.get("voice") or "")
+    voices = voice_inventory(entity, language, configured_voice=voice_id)
+    voice_id, actual = _qualified_voice_selection(voices, voice_id, preference, selected_voice, explicit_voice)
+    local = _local_processing(entity, language, voice_id)
+    revision, platform = _provider_configuration_revision(entity, defaults, configured_voice, voices)
+    return _configured_voice_descriptor(
+        entity, engine_id=engine_id, pipeline_id=pipeline_id, language=language,
+        voice_id=voice_id, actual=actual, selected_voice=selected_voice,
+        preference=preference, explicit_voice=explicit_voice, revision=revision,
+        platform=platform, local=local)
+
+
 MOOD_DELIVERY = {
     "chill": "Use a relaxed, gentle, unhurried delivery, soft emphasis and comfortable pauses. Stay warmly engaged, not sleepy or whispered.",
     "groove": "Use a warm, easy conversational rhythm, lightly buoyant phrasing and natural melodic emphasis.",
@@ -209,8 +282,7 @@ MOOD_DELIVERY = {
 }
 
 
-def mood_prosody(entity, mood=None):
-    """Qualify actual HA per-request instructions; speed is not expression."""
+def _prosody_provider_qualified(entity):
     available = False
     try:
         from homeassistant.components.openai_conversation.tts import OpenAITTSEntity
@@ -220,12 +292,46 @@ def mood_prosody(entity, mood=None):
                      and len(entity.subentry.data.get("prompt", "")) <= 4000)
     except (ImportError, AttributeError):
         pass
+    return available
+
+
+def mood_prosody(entity, mood=None):
+    """Qualify actual HA per-request instructions; speed is not expression."""
+    available = _prosody_provider_qualified(entity)
     return {"version": 1, "available": available,
             "moods": list(MOOD_DELIVERY) if available else [],
             "mood": mood if mood in MOOD_DELIVERY else None,
             "state": "applied" if available and mood in MOOD_DELIVERY else "unavailable",
             "reason": (None if available and mood in MOOD_DELIVERY else
                        "accepted_mood_unknown" if available else "provider_prosody_not_qualified")}
+
+
+def _qualified_wav(body, TtsAudio):
+
+    try:
+        with wave.open(io.BytesIO(body), "rb") as audio:
+            if (audio.getcomptype() != "NONE" or not 1 <= audio.getnchannels() <= 2
+                or not 1 <= audio.getsampwidth() <= 4 or not 8000 <= audio.getframerate() <= 192000
+                or not 0 < audio.getnframes() <= 2 * 1024 * 1024):
+                raise ProcessorUnavailable("unsupported_audio_type")
+            if len(audio.readframes(audio.getnframes())) != audio.getnframes() * audio.getnchannels() * audio.getsampwidth():
+                raise ProcessorUnavailable("unsupported_audio_type")
+    except (EOFError, wave.Error):
+        raise ProcessorUnavailable("unsupported_audio_type") from None
+
+    return TtsAudio(body, "wav", "audio/wav")
+
+
+def _qualified_audio(mime, body, _audio_type, TtsAudio):
+
+    if not isinstance(body, bytes) or not 0 < len(body) <= 2 * 1024 * 1024:
+        raise ProcessorUnavailable("unsupported_audio_extent")
+    kind = _audio_type(mime, body)
+    if kind == "mp3" and _valid_mp3(body):
+        return TtsAudio(body, "mp3", "audio/mpeg")
+    if kind != "wav" or not body.startswith(b"RIFF") or body[8:12] != b"WAVE":
+        raise ProcessorUnavailable("unsupported_audio_type")
+    return _qualified_wav(body, TtsAudio)
 
 
 async def synthesize(entity, voice, text):
@@ -246,49 +352,48 @@ async def synthesize(entity, voice, text):
         if _cloud_voice_genders(entity, voice["locale"]) is not None:
             options.pop("gender", None)
     mime, body = await entity.async_get_tts_audio(text, voice["locale"], options)
-    if not isinstance(body, bytes) or not 0 < len(body) <= 2 * 1024 * 1024:
-        raise ProcessorUnavailable("unsupported_audio_extent")
-    kind = _audio_type(mime, body)
-    if kind == "mp3" and _valid_mp3(body):
-        return TtsAudio(body, "mp3", "audio/mpeg")
-    if kind != "wav" or not body.startswith(b"RIFF") or body[8:12] != b"WAVE":
-        raise ProcessorUnavailable("unsupported_audio_type")
-    try:
-        with wave.open(io.BytesIO(body), "rb") as audio:
-            if (audio.getcomptype() != "NONE" or not 1 <= audio.getnchannels() <= 2
-                or not 1 <= audio.getsampwidth() <= 4 or not 8000 <= audio.getframerate() <= 192000
-                or not 0 < audio.getnframes() <= 2 * 1024 * 1024):
-                raise ProcessorUnavailable("unsupported_audio_type")
-            if len(audio.readframes(audio.getnframes())) != audio.getnframes() * audio.getnchannels() * audio.getsampwidth():
-                raise ProcessorUnavailable("unsupported_audio_type")
-    except (EOFError, wave.Error):
-        raise ProcessorUnavailable("unsupported_audio_type") from None
-    return TtsAudio(body, "wav", "audio/wav")
+    return _qualified_audio(mime, body, _audio_type, TtsAudio)
+
+
+def _mp3_frame_offset(body):
+    """Skip only a structurally bounded original ID3 header/footer."""
+    offset = 0
+    if body.startswith(b"ID3"):
+        if len(body) < 10 or any(b & 0x80 for b in body[6:10]):
+            return None
+        offset = 10 + sum(b << shift for b, shift in zip(body[6:10], (21, 14, 7, 0)))
+        if body[5] & 0x10:
+            offset += 10  # ID3v2.4 footer.
+    return offset
+
+
+def _mp3_frame_size(header):
+    """Return a complete Layer-III frame size only for qualified header fields."""
+    a, b, c, _ = header
+    version, layer = (b >> 3) & 3, (b >> 1) & 3
+    bitrate, rate = c >> 4, (c >> 2) & 3
+    if (a != 0xFF or b & 0xE0 != 0xE0 or version == 1 or layer != 1
+            or bitrate in (0, 15) or rate == 3):
+        return None
+    rates = (44100, 48000, 32000)
+    sample_rate = rates[rate] // {3: 1, 2: 2}.get(version, 4)
+    bitrates = ((0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320)
+                if version == 3 else (0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160))
+    size = (144 if version == 3 else 72) * bitrates[bitrate] * 1000 // sample_rate + ((c >> 1) & 1)
+    return size
 
 
 def _valid_mp3(body):
     """Require two complete contiguous Layer-III frames, not an ID3/MIME claim."""
-    offset = 0
-    if body.startswith(b"ID3"):
-        if len(body) < 10 or any(b & 0x80 for b in body[6:10]):
-            return False
-        offset = 10 + sum(b << shift for b, shift in zip(body[6:10], (21, 14, 7, 0)))
-        if body[5] & 0x10:
-            offset += 10  # ID3v2.4 footer.
+    offset = _mp3_frame_offset(body)
+    if offset is None:
+        return False
     for _ in range(2):
         if len(body) < offset + 4:
             return False
-        a, b, c, _ = body[offset:offset+4]
-        version, layer = (b >> 3) & 3, (b >> 1) & 3
-        bitrate, rate = c >> 4, (c >> 2) & 3
-        if (a != 0xFF or b & 0xE0 != 0xE0 or version == 1 or layer != 1
-                or bitrate in (0, 15) or rate == 3):
+        size = _mp3_frame_size(body[offset:offset+4])
+        if size is None:
             return False
-        rates = (44100, 48000, 32000)
-        sample_rate = rates[rate] // (1 if version == 3 else 2 if version == 2 else 4)
-        bitrates = ((0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320)
-                    if version == 3 else (0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160))
-        size = (144 if version == 3 else 72) * bitrates[bitrate] * 1000 // sample_rate + ((c >> 1) & 1)
         offset += size
         if offset > len(body):
             return False

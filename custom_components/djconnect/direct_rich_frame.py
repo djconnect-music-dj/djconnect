@@ -6,6 +6,7 @@ clock qualification. Prepared bytes remain owned by the existing image registry.
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from dataclasses import dataclass
 from fractions import Fraction
 import hashlib
 import math
@@ -42,82 +43,144 @@ def utc_ms(seconds, *, upper=False):
     return result
 
 
+def _png_chunk(body, offset):
+    size = int.from_bytes(body[offset:offset + 4], "big")
+    end = offset + 8 + size
+    if end + 4 > len(body):
+        return None
+    kind = body[offset + 4:offset + 8]
+    if not all(65 <= c <= 90 or 97 <= c <= 122 for c in kind):
+        return None
+    if zlib.crc32(body[offset + 4:end]) != int.from_bytes(body[end:end + 4], "big"):
+        return None
+    return kind, size, end
+
+
+@dataclass
+class _PngContainer:
+    header: bool = False
+    data: bool = False
+
+    def consume(self, kind, size, end, length):
+        if not self.header:
+            if kind != b"IHDR" or size != 13:
+                return False
+            self.header = True
+        elif kind == b"IHDR":
+            return False
+        if kind in {b"acTL", b"fcTL", b"fdAT"}:
+            return False
+        if kind == b"IDAT":
+            self.data = True
+        if kind == b"IEND":
+            return self.finished(size, end, length)
+        return None
+
+    def finished(self, size, end, length):
+        return self.data and size == 0 and end + 4 == length
+
+
+def _complete_png(body):
+    if not body.startswith(b"\x89PNG\r\n\x1a\n"):
+        return False
+    offset, state = 8, _PngContainer()
+    while offset <= len(body) - 12:
+        chunk = _png_chunk(body, offset)
+        if chunk is None:
+            return False
+        kind, size, end = chunk
+        complete = state.consume(kind, size, end, len(body))
+        if complete is not None:
+            return complete
+        offset = end + 4
+    return False
+
+
+def _jpeg_marker(body, offset):
+    if body[offset] != 255:
+        return None
+    while offset < len(body) and body[offset] == 255:
+        offset += 1
+    if offset >= len(body):
+        return None
+    return body[offset], offset + 1
+
+
+def _jpeg_segment(body, offset):
+    if offset > len(body) - 2:
+        return None
+    size = int.from_bytes(body[offset:offset + 2], "big")
+    if size < 2 or offset + size > len(body):
+        return None
+    return size
+
+
+def _jpeg_scan_end(body, offset):
+    while offset < len(body):
+        if body[offset] != 255:
+            offset += 1
+            continue
+        start = offset
+        parsed = _jpeg_marker(body, offset)
+        if parsed is None:
+            return None
+        marker, following = parsed
+        if marker == 0 or 208 <= marker <= 215:
+            offset = following
+        else:
+            return start
+    return offset
+
+
+@dataclass
+class _JpegContainer:
+    frame: bool = False
+    scan: bool = False
+
+    def finished(self, offset, length):
+        return self.frame and self.scan and offset == length
+
+    def consume(self, body, marker, offset):
+        if marker in {0, 216} or 208 <= marker <= 215:
+            return None
+        if marker == 1:
+            return offset
+        size = _jpeg_segment(body, offset)
+        if size is None:
+            return None
+        if marker in {192, 193, 194, 195, 197, 198, 199, 201, 202, 203, 205, 206, 207}:
+            if self.frame:
+                return None
+            self.frame = True
+        offset += size
+        if marker == 218:
+            self.scan = True
+            return _jpeg_scan_end(body, offset)
+        return offset
+
+
+def _complete_jpeg(body):
+    offset, state = 2, _JpegContainer()
+    while offset < len(body):
+        parsed = _jpeg_marker(body, offset)
+        if parsed is None:
+            return False
+        marker, offset = parsed
+        if marker == 217:
+            return state.finished(offset, len(body))
+        offset = state.consume(body, marker, offset)
+        if offset is None:
+            return False
+    return False
+
+
 def complete_image(body, mime):
     """Reject trailing/animated/concatenated containers before actual decoding."""
     if mime == "image/png":
-        if not body.startswith(b"\x89PNG\r\n\x1a\n"):
-            return False
-        offset, header, data = 8, False, False
-        while offset <= len(body) - 12:
-            size = int.from_bytes(body[offset:offset + 4], "big")
-            end = offset + 8 + size
-            if end + 4 > len(body):
-                return False
-            kind = body[offset + 4:offset + 8]
-            if not all(65 <= c <= 90 or 97 <= c <= 122 for c in kind):
-                return False
-            if zlib.crc32(body[offset + 4:end]) != int.from_bytes(body[end:end + 4], "big"):
-                return False
-            if not header:
-                if kind != b"IHDR" or size != 13:
-                    return False
-                header = True
-            elif kind == b"IHDR":
-                return False
-            if kind in {b"acTL", b"fcTL", b"fdAT"}:
-                return False
-            if kind == b"IDAT":
-                data = True
-            if kind == b"IEND":
-                return data and size == 0 and end + 4 == len(body)
-            offset = end + 4
-        return False
+        return _complete_png(body)
     if mime != "image/jpeg" or not body.startswith(b"\xff\xd8"):
         return False
-    offset, frame, scan = 2, False, False
-    while offset < len(body):
-        if body[offset] != 255:
-            return False
-        while offset < len(body) and body[offset] == 255:
-            offset += 1
-        if offset >= len(body):
-            return False
-        marker = body[offset]
-        offset += 1
-        if marker == 217:
-            return frame and scan and offset == len(body)
-        if marker in {0, 216} or 208 <= marker <= 215:
-            return False
-        if marker == 1:
-            continue
-        if offset > len(body) - 2:
-            return False
-        size = int.from_bytes(body[offset:offset + 2], "big")
-        if size < 2 or offset + size > len(body):
-            return False
-        if marker in {192, 193, 194, 195, 197, 198, 199, 201, 202, 203, 205, 206, 207}:
-            if frame:
-                return False
-            frame = True
-        offset += size
-        if marker == 218:
-            scan = True
-            while offset < len(body):
-                if body[offset] != 255:
-                    offset += 1
-                    continue
-                start = offset
-                while offset < len(body) and body[offset] == 255:
-                    offset += 1
-                if offset >= len(body):
-                    return False
-                if body[offset] == 0 or 208 <= body[offset] <= 215:
-                    offset += 1
-                else:
-                    offset = start
-                    break
-    return False
-
+    return _complete_jpeg(body)
 
 def _original_bytes(registry, descriptor):
     """Only an existing unique prepared asset, never an image URL lookup."""
@@ -135,16 +198,8 @@ def _original_bytes(registry, descriptor):
     return body, mime
 
 
-def project(attempt, *, purpose_id, generation, expires_ms):
-    """Fresh fields may change; original purpose and observation never renew."""
-    require(attempt.current(), "rich_frame_unavailable", 503)
-    context, active = attempt.context, attempt.active
-    broadcast = active.broadcast
-    now, wall = time.monotonic(), time.time()
-    observed_mono, observed_wall = broadcast.passive_state_observed
-    observed = utc_ms(observed_wall, upper=True)
-    expiry = min(utc_ms(Fraction(observed_wall) + 120), expires_ms)
-    require(observed < expiry, "rich_frame_unavailable", 503)
+def _qualified_rich_fields(broadcast, now, expiry):
+    """Bound the original independent text and music projections before art reads."""
     text, text_status = contribution(broadcast, now, projection_version=2)
     music, music_status = _music(broadcast, now)
     if text is not None and len(text["text"].encode("utf-8")) > 2560:
@@ -157,6 +212,11 @@ def project(attempt, *, purpose_id, generation, expires_ms):
         text = _cap(text, expiry)
     if music is not None:
         music = _cap(music, expiry)
+    return text, text_status, music, music_status
+
+
+def _qualified_rich_artwork(context, active, text, music, now, expiry):
+    """Reuse only existing original prepared bytes; keep unsupported slots independent."""
     registry = context.pair.domain.get("session_images")
     covers, art_status = _covers(registry, context.owner, active.session_id, text, music, now)
     artwork, assets = [], {}
@@ -178,6 +238,21 @@ def project(attempt, *, purpose_id, generation, expires_ms):
         art_status = status("qualified", "available")
     if covers and not artwork:
         art_status = status("source_not_qualified")
+    return artwork, assets, art_status
+
+
+def project(attempt, *, purpose_id, generation, expires_ms):
+    """Fresh fields may change; original purpose and observation never renew."""
+    require(attempt.current(), "rich_frame_unavailable", 503)
+    context, active = attempt.context, attempt.active
+    broadcast = active.broadcast
+    now, wall = time.monotonic(), time.time()
+    observed_mono, observed_wall = broadcast.passive_state_observed
+    observed = utc_ms(observed_wall, upper=True)
+    expiry = min(utc_ms(Fraction(observed_wall) + 120), expires_ms)
+    require(observed < expiry, "rich_frame_unavailable", 503)
+    text, text_status, music, music_status = _qualified_rich_fields(broadcast, now, expiry)
+    artwork, assets, art_status = _qualified_rich_artwork(context, active, text, music, now, expiry)
     stale = (not 0 <= now - observed_mono < 120
         or Fraction(wall) >= Fraction(observed_wall) + 120
         or Fraction(wall) * 1000 >= expires_ms)
@@ -200,11 +275,8 @@ def project(attempt, *, purpose_id, generation, expires_ms):
     return frame, assets
 
 
-def final_current(attempt, frame):
-    """Final no-await original-deadline checks, also after serialization work."""
-    if not attempt.current():
-        return False
-    wall, mono = time.time(), time.monotonic()
+def _rich_fields_unexpired(attempt, frame, wall, mono):
+    """Recheck original snapshot and individual field deadlines without renewal."""
     if frame["state"] == "active":
         observed_mono = attempt.active.broadcast.passive_state_observed[0]
         if not 0 <= mono - observed_mono < 120 or Fraction(wall) * 1000 >= frame["expires_at_ms"]:
@@ -212,11 +284,10 @@ def final_current(attempt, frame):
     for field in (frame["contribution"], frame["now_playing"], *frame["artwork"]):
         if field is not None and Fraction(wall) * 1000000 >= _date_us(field["expires_at"]):
             return False
-    context, broadcast = attempt.context, attempt.active.broadcast
-    if frame["contribution"] is not None and contribution(broadcast, mono, projection_version=2)[0] is None:
-        return False
-    if frame["now_playing"] is not None and _music(broadcast, mono)[0] is None:
-        return False
+    return True
+
+
+def _rich_artwork_current(context, frame, mono):
     if frame["artwork"]:
         registry = context.pair.domain.get("session_images")
         covers, _ = _covers(registry, context.owner, context.session_id,
@@ -228,4 +299,21 @@ def final_current(attempt, frame):
                 _original_bytes(registry, descriptor)
             except Exception:
                 return False
+    return True
+
+
+def final_current(attempt, frame):
+    """Final no-await original-deadline checks, also after serialization work."""
+    if not attempt.current():
+        return False
+    wall, mono = time.time(), time.monotonic()
+    if not _rich_fields_unexpired(attempt, frame, wall, mono):
+        return False
+    context, broadcast = attempt.context, attempt.active.broadcast
+    if frame["contribution"] is not None and contribution(broadcast, mono, projection_version=2)[0] is None:
+        return False
+    if frame["now_playing"] is not None and _music(broadcast, mono)[0] is None:
+        return False
+    if not _rich_artwork_current(context, frame, mono):
+        return False
     return attempt.current()

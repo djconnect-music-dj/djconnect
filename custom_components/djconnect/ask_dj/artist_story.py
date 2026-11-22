@@ -4,6 +4,7 @@ The interpreter proposes only a read intent. Playback metadata is a lookup
 identity, never biographical evidence or model input. Research and assessment
 remain in the ordinary Ask DJ owner, with no playback authority.
 """
+
 import asyncio
 import hashlib
 import math
@@ -13,6 +14,7 @@ from datetime import UTC, datetime
 from .dialogue import current_turn, DialogueError
 from .observations import _identified_playback, selected_artist_names
 from .public_research import safe_subject, unavailable_answer
+from .responses import _core_answer
 
 
 async def response(hass, runtime, text, selected, *, recording=False):
@@ -116,9 +118,9 @@ async def response(hass, runtime, text, selected, *, recording=False):
     if recording:
         return production_unavailable(turn.style['language'])
     message = unavailable_answer(turn.style['language'], ambiguous=True)
-    return {'success': True, 'text': message, 'dj_text': message, 'action': 'none',
-            'is_generated_text': False, 'text_source': 'core', 'playback_actions': [], 'images': [],
-            'intent': {'category': 'informational', 'intent': 'ask_music_info'}}
+    return _core_answer(message, action='none',
+            is_generated_text=False, text_source='core', playback_actions=[], images=[],
+            intent={'category': 'informational', 'intent': 'ask_music_info'})
 
 
 def production_unavailable(language):
@@ -130,9 +132,9 @@ def production_unavailable(language):
         'es': 'Todavía no puedo verificar una fuente fiable sobre la grabación y producción de este tema.',
     }
     message = copy.get(language, copy['en'])
-    return {'success': True, 'text': message, 'dj_text': message, 'action': 'none',
-            'images': [], 'playback_actions': [], 'text_source': 'core', 'is_generated_text': False,
-            'knowledge_basis': 'public_recording_research_unavailable'}
+    return _core_answer(message, action='none',
+            images=[], playback_actions=[], text_source='core', is_generated_text=False,
+            knowledge_basis='public_recording_research_unavailable')
 
 
 def recording_reference(text):
@@ -189,9 +191,9 @@ def stage_production_clarification(turn, text, scope):
         'es': '¿Te refieres al tema actual o al seleccionado?',
     }
     message = copy.get(turn.style['language'], copy['en'])
-    return {'success': True, 'text': message, 'dj_text': message, 'action': 'none',
-            'text_source': 'core', 'is_generated_text': False, 'images': [],
-            'clarification_required': True, 'knowledge_basis': 'public_subject_required'}
+    return _core_answer(message, action='none',
+            text_source='core', is_generated_text=False, images=[],
+            clarification_required=True, knowledge_basis='public_subject_required')
 
 
 def _validate_purpose_clock(turn, pending):

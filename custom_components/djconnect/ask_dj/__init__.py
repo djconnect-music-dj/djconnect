@@ -39,6 +39,8 @@ from ..mood import (
 from ..music_intent import parse_spoken_music_request, music_command_subject, negated_music_command
 from ..pipeline import _assist_context, _speech_from_response, call_conversation_process_with_agent_retry
 from ..use_cases import (
+    _playback_item_id as _playable_item_id,
+    _spotify_uri_prefix_kind as _spotify_uri_kind,
     MusicBackendCapabilityError,
     build_playback_action,
     run_music_command,
@@ -50,7 +52,11 @@ from ..track_insight import (
     track_insight_error_response,
 )
 from ..voice_profiles import voice_profile_for_mood_or_config, voice_profile_style_text_for_payload as voice_profile_style_text_for_payload
-from .responses import image_proxy_target as image_proxy_target, register_image_proxy_url
+from .responses import (
+    _core_answer,
+    image_proxy_target as image_proxy_target,
+    register_image_proxy_url,
+)
 from .read_copy import text as _read_text
 
 _LOGGER = logging.getLogger(__name__)
@@ -97,6 +103,484 @@ class AskDjConversationTurn:
     response_text: str | None = None
 
 
+_NO_ASK_DJ_RESPONSE = object()
+
+
+@dataclass(repr=False, eq=False, kw_only=True)
+class _AskDjRequestAttempt:
+    """Resolve one admitted request through existing read and effect owners."""
+
+    hass: Any
+    runtime: Any
+    payload: dict[str, Any]
+    text: str
+    user_id: str | None
+    confirmed_entry: Any
+    ephemeral_conversation: bool
+    action_request: Any
+
+    async def execute(self):
+        await self._bind_turn()
+        self.response = await self._admitted_context_response()
+        if self.response is not _NO_ASK_DJ_RESPONSE:
+            return self.response
+        if self.current_artist_question(self.text):
+            return await self.current_artist_read(self.hass, self.runtime)
+        await self._prepare_memory()
+        self.response = await self._refinement_response()
+        if self.response is not _NO_ASK_DJ_RESPONSE:
+            return self.response
+        self._restore_retry()
+        self.response = await self._conversation_response()
+        if self.response is not _NO_ASK_DJ_RESPONSE:
+            return self.response
+        self.response = await self._classify_request()
+        if self.response is not _NO_ASK_DJ_RESPONSE:
+            return self.response
+        self.response = await self._capture_read_context()
+        if self.response is not _NO_ASK_DJ_RESPONSE:
+            return self.response
+        self.response = await self._dispatch()
+        if self.response is not _NO_ASK_DJ_RESPONSE:
+            return self.response
+        return await self._finalize()
+
+    async def _bind_turn(self):
+        from .dialogue import (
+            current_turn,
+            explicit_quote,
+            model_source,
+            is_refinement,
+            DialogueError,
+        )
+
+        self.explicit_quote = explicit_quote
+        self.is_refinement = is_refinement
+        self.error_type = DialogueError
+        self.turn = current_turn.get()
+        self.source = model_source(self.confirmed_entry)
+        if self.turn is not None:
+            await self.turn.guard()
+            self.turn.source_context = self.source
+
+    async def _admitted_context_response(self):
+        self.response = await self._direct_request_response()
+        if self.response is not _NO_ASK_DJ_RESPONSE:
+            return self.response
+        self.response = await self._continued_request_response()
+        if self.response is not _NO_ASK_DJ_RESPONSE:
+            return self.response
+        self.response = await self._pending_request_response()
+        if self.response is not _NO_ASK_DJ_RESPONSE:
+            return self.response
+        self.response = self._quoted_contribution_response()
+        if self.response is not _NO_ASK_DJ_RESPONSE:
+            return self.response
+        return await self._selected_result_response()
+
+    async def _direct_request_response(self):
+        if (
+            self.action_request is None
+            and negated_music_command(self.text)
+            and (not _blocked_music_preference_from_text(self.text))
+        ):
+            message = _read_text("no_play")
+            return _core_answer(
+                message,
+                action="none",
+                intent={"category": "informational", "intent": "ask_music_info"},
+                images=[],
+                links=[],
+                sources=[],
+                items=[],
+                playback_actions=[],
+            )
+        self.response = await self._direct_media_response()
+        if self.response is not _NO_ASK_DJ_RESPONSE:
+            return self.response
+        if self.action_request is not None:
+            if (
+                self.turn is not None
+                and isinstance(self.turn.pending_at_start, dict)
+                and (self.turn.pending_at_start.get("type") == "recording_production")
+            ):
+                self.turn.clear_production_pending = True
+            return await _execute_dialogue_command(
+                self.hass, self.runtime, self.payload, self.action_request, user_id=self.user_id
+            )
+        return _NO_ASK_DJ_RESPONSE
+
+    async def _direct_media_response(self):
+        from .observations import current_artist_question, current_artist_read
+
+        self.current_artist_question = current_artist_question
+        self.current_artist_read = current_artist_read
+        from .album_tracks import album_tracks_question, album_tracks_read
+
+        if self.action_request is None and album_tracks_question(self.text):
+            return await album_tracks_read(self.hass, self.runtime, self.text, self.confirmed_entry)
+        from .observations import release_question, release_read
+
+        if self.action_request is None and release_question(self.text):
+            return await release_read(self.hass, self.runtime, self.confirmed_entry)
+        if (
+            self.action_request is None
+            and self.confirmed_entry is not None
+            and self.current_artist_question(self.text)
+        ):
+            return await self.current_artist_read(self.hass, self.runtime, self.confirmed_entry)
+        return _NO_ASK_DJ_RESPONSE
+
+    async def _continued_request_response(self):
+        from .spotify_collection_offers import collection_request, collection_response
+
+        collection = collection_request(self.text)
+        if collection is not None:
+            return await collection_response(self.hass, self.runtime, *collection, turn=self.turn)
+        from ..mood_music_steering import first_play_requested, first_play_response
+
+        if first_play_requested(self.text):
+            return await first_play_response(self.hass, self.runtime)
+        if self.turn is not None:
+            from .artist_story import production_continuation, recording_reference
+
+            continued = await production_continuation(self.hass, self.runtime, self.text)
+            if continued is not None:
+                return continued
+            if recording_reference(self.text) == "current":
+                from .semantic_reads import ReadPlan, capture_scope, execute_plan
+
+                return await execute_plan(
+                    self.hass,
+                    self.runtime,
+                    self.text,
+                    ReadPlan("recording", "current", False),
+                    capture_scope(self.hass, self.turn),
+                )
+        return _NO_ASK_DJ_RESPONSE
+
+    async def _pending_request_response(self):
+        if (
+            self.turn is not None
+            and self.turn.frame.pending
+            and (self.turn.frame.pending.get("type") == "mood_direction")
+            and (not self.turn.fast_control)
+        ):
+            from ..mood_music_steering import direction_response
+
+            direction = await direction_response(self.hass, self.runtime, self.payload, self.text)
+            if direction is not None:
+                return direction
+        return await self._pending_playback_response()
+
+    async def _pending_playback_response(self):
+        if (
+            self.turn is not None
+            and self.turn.frame.pending
+            and (self.turn.frame.pending.get("type") == "playback_confirmation")
+            and (
+                self.text.casefold().strip(" .!?")
+                in {"yes", "ja", "oui", "sí", "si", "no", "nee", "nein", "non"}
+            )
+        ):
+            response_value = (
+                "no"
+                if self.text.casefold().strip(" .!?") in {"no", "nee", "nein", "non"}
+                else "yes"
+            )
+            return await _execute_dialogue_command(
+                self.hass,
+                self.runtime,
+                self.payload,
+                ("ask_dj_followup_response", {"response_value": response_value}),
+                user_id=self.user_id,
+            )
+        return _NO_ASK_DJ_RESPONSE
+
+    def _quoted_contribution_response(self):
+        if self.confirmed_entry is not None and self.explicit_quote(self.text):
+            attribution = self.confirmed_entry.get("source_attribution") or {}
+            return {
+                "success": True,
+                "text": str(self.confirmed_entry.get("text") or ""),
+                "dj_text": str(self.confirmed_entry.get("text") or ""),
+                "sources": [attribution] if isinstance(attribution, dict) else attribution,
+                "playback_actions": [],
+                "intent": {"intent": "selected_contribution_quote"},
+            }
+        return _NO_ASK_DJ_RESPONSE
+
+    async def _selected_result_response(self):
+        if self.turn is not None and (not self.turn.resolving_output_request):
+            if self.confirmed_entry is None:
+                refined = await _dialogue_album_period_response(self.hass, self.payload, self.text)
+                if refined is not None:
+                    return refined
+                listed = await _dialogue_result_list_response(self.hass, self.payload, self.text)
+                if listed is not None:
+                    return listed
+            selected = await _dialogue_choice_response(
+                self.hass, self.runtime, self.payload, self.text
+            )
+            if selected is not None:
+                return selected
+        return _NO_ASK_DJ_RESPONSE
+
+    async def _prepare_memory(self):
+        if self.payload.get("mood_zone"):
+            _LOGGER.debug(
+                "DJConnect Ask DJ mood context: mood=%s zone=%s",
+                self.payload.get("mood"),
+                self.payload.get("mood_zone"),
+            )
+        self.identity_payload = _identity_payload(self.runtime, self.payload)
+        self.memory = None if self.ephemeral_conversation else getattr(self.runtime, "memory", None)
+        self.memory_context: dict[str, Any] = {}
+        self.music_dna_key = str(self.payload.get("music_dna_key") or "").strip() or None
+        if self.memory is not None:
+            self.memory_context = await self.memory.async_context_for_runtime(
+                self.runtime, self.identity_payload, user_id=self.user_id
+            )
+            self.music_dna_key = self.memory_context.get("music_dna_key") or self.music_dna_key
+        self._operational_history()
+
+    def _local_turn_messages(self):
+        return [
+            {key: value for key, value in message.items() if not key.startswith("_")}
+            for message in self.turn.frame.local_turns
+        ]
+
+    def _operational_history(self):
+        # This shared short window is operational, permission-qualified and
+        # independent of DNA. Durable legacy/Session archive text never grants
+        # implicit model-history processing.
+        if self.turn is not None:
+            operational_history = self._local_turn_messages()
+            self.memory_context["server_history"] = (
+                operational_history if not self.turn.reset_topic else []
+            )
+            self.memory_context["memory"] = {
+                k: v
+                for k, v in (self.memory_context.get("memory") or {}).items()
+                if k not in {"last_ask_dj", "pending_followup"}
+            }
+            if self.turn.frame.result_set and (not self.turn.reset_topic):
+                self.memory_context["server_history"] = [
+                    *operational_history,
+                    {
+                        "role": "assistant",
+                        "playback_actions": self.turn.frame.result_set["items"],
+                        "items": self.turn.frame.result_set["items"],
+                    },
+                ]
+
+    async def _refinement_response(self):
+        self.request_intent = classify_ask_dj(self.text)
+        self.complex_music_search = (
+            self.request_intent.intent == "song_recommendations"
+            and (not _current_track_seed_mix_request(self.text))
+            and (len(self.text.split()) > 8)
+        )
+        if (
+            self.is_refinement(self.text) or (self.turn is not None and self.complex_music_search)
+        ) and self.request_intent.category != "action":
+            return await _informational_assist_response(
+                self.hass, self.runtime, self.text, self.payload, self.memory_context, {}, []
+            )
+        return _NO_ASK_DJ_RESPONSE
+
+    def _restore_retry(self):
+        if (
+            self.turn is not None
+            and _is_retry_request(_normalize(self.text))
+            and self.turn.frame.retry
+        ):
+            if self.turn.frame.retry.get("uncertain"):
+                raise self.error_type("action_outcome_uncertain")
+            self.text = self.turn.frame.retry["text"]
+            from .dialogue import request_effect_grants
+
+            self.turn.effect_grants = request_effect_grants(self.text, classify_ask_dj(self.text))
+
+    async def _conversation_response(self):
+        self.conversation_turn = classify_conversation_turn(self.text, self.memory_context)
+        if self.source or (
+            _current_track_version_request(self.text)
+            and (not _has_clear_playback_action(_normalize(self.text)))
+        ):
+            self.conversation_turn = AskDjConversationTurn("request", self.text)
+        self.response = await _async_conversation_turn_response(
+            self.hass,
+            self.runtime,
+            self.payload,
+            self.conversation_turn,
+            self.memory,
+            self.identity_payload,
+            self.user_id,
+            self.text,
+            self.music_dna_key,
+        )
+        if self.response is not None:
+            return self.response
+        return _NO_ASK_DJ_RESPONSE
+
+    async def _classify_request(self):
+        self.effective_text = _contextualize_play_request_from_recent_actions(
+            self.conversation_turn.text, self.memory_context
+        )
+        blocked_preference = _blocked_music_preference_from_text(self.effective_text)
+        self.response = await _async_blocked_preference_response(
+            self.hass,
+            self.runtime,
+            blocked_preference,
+            self.memory,
+            self.identity_payload,
+            self.user_id,
+            self.text,
+            self.music_dna_key,
+        )
+        if self.response is not None:
+            return self.response
+        self.classification = classify_ask_dj(self.effective_text)
+        self.response = _help_ask_dj_response(
+            self.hass, self.runtime, self.payload, self.classification, self.music_dna_key
+        )
+        if self.response is not None:
+            return self.response
+        return _NO_ASK_DJ_RESPONSE
+
+    def _legacy_current_reference(self):
+        return (
+            "nog meer leuk" in _normalize(self.effective_text)
+            and "artiest" in _normalize(self.effective_text)
+            or bool(
+                re.search(
+                    "\\b(?:nu|now|current|currently|huidige|gerade|aktuell|maintenant|ahora)\\b",
+                    self.effective_text.casefold(),
+                )
+            )
+        )
+
+    def _references_current_context(self, references_topic):
+        return (
+            references_topic(self.effective_text)
+            or _is_current_artist_album_question(self.effective_text)
+            or _is_current_artist_info_question(self.effective_text)
+            or bool(_current_track_version_request(self.effective_text))
+            or bool(_current_track_seed_mix_request(self.effective_text))
+            or self._legacy_current_reference()
+        )
+
+    async def _capture_read_context(self):
+        from .dialogue import references_topic
+
+        self.current_reference = self._references_current_context(references_topic)
+        private_reads = {
+            "previous_track_information",
+            "session_forecast_information",
+            "next_track_info",
+            "list_outputs",
+            "playback_control",
+        }
+        self.playback_context = (
+            await _playback_context(self.hass, self.runtime, allow_cached=False)
+            if self.classification.intent == "current_output"
+            else await _playback_context(self.hass, self.runtime)
+            if self.classification.intent not in private_reads
+            and (
+                self.classification.intent != "ask_music_info"
+                or self.classification.category in {"action", "hybrid"}
+                or self.current_reference
+            )
+            else {}
+        )
+        self.output_devices = await _output_devices(self.hass, self.runtime, self.classification)
+        (
+            self.effective_text,
+            self.classification,
+            self.response,
+        ) = await _async_special_ask_dj_response(
+            self.hass,
+            self.runtime,
+            self.effective_text,
+            self.classification,
+            self.playback_context,
+            self.music_dna_key,
+        )
+        if self.response is not None:
+            return self.response
+        if _is_playback_mode_status_question(_normalize(self.effective_text)):
+            self.classification = AskDjIntent("informational", "playback_mode_status", "status")
+        return _NO_ASK_DJ_RESPONSE
+
+    async def _dispatch(self):
+        try:
+            if self.classification.category == "action":
+                self.result = await _handle_action(
+                    self.hass,
+                    self.runtime,
+                    self.effective_text,
+                    self.classification,
+                    self.identity_payload,
+                    user_id=self.user_id,
+                )
+            elif self.classification.intent == "dj_announcement":
+                self.result = _dj_announcement_response(self.playback_context)
+            elif self.classification.category == "hybrid":
+                self.result = await _handle_hybrid(
+                    self.hass, self.runtime, self.effective_text, self.classification, self.payload
+                )
+            else:
+                self.result = await _handle_informational(
+                    self.hass,
+                    self.runtime,
+                    self.effective_text,
+                    self.payload,
+                    self.memory_context,
+                    self.playback_context,
+                    self.output_devices,
+                )
+        except Exception as exc:
+            from ..session_conversation import SessionConversationError
+
+            if isinstance(exc, (self.error_type, SessionConversationError)):
+                raise
+            _LOGGER.warning("DJConnect Ask DJ failed: %s", type(exc).__name__)
+            return _error_response(
+                "ask_dj_unavailable",
+                "Ask DJ is nu niet bereikbaar.",
+                music_dna_key=self.music_dna_key,
+            )
+        return _NO_ASK_DJ_RESPONSE
+
+    async def _finalize(self):
+        if self.turn is not None and self.turn.interpreted_context_research:
+            # The admitted read plan supersedes earlier keyword classification;
+            # never attach a different current artist/album to its topic.
+            self.classification = AskDjIntent("informational", "ask_music_info", "none")
+            self.playback_context = {}
+        self.response = _normalize_ask_dj_response(
+            self.hass,
+            self.runtime,
+            self.result,
+            self.classification,
+            music_dna_key=self.music_dna_key,
+            playback_context=self.playback_context,
+        )
+        return await _async_finalize_ask_dj_response(
+            self.hass,
+            self.runtime,
+            self.response,
+            self.classification,
+            self.payload,
+            self.memory,
+            self.identity_payload,
+            self.user_id,
+            self.effective_text,
+            self.playback_context,
+        )
+
+
 async def async_handle_ask_dj(
     hass: HomeAssistant,
     runtime: Any,
@@ -119,217 +603,16 @@ async def async_handle_ask_dj(
         from ..session_conversation import historical_answer
 
         return historical_answer(payload, saved_playback_result)
-    from .dialogue import current_turn, explicit_quote, model_source, is_refinement, DialogueError
-    turn = current_turn.get()
-    source = model_source(confirmed_entry)
-    if turn is not None:
-        await turn.guard()
-        turn.source_context = source
-    if action_request is None and negated_music_command(text) and not _blocked_music_preference_from_text(text):
-        message=_read_text('no_play')
-        return {'success':True,'text':message,'dj_text':message,'action':'none',
-                'intent':{'category':'informational','intent':'ask_music_info'},
-                'images':[],'links':[],'sources':[],'items':[],'playback_actions':[]}
-    from .observations import current_artist_question, current_artist_read
-    from .album_tracks import album_tracks_question, album_tracks_read
-    if action_request is None and album_tracks_question(text):
-        return await album_tracks_read(hass, runtime, text, confirmed_entry)
-    from .observations import release_question, release_read
-    if action_request is None and release_question(text):
-        return await release_read(hass,runtime,confirmed_entry)
-    if action_request is None and confirmed_entry is not None and current_artist_question(text):
-        return await current_artist_read(hass, runtime, confirmed_entry)
-    if action_request is not None:
-        if (turn is not None and isinstance(turn.pending_at_start, dict)
-                and turn.pending_at_start.get('type') == 'recording_production'):
-            turn.clear_production_pending = True
-        return await _execute_dialogue_command(hass, runtime, payload, action_request, user_id=user_id)
-    from .spotify_collection_offers import collection_request, collection_response
-    collection = collection_request(text)
-    if collection is not None:
-        return await collection_response(hass, runtime, *collection, turn=turn)
-    from ..mood_music_steering import first_play_requested, first_play_response
-    if first_play_requested(text):
-        return await first_play_response(hass, runtime)
-    if turn is not None:
-        from .artist_story import production_continuation, recording_reference
-        continued = await production_continuation(hass, runtime, text)
-        if continued is not None:
-            return continued
-        if recording_reference(text) == 'current':
-            from .semantic_reads import ReadPlan, capture_scope, execute_plan
-            return await execute_plan(hass, runtime, text, ReadPlan('recording', 'current', False),
-                                      capture_scope(hass, turn))
-    if (turn is not None and turn.frame.pending and turn.frame.pending.get("type")=="mood_direction"
-            and not turn.fast_control):
-        from ..mood_music_steering import direction_response
-        direction = await direction_response(hass,runtime,payload,text)
-        if direction is not None:
-            return direction
-    if (turn is not None and turn.frame.pending and turn.frame.pending.get("type")=="playback_confirmation"
-            and text.casefold().strip(" .!?") in {"yes", "ja", "oui", "sí", "si", "no", "nee", "nein", "non"}):
-        response_value = "no" if text.casefold().strip(" .!?") in {"no", "nee", "nein", "non"} else "yes"
-        return await _execute_dialogue_command(hass, runtime, payload,
-                                             ("ask_dj_followup_response", {"response_value": response_value}), user_id=user_id)
-    if confirmed_entry is not None and explicit_quote(text):
-        attribution = confirmed_entry.get("source_attribution") or {}
-        return {"success": True, "text": str(confirmed_entry.get("text") or ""),
-                "dj_text": str(confirmed_entry.get("text") or ""),
-                "sources": [attribution] if isinstance(attribution, dict) else attribution,
-                "playback_actions": [], "intent": {"intent": "selected_contribution_quote"}}
-    if turn is not None and not turn.resolving_output_request:
-        if confirmed_entry is None:
-            refined = await _dialogue_album_period_response(hass, payload, text)
-            if refined is not None:
-                return refined
-            listed = await _dialogue_result_list_response(hass, payload, text)
-            if listed is not None:
-                return listed
-        selected = await _dialogue_choice_response(hass, runtime, payload, text)
-        if selected is not None:
-            return selected
-    if current_artist_question(text):
-        return await current_artist_read(hass, runtime)
-    if payload.get("mood_zone"):
-        _LOGGER.debug(
-            "DJConnect Ask DJ mood context: mood=%s zone=%s",
-            payload.get("mood"),
-            payload.get("mood_zone"),
-        )
-
-    identity_payload = _identity_payload(runtime, payload)
-    memory = None if ephemeral_conversation else getattr(runtime, "memory", None)
-    memory_context: dict[str, Any] = {}
-    music_dna_key = str(payload.get("music_dna_key") or "").strip() or None
-    if memory is not None:
-        memory_context = await memory.async_context_for_runtime(
-            runtime,
-            identity_payload,
-            user_id=user_id,
-        )
-        music_dna_key = memory_context.get("music_dna_key") or music_dna_key
-    # The shared short window is operational, permission-qualified and independent of DNA.
-    # Durable legacy/Session archive text is never an implicit model-history grant.
-    if turn is not None:
-        operational_history = [{key: value for key, value in message.items() if not key.startswith('_')}
-                               for message in turn.frame.local_turns]
-        memory_context["server_history"] = operational_history if not turn.reset_topic else []
-        memory_context["memory"] = {k: v for k, v in (memory_context.get("memory") or {}).items() if k not in {"last_ask_dj", "pending_followup"}}
-        if turn.frame.result_set and not turn.reset_topic:
-            memory_context["server_history"] = [*operational_history,
-                {"role": "assistant", "playback_actions": turn.frame.result_set["items"], "items": turn.frame.result_set["items"]}]
-    request_intent = classify_ask_dj(text)
-    complex_music_search = (request_intent.intent == "song_recommendations"
-                            and not _current_track_seed_mix_request(text)
-                            and len(text.split()) > 8)
-    if (is_refinement(text) or (turn is not None and complex_music_search)) and request_intent.category != "action":
-        return await _informational_assist_response(hass, runtime, text, payload, memory_context, {}, [])
-    if turn is not None and _is_retry_request(_normalize(text)) and turn.frame.retry:
-        if turn.frame.retry.get("uncertain"):
-            raise DialogueError("action_outcome_uncertain")
-        text = turn.frame.retry["text"]
-        from .dialogue import request_effect_grants
-        turn.effect_grants = request_effect_grants(text, classify_ask_dj(text))
-    conversation_turn = classify_conversation_turn(text, memory_context)
-    if source or (_current_track_version_request(text) and not _has_clear_playback_action(_normalize(text))):
-        conversation_turn = AskDjConversationTurn("request", text)
-    response = await _async_conversation_turn_response(
-        hass, runtime, payload, conversation_turn, memory, identity_payload,
-        user_id, text, music_dna_key,
-    )
-    if response is not None:
-        return response
-
-    effective_text = _contextualize_play_request_from_recent_actions(
-        conversation_turn.text,
-        memory_context,
-    )
-    blocked_preference = _blocked_music_preference_from_text(effective_text)
-    response = await _async_blocked_preference_response(
-        hass, runtime, blocked_preference, memory, identity_payload,
-        user_id, text, music_dna_key,
-    )
-    if response is not None:
-        return response
-    classification = classify_ask_dj(effective_text)
-    response = _help_ask_dj_response(hass, runtime, payload, classification, music_dna_key)
-    if response is not None:
-        return response
-    from .dialogue import references_topic
-    current_reference = (references_topic(effective_text)
-        or _is_current_artist_album_question(effective_text) or _is_current_artist_info_question(effective_text)
-        or bool(_current_track_version_request(effective_text))
-        or bool(_current_track_seed_mix_request(effective_text))
-        or ("nog meer leuk" in _normalize(effective_text) and "artiest" in _normalize(effective_text))
-        or bool(re.search(r"\b(?:nu|now|current|currently|huidige|gerade|aktuell|maintenant|ahora)\b", effective_text.casefold())))
-    private_reads = {"previous_track_information", "session_forecast_information", "next_track_info", "list_outputs", "playback_control"}
-    playback_context = (await _playback_context(hass, runtime, allow_cached=False)
-        if classification.intent == "current_output" else await _playback_context(hass, runtime)
-        if classification.intent not in private_reads and (classification.intent != "ask_music_info" or classification.category in {"action", "hybrid"} or current_reference)
-        else {})
-    output_devices = await _output_devices(hass, runtime, classification)
-    effective_text, classification, response = await _async_special_ask_dj_response(
-        hass, runtime, effective_text, classification, playback_context, music_dna_key,
-    )
-    if response is not None:
-        return response
-
-    if _is_playback_mode_status_question(_normalize(effective_text)):
-        classification = AskDjIntent("informational", "playback_mode_status", "status")
-
-    try:
-        if classification.category == "action":
-            result = await _handle_action(
-                hass,
-                runtime,
-                effective_text,
-                classification,
-                identity_payload,
-                user_id=user_id,
-            )
-        elif classification.intent == "dj_announcement":
-            result = _dj_announcement_response(playback_context)
-        elif classification.category == "hybrid":
-            result = await _handle_hybrid(hass, runtime, effective_text, classification, payload)
-        else:
-            result = await _handle_informational(
-                hass,
-                runtime,
-                effective_text,
-                payload,
-                memory_context,
-                playback_context,
-                output_devices,
-            )
-    except Exception as exc:  # noqa: BLE001
-        from ..session_conversation import SessionConversationError
-        if isinstance(exc, (DialogueError, SessionConversationError)):
-            raise
-        _LOGGER.warning("DJConnect Ask DJ failed: %s", type(exc).__name__)
-        return _error_response(
-            "ask_dj_unavailable",
-            "Ask DJ is nu niet bereikbaar.",
-            music_dna_key=music_dna_key,
-        )
-
-    if turn is not None and turn.interpreted_context_research:
-        # The admitted read plan supersedes an earlier keyword classification.
-        # Do not attach a different current artist/album to the researched topic.
-        classification = AskDjIntent("informational", "ask_music_info", "none")
-        playback_context = {}
-    response = _normalize_ask_dj_response(
-        hass,
-        runtime,
-        result,
-        classification,
-        music_dna_key=music_dna_key,
-        playback_context=playback_context,
-    )
-
-    return await _async_finalize_ask_dj_response(
-        hass, runtime, response, classification, payload, memory, identity_payload,
-        user_id, effective_text, playback_context,
-    )
+    return await _AskDjRequestAttempt(
+        hass=hass,
+        runtime=runtime,
+        payload=payload,
+        text=text,
+        user_id=user_id,
+        confirmed_entry=confirmed_entry,
+        ephemeral_conversation=ephemeral_conversation,
+        action_request=action_request,
+    ).execute()
 
 
 async def _async_conversation_turn_response(
@@ -757,18 +1040,15 @@ async def async_idle_suggestion(
     playback_context = await _playback_context(hass, runtime)
     if _playback_is_active(playback_context):
         text = "Er speelt al muziek. Ik laat de suggestie even achterwege."
-        return {
-            "success": True,
-            "text": text,
-            "dj_text": text,
-            "message": text,
-            "message_kind": "system",
-            "origin": "idle_suggestion",
-            "intent": {"category": "informational", "intent": "idle_suggestion"},
-            "action": "none",
-            "music_dna_key": music_dna_key,
-            "playback_actions": [],
-        }
+        return _core_answer(text,
+            message=text,
+            message_kind="system",
+            origin="idle_suggestion",
+            intent={"category": "informational", "intent": "idle_suggestion"},
+            action="none",
+            music_dna_key=music_dna_key,
+            playback_actions=[],
+        )
     listening_profile = await _listening_profile_context(
         hass,
         runtime,
@@ -798,19 +1078,16 @@ async def async_idle_suggestion(
             "Er speelt nu niets. Ik heb nog te weinig luisterprofiel om direct "
             f"een goede Play Now suggestie te doen{_mood_sentence_suffix(payload)}."
         )
-    return {
-        "success": True,
-        "text": text,
-        "dj_text": text,
-        "message": text,
-        "message_kind": "system",
-        "origin": "idle_suggestion",
-        "intent": {"category": "informational", "intent": "idle_suggestion"},
-        "action": "none",
-        "music_dna_key": music_dna_key,
-        "playback_actions": selected_actions,
-        "sources": _profile_sources(memory_context, listening_profile),
-    }
+    return _core_answer(text,
+        message=text,
+        message_kind="system",
+        origin="idle_suggestion",
+        intent={"category": "informational", "intent": "idle_suggestion"},
+        action="none",
+        music_dna_key=music_dna_key,
+        playback_actions=selected_actions,
+        sources=_profile_sources(memory_context, listening_profile),
+    )
 
 
 def _playback_is_active(playback_context: dict[str, Any]) -> bool:
@@ -1165,19 +1442,16 @@ async def _record_blocked_music_preference_response(
     if callable(recorder):
         await recorder(runtime, preference, payload, user_id=user_id)
     message = f"Ik zal er rekening mee houden vanaf nu: ik zet {name} niet meer voor je op."
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "none",
-        "images": [],
-        "links": [],
-        "items": [],
-        "playback_actions": [],
-        "confirmation_actions": [],
-        "sources": [{"source": "djconnect_music_dna", "title": "Music DNA", "kind": "source"}],
-        "intent": {"category": "informational", "intent": "blocked_music_preference"},
-    }
+    return _core_answer(message,
+        action="none",
+        images=[],
+        links=[],
+        items=[],
+        playback_actions=[],
+        confirmation_actions=[],
+        sources=[{"source": "djconnect_music_dna", "title": "Music DNA", "kind": "source"}],
+        intent={"category": "informational", "intent": "blocked_music_preference"},
+    )
 
 
 def _contextualize_play_request_from_recent_actions(
@@ -1557,13 +1831,10 @@ def _conversational_response_text(normalized: str) -> str:
 
 def _handle_conversational_followup(turn: AskDjConversationTurn) -> dict[str, Any]:
     text = turn.response_text or "Helemaal goed."
-    return {
-        "success": True,
-        "text": text,
-        "dj_text": text,
-        "message": text,
-        "action": "none",
-    }
+    return _core_answer(text,
+        message=text,
+        action="none",
+    )
 
 
 def classify_ask_dj(text: str) -> AskDjIntent:
@@ -1824,7 +2095,7 @@ async def _toggle_playback_response(hass: HomeAssistant, runtime: Any, command: 
     if failure := _failed_backend_action(result):
         return failure
     text = ("Shuffle staat aan." if value else "Shuffle staat uit.") if command == "set_shuffle" else ("Repeat is uitgezet." if value == "off" else "Repeat is aangezet.")
-    return {"success": True, "text": text, "dj_text": text, "images": []}
+    return _core_answer(text, images=[])
 
 
 async def _favorite_action_response(hass: HomeAssistant, runtime: Any, action: str, value: Any, payload: dict[str, Any] | None, user_id: str | None) -> dict[str, Any]:
@@ -1837,7 +2108,7 @@ async def _favorite_action_response(hass: HomeAssistant, runtime: Any, action: s
     await _async_record_favorite_preference(runtime, playback, favorite_status, payload, user_id)
     title = _track_label(playback) if isinstance(playback, dict) else ""
     text = (f"Ik heb {title} uit je favorieten gehaald." if title else "Ik heb dit nummer uit je favorieten gehaald.") if favorite_status is False else (f"Ik heb {title} toegevoegd aan je favorieten." if title else "Ik heb dit nummer toegevoegd aan je favorieten.")
-    return {"success": True, "text": text, "dj_text": text, "playback": {}, "images": [], "links": [], "sources": [], "items": [], "playback_actions": []}
+    return _core_answer(text, playback={}, images=[], links=[], sources=[], items=[], playback_actions=[])
 
 
 async def _async_record_favorite_preference(runtime: Any, playback: Any, favorite_status: bool | None, payload: dict[str, Any] | None, user_id: str | None) -> None:
@@ -1990,26 +2261,23 @@ async def _deferred_playback_request_response(
     except Exception as exc:  # noqa: BLE001
         _LOGGER.debug("DJConnect deferred playback search failed: %s", exc)
         message = "Ik kon je verzoek nu niet concreet vinden op Spotify."
-        return {"success": True, "text": message, "dj_text": message, "action": "none"}
+        return _core_answer(message, action="none")
     item = result.get("item") if isinstance(result, dict) else {}
     if not isinstance(item, dict) or not item.get("uri"):
         message = "Ik kon je verzoek nu niet concreet vinden op Spotify."
-        return {"success": True, "text": message, "dj_text": message, "action": "none"}
+        return _core_answer(message, action="none")
     action = _play_now_action_from_spotify_item(hass, item)
     label = _public_play_now_label(action, fallback="je verzoek")
     message = (
         f"Ik heb {label} vooraan klaargezet. "
         "Wil je hem nu direct horen? Tik dan op Play Now."
     )
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "none",
-        "images": [],
-        "playback_actions": [action],
-        "sources": [{"source": "spotify_search", "title": "Spotify search", "kind": "source"}],
-    }
+    return _core_answer(message,
+        action="none",
+        images=[],
+        playback_actions=[action],
+        sources=[{"source": "spotify_search", "title": "Spotify search", "kind": "source"}],
+    )
 
 
 def _public_play_now_label(action: dict[str, Any], *, fallback: str) -> str:
@@ -2323,16 +2591,13 @@ async def _fuzzy_music_search_response(
         actions.append(action)
     if not actions:
         message = "Ik kon geen passende tracks, playlists of albums vinden op Spotify."
-        return {
-            "success": True,
-            "text": message,
-            "dj_text": message,
-            "action": "none",
-            "images": [],
-            "items": [],
-            "playback_actions": [],
-            "sources": [{"source": "spotify_search", "title": "Spotify search", "kind": "source"}],
-        }
+        return _core_answer(message,
+            action="none",
+            images=[],
+            items=[],
+            playback_actions=[],
+            sources=[{"source": "spotify_search", "title": "Spotify search", "kind": "source"}],
+        )
     kinds = _join_examples(
         [_spotify_kind_label(str(action.get("kind") or "")) for action in actions],
         limit=3,
@@ -2341,16 +2606,13 @@ async def _fuzzy_music_search_response(
         f"Ik vond {kinds} voor {cleaned_query} op Spotify. "
         "Kies wat je wilt horen met Play Now."
     )
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "none",
-        "images": [],
-        "items": actions,
-        "playback_actions": actions,
-        "sources": [{"source": "spotify_search", "title": "Spotify search", "kind": "source"}],
-    }
+    return _core_answer(message,
+        action="none",
+        images=[],
+        items=actions,
+        playback_actions=actions,
+        sources=[{"source": "spotify_search", "title": "Spotify search", "kind": "source"}],
+    )
 
 
 async def _track_title_choice_response(
@@ -2382,16 +2644,13 @@ async def _track_title_choice_response(
         + "\n".join(lines)
         + "\n\nTik op Play Now bij de versie die je wilt horen."
     )
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "none",
-        "images": [],
-        "items": actions,
-        "playback_actions": actions,
-        "sources": [{"source": "spotify_track_search", "title": "Spotify track search", "kind": "source"}],
-    }
+    return _core_answer(message,
+        action="none",
+        images=[],
+        items=actions,
+        playback_actions=actions,
+        sources=[{"source": "spotify_track_search", "title": "Spotify track search", "kind": "source"}],
+    )
 
 
 def _bare_track_title_play_query(text: str) -> str:
@@ -2547,17 +2806,14 @@ async def _informational_intent_response(
         language = _response_language(runtime, payload)
         message = _devices_text(output_devices, language)
         actions = _output_device_actions(output_devices, language)
-        return {
-            "success": True,
-            "text": message,
-            "dj_text": message,
-            "intent": {"category": "informational", "intent": "list_outputs"},
-            "images": [],
-            "links": [],
-            "sources": [],
-            "playback_actions": actions,
-            "items": actions,
-        }
+        return _core_answer(message,
+            intent={"category": "informational", "intent": "list_outputs"},
+            images=[],
+            links=[],
+            sources=[],
+            playback_actions=actions,
+            items=actions,
+        )
     if ask_intent.intent == "morning_music_suggestion":
         return await _morning_music_suggestion_response(
             hass,
@@ -2604,22 +2860,19 @@ async def _informational_intent_response(
             message = (
                 f"Ik kon nu geen speelbare Spotify-mix samenstellen op basis van {_seed_mix_label(seed_mix)}."
             )
-        return {
-            "success": True,
-            "text": message,
-            "dj_text": message,
-            "action": "none",
-            "images": [],
-            "items": actions,
-            "playback_actions": actions,
-            "sources": [
+        return _core_answer(message,
+            action="none",
+            images=[],
+            items=actions,
+            playback_actions=actions,
+            sources=[
                 {
                     "source": "spotify_recommendations",
                     "kind": "source",
                     "title": "Spotify recommendations",
                 }
             ],
-        }
+        )
     if ask_intent.intent == "mood_mix":
         return await _mood_mix_response(hass, runtime, payload, memory_context)
     if ask_intent.intent == "spotify_user_playlists":
@@ -2739,40 +2992,31 @@ async def _informational_profile_response(
             playback_context,
             listening_profile,
         )
-        return {
-            "success": True,
-            "text": message,
-            "dj_text": message,
-            "action": "profile_analysis",
-            "sources": _profile_sources(memory_context, listening_profile),
-        }
+        return _core_answer(message,
+            action="profile_analysis",
+            sources=_profile_sources(memory_context, listening_profile),
+        )
     if ask_intent.intent == "personal_music_dna_summary":
         message = _personal_music_dna_summary_text(memory_context)
-        return {
-            "success": True,
-            "text": message,
-            "dj_text": message,
-            "action": "music_dna_summary",
-            "images": [],
-            "links": [],
-            "sources": [{"source": "djconnect_music_dna", "title": "Music DNA", "kind": "source"}],
-            "playback_actions": [],
-        }
+        return _core_answer(message,
+            action="music_dna_summary",
+            images=[],
+            links=[],
+            sources=[{"source": "djconnect_music_dna", "title": "Music DNA", "kind": "source"}],
+            playback_actions=[],
+        )
     if ask_intent.intent == "music_discovery_summary":
         message = _music_discovery_summary_text(text, memory_context)
-        return {
-            "success": True,
-            "text": message,
-            "dj_text": message,
-            "action": "music_discovery_summary",
-            "images": [],
-            "links": [],
-            "sources": [
+        return _core_answer(message,
+            action="music_discovery_summary",
+            images=[],
+            links=[],
+            sources=[
                 {"source": "djconnect_music_discovery", "title": "Music Discovery", "kind": "source"},
                 {"source": "djconnect_music_dna", "title": "Music DNA", "kind": "source"},
             ],
-            "playback_actions": [],
-        }
+            playback_actions=[],
+        )
     if ask_intent.intent == "personal_music_recommendations":
         tool_result = await async_call_ai_tool(
             hass,
@@ -2809,16 +3053,13 @@ async def _informational_profile_response(
                 "Ik heb nog te weinig concrete speelbare aanbevelingen om "
                 "een Play Now lijst te maken."
             )
-        return {
-            "success": True,
-            "text": message,
-            "dj_text": message,
-            "action": "none",
-            "images": [],
-            "playback_actions": actions,
-            "confirmation_actions": _confirmation_actions() if actions else [],
-            "sources": _profile_sources(memory_context, listening_profile),
-        }
+        return _core_answer(message,
+            action="none",
+            images=[],
+            playback_actions=actions,
+            confirmation_actions=_confirmation_actions() if actions else [],
+            sources=_profile_sources(memory_context, listening_profile),
+        )
     if ask_intent.intent == "personal_artist_recommendations":
         listening_profile = await _listening_profile_context(
             hass,
@@ -2834,19 +3075,1211 @@ async def _informational_profile_response(
             )
         else:
             message = "Ik heb nog te weinig artiestinformatie om goede matches bij je smaak te tonen."
-        return {
-            "success": True,
-            "text": message,
-            "dj_text": message,
-            "action": "none",
-            "images": [],
-            "items": actions,
-            "playback_actions": actions,
-            "sources": _profile_sources(memory_context, listening_profile),
-        }
+        return _core_answer(message,
+            action="none",
+            images=[],
+            items=actions,
+            playback_actions=actions,
+            sources=_profile_sources(memory_context, listening_profile),
+        )
     if ask_intent.intent == "playlist_recommendation_offer":
         return await _playlist_recommendation_offer_response(runtime, payload)
     return None
+
+
+_NO_INFORMATIONAL_RESEARCH_RESPONSE = object()
+
+
+async def _group_inception_research_response(
+    fetched_sources, subject, turn, text, DialogueError
+):
+    from .biographical_dates import group_inception_answer
+    from .exploration import band_age_question
+
+    original_group_sources = tuple(fetched_sources)
+    group_language = turn.style.get("language", "en")
+    group_answer = (
+        group_inception_answer(original_group_sources, subject, group_language)
+        if band_age_question(turn.public_research, group_language, question=text)
+        is None
+        else None
+    )
+    if group_answer:
+
+        def original_group_date_delivery_guard():
+            if (
+                group_inception_answer(original_group_sources, subject, group_language)
+                != group_answer
+            ):
+                raise DialogueError("conversation_context_changed", 409)
+
+        turn.delivery_validators.append(original_group_date_delivery_guard)
+        await turn.guard()
+        return _core_answer(
+            group_answer,
+            images=[],
+            sources=[
+                s.metadata()
+                for s in original_group_sources
+                if s.provider in {"Wikipedia", "Wikidata"}
+            ],
+            text_source="core",
+            is_generated_text=False,
+            knowledge_basis="public_group_inception_v1",
+        )
+    return _NO_INFORMATIONAL_RESEARCH_RESPONSE
+
+
+async def _person_age_research_response(fetched_sources, subject, turn, DialogueError):
+    from .person_age import age_answer
+
+    original_sources = tuple(fetched_sources)
+    language = turn.style.get("language", "en")
+    answer = age_answer(original_sources, subject, language)
+    if answer:
+
+        def original_age_delivery_guard():
+            if age_answer(original_sources, subject, language) != answer:
+                raise DialogueError("conversation_context_changed", 409)
+
+        turn.delivery_validators.append(original_age_delivery_guard)
+        await turn.guard()
+        return _core_answer(
+            answer,
+            images=[],
+            sources=[
+                s.metadata()
+                for s in original_sources
+                if s.provider in {"Wikipedia", "Wikidata"}
+            ],
+            text_source="core",
+            is_generated_text=False,
+            knowledge_basis="public_person_age_v1",
+        )
+    return _NO_INFORMATIONAL_RESEARCH_RESPONSE
+
+
+async def _current_events_research_response(
+    fetched_sources, subject, turn, public_research, DialogueError
+):
+    original_sources = tuple(fetched_sources)
+    language = turn.style.get("language", "en")
+    calendar_answer = public_research.concert_calendar_answer(
+        original_sources, subject, language
+    )
+    if calendar_answer:
+
+        def original_calendar_delivery_guard():
+            if (
+                public_research.concert_calendar_answer(
+                    original_sources, subject, language
+                )
+                != calendar_answer
+            ):
+                raise DialogueError("conversation_context_changed", 409)
+
+        turn.delivery_validators.append(original_calendar_delivery_guard)
+        await turn.guard()
+        return _core_answer(
+            calendar_answer,
+            images=[],
+            sources=[
+                s.metadata()
+                for s in original_sources
+                if s.provider == "Public concert calendar"
+            ],
+            links=[
+                {"title": s.title, "url": s.revision_url, "kind": "source"}
+                for s in original_sources
+                if s.provider == "Public concert calendar"
+                and public_research.public_url(s.revision_url)
+            ],
+            text_source="core",
+            is_generated_text=False,
+            knowledge_basis="public_concert_calendar_v1",
+        )
+    activity = public_research.band_activity_answer(original_sources, subject, language)
+    if activity:
+        activity_answer, activity_source = activity
+
+        def original_activity_delivery_guard():
+            if (
+                public_research.band_activity_answer(
+                    original_sources, subject, language
+                )
+                != activity
+            ):
+                raise DialogueError("conversation_context_changed", 409)
+
+        turn.delivery_validators.append(original_activity_delivery_guard)
+        await turn.guard()
+        return _core_answer(
+            activity_answer,
+            images=[],
+            sources=[activity_source.metadata()],
+            text_source="core",
+            is_generated_text=False,
+            knowledge_basis="public_band_activity_v1",
+        )
+    return _NO_INFORMATIONAL_RESEARCH_RESPONSE
+
+
+async def _group_age_research_response(
+    fetched_sources, turn, text, research_state, DialogueError
+):
+    from .exploration import band_age_question
+
+    original_research = json.loads(json.dumps(turn.public_research, ensure_ascii=False))
+    language = turn.style.get("language", "en")
+    question = band_age_question(original_research, language, question=text)
+    if question is not None:
+
+        def original_group_evidence():
+            if (
+                band_age_question(original_research, language, question=text)
+                != question
+            ):
+                raise DialogueError("conversation_context_changed", 409)
+
+        turn.delivery_validators.append(original_group_evidence)
+        await turn.guard()
+        return _core_answer(
+            question,
+            action="none",
+            images=[],
+            text_source="core",
+            is_generated_text=False,
+            clarification_required=True,
+            knowledge_basis="public_subject_clarification_v1",
+            sources=[source.metadata() for source in fetched_sources],
+            public_research_status={
+                **research_state,
+                "answer_state": "person_or_band_clarification",
+            },
+        )
+    return _NO_INFORMATIONAL_RESEARCH_RESPONSE
+
+
+@dataclass(repr=False, eq=False, kw_only=True)
+class _InformationalResearchPreparation:
+    """Prepare one request's source evidence before model generation."""
+
+    hass: Any
+    runtime: Any
+    text: str
+    payload: dict[str, Any]
+    turn: Any
+    research_subject: str | None
+    research_angle: str
+    contextual_research: bool
+    recording_lookup: tuple[str, str] | None
+    requests_lookup: Any
+    error_type: Any
+    public_research: Any
+
+    async def execute(self):
+        self._bind_query_angle()
+        self.fetched_sources = []
+        self.research_state = {}
+        self.semantic_scope = None
+        from . import semantic_reads
+
+        self.semantic_reads = semantic_reads
+        if self.turn and (not self.requests_lookup(self.text)):
+            self._resolve_subject()
+            response = await self._unbound_subject_response()
+            if response is not _NO_INFORMATIONAL_RESEARCH_RESPONSE:
+                return response
+            if self.subject:
+                self._mark_named_subject()
+                await self._research_subject()
+                response = await self._answers_before_recording()
+                if response is not _NO_INFORMATIONAL_RESEARCH_RESPONSE:
+                    return response
+                response = self._recording_research_question()
+                if response is not _NO_INFORMATIONAL_RESEARCH_RESPONSE:
+                    return response
+                response = await self._answers_after_recording()
+                if response is not _NO_INFORMATIONAL_RESEARCH_RESPONSE:
+                    return response
+                self._remember_editorial_focus()
+                return await self._missing_sources_response()
+        return _NO_INFORMATIONAL_RESEARCH_RESPONSE
+
+    def _resolve_subject(self):
+        self.subject, self.qualified_music, self.ambiguous = (
+            (self.research_subject, True, False)
+            if self.research_subject
+            else self.public_research.subject_for_question(self.text, self.turn)
+        )
+        from .exploration import more_request
+
+        # An open exploration chooses an angle through the existing read
+        # interpreter, even if just one typed name is available.
+        if (
+            not self.research_subject
+            and more_request(self.text)
+            and (self.turn.selected_read_context is not None)
+            and (self.turn.source_context.get("basis") == "cc0_normalized_fields_v1")
+        ):
+            self.subject, self.ambiguous = ("", False)
+        self._capture_semantic_scope()
+
+    async def _unbound_subject_response(self):
+        if self.ambiguous:
+            if self.semantic_scope is not None:
+                semantic = await self.semantic_reads.read_response(
+                    self.hass,
+                    self.runtime,
+                    self.text,
+                    self.payload,
+                    scope=self.semantic_scope,
+                )
+                if semantic is not None:
+                    return semantic
+            message = self.public_research.unavailable_answer(
+                self.turn.style.get("language", "en"), ambiguous=True
+            )
+            return _core_answer(message, images=[])
+        if (
+            not self.subject
+            and self.turn.source_context.get("basis") != "runtime_authored_direction_v1"
+        ):
+            from .semantic_reads import read_response
+
+            semantic = await read_response(
+                self.hass,
+                self.runtime,
+                self.text,
+                self.payload,
+                scope=self.semantic_scope,
+            )
+            if semantic is not None:
+                return semantic
+            from .artist_story import stage_production_clarification
+
+            clarification = stage_production_clarification(
+                self.turn, self.text, self.semantic_scope
+            )
+            if clarification is not None:
+                return clarification
+            # An unrecognized public question is not authority to answer from
+            # unchecked recollection. Clarify in the same owner before any I/O.
+            message = self.public_research.unavailable_answer(
+                self.turn.style.get("language", "en"),
+                ambiguous=bool(self.public_research.MUSIC.search(self.text)),
+            )
+            return _core_answer(
+                message,
+                images=[],
+                text_source="core",
+                is_generated_text=False,
+                knowledge_basis="public_subject_required",
+            )
+        return _NO_INFORMATIONAL_RESEARCH_RESPONSE
+
+    def _mark_named_subject(self):
+        if self.named_subject and self.public_research.safe_subject(self.named_subject):
+            from .exploration import named_in_question
+
+            if named_in_question(self.subject, self.text):
+                self.turn.public_query_candidate = self.subject
+
+    async def _research_subject(self):
+        from .dialogue import selected_lookup_topic
+
+        lookup_topic = (
+            self.recording_lookup[1]
+            if self.recording_lookup is not None
+            else selected_lookup_topic(self.turn, self.text, angle=self.research_angle)
+        )
+        self.fetched_sources, self.research_state = await self.public_research.research(
+            self.subject,
+            self.text,
+            self.turn.style.get("language", "en"),
+            self.turn.guard,
+            qualified_music=self.qualified_music,
+            original_paragraphs=bool(
+                self.research_subject
+                or self.research_angle == "members"
+                or self.public_research.rich_introduction(self.text)
+            ),
+            artist_introduction=bool(
+                self.research_subject and (not self.contextual_research)
+            ),
+            research_angle=self.research_angle,
+            **{"lookup_topic": lookup_topic} if lookup_topic else {},
+            expected_roles=tuple(
+                (
+                    s.get("role")
+                    for s in self.turn.source_context.get("subjects", [])
+                    if s.get("name", "").casefold()
+                    == self.public_research.safe_subject(self.subject).casefold()
+                )
+            ),
+        )
+        self.turn.public_research = self.public_research.research_projection(
+            self.subject, self.fetched_sources, self.research_state, question=self.text
+        )
+        if self.research_angle == "members":
+            from .band_story import band_identity
+
+            self.turn.membership_research = bool(
+                band_identity(tuple(self.fetched_sources), self.subject)
+                and self.turn.public_research.get("schema_version") == 3
+            )
+
+    async def _answers_before_recording(self):
+        if self.research_state.get("exact_date") == "conflicting_dates":
+            message = self.public_research.unavailable_answer(
+                self.turn.style.get("language", "en"), answer_unverified=True
+            )
+            await self.turn.guard()
+            return _core_answer(
+                message,
+                images=[],
+                sources=[source.metadata() for source in self.fetched_sources],
+                text_source="core",
+                is_generated_text=False,
+                knowledge_basis="public_research_conflicting_dates",
+                public_research_status={
+                    **self.research_state,
+                    "answer_state": "calendar_conflict",
+                },
+            )
+        if self.research_angle == "age":
+            response = await _group_inception_research_response(
+                self.fetched_sources,
+                self.subject,
+                self.turn,
+                self.text,
+                self.error_type,
+            )
+            if response is not _NO_INFORMATIONAL_RESEARCH_RESPONSE:
+                return response
+        if self.public_research.direct_question(self.text)[0] == "age":
+            response = await _person_age_research_response(
+                self.fetched_sources, self.subject, self.turn, self.error_type
+            )
+            if response is not _NO_INFORMATIONAL_RESEARCH_RESPONSE:
+                return response
+        return _NO_INFORMATIONAL_RESEARCH_RESPONSE
+
+    def _recording_research_question(self):
+        if self.recording_lookup is not None:
+            public_names = self.public_research.public_recording_names(
+                self.fetched_sources, *self.recording_lookup
+            )
+            if public_names is None:
+                from .artist_story import production_unavailable
+
+                return production_unavailable(self.turn.style["language"])
+            public_artist, public_work = public_names
+            self.turn.recording_research = True
+            questions = {
+                "nl": "Wat is er gedocumenteerd over de opname en productie van {work} van {artist}?",
+                "en": "What is documented about the recording and production of {work} by {artist}?",
+                "de": "Was ist über die Aufnahme und Produktion von {work} von {artist} dokumentiert?",
+                "fr": "Que sait-on de source vérifiée sur l’enregistrement et la production de {work} de {artist} ?",
+                "es": "¿Qué está documentado sobre la grabación y producción de {work} de {artist}?",
+            }
+            self.text = questions.get(
+                self.turn.style["language"], questions["en"]
+            ).format(work=public_work, artist=public_artist)
+        return _NO_INFORMATIONAL_RESEARCH_RESPONSE
+
+    async def _answers_after_recording(self):
+        if self.research_angle == "current_events":
+            response = await _current_events_research_response(
+                self.fetched_sources,
+                self.subject,
+                self.turn,
+                self.public_research,
+                self.error_type,
+            )
+            if response is not _NO_INFORMATIONAL_RESEARCH_RESPONSE:
+                return response
+        if self.research_angle == "age":
+            response = await _group_age_research_response(
+                self.fetched_sources,
+                self.turn,
+                self.text,
+                self.research_state,
+                self.error_type,
+            )
+            if response is not _NO_INFORMATIONAL_RESEARCH_RESPONSE:
+                return response
+        return _NO_INFORMATIONAL_RESEARCH_RESPONSE
+
+    def _remember_editorial_focus(self):
+        if self.research_subject:
+            focus = self.public_research.documented_episode_focus(
+                self.turn.public_research,
+                angle=self.research_angle,
+                brief=bool(
+                    self.turn.interpreted_artist_research
+                    and self.public_research.brief_contextual_artist_question(self.text)
+                ),
+            )
+            if focus:
+                self.turn.public_research["editorial_focus"] = focus
+
+    async def _missing_sources_response(self):
+        if not self.fetched_sources:
+            if self.semantic_scope is not None:
+                semantic = await self.semantic_reads.read_response(
+                    self.hass,
+                    self.runtime,
+                    self.text,
+                    self.payload,
+                    scope=self.semantic_scope,
+                )
+                if semantic is not None:
+                    return semantic
+            message = self.public_research.unavailable_answer(
+                self.turn.style.get("language", "en")
+            )
+            return _core_answer(
+                message,
+                images=[],
+                text_source="core",
+                is_generated_text=False,
+                knowledge_basis="public_research_unavailable",
+                public_research_status=self.research_state,
+            )
+        return _NO_INFORMATIONAL_RESEARCH_RESPONSE
+
+    def _bind_query_angle(self):
+        if not self.research_angle:
+            kind, _ = self.public_research.direct_question(self.text)
+            self.research_angle = "age" if kind == "formation" else kind
+        if self.turn is not None:
+            from .exploration import ANGLES
+
+            self.turn.public_query_angle = (
+                self.research_angle if self.research_angle in ANGLES else ""
+            )
+
+
+    def _capture_semantic_scope(self):
+        self.named_subject = self.public_research.public_name_slot(
+            self.public_research.explicit_public_subject(self.text) or ""
+        )
+        self.implicit_subject = (
+            not self.named_subject
+            or not self.public_research.safe_subject(self.named_subject)
+        )
+        if (
+            self.implicit_subject
+            and (not self.research_subject)
+            and self.semantic_reads.admissible_question(self.text)
+        ):
+            self.semantic_scope = self.semantic_reads.capture_scope(
+                self.hass, self.turn
+            )
+
+
+
+@dataclass(repr=False, eq=False, kw_only=True)
+class _InformationalReplyParser:
+    """Validate replies against this turn and the current research context."""
+
+    text: str
+    turn: Any
+    draft_context: Any
+    fetched_sources: Any
+    research_subject: Any
+    public_research: Any
+    parse_model_reply: Any
+    requests_lookup: Any
+    answer_language_format_issue: Any
+    error_type: Any
+    format_issue: Any = None
+
+    def parse(self, reply):
+        answer, operation = self.parse_model_reply(reply)
+        if self.fetched_sources and (not operation):
+            answer = self._normalize_research_answer(answer)
+        self._validate_operation(operation)
+        if self.turn and (not operation):
+            self._validate_language(answer)
+        return (answer, operation)
+
+    def _validate_operation(self, operation):
+        if (
+            self.turn
+            and self.requests_lookup(self.text)
+            and (
+                operation.get("intent") not in {"lookup", "refine"}
+                or not operation.get("query")
+            )
+        ):
+            raise self.error_type("conversation_model_response_invalid", 502)
+        if self.turn and (not self.requests_lookup(self.text)) and operation:
+            raise self.error_type("conversation_model_response_invalid", 502)
+
+    def _normalize_research_answer(self, answer):
+        answer = self.public_research.without_duplicate_source_footer(
+            answer, self.fetched_sources
+        )
+        if self.research_subject:
+            from ..public_artist_narration import plain_work_titles
+
+            answer = plain_work_titles(
+                answer,
+                self.draft_context["public_music_research"]
+                if self.draft_context is not None
+                else self.turn.public_research,
+            )
+        return answer
+
+    def _validate_language(self, answer):
+        from .dialogue import explicit_subject
+
+        subjects = [
+            s.get("name", "")
+            for s in self.turn.frame.subjects
+            + self.turn.source_context.get("subjects", [])
+        ]
+        subjects.append(explicit_subject(self.text) or "")
+        self.format_issue = self.answer_language_format_issue(
+            answer, self.turn.style, subjects
+        )
+        if self.format_issue:
+            raise self.error_type("conversation_model_response_invalid", 502)
+
+
+def _parse_informational_drafts(message, artist_corpus, parser, turn, error_type):
+    from ..narration_brief import artist_evidence_drafts
+
+    def normalize_draft(value):
+        answer, operation = parser.parse(value)
+        if operation or _looks_like_internal_prompt_leak(answer):
+            raise error_type("conversation_model_response_invalid", 502)
+        return answer
+
+    try:
+        draft_pool = artist_evidence_drafts(message, artist_corpus, normalize_draft)
+        if turn.membership_research and len(draft_pool.texts) != 1:
+            raise ValueError("membership_requires_one_whole_draft")
+        from ..artist_review_words import AnswerWordReview
+
+        word_review = AnswerWordReview.capture(draft_pool)
+    except (ValueError, TypeError, RecursionError, UnicodeError) as exc:
+        raise error_type("conversation_model_response_invalid", 502) from exc
+    message, plan = (draft_pool.texts[0], {})
+    if not draft_pool.batch:
+        # Preserve the single-review ABI and its original failure reasons.
+        draft_pool = None
+    return (message, plan, draft_pool, word_review)
+
+
+@dataclass(repr=False, eq=False, kw_only=True)
+class _InformationalAnswerAttempt:
+    """Generate and qualify one answer using the existing turn budget."""
+
+    hass: Any
+    runtime: Any
+    text: str
+    payload: dict[str, Any]
+    memory_context: dict[str, Any]
+    playback_context: dict[str, Any]
+    output_devices: list[dict[str, Any]]
+    research_subject: Any
+    research_angle: str
+    fetched_sources: Any
+    research_state: Any
+    semantic_scope: Any
+    semantic_reads: Any
+    turn: Any
+    public_research: Any
+    error_type: Any
+
+    async def execute(self):
+        self._capture_artist_drafts()
+        self._prepare_prompt()
+        await self._generate()
+        self.response = self._fallback_response()
+        if self.response is not _NO_INFORMATIONAL_RESEARCH_RESPONSE:
+            return self.response
+        self.response = await self._semantic_plan_response()
+        if self.response is not _NO_INFORMATIONAL_RESEARCH_RESPONSE:
+            return self.response
+        await self._parse_generation()
+        self._generated_response()
+        if self.fetched_sources and (not self.plan):
+            await self._ground_research()
+        if self.research_state:
+            self.response["public_research_status"] = self.research_state
+        if self.plan:
+            return await _realize_dialogue_plan(
+                self.hass,
+                self.runtime,
+                self.payload,
+                self.text,
+                self.response,
+                self.plan,
+            )
+        return self.response
+
+    def _generated_response(self):
+        self.response = _core_answer(
+            self.message,
+            text_source="generated",
+            is_generated_text=True,
+            model_processing_basis="qualified_dialogue_v1",
+            knowledge_basis="source_context_plus_general_knowledge"
+            if self.turn and self.turn.source_context
+            else "general_model_knowledge",
+        )
+        if self.turn and self.turn.source_context.get("attribution"):
+            self.response["sources"] = [
+                {
+                    **self.turn.source_context["attribution"],
+                    "kind": "source",
+                    "claim_scope": "qualified_credit_only",
+                }
+            ]
+
+    def _capture_artist_drafts(self):
+        # Only the original fetched schema3 artist route admits alternatives. Other
+        # research (including interpreted album/producer context) keeps its ABI.
+        self.draft_context = None
+        self.draft_pool = None
+        self.artist_corpus = None
+        if (
+            self.turn
+            and self.fetched_sources
+            and (
+                self.turn.interpreted_artist_research
+                and (not self.turn.interpreted_context_research)
+                or self.turn.membership_research
+            )
+            and (self.turn.public_research.get("schema_version") == 3)
+        ):
+            from .dialogue import selected_public_focus
+
+            self.draft_context = {
+                "public_music_research": self.turn.public_research,
+                "qualified_context": self.turn.source_context,
+            }
+            if focus := selected_public_focus(self.turn):
+                self.draft_context["selected_contribution"] = focus
+            # Plain literal evidence only; no copy/reconstruction of typed authority.
+            # Freeze before the FIRST await, not separately for each alternative.
+            self.draft_context = json.loads(
+                json.dumps(self.draft_context, ensure_ascii=False, allow_nan=False)
+            )
+            from ..narration_brief import artist_anchor_corpus
+
+            try:
+                self.artist_corpus = artist_anchor_corpus(
+                    self.draft_context["public_music_research"]
+                )
+            except (
+                ValueError,
+                TypeError,
+                KeyError,
+                RecursionError,
+                UnicodeError,
+            ) as exc:
+                raise self.error_type(
+                    "conversation_model_response_invalid", 502
+                ) from exc
+
+    def _prepare_prompt(self):
+        self.prompt = _informational_prompt(
+            self.text,
+            self.payload,
+            self.memory_context,
+            self.playback_context,
+            self.output_devices,
+            getattr(self.runtime, "config", {}) or {},
+            **{
+                "verified_drafts": True,
+                "artist_anchors": self.artist_corpus.projection(),
+            }
+            if self.artist_corpus is not None
+            else {},
+        )
+        if self.semantic_scope is not None:
+            self.prompt = self.semantic_reads.augment_answer_prompt(
+                self.prompt, self.semantic_scope
+            )
+
+    async def _bind_agent_request(self):
+        self.assist_context = _assist_context(
+            self.hass, getattr(self.runtime, "config", {}) or {}
+        )
+        self.language = (
+            self.turn.style["language"]
+            if self.turn
+            else self.payload.get("language")
+            or self.assist_context.get("language")
+            or DEFAULT_TTS_LANGUAGE
+        )
+        self.data = {"text": self.prompt, "language": self.language}
+        if self.assist_context.get("agent_id"):
+            self.data["agent_id"] = self.assist_context["agent_id"]
+        from .dialogue import current_turn, DialogueError
+
+        self.error_type = DialogueError
+        self.turn = current_turn.get()
+        if self.turn:
+            await self.turn.guard()
+        from ..structured_playback import TASK_CONFIG
+
+        self.task_config = TASK_CONFIG
+        self.configured_task = (getattr(self.runtime, "config", {}) or {}).get(
+            self.task_config
+        )
+
+    def _choose_artist_generation(self):
+        # Membership and brief current-artist questions can use the existing
+        # qualified agent when no public task is configured. Choose before I/O;
+        # an explicitly configured task failure never changes provider.
+        self.conversation_artist = (
+            self.turn is not None
+            and (
+                self.turn.membership_research
+                or self.public_research.brief_contextual_artist_question(self.text)
+            )
+            and (self.configured_task is None or self.configured_task == "")
+        )
+        self.typed_artist = (
+            self.artist_corpus is not None
+            and (not self.conversation_artist)
+            and (str(self.language).split("-")[0].lower() in {"en", "nl"})
+        )
+
+    async def _invoke_generation(self):
+        if self.typed_artist:
+            from ..structured_artist import generation
+            from ..structured_playback import TASK_CONFIG
+
+            self.task_config = TASK_CONFIG
+            from ..pipeline import call_structured_artist
+
+            self.call_structured_artist = call_structured_artist
+            wire = await self.call_structured_artist(
+                self.hass,
+                self.data,
+                task_id=self.assist_context.get(self.task_config),
+                operation=generation(self.prompt, self.artist_corpus),
+            )
+            self.message = wire
+        else:
+            result = await _call_dialogue_agent(self.hass, self.data)
+            agent_response = (result or {}).get("response") or {}
+            self.message = (
+                ""
+                if agent_response.get("error")
+                else _speech_from_response(agent_response)
+            )
+
+    async def _generate(self):
+        try:
+            await self._bind_agent_request()
+            self._choose_artist_generation()
+            await self._invoke_generation()
+            if self.turn:
+                await self.turn.guard()
+        except Exception as exc:
+            from .dialogue import DialogueError
+
+            self.error_type = DialogueError
+            from ..session_conversation import SessionConversationError
+
+            if isinstance(exc, (self.error_type, SessionConversationError)):
+                raise
+            _LOGGER.debug(
+                "DJConnect Ask DJ informational Assist answer failed: %s",
+                type(exc).__name__,
+            )
+            self.message = ""
+        self.message = str(self.message or "").strip()
+        if _looks_like_internal_prompt_leak(self.message):
+            _LOGGER.debug(
+                "DJConnect Ask DJ informational answer ignored: internal prompt leak"
+            )
+            self.message = ""
+
+    def _fallback_response(self):
+        if not self.message:
+            self.message = _fallback_info_text(
+                self.text, self.memory_context, self.playback_context
+            )
+            return _core_answer(self.message, images=[])
+        return _NO_INFORMATIONAL_RESEARCH_RESPONSE
+
+    async def _semantic_plan_response(self):
+        if self.semantic_scope is not None:
+            self.plan = self.semantic_reads.parse_plan(self.message)
+            if self.plan is not None:
+                semantic = await self.semantic_reads.execute_plan(
+                    self.hass, self.runtime, self.text, self.plan, self.semantic_scope
+                )
+                if semantic is not None:
+                    return semantic
+                self.message = self.public_research.unavailable_answer(
+                    self.turn.style.get("language", "en"), ambiguous=True
+                )
+                return _core_answer(
+                    self.message, images=[], text_source="core", is_generated_text=False
+                )
+        return _NO_INFORMATIONAL_RESEARCH_RESPONSE
+
+    async def _parse_generation(self):
+        from .dialogue import (
+            parse_model_reply,
+            requests_lookup,
+            answer_language_format_issue,
+        )
+
+        self.answer_language_format_issue = answer_language_format_issue
+        parser = _InformationalReplyParser(
+            text=self.text,
+            turn=self.turn,
+            draft_context=self.draft_context,
+            fetched_sources=self.fetched_sources,
+            research_subject=self.research_subject,
+            public_research=self.public_research,
+            parse_model_reply=parse_model_reply,
+            requests_lookup=requests_lookup,
+            answer_language_format_issue=answer_language_format_issue,
+            error_type=self.error_type,
+        )
+        self.word_review = None
+        try:
+            if self.draft_context is not None:
+                self.message, self.plan, self.draft_pool, self.word_review = (
+                    _parse_informational_drafts(
+                        self.message,
+                        self.artist_corpus,
+                        parser,
+                        self.turn,
+                        self.error_type,
+                    )
+                )
+            else:
+                self.message, self.plan = parser.parse(self.message)
+        except self.error_type as exc:
+            if exc.code != "conversation_model_response_invalid" or not self.turn:
+                raise
+            if self.fetched_sources:
+                # Research reserves call two for independent evidence review.
+                # Invalid generation cannot buy a repair in its place or archive.
+                raise
+            await self._repair_generation(parser, requests_lookup)
+
+    async def _repair_generation(self, parser, requests_lookup):
+        # One read-only format retry uses the same qualified agent/call budget.
+        # Never send invalid output back as context or repeat a provider effect.
+        repair_instruction = (
+            "Return only one valid JSON object with intent and query. No text or commentary.\n"
+            if requests_lookup(self.text)
+            else "Answer the user's factual question directly in natural prose. Do not return a search/choice/query object.\n"
+        )
+        if parser.format_issue:
+            repair_instruction += (
+                parser.format_issue
+                + " Do not change the subject or qualified source facts.\n"
+            )
+        repaired = await _call_dialogue_agent(
+            self.hass, {**self.data, "text": repair_instruction + self.prompt}
+        )
+        self.response = (repaired or {}).get("response") or {}
+        if self.response.get("error"):
+            raise self.error_type("conversation_model_response_invalid", 502)
+        self.message, self.plan = parser.parse(
+            str(_speech_from_response(self.response) or "")
+        )
+
+    async def _ground_research(self):
+        # Generation and grounding share the existing turn budget. No repair
+        # buys an extra model call or publishes an unchecked answer. Source
+        # excerpts never enter history or transport.
+        self.accepted = False
+        self.answer_state = "assessment_unavailable"
+        if self.turn.agent_calls < (
+            3
+            if self.turn.interpreted_artist_research
+            or self.turn.interpreted_context_research
+            else 2
+        ):
+            await self._review_research()
+        self._project_grounding_result()
+        await self._membership_photo()
+        self.research_state = {**self.research_state, "answer_state": self.answer_state}
+
+    async def _review_research(self):
+        self._capture_grounding_context()
+        self._prepare_review_prompt()
+        await self._invoke_review()
+        await self.turn.guard()
+        self.quality_ok = True
+        if self.draft_pool is not None:
+            await self._review_drafts()
+        elif self.id_review:
+            self._decode_id_review()
+        self._qualify_assessment()
+        self._qualify_prefix()
+
+    def _capture_grounding_context(self):
+        if self.draft_context is not None:
+            self.grounding_context = self.draft_context
+        else:
+            self.grounding_context = {
+                "public_music_research": self.turn.public_research,
+                "qualified_context": self.turn.source_context,
+            }
+            self.grounding_context = self.public_research.selected_credit_context(
+                self.grounding_context, self.turn, allow_opened_credit=True
+            )
+            from .dialogue import selected_public_focus
+
+            if focus := selected_public_focus(self.turn):
+                self.grounding_context["selected_contribution"] = focus
+
+    def _prepare_review_prompt(self):
+        self.id_review = bool(
+            (
+                self.turn.interpreted_artist_research
+                or self.turn.interpreted_context_research
+                or self.turn.membership_research
+            )
+            and self.turn.public_research.get("schema_version") == 3
+        )
+        from ..public_artist_narration import (
+            complete_review_projection,
+            resolve_review_quotes,
+        )
+
+        self.resolve_review_quotes = resolve_review_quotes
+        # Both wires need the original selected-credit span ID. The projection
+        # grants no authority: factual checks keep the original typed context.
+        self.review_context = complete_review_projection(
+            self.grounding_context,
+            preserve_nonparagraph_sources=self.artist_corpus is not None
+            or not self.id_review,
+        )
+        self.review_prompt = self.public_research.assessment_prompt(
+            self.message,
+            self.review_context,
+            self.language,
+            self.text,
+            allow_prefix=not self.id_review,
+            quote_by_id=self.id_review,
+            closed_negative=self.artist_corpus is not None,
+            answer_word_ids=self.word_review is not None,
+        )
+        if self.id_review:
+            from ..narration_style import instructions as story_style
+
+            self.review_prompt = self.review_prompt.replace(
+                "\nData:\n",
+                (
+                    " Also return language_ok and style_ok booleans. language_ok requires fluent re"
+                    "quested-language prose; style_ok requires a useful connected personal DJ answe"
+                    "r in the requested Persona/Mood, addressing each requested musical aspect and "
+                    "answering a precise fact question directly without a compulsory follow-up. Onl"
+                    "y open exploration benefits from a relevant grounded invitation. A metadata/bi"
+                    "ography list, generic praise or a cropped first detail is insufficient. No com"
+                    "pulsory joke or fixed opening. When selected_contribution is supplied, judge w"
+                    "hether the answer deepens that selected episode rather than restarting a gener"
+                    "al biography, unless the actual question requests a different aspect or the fr"
+                    "esh passages only support an honest limitation. Do not demand invented depth. "
+                    "Its text grants no fact evidence: each new detail still needs its fetched lite"
+                    "ral passage. "
+                )
+                + story_style(
+                    persona=self.turn.style["persona"],
+                    mood=self.turn.style["mood"],
+                    locale=self.language,
+                )
+                + "\nData:\n",
+                1,
+            )
+        if self.draft_pool is not None:
+            from ..narration_brief import draft_review_prompt
+
+            self.review_prompt = (
+                self.word_review.prompt(self.review_prompt, self.draft_pool)
+                if self.word_review is not None
+                else draft_review_prompt(
+                    self.review_prompt, self.draft_pool, text_field="answer"
+                )
+            )
+
+    async def _invoke_review(self):
+        if self.typed_artist:
+            from ..structured_artist import review as artist_review
+
+            self.review_prompt = self.review_prompt.replace(
+                "\nData:\n",
+                " Always include temporal_claims: an empty array when no temporal claim is made.\nData:\n",
+                1,
+            )
+            wire = await self.call_structured_artist(
+                self.hass,
+                {**self.data, "text": self.review_prompt},
+                task_id=self.assist_context.get(self.task_config),
+                operation=artist_review(
+                    self.review_prompt, self.word_review, self.draft_pool
+                ),
+            )
+            self.assessment, self.check_response = (wire, {})
+        else:
+            checked = await _call_dialogue_agent(
+                self.hass, {**self.data, "text": self.review_prompt}
+            )
+            self.check_response = (checked or {}).get("response") or {}
+            self.assessment = _speech_from_response(self.check_response)
+
+    async def _accept_reviewed_draft(self, draft, raw_review, _object):
+        review = _object(raw_review)
+        language_ok = review.pop("language_ok", None) is True
+        style_ok = review.pop("style_ok", None) is True
+        if review.get("supported") is True:
+            review = self.resolve_review_quotes(review, self.grounding_context)
+        else:
+            review.pop("review_schema", None)
+        if (
+            not self.check_response.get("error")
+            and language_ok
+            and style_ok
+            and self.public_research.supported(
+                json.dumps(review), draft, self.grounding_context
+            )
+        ):
+            await self.turn.guard()
+            self.message = draft
+            self.response.update(text=self.message, dj_text=self.message)
+            self.accepted = True
+            return True
+        return False
+
+    async def _review_drafts(self):
+        from ..narration_brief import bound_draft_reviews, _object
+
+        try:
+            reviews = (
+                self.word_review.decode(self.assessment, self.draft_pool)
+                if self.word_review is not None
+                else bound_draft_reviews(
+                    self.assessment,
+                    self.draft_pool,
+                    public_story=True,
+                    closed_negative=self.artist_corpus is not None,
+                )
+            )
+            # The complete envelope is checked before any positive verdict.
+            for draft, raw_review in zip(self.draft_pool.texts, reviews, strict=True):
+                if await self._accept_reviewed_draft(draft, raw_review, _object):
+                    break
+            self.answer_state = (
+                "full_answer_supported" if self.accepted else "drafts_unqualified"
+            )
+        except (ValueError, TypeError, KeyError, RecursionError, UnicodeError):
+            self.answer_state = "drafts_unqualified"
+
+    def _decode_id_review(self):
+        # Reuse the literal-ID decoder; factual coverage, source identity,
+        # temporal and relationship checks retain their existing contracts.
+        from ..narration_brief import _object
+
+        try:
+            review = _object(self.assessment)
+            self.quality_ok = review.pop("language_ok", None) is True
+            self.quality_ok = review.pop("style_ok", None) is True and self.quality_ok
+            if review.get("supported") is True:
+                review = self.resolve_review_quotes(review, self.grounding_context)
+            else:
+                review.pop("review_schema", None)
+            self.assessment = json.dumps(review)
+        except (ValueError, TypeError, KeyError):
+            self.assessment = "{}"
+
+    def _qualify_assessment(self):
+        if self.draft_pool is None:
+            self.accepted = (
+                not self.check_response.get("error")
+                and self.quality_ok
+                and self.public_research.supported(
+                    self.assessment, self.message, self.grounding_context
+                )
+            )
+        if self.draft_pool is None and (not self.check_response.get("error")):
+            self.answer_state = (
+                "full_answer_supported"
+                if self.accepted
+                else "narration_quality_unverified"
+                if not self.quality_ok
+                else self.public_research.assessment_failure_reason(self.assessment)
+            )
+
+    def _qualify_prefix(self):
+        if (
+            not self.accepted
+            and (not self.check_response.get("error"))
+            and (not self.id_review)
+        ):
+            prefix = self.public_research.qualified_prefix(
+                self.assessment, self.message, self.grounding_context
+            )
+            if (
+                prefix is not None
+                and self.answer_language_format_issue(prefix, self.turn.style) is None
+            ):
+                self.message = prefix
+                self.response.update(
+                    text=self.message,
+                    dj_text=self.message,
+                    research_answer_qualification="supported_prefix_v1",
+                )
+                self.accepted = True
+                self.answer_state = "supported_prefix"
+
+    def _project_grounding_result(self):
+        if not self.accepted:
+            self.message = self.public_research.unavailable_answer(
+                self.turn.style.get("language", "en"), answer_unverified=True
+            )
+            self.response.update(
+                text=self.message,
+                dj_text=self.message,
+                knowledge_basis="public_research_unqualified",
+                text_source="core",
+                is_generated_text=False,
+            )
+            self.response.pop("model_processing_basis", None)
+        else:
+            self.response["knowledge_basis"] = "fetched_public_music_research_v1"
+            actual_sources = [source.metadata() for source in self.fetched_sources]
+            self.response["sources"] = self.response.get("sources", []) + actual_sources
+            self.response["links"] = [
+                {
+                    "kind": "source",
+                    "title": source.get("title", source.get("provider", "Source")),
+                    "url": source["url"],
+                    "source": source.get("provider", "Source"),
+                }
+                for source in self.response["sources"]
+                if source.get("url")
+            ]
+
+    async def _membership_photo(self):
+        if self.accepted and self.turn.membership_research:
+            from .band_story import band_identity, prepare_photo
+
+            identity = band_identity(
+                tuple(self.fetched_sources),
+                self.turn.public_research.get("resolved_public_subject", ""),
+            )
+            self.response["images"] = await prepare_photo(
+                self.hass, self.runtime, self.turn, identity
+            )
+            await self.turn.guard()
 
 
 async def _informational_assist_response(
@@ -2865,521 +4298,59 @@ async def _informational_assist_response(
 ) -> dict[str, Any]:
     if _looks_like_gibberish(text) or _looks_like_prompt_or_sandbox_attack(text):
         message = _unrecognized_request_text()
-        return {
-            "success": True,
-            "text": message,
-            "dj_text": message,
-            "action": "none",
-            "images": [],
-        }
+        return _core_answer(message,
+            action="none",
+            images=[],
+        )
 
     from .dialogue import current_turn, requests_lookup, DialogueError
     from . import public_research
     turn = current_turn.get()
-    if not research_angle:
-        kind, _ = public_research.direct_question(text)
-        research_angle = "age" if kind == "formation" else kind
-    if turn is not None:
-        from .exploration import ANGLES
-        turn.public_query_angle = research_angle if research_angle in ANGLES else ""
-    fetched_sources = []
-    research_state = {}
-    semantic_scope = None
-    from . import semantic_reads
-    if turn and not requests_lookup(text):
-        subject, qualified_music, ambiguous = ((research_subject, True, False) if research_subject
-            else public_research.subject_for_question(text, turn))
-        from .exploration import more_request
-        if (not research_subject and more_request(text) and turn.selected_read_context is not None
-                and turn.source_context.get("basis") == "cc0_normalized_fields_v1"):
-            # An open exploration chooses an angle through the existing read
-            # interpreter, even if just one typed name is available.
-            subject, ambiguous = "", False
-        named_subject = public_research.public_name_slot(public_research.explicit_public_subject(text) or "")
-        implicit_subject = not named_subject or not public_research.safe_subject(named_subject)
-        if implicit_subject and not research_subject and semantic_reads.admissible_question(text):
-            semantic_scope = semantic_reads.capture_scope(hass, turn)
-        if ambiguous:
-            if semantic_scope is not None:
-                semantic = await semantic_reads.read_response(hass, runtime, text, payload, scope=semantic_scope)
-                if semantic is not None:
-                    return semantic
-            message = public_research.unavailable_answer(turn.style.get("language", "en"), ambiguous=True)
-            return {"success": True, "text": message, "dj_text": message, "images": []}
-        if not subject and turn.source_context.get("basis") != "runtime_authored_direction_v1":
-            from .semantic_reads import read_response
-            semantic = await read_response(hass, runtime, text, payload, scope=semantic_scope)
-            if semantic is not None:
-                return semantic
-            from .artist_story import stage_production_clarification
-            clarification = stage_production_clarification(turn, text, semantic_scope)
-            if clarification is not None:
-                return clarification
-            # An unrecognized public question is not authority to answer from
-            # unchecked recollection. Clarify in the same owner before any I/O.
-            message = public_research.unavailable_answer(turn.style.get("language", "en"),
-                ambiguous=bool(public_research.MUSIC.search(text)))
-            return {"success": True, "text": message, "dj_text": message, "images": [],
-                    "text_source": "core", "is_generated_text": False,
-                    "knowledge_basis": "public_subject_required"}
-        if subject:
-            if named_subject and public_research.safe_subject(named_subject):
-                from .exploration import named_in_question
-                if named_in_question(subject, text):
-                    turn.public_query_candidate = subject
-            from .dialogue import selected_lookup_topic
-            lookup_topic = (recording_lookup[1] if recording_lookup is not None
-                            else selected_lookup_topic(turn, text, angle=research_angle))
-            fetched_sources, research_state = await public_research.research(
-                subject, text, turn.style.get("language", "en"), turn.guard,
-                qualified_music=qualified_music,
-                original_paragraphs=bool(research_subject or research_angle == "members"
-                                         or public_research.rich_introduction(text)),
-                artist_introduction=bool(research_subject and not contextual_research),
-                research_angle=research_angle,
-                **({'lookup_topic':lookup_topic} if lookup_topic else {}),
-                expected_roles=tuple(s.get("role") for s in turn.source_context.get("subjects", [])
-                                     if s.get("name", "").casefold() == public_research.safe_subject(subject).casefold()))
-            turn.public_research = public_research.research_projection(subject, fetched_sources, research_state, question=text)
-            if research_angle == "members":
-                from .band_story import band_identity
-                turn.membership_research = bool(band_identity(tuple(fetched_sources), subject)
-                    and turn.public_research.get("schema_version") == 3)
-
-            if research_state.get('exact_date') == 'conflicting_dates':
-                message = public_research.unavailable_answer(turn.style.get('language', 'en'), answer_unverified=True)
-                await turn.guard()
-                return {'success': True, 'text': message, 'dj_text': message, 'images': [],
-                        'sources': [source.metadata() for source in fetched_sources],
-                        'text_source': 'core', 'is_generated_text': False,
-                        'knowledge_basis': 'public_research_conflicting_dates',
-                        'public_research_status': {**research_state, 'answer_state': 'calendar_conflict'}}
-            if research_angle == 'age':
-                from .biographical_dates import group_inception_answer
-                from .exploration import band_age_question
-                original_group_sources = tuple(fetched_sources)
-                group_language = turn.style.get('language', 'en')
-                group_answer = (group_inception_answer(original_group_sources, subject, group_language)
-                    if band_age_question(turn.public_research, group_language, question=text) is None else None)
-                if group_answer:
-                    def original_group_date_delivery_guard():
-                        if group_inception_answer(original_group_sources, subject, group_language) != group_answer:
-                            raise DialogueError('conversation_context_changed', 409)
-                    turn.delivery_validators.append(original_group_date_delivery_guard)
-                    await turn.guard()
-                    return {'success': True, 'text': group_answer, 'dj_text': group_answer,
-                            'images': [], 'sources': [s.metadata() for s in original_group_sources
-                                if s.provider in {'Wikipedia', 'Wikidata'}],
-                            'text_source': 'core', 'is_generated_text': False,
-                            'knowledge_basis': 'public_group_inception_v1'}
-            if public_research.direct_question(text)[0] == 'age':
-                from .person_age import age_answer
-                original_sources = tuple(fetched_sources)
-                language = turn.style.get('language', 'en')
-                answer = age_answer(original_sources, subject, language)
-                if answer:
-                    def original_age_delivery_guard():
-                        if age_answer(original_sources, subject, language) != answer:
-                            raise DialogueError('conversation_context_changed', 409)
-                    turn.delivery_validators.append(original_age_delivery_guard)
-                    await turn.guard()
-                    return {'success': True, 'text': answer, 'dj_text': answer,
-                            'images': [], 'sources': [s.metadata() for s in original_sources
-                                if s.provider in {'Wikipedia', 'Wikidata'}],
-                            'text_source': 'core', 'is_generated_text': False,
-                            'knowledge_basis': 'public_person_age_v1'}
-            if recording_lookup is not None:
-                public_names = public_research.public_recording_names(fetched_sources, *recording_lookup)
-                if public_names is None:
-                    from .artist_story import production_unavailable
-                    return production_unavailable(turn.style['language'])
-                public_artist, public_work = public_names
-                turn.recording_research = True
-                questions = {
-                    'nl': 'Wat is er gedocumenteerd over de opname en productie van {work} van {artist}?',
-                    'en': 'What is documented about the recording and production of {work} by {artist}?',
-                    'de': 'Was ist über die Aufnahme und Produktion von {work} von {artist} dokumentiert?',
-                    'fr': 'Que sait-on de source vérifiée sur l’enregistrement et la production de {work} de {artist} ?',
-                    'es': '¿Qué está documentado sobre la grabación y producción de {work} de {artist}?',
-                }
-                text = questions.get(turn.style['language'], questions['en']).format(work=public_work, artist=public_artist)
-            if research_angle == 'current_events':
-                original_sources = tuple(fetched_sources)
-                language = turn.style.get('language', 'en')
-                calendar_answer = public_research.concert_calendar_answer(original_sources, subject, language)
-                if calendar_answer:
-                    def original_calendar_delivery_guard():
-                        if public_research.concert_calendar_answer(original_sources, subject, language) != calendar_answer:
-                            raise DialogueError('conversation_context_changed', 409)
-                    turn.delivery_validators.append(original_calendar_delivery_guard)
-                    await turn.guard()
-                    return {'success': True, 'text': calendar_answer, 'dj_text': calendar_answer,
-                            'images': [], 'sources': [s.metadata() for s in original_sources
-                                if s.provider == 'Public concert calendar'],
-                            'links': [{'title': s.title, 'url': s.revision_url, 'kind': 'source'}
-                                for s in original_sources if s.provider == 'Public concert calendar'
-                                and public_research.public_url(s.revision_url)],
-                            'text_source': 'core', 'is_generated_text': False,
-                            'knowledge_basis': 'public_concert_calendar_v1'}
-                activity = public_research.band_activity_answer(original_sources, subject, language)
-                if activity:
-                    activity_answer, activity_source = activity
-
-                    def original_activity_delivery_guard():
-                        if public_research.band_activity_answer(original_sources, subject, language) != activity:
-                            raise DialogueError('conversation_context_changed', 409)
-
-                    turn.delivery_validators.append(original_activity_delivery_guard)
-                    await turn.guard()
-                    return {'success': True, 'text': activity_answer, 'dj_text': activity_answer,
-                            'images': [], 'sources': [activity_source.metadata()],
-                            'text_source': 'core', 'is_generated_text': False,
-                            'knowledge_basis': 'public_band_activity_v1'}
-            if research_angle == "age":
-                from .exploration import band_age_question
-                original_research = json.loads(json.dumps(turn.public_research, ensure_ascii=False))
-                language = turn.style.get("language", "en")
-                question = band_age_question(original_research, language, question=text)
-                if question is not None:
-                    def original_group_evidence():
-                        if band_age_question(original_research, language, question=text) != question:
-                            raise DialogueError("conversation_context_changed", 409)
-                    turn.delivery_validators.append(original_group_evidence)
-                    await turn.guard()
-                    return {"success": True, "text": question, "dj_text": question,
-                            "action": "none", "images": [], "text_source": "core",
-                            "is_generated_text": False, "clarification_required": True,
-                            "knowledge_basis": "public_subject_clarification_v1",
-                            "sources": [source.metadata() for source in fetched_sources],
-                            "public_research_status": {**research_state, "answer_state": "person_or_band_clarification"}}
-            if research_subject:
-                focus = public_research.documented_episode_focus(
-                    turn.public_research, angle=research_angle,
-                    brief=bool(turn.interpreted_artist_research
-                        and public_research.brief_contextual_artist_question(text)))
-                if focus:
-                    turn.public_research['editorial_focus'] = focus
-            if not fetched_sources:
-                if semantic_scope is not None:
-                    semantic = await semantic_reads.read_response(hass, runtime, text, payload, scope=semantic_scope)
-                    if semantic is not None:
-                        return semantic
-                message = public_research.unavailable_answer(turn.style.get("language", "en"))
-                return {"success": True, "text": message, "dj_text": message, "images": [],
-                        "text_source": "core", "is_generated_text": False,
-                        "knowledge_basis": "public_research_unavailable",
-                        "public_research_status": research_state}
+    preparation = _InformationalResearchPreparation(
+        hass=hass,
+        runtime=runtime,
+        text=text,
+        payload=payload,
+        turn=turn,
+        research_subject=research_subject,
+        research_angle=research_angle,
+        contextual_research=contextual_research,
+        recording_lookup=recording_lookup,
+        requests_lookup=requests_lookup,
+        error_type=DialogueError,
+        public_research=public_research,
+    )
+    research_response = await preparation.execute()
+    if research_response is not _NO_INFORMATIONAL_RESEARCH_RESPONSE:
+        return research_response
+    text = preparation.text
+    research_angle = preparation.research_angle
+    fetched_sources = preparation.fetched_sources
+    research_state = preparation.research_state
+    semantic_scope = preparation.semantic_scope
+    semantic_reads = preparation.semantic_reads
+    del preparation
 
     # Only the original fetched schema3 artist route admits alternatives. Other
     # research (including interpreted album/producer context) keeps its ABI.
-    draft_context = None
-    draft_pool = None
-    artist_corpus = None
-    if (turn and fetched_sources
-            and ((turn.interpreted_artist_research and not turn.interpreted_context_research)
-                 or turn.membership_research)
-            and turn.public_research.get('schema_version') == 3):
-        from .dialogue import selected_public_focus
-        draft_context = {"public_music_research": turn.public_research,
-                         "qualified_context": turn.source_context}
-        if focus := selected_public_focus(turn):
-            draft_context['selected_contribution'] = focus
-        # Plain literal evidence only; no copy/reconstruction of typed authority.
-        # Freeze before the FIRST await, not separately for each alternative.
-        draft_context = json.loads(json.dumps(draft_context, ensure_ascii=False, allow_nan=False))
-        from ..narration_brief import artist_anchor_corpus
-        try:
-            artist_corpus = artist_anchor_corpus(draft_context['public_music_research'])
-        except (ValueError, TypeError, KeyError, RecursionError, UnicodeError) as exc:
-            raise DialogueError('conversation_model_response_invalid', 502) from exc
-    prompt = _informational_prompt(
-        text,
-        payload,
-        memory_context,
-        playback_context,
-        output_devices,
-        getattr(runtime, "config", {}) or {},
-        **({'verified_drafts': True, 'artist_anchors': artist_corpus.projection()}
-           if artist_corpus is not None else {}),
-    )
-    if semantic_scope is not None:
-        prompt = semantic_reads.augment_answer_prompt(prompt, semantic_scope)
-    try:
-        assist_context = _assist_context(hass, getattr(runtime, "config", {}) or {})
-        language = (turn.style['language'] if turn else
-                    payload.get("language") or assist_context.get("language") or DEFAULT_TTS_LANGUAGE)
-        data = {"text": prompt, "language": language}
-        if assist_context.get("agent_id"):
-            data["agent_id"] = assist_context["agent_id"]
-        from .dialogue import current_turn, DialogueError
-        turn = current_turn.get()
-        if turn:
-            await turn.guard()
-        from ..structured_playback import TASK_CONFIG
-        configured_task = (getattr(runtime, "config", {}) or {}).get(TASK_CONFIG)
-        # Membership and brief current-artist questions can use the existing
-        # qualified conversation agent when no public task is configured. Choose before
-        # any I/O; an explicitly configured task failure never changes provider.
-        conversation_artist = (turn is not None
-            and (turn.membership_research or public_research.brief_contextual_artist_question(text))
-            and (configured_task is None or configured_task == ""))
-        typed_artist = (artist_corpus is not None and not conversation_artist
-            and str(language).split("-")[0].lower() in {"en", "nl"})
-        if typed_artist:
-            from ..structured_artist import generation
-            from ..structured_playback import TASK_CONFIG
-            from ..pipeline import call_structured_artist
-            wire = await call_structured_artist(hass, data,
-                task_id=assist_context.get(TASK_CONFIG), operation=generation(prompt, artist_corpus))
-            message = wire
-        else:
-            result = await _call_dialogue_agent(hass, data)
-            agent_response = (result or {}).get("response") or {}
-            message = "" if agent_response.get("error") else _speech_from_response(agent_response)
-        if turn:
-            await turn.guard()
-    except Exception as exc:  # noqa: BLE001
-        from .dialogue import DialogueError
-        from ..session_conversation import SessionConversationError
-        if isinstance(exc, (DialogueError, SessionConversationError)):
-            raise
-        _LOGGER.debug("DJConnect Ask DJ informational Assist answer failed: %s", type(exc).__name__)
-        message = ""
-    message = str(message or "").strip()
-    if _looks_like_internal_prompt_leak(message):
-        _LOGGER.debug("DJConnect Ask DJ informational answer ignored: internal prompt leak")
-        message = ""
-    if not message:
-        message = _fallback_info_text(text, memory_context, playback_context)
-        return {"success": True, "text": message, "dj_text": message, "images": []}
-    if semantic_scope is not None:
-        plan = semantic_reads.parse_plan(message)
-        if plan is not None:
-            semantic = await semantic_reads.execute_plan(hass, runtime, text, plan, semantic_scope)
-            if semantic is not None:
-                return semantic
-            message = public_research.unavailable_answer(turn.style.get("language", "en"), ambiguous=True)
-            return {"success": True, "text": message, "dj_text": message, "images": [],
-                    "text_source": "core", "is_generated_text": False}
-    from .dialogue import parse_model_reply, requests_lookup, answer_language_format_issue
-    format_issue = None
-    word_review = None
-
-    def parse_reply(reply):
-        nonlocal format_issue
-        answer, operation = parse_model_reply(reply)
-        if fetched_sources and not operation:
-            answer = public_research.without_duplicate_source_footer(answer, fetched_sources)
-            if research_subject:
-                from ..public_artist_narration import plain_work_titles
-                answer = plain_work_titles(answer, draft_context['public_music_research']
-                    if draft_context is not None else turn.public_research)
-        if turn and requests_lookup(text) and (
-            operation.get("intent") not in {"lookup", "refine"} or not operation.get("query")
-        ):
-            raise DialogueError("conversation_model_response_invalid", 502)
-        if turn and not requests_lookup(text) and operation:
-            raise DialogueError("conversation_model_response_invalid", 502)
-        if turn and not operation:
-            from .dialogue import explicit_subject
-            subjects = [s.get("name", "") for s in turn.frame.subjects + turn.source_context.get("subjects", [])]
-            subjects.append(explicit_subject(text) or "")
-            format_issue = answer_language_format_issue(answer, turn.style, subjects)
-            if format_issue:
-                raise DialogueError("conversation_model_response_invalid", 502)
-        return answer, operation
-
-    try:
-        if draft_context is not None:
-            from ..narration_brief import artist_evidence_drafts
-            def normalize_draft(value):
-                answer, operation = parse_reply(value)
-                if operation or _looks_like_internal_prompt_leak(answer):
-                    raise DialogueError('conversation_model_response_invalid', 502)
-                return answer
-            try:
-                draft_pool = artist_evidence_drafts(message, artist_corpus, normalize_draft)
-                if turn.membership_research and len(draft_pool.texts) != 1:
-                    raise ValueError("membership_requires_one_whole_draft")
-                from ..artist_review_words import AnswerWordReview
-                word_review = AnswerWordReview.capture(draft_pool)
-            except (ValueError, TypeError, RecursionError, UnicodeError) as exc:
-                raise DialogueError('conversation_model_response_invalid', 502) from exc
-            message, plan = draft_pool.texts[0], {}
-            if not draft_pool.batch:
-                draft_pool = None  # Preserve the existing single-review ABI and failure reasons.
-        else:
-            message, plan = parse_reply(message)
-    except DialogueError as exc:
-        if exc.code != "conversation_model_response_invalid" or not turn:
-            raise
-        if fetched_sources:
-            # Research reserves call two for independent evidence review.
-            # Invalid generation cannot buy a repair in its place or archive.
-            raise
-        # One read-only format retry through the same qualified agent/call budget.
-        # Never send the invalid output back as context or repeat a provider effect.
-        repair_instruction = (
-            "Return only one valid JSON object with intent and query. No text or commentary.\n"
-            if requests_lookup(text) else
-            "Answer the user's factual question directly in natural prose. Do not return a search/choice/query object.\n"
-        )
-        if format_issue:
-            repair_instruction += format_issue + " Do not change the subject or qualified source facts.\n"
-        repaired = await _call_dialogue_agent(hass, {**data, "text": repair_instruction + prompt})
-        response = (repaired or {}).get("response") or {}
-        if response.get("error"):
-            raise DialogueError("conversation_model_response_invalid", 502)
-        message, plan = parse_reply(str(_speech_from_response(response) or ""))
-    response = {"success": True, "text": message, "dj_text": message,
-                "text_source": "generated", "is_generated_text": True,
-                "model_processing_basis": "qualified_dialogue_v1",
-                "knowledge_basis": "source_context_plus_general_knowledge" if turn and turn.source_context else "general_model_knowledge"}
-    if turn and turn.source_context.get("attribution"):
-        response["sources"] = [{**turn.source_context["attribution"], "kind": "source", "claim_scope": "qualified_credit_only"}]
-    if fetched_sources and not plan:
-        # Generation and grounding share the existing two-call turn budget. A
-        # format repair cannot silently buy a third model call or publish an
-        # unchecked answer. No excerpts are copied into history or transport.
-        accepted = False
-        answer_state = 'assessment_unavailable'
-        if turn.agent_calls < (3 if turn.interpreted_artist_research or turn.interpreted_context_research else 2):
-            if draft_context is not None:
-                grounding_context = draft_context
-            else:
-                grounding_context = {"public_music_research": turn.public_research,
-                                     "qualified_context": turn.source_context}
-                grounding_context = public_research.selected_credit_context(grounding_context, turn, allow_opened_credit=True)
-                from .dialogue import selected_public_focus
-                if focus := selected_public_focus(turn):
-                    grounding_context['selected_contribution'] = focus
-            id_review = bool((turn.interpreted_artist_research or turn.interpreted_context_research
-                or turn.membership_research)
-                and turn.public_research.get('schema_version') == 3)
-            from ..public_artist_narration import complete_review_projection, resolve_review_quotes
-            # Both review wires need the original selected-credit span ID. The
-            # projection grants no authority: factual checks retain the typed,
-            # original grounding_context after the model returns.
-            review_context = complete_review_projection(grounding_context,
-                preserve_nonparagraph_sources=artist_corpus is not None or not id_review)
-            review_prompt = public_research.assessment_prompt(
-                message, review_context, language, text, allow_prefix=not id_review, quote_by_id=id_review,
-                closed_negative=artist_corpus is not None, answer_word_ids=word_review is not None)
-            if id_review:
-                from ..narration_style import instructions as story_style
-                review_prompt = review_prompt.replace('\nData:\n',
-                    ' Also return language_ok and style_ok booleans. language_ok requires fluent '
-                    'requested-language prose; style_ok requires a useful connected personal DJ '
-                    'answer in the requested Persona/Mood, addressing each requested musical aspect '
-                    'and answering a precise fact question directly without a compulsory follow-up. '
-                    'Only open exploration benefits from a relevant grounded invitation. '
-                    'A metadata/biography list, generic praise or a cropped first detail is insufficient. '
-                    'No compulsory joke or fixed opening. '
-                    'When selected_contribution is supplied, judge whether the answer deepens that '
-                    'selected episode rather than restarting a general biography, unless the actual '
-                    'question requests a different aspect or the fresh passages only support an honest '
-                    'limitation. Do not demand invented depth. Its text grants no '
-                    'fact evidence: each new detail still needs its fetched literal passage. '
-                    + story_style(persona=turn.style['persona'], mood=turn.style['mood'], locale=language)
-                    + '\nData:\n', 1)
-            if draft_pool is not None:
-                from ..narration_brief import draft_review_prompt
-                review_prompt = (word_review.prompt(review_prompt, draft_pool) if word_review is not None
-                    else draft_review_prompt(review_prompt, draft_pool, text_field='answer'))
-            if typed_artist:
-                from ..structured_artist import review as artist_review
-                # Required arrays close both positive and negative typed variants.
-                review_prompt = review_prompt.replace("\nData:\n",
-                    " Always include temporal_claims: an empty array when no temporal claim is made.\nData:\n", 1)
-                wire = await call_structured_artist(hass, {**data, "text": review_prompt},
-                    task_id=assist_context.get(TASK_CONFIG),
-                    operation=artist_review(review_prompt, word_review, draft_pool))
-                assessment, check_response = wire, {}
-            else:
-                checked = await _call_dialogue_agent(hass, {**data, "text": review_prompt})
-                check_response = (checked or {}).get("response") or {}
-                assessment = _speech_from_response(check_response)
-            await turn.guard()
-            quality_ok = True
-            if draft_pool is not None:
-                from ..narration_brief import bound_draft_reviews, _object
-                try:
-                    reviews = (word_review.decode(assessment, draft_pool) if word_review is not None
-                        else bound_draft_reviews(assessment, draft_pool, public_story=True,
-                            closed_negative=artist_corpus is not None))
-                    # Complete envelope was checked before any positive verdict.
-                    for draft, raw_review in zip(draft_pool.texts, reviews, strict=True):
-                        review = _object(raw_review)
-                        language_ok = review.pop('language_ok', None) is True
-                        style_ok = review.pop('style_ok', None) is True
-                        if review.get('supported') is True:
-                            review = resolve_review_quotes(review, grounding_context)
-                        else:
-                            review.pop('review_schema', None)
-                        if (not check_response.get('error') and language_ok and style_ok
-                                and public_research.supported(json.dumps(review), draft, grounding_context)):
-                            await turn.guard()
-                            message = draft
-                            response.update(text=message, dj_text=message)
-                            accepted = True
-                            break
-                    answer_state = 'full_answer_supported' if accepted else 'drafts_unqualified'
-                except (ValueError, TypeError, KeyError, RecursionError, UnicodeError):
-                    answer_state = 'drafts_unqualified'
-            elif id_review:
-                # Reuse the existing literal-ID wire decoder; factual coverage,
-                # source identity, temporal and relationship checks are unchanged.
-                from ..narration_brief import _object
-                try:
-                    review = _object(assessment)
-                    quality_ok = review.pop('language_ok', None) is True
-                    quality_ok = review.pop('style_ok', None) is True and quality_ok
-                    if review.get('supported') is True:
-                        review = resolve_review_quotes(review, grounding_context)
-                    else:
-                        review.pop('review_schema', None)  # Rejected text is never admitted.
-                    assessment = json.dumps(review)
-                except (ValueError, TypeError, KeyError):
-                    assessment = '{}'
-            if draft_pool is None:
-                accepted = (not check_response.get("error") and quality_ok
-                    and public_research.supported(assessment, message, grounding_context))
-            if draft_pool is None and not check_response.get("error"):
-                answer_state = ('full_answer_supported' if accepted
-                                else 'narration_quality_unverified' if not quality_ok
-                                else public_research.assessment_failure_reason(assessment))
-            if not accepted and not check_response.get("error") and not id_review:
-                prefix = public_research.qualified_prefix(assessment, message, grounding_context)
-                if prefix is not None and answer_language_format_issue(prefix, turn.style) is None:
-                    message = prefix
-                    response.update(text=message, dj_text=message,
-                                    research_answer_qualification='supported_prefix_v1')
-                    accepted = True
-                    answer_state = 'supported_prefix'
-        if not accepted:
-            message = public_research.unavailable_answer(turn.style.get("language", "en"), answer_unverified=True)
-            response.update(text=message, dj_text=message, knowledge_basis="public_research_unqualified",
-                            text_source="core", is_generated_text=False)
-            response.pop('model_processing_basis', None)
-        else:
-            response["knowledge_basis"] = "fetched_public_music_research_v1"
-            actual_sources = [source.metadata() for source in fetched_sources]
-            response["sources"] = response.get("sources", []) + actual_sources
-            response["links"] = [{"kind": "source", "title": source.get("title", source.get("provider", "Source")),
-                                  "url": source["url"], "source": source.get("provider", "Source")}
-                                 for source in response["sources"] if source.get("url")]
-        if accepted and turn.membership_research:
-            from .band_story import band_identity, prepare_photo
-            identity = band_identity(tuple(fetched_sources),
-                turn.public_research.get("resolved_public_subject", ""))
-            response["images"] = await prepare_photo(hass, runtime, turn, identity)
-            await turn.guard()
-        research_state = {**research_state, 'answer_state': answer_state}
-    if research_state:
-        response["public_research_status"] = research_state
-    if plan:
-        return await _realize_dialogue_plan(hass, runtime, payload, text, response, plan)
-    return response
+    return await _InformationalAnswerAttempt(
+        hass=hass,
+        runtime=runtime,
+        text=text,
+        payload=payload,
+        memory_context=memory_context,
+        playback_context=playback_context,
+        output_devices=output_devices,
+        research_subject=research_subject,
+        research_angle=research_angle,
+        fetched_sources=fetched_sources,
+        research_state=research_state,
+        semantic_scope=semantic_scope,
+        semantic_reads=semantic_reads,
+        turn=turn,
+        public_research=public_research,
+        error_type=DialogueError,
+    ).execute()
 
 
 async def _spotify_user_playlists_response(
@@ -3390,21 +4361,18 @@ async def _spotify_user_playlists_response(
     playlists = result.get("playlists") if isinstance(result, dict) else []
     actions = _playlist_search_playback_actions(hass, playlists, limit=10)
     message = _read_text('playlists' if actions else 'playlists_empty')
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "none",
-        "images": [],
-        "playback_actions": actions,
-        "sources": [
+    return _core_answer(message,
+        action="none",
+        images=[],
+        playback_actions=actions,
+        sources=[
             {
                 "source": "spotify_user_playlists",
                 "kind": "source",
                 "title": "Spotify user playlists",
             }
         ],
-    }
+    )
 
 
 async def _spotify_playlist_search_response(
@@ -3426,21 +4394,18 @@ async def _spotify_playlist_search_response(
         message += "Tik op Play Now bij de playlist die je wilt horen."
     else:
         message = f"Ik vond nu geen Spotify-playlists voor {query}."
-    response = {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "none",
-        "images": [],
-        "playback_actions": actions,
-        "sources": [
+    response = _core_answer(message,
+        action="none",
+        images=[],
+        playback_actions=actions,
+        sources=[
             {
                 "source": "spotify_playlist_search",
                 "title": "Spotify playlist search",
                 "kind": "source",
             }
         ],
-    }
+    )
     if include_items:
         response["items"] = actions
     return response
@@ -3463,18 +4428,15 @@ async def _playlist_recommendation_offer_response(
         proposed_action="ask_dj_personal_recommendations",
         proposed_payload={"text": "verras me met persoonlijke muzieksuggesties"},
     )
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "none",
-        "intent": {"category": "playback_confirmation", "intent": "playlist_recommendation_offer"},
-        "images": [],
-        "links": [],
-        "sources": [],
-        "playback_actions": confirmations,
-        "confirmation_actions": confirmations,
-    }
+    return _core_answer(message,
+        action="none",
+        intent={"category": "playback_confirmation", "intent": "playlist_recommendation_offer"},
+        images=[],
+        links=[],
+        sources=[],
+        playback_actions=confirmations,
+        confirmation_actions=confirmations,
+    )
 
 
 async def _spotify_artist_albums(
@@ -3504,7 +4466,7 @@ async def _morning_music_suggestion_response(
 ) -> dict[str, Any]:
     if _playback_is_active(playback_context):
         text = "Goedemorgen! Er speelt al muziek, dus ik laat alles lekker doorlopen."
-        return {"success": True, "text": text, "dj_text": text, "action": "none"}
+        return _core_answer(text, action="none")
     listening_profile = await _listening_profile_context(
         hass,
         runtime,
@@ -3537,16 +4499,13 @@ async def _morning_music_suggestion_response(
     else:
         text = "Goedemorgen! Zal ik iets rustigs opzetten om de dag te starten?"
     confirmations = _confirmation_actions()
-    return {
-        "success": True,
-        "text": text,
-        "dj_text": text,
-        "action": "none",
-        "intent": {"category": "playback_confirmation", "intent": "morning_music_suggestion"},
-        "playback_actions": [*selected, *confirmations],
-        "confirmation_actions": confirmations,
-        "sources": _profile_sources(memory_context, listening_profile),
-    }
+    return _core_answer(text,
+        action="none",
+        intent={"category": "playback_confirmation", "intent": "morning_music_suggestion"},
+        playback_actions=[*selected, *confirmations],
+        confirmation_actions=confirmations,
+        sources=_profile_sources(memory_context, listening_profile),
+    )
 
 
 async def _next_track_info_response(
@@ -3570,7 +4529,7 @@ def _spotify_queue_source() -> dict[str, str]:
 
 def _empty_queue_response() -> dict[str, Any]:
     text = "Er staat nu geen volgend nummer in de Spotify wachtrij. Wil je wat anders horen? Laat het me weten. Zeg simpelweg 'verras me' en ik speel muziek op basis van jouw voorkeur."
-    return {"success": True, "text": text, "dj_text": text, "action": "none", "images": [], "playback_actions": [], "sources": [_spotify_queue_source()]}
+    return _core_answer(text, action="none", images=[], playback_actions=[], sources=[_spotify_queue_source()])
 
 
 def _queue_response(hass: HomeAssistant, result: Any, queue: list[dict[str, Any]]) -> dict[str, Any]:
@@ -3697,29 +4656,26 @@ def _recently_played_response(
     items: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     items = items if isinstance(items, list) else []
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "message": message,
-        "action": "none",
-        "intent": {
+    return _core_answer(message,
+        message=message,
+        action="none",
+        intent={
             "category": "informational",
             "intent": "recently_played_history",
             "action": "recently_played",
             "item_type": history_type,
         },
-        "items": items,
-        "images": _recently_played_images(items),
-        "links": [],
-        "sources": [
+        items=items,
+        images=_recently_played_images(items),
+        links=[],
+        sources=[
             {
                 "source": "spotify_recently_played",
                 "kind": "source",
                 "title": "Spotify recently played",
             }
         ],
-    }
+    )
 
 
 def _recently_played_history_type(text: str) -> str:
@@ -4007,15 +4963,12 @@ async def _current_track_reference_response(
     album = _playback_text(playback_context, "album_name", "album")
     if not title and not artist:
         text = _read_text('current_none')
-        return {
-            "success": True,
-            "text": text,
-            "dj_text": text,
-            "action": "none",
-            "images": [],
-            "playback_actions": [],
-            "sources": [{"source": "spotify_playback_context", "title": "Spotify playback context", "kind": "source"}],
-        }
+        return _core_answer(text,
+            action="none",
+            images=[],
+            playback_actions=[],
+            sources=[{"source": "spotify_playback_context", "title": "Spotify playback context", "kind": "source"}],
+        )
     # Canonical Ask DJ owns generated dialogue. A low-level current-track
     # reference has no separate model announcer or proactive publication path.
     text, generated = "", False
@@ -4059,17 +5012,14 @@ async def _current_track_reference_response(
     favorite_action = _favorite_current_track_action(title, artist, playback_context)
     if favorite_action:
         playback_actions.append(favorite_action)
-    return {
-        "success": True,
-        "text": text,
-        "dj_text": text,
-        "text_source": "generated" if generated else "fallback",
-        "is_generated_text": generated,
-        "action": "none",
-        "images": images,
-        "playback_actions": playback_actions,
-        "sources": [{"source": "spotify_playback_context", "title": "Spotify playback context", "kind": "source"}],
-    }
+    return _core_answer(text,
+        text_source="generated" if generated else "fallback",
+        is_generated_text=generated,
+        action="none",
+        images=images,
+        playback_actions=playback_actions,
+        sources=[{"source": "spotify_playback_context", "title": "Spotify playback context", "kind": "source"}],
+    )
 
 
 
@@ -4158,29 +5108,23 @@ def _current_track_album_response(
     album_label = f"{album} (uit {year})" if album and year else album
     if not album:
         text = "Ik kan nu niet zien op welk album dit nummer staat."
-        return {
-            "success": True,
-            "text": text,
-            "dj_text": text,
-            "action": "none",
-            "images": [],
-            "playback_actions": [],
-        }
+        return _core_answer(text,
+            action="none",
+            images=[],
+            playback_actions=[],
+        )
     if title and artist:
         text = f"{title} van {artist} werd uitgebracht op {album_label}."
     elif title:
         text = f"{title} werd uitgebracht op {album_label}."
     else:
         text = f"Dit nummer staat op {album_label}."
-    return {
-        "success": True,
-        "text": text,
-        "dj_text": text,
-        "action": "none",
-        "images": _images_from_context(hass, {}, playback_context),
-        "playback_actions": [_current_album_playback_action(hass, playback_context)] if _current_album_uri(playback_context) else [],
-        "sources": [{"source": "spotify_playback_context", "title": "Spotify playback context", "kind": "source"}],
-    }
+    return _core_answer(text,
+        action="none",
+        images=_images_from_context(hass, {}, playback_context),
+        playback_actions=[_current_album_playback_action(hass, playback_context)] if _current_album_uri(playback_context) else [],
+        sources=[{"source": "spotify_playback_context", "title": "Spotify playback context", "kind": "source"}],
+    )
 
 
 async def _play_current_album_response(
@@ -4195,21 +5139,18 @@ async def _play_current_album_response(
         uri = await _search_current_album_uri(hass, runtime, album, artist)
     if not album:
         text = "Ik weet nog niet welk album je bedoelt."
-        return {"success": True, "text": text, "dj_text": text, "action": "none"}
+        return _core_answer(text, action="none")
     if not uri:
         text = f"Ik weet dat dit {album} is, maar ik kan de Spotify album-URI nu niet vinden."
-        return {"success": True, "text": text, "dj_text": text, "action": "none"}
+        return _core_answer(text, action="none")
     result = await run_music_command(hass, runtime, "play", uri, play=True)
     text = f"{album} is in je wachtrij gezet."
-    return {
-        "success": True,
-        "text": text,
-        "dj_text": text,
-        "action": "play_music",
-        "playback": result.get("playback") if isinstance(result, dict) else {},
-        "playback_actions": [],
-        "sources": [{"source": "spotify_playback_context", "title": "Spotify playback context", "kind": "source"}],
-    }
+    return _core_answer(text,
+        action="play_music",
+        playback=result.get("playback") if isinstance(result, dict) else {},
+        playback_actions=[],
+        sources=[{"source": "spotify_playback_context", "title": "Spotify playback context", "kind": "source"}],
+    )
 
 
 async def _play_album_containing_track_response(
@@ -4221,7 +5162,7 @@ async def _play_album_containing_track_response(
     artist = str(request.get("artist") or "").strip()
     if not track or not artist:
         text = "Welk nummer en welke artiest bedoel je?"
-        return {"success": True, "text": text, "dj_text": text, "action": "none"}
+        return _core_answer(text, action="none")
     try:
         result = await run_music_command(
             hass,
@@ -4232,7 +5173,7 @@ async def _play_album_containing_track_response(
     except Exception as exc:  # noqa: BLE001
         _LOGGER.debug("DJConnect album-by-track search failed: %s", exc)
         text = f"Ik kan het album met {track} van {artist} nu niet vinden."
-        return {"success": True, "text": text, "dj_text": text, "action": "none"}
+        return _core_answer(text, action="none")
     item = result.get("item") if isinstance(result, dict) else {}
     if not isinstance(item, dict):
         item = {}
@@ -4244,23 +5185,17 @@ async def _play_album_containing_track_response(
         album = "dat album"
     if not uri.startswith("spotify:album:"):
         text = f"Ik vond {track} van {artist}, maar niet de Spotify album-URI."
-        return {
-            "success": True,
-            "text": text,
-            "dj_text": text,
-            "action": "none",
-            "sources": [{"source": "spotify_search", "title": "Spotify search", "kind": "source"}],
-        }
+        return _core_answer(text,
+            action="none",
+            sources=[{"source": "spotify_search", "title": "Spotify search", "kind": "source"}],
+        )
     playback = await run_music_command(hass, runtime, "play", uri, play=True)
     text = f"{album} is in je wachtrij gezet."
-    return {
-        "success": True,
-        "text": text,
-        "dj_text": text,
-        "action": "play_music",
-        "playback": playback.get("playback") if isinstance(playback, dict) else {},
-        "sources": [{"source": "spotify_search", "title": "Spotify search", "kind": "source"}],
-    }
+    return _core_answer(text,
+        action="play_music",
+        playback=playback.get("playback") if isinstance(playback, dict) else {},
+        sources=[{"source": "spotify_search", "title": "Spotify search", "kind": "source"}],
+    )
 
 
 def _track_versions_search_request(text: str) -> str:
@@ -4359,16 +5294,13 @@ async def _track_versions_search_response(
         )
     else:
         text = f"Ik vond nu geen duidelijke uitvoeringen waarbij alle woorden uit {query} terugkomen."
-    return {
-        "success": True,
-        "text": text,
-        "dj_text": text,
-        "action": "none",
-        "images": [],
-        "items": actions,
-        "playback_actions": actions,
-        "sources": [{"source": "spotify_track_search", "title": "Spotify track search", "kind": "source"}],
-    }
+    return _core_answer(text,
+        action="none",
+        images=[],
+        items=actions,
+        playback_actions=actions,
+        sources=[{"source": "spotify_track_search", "title": "Spotify track search", "kind": "source"}],
+    )
 
 
 def _track_versions_required_words(query: str) -> list[str]:
@@ -4428,15 +5360,12 @@ async def _current_track_version_response(
     variant_label = _version_variant_label(variant)
     if not title:
         text = f"Ik weet nu niet van welk nummer je een {variant_label} zoekt."
-        return {
-            "success": True,
-            "text": text,
-            "dj_text": text,
-            "action": "none",
-            "images": [],
-            "items": [],
-            "playback_actions": [],
-        }
+        return _core_answer(text,
+            action="none",
+            images=[],
+            items=[],
+            playback_actions=[],
+        )
     query = f"{title} {artist} {_version_variant_search_term(variant)}".strip()
     result = await _spotify_track_search(hass, runtime, query, limit=10)
     tracks = result.get("tracks") if isinstance(result, dict) else []
@@ -4456,16 +5385,13 @@ async def _current_track_version_response(
         )
     else:
         text = f"Ik vond nu geen duidelijke {variant_label} van {label} op Spotify."
-    return {
-        "success": True,
-        "text": text,
-        "dj_text": text,
-        "action": "none",
-        "images": [],
-        "items": actions,
-        "playback_actions": actions,
-        "sources": [{"source": "spotify_track_search", "title": "Spotify track search", "kind": "source"}],
-    }
+    return _core_answer(text,
+        action="none",
+        images=[],
+        items=actions,
+        playback_actions=actions,
+        sources=[{"source": "spotify_track_search", "title": "Spotify track search", "kind": "source"}],
+    )
 
 
 def _version_track_candidates(tracks: Any, title: str, artist: str, variant: str) -> list[dict[str, Any]]:
@@ -4576,7 +5502,7 @@ async def _track_owner_response(
     query = str(track_query or "").strip()
     if not query:
         text = "Welk nummer bedoel je?"
-        return {"success": True, "text": text, "dj_text": text, "action": "none"}
+        return _core_answer(text, action="none")
     try:
         result = await run_music_command(
             hass,
@@ -4587,11 +5513,11 @@ async def _track_owner_response(
     except Exception as exc:  # noqa: BLE001
         _LOGGER.debug("DJConnect track owner search failed: %s", exc)
         text = f"Ik kan nu niet betrouwbaar vinden van wie {query} is."
-        return {"success": True, "text": text, "dj_text": text, "action": "none"}
+        return _core_answer(text, action="none")
     item = result.get("item") if isinstance(result, dict) else {}
     if not isinstance(item, dict) or not item:
         text = f"Ik vind nu geen betrouwbare Spotify-match voor {query}."
-        return {"success": True, "text": text, "dj_text": text, "action": "none"}
+        return _core_answer(text, action="none")
     title = _playback_text(item, "track_name", "title", "name") or query
     artist = _playback_text(item, "artist", "artist_name")
     album = _playback_text(item, "album_name", "album")
@@ -4602,15 +5528,12 @@ async def _track_owner_response(
     else:
         text = f"Ik vond {title}, maar Spotify gaf geen duidelijke artiest terug."
     actions = _track_and_album_actions_from_track_item(hass, item)
-    return {
-        "success": True,
-        "text": text,
-        "dj_text": text,
-        "action": "none",
-        "playback_actions": actions,
-        "images": _images_from_context(hass, item, {}),
-        "sources": [{"source": "spotify_search", "title": "Spotify search", "kind": "source"}],
-    }
+    return _core_answer(text,
+        action="none",
+        playback_actions=actions,
+        images=_images_from_context(hass, item, {}),
+        sources=[{"source": "spotify_search", "title": "Spotify search", "kind": "source"}],
+    )
 
 
 def _track_and_album_actions_from_track_item(
@@ -4832,22 +5755,19 @@ def _artist_albums_response(
     text = _artist_albums_text(artist, album_labels, len(albums))
     images = _artist_album_images(visible_albums)
     playback_actions = _artist_album_playback_actions(hass, artist, visible_albums)
-    return {
-        "success": True,
-        "text": text,
-        "dj_text": text,
-        "action": "none",
-        "images": images,
-        "items": playback_actions,
-        "playback_actions": playback_actions,
-        "sources": [{"source": "spotify_artist_albums", "title": "Spotify artist albums", "kind": "source"}],
-    }
+    return _core_answer(text,
+        action="none",
+        images=images,
+        items=playback_actions,
+        playback_actions=playback_actions,
+        sources=[{"source": "spotify_artist_albums", "title": "Spotify artist albums", "kind": "source"}],
+    )
 
 
 def _empty_artist_albums_response(discography: dict[str, Any]) -> dict[str, Any]:
     artist = str(discography.get("artist") or "deze artiest").strip()
     text = _read_text('albums_empty',artist=artist)
-    return {"success": True, "text": text, "dj_text": text, "action": "none", "sources": [_spotify_artist_albums_source()]}
+    return _core_answer(text, action="none", sources=[_spotify_artist_albums_source()])
 
 
 def _spotify_artist_albums_source() -> dict[str, str]:
@@ -4926,17 +5846,14 @@ def _related_artists_response(
     profile_hint = _profile_artist_hint(memory_context or {}, listening_profile or {})
     text = _related_artists_text(source_artist, labels, profile_hint)
     images = _related_artist_images(visible)
-    return {
-        "success": True,
-        "text": text,
-        "dj_text": text,
-        "action": "none",
-        "images": images,
-        "sources": [
+    return _core_answer(text,
+        action="none",
+        images=images,
+        sources=[
             {"source": "spotify_related_artists", "title": "Spotify related artists", "kind": "source"},
             *(_profile_sources(memory_context or {}, listening_profile or {}) if profile_hint else []),
         ],
-    }
+    )
 
 
 def _spotify_related_artists_source() -> dict[str, str]:
@@ -4946,7 +5863,7 @@ def _spotify_related_artists_source() -> dict[str, str]:
 def _empty_related_artists_response(related: dict[str, Any]) -> dict[str, Any]:
     artist = str(related.get("artist") or "deze artiest").strip()
     text = f"Ik vind via Spotify geen vergelijkbare artiesten voor {artist}."
-    return {"success": True, "text": text, "dj_text": text, "action": "none", "sources": [_spotify_related_artists_source()]}
+    return _core_answer(text, action="none", sources=[_spotify_related_artists_source()])
 
 
 def _related_artist_labels(artists: list[Any]) -> list[str]:
@@ -4981,14 +5898,11 @@ def _artist_genre_response(profile: dict[str, Any]) -> dict[str, Any]:
             "source": "spotify",
         }
     ] if image_url else []
-    return {
-        "success": True,
-        "text": text,
-        "dj_text": text,
-        "action": "none",
-        "images": images,
-        "sources": [{"source": "spotify_artist_profile", "title": "Spotify artist profile", "kind": "source"}],
-    }
+    return _core_answer(text,
+        action="none",
+        images=images,
+        sources=[{"source": "spotify_artist_profile", "title": "Spotify artist profile", "kind": "source"}],
+    )
 
 
 def _genre_phrase(genres: list[str]) -> str:
@@ -5291,13 +6205,10 @@ def _artist_concerts_response(
             f"Ik vind nu geen actuele concertagenda voor {clean_artist}. "
             "Check voor de zekerheid de officiele artist site of ticketkanalen."
         )
-        return {
-            "success": True,
-            "text": text,
-            "dj_text": text,
-            "action": "none",
-            "sources": [{"source": "bandsintown", "title": "Bandsintown", "kind": "source"}],
-        }
+        return _core_answer(text,
+            action="none",
+            sources=[{"source": "bandsintown", "title": "Bandsintown", "kind": "source"}],
+        )
     lines = [f"Ik vond deze aankomende concerten voor {clean_artist}:"]
     links: list[dict[str, Any]] = []
     for index, event in enumerate(visible, start=1):
@@ -5318,14 +6229,11 @@ def _artist_concerts_response(
             )
         lines.append(line)
     text = "\n".join(lines)
-    return {
-        "success": True,
-        "text": text,
-        "dj_text": text,
-        "action": "none",
-        "links": links,
-        "sources": [{"source": "bandsintown", "title": "Bandsintown", "kind": "source"}],
-    }
+    return _core_answer(text,
+        action="none",
+        links=links,
+        sources=[{"source": "bandsintown", "title": "Bandsintown", "kind": "source"}],
+    )
 
 
 def _artist_from_similar_artists_question(
@@ -6266,29 +7174,23 @@ def _dj_announcement_response(playback_context: dict[str, Any]) -> dict[str, Any
     album = _playback_text(playback_context, "album_name", "album")
     if not title and not artist:
         text = "Ik kan nu geen DJ intro maken, omdat ik niet zie welk nummer er speelt."
-        return {
-            "success": True,
-            "text": text,
-            "dj_text": text,
-            "action": "none",
-            "images": [],
-            "playback_actions": [],
-        }
+        return _core_answer(text,
+            action="none",
+            images=[],
+            playback_actions=[],
+        )
     subject = _track_label(playback_context) or title or artist
     album_part = f", van het album {album}" if album else ""
     if title and artist:
         text = f"Intro: dit is {title} van {artist}{album_part}. Even volume erbij, want deze verdient je aandacht."
     else:
         text = f"Intro: dit is {subject}{album_part}. Even volume erbij, want deze verdient je aandacht."
-    return {
-        "success": True,
-        "text": text,
-        "dj_text": text,
-        "action": "announce",
-        "source": "spotify_playback_context",
-        "playback_actions": [],
-        "sources": [{"source": "spotify_playback_context", "title": "Spotify playback context", "kind": "source"}],
-    }
+    return _core_answer(text,
+        action="announce",
+        source="spotify_playback_context",
+        playback_actions=[],
+        sources=[{"source": "spotify_playback_context", "title": "Spotify playback context", "kind": "source"}],
+    )
 
 
 def _song_recommendation_seeds(text: str) -> dict[str, list[str]]:
@@ -6966,16 +7868,13 @@ async def _artist_seed_recommendations_response(
         )
     else:
         message = f"Ik vond nu geen speelbare aanbevelingen op basis van {artist}."
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "none",
-        "images": [],
-        "items": actions,
-        "playback_actions": actions,
-        "sources": [{"source": "spotify_recommendations", "title": "Spotify recommendations", "kind": "source"}],
-    }
+    return _core_answer(message,
+        action="none",
+        images=[],
+        items=actions,
+        playback_actions=actions,
+        sources=[{"source": "spotify_recommendations", "title": "Spotify recommendations", "kind": "source"}],
+    )
 
 
 async def _spotify_seed_mix(
@@ -7008,16 +7907,13 @@ async def _current_track_seed_mix_response(
     label = f"{title} van {artist}" if title and artist else title or artist or "het huidige nummer"
     if not seeds:
         message = "Ik kan nu niet zien welk nummer als basis voor de mix moet dienen."
-        return {
-            "success": True,
-            "text": message,
-            "dj_text": message,
-            "action": "none",
-            "images": [],
-            "items": [],
-            "playback_actions": [],
-            "sources": [{"source": "spotify_playback_context", "title": "Spotify playback context", "kind": "source"}],
-        }
+        return _core_answer(message,
+            action="none",
+            images=[],
+            items=[],
+            playback_actions=[],
+            sources=[{"source": "spotify_playback_context", "title": "Spotify playback context", "kind": "source"}],
+        )
     result = await _spotify_seed_mix_with_fallbacks(hass, runtime, playback_context, seeds)
     tracks = result.get("tracks") if isinstance(result, dict) else []
     used_search_fallback = False
@@ -7038,11 +7934,11 @@ async def _current_track_seed_mix_response(
             "fr": "L’ajout de ces suggestions à la file n’est pas pris en charge. La lecture reste inchangée ; choisis Lire pour lancer un résultat.",
             "es": "No se admite añadir estas sugerencias a la cola. La reproducción no cambia; elige Reproducir para iniciar un resultado.",
         }[language]
-        return {"success": True, "text": message, "dj_text": message, "action": "none",
-            "queue_append": {"state": "unsupported"}, "images": [], "items": track_actions,
-            "playback_actions": track_actions, "sources": [
+        return _core_answer(message, action="none",
+            queue_append={"state": "unsupported"}, images=[], items=track_actions,
+            playback_actions=track_actions, sources=[
                 {"source": "spotify_playback_context", "title": "Spotify playback context", "kind": "source"},
-                {"source": "spotify_recommendations", "title": "Spotify recommendations", "kind": "source"}]}
+                {"source": "spotify_recommendations", "title": "Spotify recommendations", "kind": "source"}])
     if request_kind == "play":
         uris = _track_uris_from_items(tracks, limit=50)
         playback_result = {}
@@ -7063,20 +7959,17 @@ async def _current_track_seed_mix_response(
             )
         else:
             message = f"Ik kon nu geen vergelijkbare Spotify-tracks vinden op basis van {label}."
-        return {
-            "success": True,
-            "text": message,
-            "dj_text": message,
-            "action": "play_music" if playback_result else "none",
-            "images": [],
-            "items": track_actions,
-            "playback_actions": track_actions,
-            "playback": playback_result.get("playback") if isinstance(playback_result, dict) else {},
-            "sources": [
+        return _core_answer(message,
+            action="play_music" if playback_result else "none",
+            images=[],
+            items=track_actions,
+            playback_actions=track_actions,
+            playback=playback_result.get("playback") if isinstance(playback_result, dict) else {},
+            sources=[
                 {"source": "spotify_playback_context", "title": "Spotify playback context", "kind": "source"},
                 {"source": "spotify_recommendations", "title": "Spotify recommendations", "kind": "source"},
             ],
-        }
+        )
     actions = track_actions + ([mix_action] if mix_action else [])
     if actions:
         intro = (
@@ -7087,19 +7980,16 @@ async def _current_track_seed_mix_response(
         message = intro + "Ik start nog niets; tik op Play Now bij een track of zet de hele mix in de wachtrij."
     else:
         message = f"Ik kon nu geen speelbare Spotify-mix samenstellen op basis van {label}."
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "none",
-        "images": [],
-        "items": actions,
-        "playback_actions": actions,
-        "sources": [
+    return _core_answer(message,
+        action="none",
+        images=[],
+        items=actions,
+        playback_actions=actions,
+        sources=[
             {"source": "spotify_playback_context", "title": "Spotify playback context", "kind": "source"},
             {"source": "spotify_recommendations", "title": "Spotify recommendations", "kind": "source"},
         ],
-    }
+    )
 
 
 def _current_track_seed_values(playback_context: dict[str, Any]) -> dict[str, list[str]]:
@@ -7233,16 +8123,13 @@ async def _mood_mix_response(
             f"Ik wilde een mix maken voor je huidige mood: {mood_label}, "
             "maar ik vond nu geen speelbare Spotify-tracks."
         )
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "none",
-        "images": [],
-        "playback_actions": actions,
-        "items": track_actions,
-        "sources": [{"source": "spotify_recommendations", "title": "Spotify recommendations", "kind": "source"}],
-    }
+    return _core_answer(message,
+        action="none",
+        images=[],
+        playback_actions=actions,
+        items=track_actions,
+        sources=[{"source": "spotify_recommendations", "title": "Spotify recommendations", "kind": "source"}],
+    )
 
 
 def _payload_or_memory_mood(payload: dict[str, Any], memory_context: dict[str, Any]) -> int | None:
@@ -7284,7 +8171,7 @@ async def _song_recommendations_response(
     seeds = _song_recommendation_seeds(text)
     if not seeds:
         message = "Welke stijl of sfeer zoek je voor die nummers?"
-        return {"success": True, "text": message, "dj_text": message, "action": "none"}
+        return _core_answer(message, action="none")
     try:
         result = await run_music_command(
             hass,
@@ -7306,14 +8193,11 @@ async def _song_recommendations_response(
         )
     else:
         message = "Ik kon nu geen speelbare Spotify-nummers vinden voor die stijl."
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "none",
-        "playback_actions": actions,
-        "sources": [{"source": "spotify_recommendations", "title": "Spotify recommendations", "kind": "source"}],
-    }
+    return _core_answer(message,
+        action="none",
+        playback_actions=actions,
+        sources=[{"source": "spotify_recommendations", "title": "Spotify recommendations", "kind": "source"}],
+    )
 
 
 def _track_recommendation_actions(
@@ -7415,7 +8299,7 @@ async def _save_generated_playlist(
     uris = recommendation.get("uris") if isinstance(recommendation, dict) else []
     if not isinstance(uris, list) or not uris:
         message = "Ik heb nog geen samengestelde mix om als Spotify playlist op te slaan."
-        return {"success": True, "text": message, "dj_text": message, "action": "none"}
+        return _core_answer(message, action="none")
     name = _playlist_name_from_save_request(text) or str(recommendation.get("title") or "DJConnect mix")
     try:
         result = await run_music_command(
@@ -7444,13 +8328,10 @@ async def _save_generated_playlist(
     playlist = result.get("playlist") if isinstance(result, dict) else {}
     title = str(playlist.get("title") or playlist.get("name") or name).strip()
     message = f"Opgeslagen als Spotify playlist: {title}."
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "create_playlist",
-        "links": _playlist_links(playlist),
-    }
+    return _core_answer(message,
+        action="create_playlist",
+        links=_playlist_links(playlist),
+    )
 
 
 def _last_mix_recommendation(memory_context: dict[str, Any]) -> dict[str, Any]:
@@ -7655,19 +8536,16 @@ def _media_options_response(
         "es": "Ahora no he encontrado álbumes ni listas que pueda reproducir para {query}.",
     }
     message = (introductions if actions else empty)[language].format(query=query)
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "none",
-        "images": [],
-        "playback_actions": actions,
-        "items": [],
-        "sources": [
+    return _core_answer(message,
+        action="none",
+        images=[],
+        playback_actions=actions,
+        items=[],
+        sources=[
             {"source": "spotify_album_search", "title": "Spotify album search", "kind": "source"},
             {"source": "spotify_playlist_search", "title": "Spotify playlist search", "kind": "source"},
         ],
-    }
+    )
 
 
 async def _artist_album_playlist_options_response(
@@ -7814,17 +8692,14 @@ async def _artist_fun_queue_response(
         )
     else:
         message = f"Ik vond nu geen speelbare Spotify-nummers van {artist}."
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "play_music" if playback_result else "none",
-        "images": [],
-        "items": actions,
-        "playback_actions": actions,
-        "playback": playback_result.get("playback") if isinstance(playback_result, dict) else {},
-        "sources": [{"source": "spotify_track_search", "title": "Spotify track search", "kind": "source"}],
-    }
+    return _core_answer(message,
+        action="play_music" if playback_result else "none",
+        images=[],
+        items=actions,
+        playback_actions=actions,
+        playback=playback_result.get("playback") if isinstance(playback_result, dict) else {},
+        sources=[{"source": "spotify_track_search", "title": "Spotify track search", "kind": "source"}],
+    )
 
 
 def _clean_artist_item_name(value: Any) -> str:
@@ -7997,16 +8872,13 @@ def _artist_clickable_rows_response(
         )
     else:
         message = _read_text('empty',label=label,artist=artist)
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "none",
-        "images": [],
-        "playback_actions": actions,
-        "items": actions,
-        "sources": [{"source": source, "title": source.replace("_", " "), "kind": "source"}],
-    }
+    return _core_answer(message,
+        action="none",
+        images=[],
+        playback_actions=actions,
+        items=actions,
+        sources=[{"source": source, "title": source.replace("_", " "), "kind": "source"}],
+    )
 
 
 async def _artist_more_media_response(
@@ -8041,20 +8913,17 @@ async def _artist_more_media_response(
         )
     else:
         message = f"Ik vond nu geen speelbare albums, playlists of tracks voor {artist}."
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "none",
-        "images": [],
-        "playback_actions": actions,
-        "items": actions,
-        "sources": [
+    return _core_answer(message,
+        action="none",
+        images=[],
+        playback_actions=actions,
+        items=actions,
+        sources=[
             {"source": "spotify_album_search", "title": "Spotify album search", "kind": "source"},
             {"source": "spotify_playlist_search", "title": "Spotify playlist search", "kind": "source"},
             {"source": "spotify_track_search", "title": "Spotify track search", "kind": "source"},
         ],
-    }
+    )
 
 
 def _ordered_playback_actions(
@@ -8077,16 +8946,13 @@ def _ordered_playback_actions(
 
 def _empty_artist_item_list_response(artist: str, label: str, source: str) -> dict[str, Any]:
     message = _read_text('empty',label=label,artist=artist)
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "none",
-        "images": [],
-        "playback_actions": [],
-        "items": [],
-        "sources": [{"source": source, "title": source.replace("_", " "), "kind": "source"}],
-    }
+    return _core_answer(message,
+        action="none",
+        images=[],
+        playback_actions=[],
+        items=[],
+        sources=[{"source": source, "title": source.replace("_", " "), "kind": "source"}],
+    )
 
 
 async def _playlist_track_choices_response(
@@ -8109,16 +8975,13 @@ async def _playlist_track_choices_response(
         )
     else:
         message = f"Ik vond nu geen speelbare Spotify-nummers voor {query}."
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "none",
-        "images": [],
-        "playback_actions": actions,
-        "items": actions,
-        "sources": [{"source": "spotify_track_search", "title": "Spotify track search", "kind": "source"}],
-    }
+    return _core_answer(message,
+        action="none",
+        images=[],
+        playback_actions=actions,
+        items=actions,
+        sources=[{"source": "spotify_track_search", "title": "Spotify track search", "kind": "source"}],
+    )
 
 
 async def _artist_more_tracks_response(
@@ -8141,16 +9004,13 @@ async def _artist_more_tracks_response(
         )
     else:
         message = f"Ik vond nu geen speelbare Spotify-nummers van {artist}."
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "none",
-        "images": [],
-        "playback_actions": actions,
-        "items": actions,
-        "sources": [{"source": "spotify_track_search", "title": "Spotify track search", "kind": "source"}],
-    }
+    return _core_answer(message,
+        action="none",
+        images=[],
+        playback_actions=actions,
+        items=actions,
+        sources=[{"source": "spotify_track_search", "title": "Spotify track search", "kind": "source"}],
+    )
 
 
 async def _spotify_user_playlists(
@@ -9066,18 +9926,6 @@ def _recommendation_reason(memory_context: dict[str, Any]) -> str:
     return "Past bij je recente luisterprofiel."
 
 
-def _spotify_uri_kind(uri: str) -> str:
-    if uri.startswith("spotify:track:"):
-        return "track"
-    if uri.startswith("spotify:album:"):
-        return "album"
-    if uri.startswith("spotify:artist:"):
-        return "artist"
-    if uri.startswith("spotify:playlist:"):
-        return "playlist"
-    return ""
-
-
 def _sources_from_context(result: dict[str, Any], links: list[dict[str, Any]]) -> list[dict[str, Any]]:
     sources: list[dict[str, Any]] = []
     provided = result.get("sources")
@@ -9491,24 +10339,6 @@ def _links_from_context(
     return links
 
 
-def _playable_item_id(item: dict[str, Any]) -> str:
-    for key in (
-        "uri",
-        "current_uri",
-        "context_uri",
-        "playlist_uri",
-        "album_uri",
-        "artist_uri",
-        "item_id",
-        "media_content_id",
-        "id",
-    ):
-        value = str(item.get(key) or "").strip()
-        if value:
-            return value
-    return ""
-
-
 def _playable_item_kind(item: dict[str, Any], item_id: str) -> str:
     spotify_kind = _spotify_uri_kind(item_id)
     if spotify_kind:
@@ -9900,11 +10730,10 @@ def _help_sections(language: str = "nl", context=None) -> list[tuple[str, list[s
 def _help_response(language: str = "nl", context=None) -> dict[str, Any]:
     from .example_catalogue import help_text
     message = help_text(language, context)
-    return {
-        "success": True, "text": message, "dj_text": message, "action": "none",
-        "intent": {"category": "informational", "intent": "help"},
-        "images": [], "links": [], "sources": [], "playback_actions": [],
-    }
+    return _core_answer(message, action="none",
+        intent={"category": "informational", "intent": "help"},
+        images=[], links=[], sources=[], playback_actions=[],
+    )
 
 
 def _looks_dutch(normalized: str) -> bool:
@@ -10051,33 +10880,27 @@ def _playback_status_response(
             if enabled is False
             else "Ik kan nu niet zien of shuffle aan staat."
         )
-        return {
-            "success": True,
-            "text": message,
-            "dj_text": message,
-            "images": [],
-            "links": [],
-            "sources": [],
-            "items": [],
-            "audio_url": None,
-            "playback_actions": [] if manual_backend else [_shuffle_toggle_action(enabled)],
-        }
+        return _core_answer(message,
+            images=[],
+            links=[],
+            sources=[],
+            items=[],
+            audio_url=None,
+            playback_actions=[] if manual_backend else [_shuffle_toggle_action(enabled)],
+        )
     if "repeat" in normalized or "herhaal" in normalized:
         repeat_state = _playback_repeat_state(playback)
         message = _repeat_status_text(repeat_state)
-        return {
-            "success": True,
-            "text": message,
-            "dj_text": message,
-            "images": [],
-            "links": [],
-            "sources": [],
-            "items": [],
-            "audio_url": None,
-            "playback_actions": [] if manual_backend else _repeat_option_actions(repeat_state),
-        }
+        return _core_answer(message,
+            images=[],
+            links=[],
+            sources=[],
+            items=[],
+            audio_url=None,
+            playback_actions=[] if manual_backend else _repeat_option_actions(repeat_state),
+        )
     message = _current_output_text(playback)
-    return {"success": True, "text": message, "dj_text": message}
+    return _core_answer(message)
 
 
 def _playback_shuffle_enabled(playback: dict[str, Any]) -> bool | None:
@@ -10305,12 +11128,12 @@ async def _dialogue_album_period_response(hass, payload, text):
     }
     caption=labels[language].format(start=start,end=end,missing=missing)
     message = catalogue_result_text(selected,language,caption=caption)
-    return {'success':True,'text':message,'dj_text':message,
-            'action':'none','items':selected,'playback_actions':selected,'images':[],
-            'text_source':'qualified_catalog_result','is_generated_text':False,'_private_current_context':True,
-            'filtering_coverage':{'basis':'shown_catalog_editions','input_items':len(shown['items']),
+    return _core_answer(message,
+            action='none',items=selected,playback_actions=selected,images=[],
+            text_source='qualified_catalog_result',is_generated_text=False,_private_current_context=True,
+            filtering_coverage={'basis':'shown_catalog_editions','input_items':len(shown['items']),
                                   'missing_date':missing,'matched':len(selected)},
-            'intent':{'category':'informational','intent':'shown_result_list'}}
+            intent={'category':'informational','intent':'shown_result_list'})
 
 
 async def _dialogue_result_list_response(hass, payload, text):
@@ -10330,10 +11153,10 @@ async def _dialogue_result_list_response(hass, payload, text):
             "es": "La lista anterior ya no está disponible. Vuelve a pedir los resultados.",
         }
         message = labels[language]
-        return {"success": True, "text": message, "dj_text": message, "action": "none",
-                "items": [], "playback_actions": [], "is_generated_text": False,
-                "text_source": "qualified_catalog_result", "_private_current_context": True,
-                "intent": {"category": "informational", "intent": "result_list_unavailable"}}
+        return _core_answer(message, action="none",
+                items=[], playback_actions=[], is_generated_text=False,
+                text_source="qualified_catalog_result", _private_current_context=True,
+                intent={"category": "informational", "intent": "result_list_unavailable"})
     expected = (payload.get("conversation_context") or {}).get("result_set_id")
     if expected and expected != shown["result_set_id"]:
         raise DialogueError("choice_changed")
@@ -10360,14 +11183,370 @@ async def _dialogue_result_list_response(hass, payload, text):
                else catalogue_result_text(items, language))
     # No playback_actions: complete() must retain the exact set, original IDs,
     # chosen item and deadline, rather than minting a fresh600s offer.
-    return {"success": True, "text": message, "dj_text": message, "action": "none",
-            "items": items, "playback_actions": [], "is_generated_text": False,
-            "text_source": "qualified_catalog_result", "_private_current_context": True,
-            "result_set": {"schema_version": 1, "result_set_id": shown["result_set_id"],
+    return _core_answer(message, action="none",
+            items=items, playback_actions=[], is_generated_text=False,
+            text_source="qualified_catalog_result", _private_current_context=True,
+            result_set={"schema_version": 1, "result_set_id": shown["result_set_id"],
                            "expires_in": max(0, shown["deadline"] - turn.history.dialogue.clock()),
                            "items": deepcopy(items),
                            **({'presentation': presentation} if presentation else {})},
-            "intent": {"category": "informational", "intent": "shown_result_list"}}
+            intent={"category": "informational", "intent": "shown_result_list"})
+
+
+_NO_DIALOGUE_CHOICE_RESPONSE = object()
+
+
+def _dialogue_choice_validators(*, hass, turn, shown, chosen, action_identity, DialogueError):
+
+    def validate_choice_evidence():
+        if turn.history.dialogue.clock() >= shown["deadline"]:
+            raise DialogueError("choice_expired")
+        if shown.get("session_id"):
+            from ..session_runtime import session_runtime_manager
+
+            active = session_runtime_manager(hass).current_active(
+                turn.scope.removeprefix("profile:")
+            )
+            if active is None or active.session_id != shown["session_id"]:
+                raise DialogueError("choice_expired")
+
+    def validate_choice():
+        validate_choice_evidence()
+        if (
+            turn.frame.result_set is not shown
+            or shown["generation"] != turn.generation
+            or chosen >= len(shown["items"])
+            or (shown["items"][chosen] != action_identity)
+        ):
+            raise DialogueError("choice_changed")
+
+    return (validate_choice_evidence, validate_choice)
+
+
+@dataclass(repr=False, eq=False, kw_only=True)
+class _DialogueChoiceAttempt:
+    """Resolve one offered selection with its original source/effect fences."""
+
+    hass: Any
+    runtime: Any
+    payload: Any
+    text: str
+    turn: Any
+    index: Any
+    choice_index: Any
+    explicit_play: Any
+    explicit_activate: Any
+    play_selected: Any
+    references_topic: Any
+    error_type: Any
+    valid_uri: Any
+
+    async def execute(self):
+        self._capture_requested_index()
+        self._capture_references()
+        response = self._unselected_response()
+        if response is not _NO_DIALOGUE_CHOICE_RESPONSE:
+            return response
+        response = await self._current_offer_response()
+        if response is not _NO_DIALOGUE_CHOICE_RESPONSE:
+            return response
+        self._admit_result_set()
+        self._bound_choice_action()
+        self._preferred_index()
+        self._version_index()
+        self._admit_selected_action()
+        await self._bind_validators()
+        self._capture_requested_effect()
+        response = await self._first_play_response()
+        if response is not _NO_DIALOGUE_CHOICE_RESPONSE:
+            return response
+        return await self._play_or_activate_response()
+
+    def _capture_requested_index(self):
+        self.value = self.payload.get("choice_action")
+        self.chosen = self.choice_index(self.text) if self.index is None else self.index
+        if self.chosen is None and self.value is None and self.turn.frame.result_set:
+            from .dialogue import offered_media_index
+
+            self.chosen = offered_media_index(self.text, self.turn.frame.result_set["items"])
+
+    def _capture_references(self):
+        self.version_match = re.fullmatch(
+            "(?:(?:de|die|the|la|le|el|speel|play|joue|spiel|pon)\\s+)*(live|acoustic|akoestische|akustische|acoustique|acústica)(?:\\s*(?:versie|version|versión|one))?",
+            self.text.casefold().strip(" .!?"),
+        )
+        self.play_reference = self.play_selected(self.text) and (
+            not (_is_current_album_play_request(self.text) and self.turn.frame.result_set is None)
+        )
+        self.activate_reference = self.explicit_activate(self.text) and (
+            self.references_topic(self.text)
+            or self.text.casefold().strip(" .!?")
+            in {"activate", "activeer", "aktiviere", "active", "activa"}
+        )
+
+    def _unselected_response(self):
+        if (
+            self.chosen is None
+            and self.value is None
+            and (self.version_match is None)
+            and (not self.play_reference)
+            and (not self.activate_reference)
+        ):
+            return self._identify_selected_result()
+        return _NO_DIALOGUE_CHOICE_RESPONSE
+
+    def _identify_selected_result(self):
+        self.shown = self.turn.frame.result_set
+        if (
+            self.shown
+            and self.turn.frame.chosen_action_id
+            and (not self.turn.reset_topic)
+            and (not self.turn.source_context)
+            and self.references_topic(self.text)
+        ):
+            self._admit_existing_selected_action()
+            return self._identification_reply()
+        return None
+
+    def _admit_existing_selected_action(self):
+        if self.turn.history.dialogue.clock() >= self.shown["deadline"]:
+            raise self.error_type("choice_expired")
+        self.action = next(
+            (a for a in self.shown["items"] if a["action_id"] == self.turn.frame.chosen_action_id),
+            None,
+        )
+        if self.action is None:
+            raise self.error_type("choice_changed")
+
+    def _artist_name_for_action(self):
+        self.artist = self.action.get("artist") or self.action.get("artist_name")
+        if self.action.get("kind") == "track" and (not self.artist):
+            self.artist = self.action.get("subtitle")
+        if self.action.get("kind") == "artist":
+            self.artist = self.action.get("title") or self.action.get("name") or self.artist
+
+    def _identification_reply(self):
+        # Display rights grant neither model processing nor external lookup.
+        # Multiple credited names remain ambiguous; never choose one.
+        labels = {
+            "en": "Which artist or aspect of the selected result do you mean? Please name it so I can explain it.",
+            "nl": "Welke artiest of welk aspect van het gekozen resultaat bedoel je? Noem het, dan kan ik het toelichten.",
+            "de": "Welchen Künstler oder welchen Aspekt des ausgewählten Ergebnisses meinst du? Nenne ihn, damit ich ihn erklären kann.",
+            "fr": "Quel artiste ou quel aspect du résultat sélectionné veux-tu approfondir ? Nomme-le pour que je puisse l’expliquer.",
+            "es": "¿Qué artista o aspecto del resultado seleccionado quieres conocer? Nómbralo para que pueda explicarlo.",
+        }
+        self._artist_name_for_action()
+        self.single_artist = (
+            isinstance(self.artist, str)
+            and 0 < len(self.artist) <= 256
+            and (
+                not re.search(
+                    "[,;/&]|\\b(?:feat\\.?|featuring|with|and|en|und|et|y)\\b", self.artist, re.I
+                )
+            )
+        )
+        if self.single_artist:
+            labels = {
+                "en": "The selected result credits {artist}. I can identify that catalog credit here; I do not yet have independently qualified context for a further explanation.",
+                "nl": "Het gekozen resultaat vermeldt {artist} als artiest. Ik kan die catalogusvermelding hier identificeren; voor verdere uitleg ontbreekt nog onafhankelijk gekwalificeerde context.",
+                "de": "Das ausgewählte Ergebnis nennt {artist} als Künstler. Diese Katalogangabe kann ich hier zuordnen; für eine weitere Erklärung fehlt noch unabhängig qualifizierter Kontext.",
+                "fr": "Le résultat sélectionné indique {artist} comme artiste. Je peux identifier cette mention du catalogue ; il manque encore un contexte qualifié indépendant pour l’expliquer davantage.",
+                "es": "El resultado seleccionado acredita a {artist} como artista. Puedo identificar esa mención del catálogo; aún falta contexto cualificado independiente para ampliarla.",
+            }
+        reply = labels[self.turn.style.get("language", "en")].format(artist=self.artist)
+        return _core_answer(
+            reply,
+            items=[self.action],
+            text_source="qualified_catalog_result",
+            is_generated_text=False,
+            _private_current_context=True,
+            playback_actions=[],
+            intent={
+                "intent": "selected_result_identification"
+                if self.single_artist
+                else "selected_result_clarification"
+            },
+        )
+
+    async def _current_offer_response(self):
+        self.shown = self.turn.frame.result_set
+        if self.shown is not None and isinstance(self.shown.get("music_steering"), dict):
+            from ..mood_music_steering import validate_offer
+
+            await validate_offer(self.hass, self.runtime, self.shown["music_steering"], self.turn)
+        if self.shown is None and self.activate_reference:
+            raise self.error_type("choice_expired")
+        if self.shown is None and self.play_reference and (self.value is None):
+            labels = {
+                "en": "Which shown result should I play? Please search or choose a result first.",
+                "nl": "Welk getoond resultaat wil je afspelen? Zoek of kies eerst een resultaat.",
+                "de": "Welches angezeigte Ergebnis soll ich abspielen? Suche oder wähle zuerst ein Ergebnis.",
+                "fr": "Quel résultat affiché veux-tu écouter ? Recherche ou sélectionne d’abord un résultat.",
+                "es": "¿Qué resultado mostrado quieres reproducir? Busca o elige un resultado primero.",
+            }
+            reply = labels[self.turn.style.get("language", "en")]
+            return _core_answer(
+                reply,
+                action="none",
+                intent={"category": "informational", "intent": "clarification_needed"},
+                playback_actions=[],
+            )
+        return _NO_DIALOGUE_CHOICE_RESPONSE
+
+    def _admit_result_set(self):
+        if self.shown is None or self.turn.history.dialogue.clock() >= self.shown["deadline"]:
+            raise self.error_type("choice_expired")
+        context = self.payload.get("conversation_context") or {}
+        expected = context.get("result_set_id") or (
+            self.value.get("result_set_id") if isinstance(self.value, dict) else None
+        )
+        if expected and expected != self.shown["result_set_id"]:
+            raise self.error_type("choice_changed")
+
+    def _bound_choice_action(self):
+        if self.value is not None:
+            if (
+                not isinstance(self.value, dict)
+                or set(self.value) != {"result_set_id", "action_id", "operation"}
+                or self.value.get("operation") not in {"select", "play", "activate"}
+            ):
+                raise self.error_type("invalid_choice_action", 400)
+            self.chosen = next(
+                (
+                    i
+                    for i, a in enumerate(self.shown["items"])
+                    if a["action_id"] == self.value.get("action_id")
+                ),
+                None,
+            )
+
+    def _preferred_index(self):
+        if (
+            (self.play_reference or self.activate_reference)
+            and self.chosen is None
+            and (self.value is None)
+        ):
+            self.chosen = next(
+                (
+                    i
+                    for i, a in enumerate(self.shown["items"])
+                    if a["action_id"] == self.turn.frame.chosen_action_id
+                ),
+                None,
+            )
+            if self.chosen is None:
+                if len(self.shown["items"]) != 1:
+                    raise self.error_type("choice_ambiguous")
+                self.chosen = 0
+
+    def _version_index(self):
+        if self.version_match and self.chosen is None:
+            tag = "live" if self.version_match[1] == "live" else "acoustic"
+            candidates = [
+                i
+                for i, a in enumerate(self.shown["items"])
+                if tag in str(a.get("title") or "").casefold()
+            ]
+            if len(candidates) != 1:
+                raise self.error_type("choice_ambiguous")
+            self.chosen = candidates[0]
+
+    def _admit_selected_action(self):
+        if self.chosen is None or not 0 <= self.chosen < len(self.shown["items"]):
+            raise self.error_type("choice_unavailable")
+        self.action = self.shown["items"][self.chosen]
+        self.output = self.action.get("kind") == "output" and bool(self.action.get("device_id"))
+        if self.shown["generation"] != self.turn.generation or (
+            not self.output
+            and (not self.valid_uri(self.action.get("uri") or self.action.get("context_uri")))
+        ):
+            raise self.error_type("choice_changed")
+
+    async def _bind_validators(self):
+        # Bind authority to this exact offered set across adapter/token awaits.
+        self.action_identity = dict(self.action)
+        self.validate_choice_evidence, self.validate_choice = _dialogue_choice_validators(
+            hass=self.hass,
+            turn=self.turn,
+            shown=self.shown,
+            chosen=self.chosen,
+            action_identity=self.action_identity,
+            DialogueError=self.error_type,
+        )
+        self.turn.effect_validators.append(self.validate_choice)
+        self.validate_choice_evidence.speech_deadline = self.shown["deadline"]
+        self.turn.delivery_validators.append(self.validate_choice_evidence)
+        await self.turn.guard()
+
+    def _capture_requested_effect(self):
+        self.activate = self.explicit_activate(self.text) or (
+            isinstance(self.value, dict) and self.value["operation"] == "activate"
+        )
+        self.play = self.explicit_play(self.text) or (
+            isinstance(self.value, dict) and self.value["operation"] == "play"
+        )
+        self.no_play = re.search(
+            "\\b(?:without (?:starting |resuming )?(?:playback|playing)|zonder (?:afspelen|te spelen|muziek te starten)|ohne (?:wiedergabe|abzuspielen)|sans (?:lancer|reprendre|jouer)|sin (?:reproducir|iniciar))\\b",
+            self.text.casefold(),
+        )
+
+    async def _first_play_response(self):
+        if self.activate and (not self.output):
+            raise self.error_type("invalid_choice_action", 400)
+        if self.shown.get("first_play_admission") is not None:
+            # A genre selection grants play directly; explicit negation or an
+            # informational question never becomes that playback grant.
+            if _nonexecuting_speech_act(self.text) or self.no_play:
+                raise self.error_type("playback_effect_not_authorized", 403)
+            from ..mood_music_steering import first_play_choose
+
+            return await first_play_choose(
+                self.hass, self.runtime, self.action, self.shown, self.turn
+            )
+        return _NO_DIALOGUE_CHOICE_RESPONSE
+
+    async def _play_or_activate_response(self):
+        if self.play and (_nonexecuting_speech_act(self.text) or self.no_play):
+            raise self.error_type("playback_effect_not_authorized", 403)
+        if self.output and (self.activate or self.play):
+            return await _activate_dialogue_output(
+                self.hass, self.runtime, self.payload, self.action, self.turn, play=self.play
+            )
+        if self.play:
+            from .dialogue import EffectGrant, effect_media
+
+            self.turn.effect_grants = (
+                EffectGrant(
+                    frozenset({"play"}), "validated_result_play", media=effect_media(self.action)
+                ),
+            )
+            from ..http import _handle_ask_dj_play_recommendation
+
+            result = await _handle_ask_dj_play_recommendation(
+                self.hass, self.runtime, self.action, self.payload
+            )
+            await self.turn.guard()
+            if result.get("action") == "select_output":
+                # A new output offer needs its own frozen identity, without
+                # the media selection marker that suppresses set admission.
+                return result
+            return {**result, "selected_action_id": self.action["action_id"]}
+        labels = {
+            "en": "Selected; playback is unchanged.",
+            "nl": "Geselecteerd; afspelen is niet gewijzigd.",
+            "de": "Ausgewählt; die Wiedergabe bleibt unverändert.",
+            "fr": "Sélectionné ; la lecture reste inchangée.",
+            "es": "Seleccionado; la reproducción sigue igual.",
+        }
+        language = self.turn.style.get("language", "en")
+        return {
+            "success": True,
+            "text": labels[language],
+            "dj_text": labels[language],
+            "selected_action_id": self.action["action_id"],
+            "playback_actions": [self.action],
+            "items": [self.action],
+        }
 
 
 async def _dialogue_choice_response(hass, runtime, payload, text, *, index=None):
@@ -10375,148 +11554,13 @@ async def _dialogue_choice_response(hass, runtime, payload, text, *, index=None)
     turn = current_turn.get()
     if turn is None:
         return None
-    value = payload.get("choice_action")
-    chosen = choice_index(text) if index is None else index
-    if chosen is None and value is None and turn.frame.result_set:
-        from .dialogue import offered_media_index
-        chosen = offered_media_index(text, turn.frame.result_set["items"])
-    version_match = re.fullmatch(r"(?:(?:de|die|the|la|le|el|speel|play|joue|spiel|pon)\s+)*(live|acoustic|akoestische|akustische|acoustique|acústica)(?:\s*(?:versie|version|versión|one))?", text.casefold().strip(" .!?"))
-    play_reference = play_selected(text) and not (
-        _is_current_album_play_request(text) and turn.frame.result_set is None)
-    activate_reference = explicit_activate(text) and (references_topic(text) or text.casefold().strip(" .!?") in {"activate", "activeer", "aktiviere", "active", "activa"})
-    if chosen is None and value is None and version_match is None and not play_reference and not activate_reference:
-        shown = turn.frame.result_set
-        if (shown and turn.frame.chosen_action_id and not turn.reset_topic and not turn.source_context
-            and references_topic(text)):
-            if turn.history.dialogue.clock() >= shown["deadline"]:
-                raise DialogueError("choice_expired")
-            action = next((a for a in shown["items"] if a["action_id"] == turn.frame.chosen_action_id), None)
-            if action is None:
-                raise DialogueError("choice_changed")
-            labels = {
-                "en": "Which artist or aspect of the selected result do you mean? Please name it so I can explain it.",
-                "nl": "Welke artiest of welk aspect van het gekozen resultaat bedoel je? Noem het, dan kan ik het toelichten.",
-                "de": "Welchen Künstler oder welchen Aspekt des ausgewählten Ergebnisses meinst du? Nenne ihn, damit ich ihn erklären kann.",
-                "fr": "Quel artiste ou quel aspect du résultat sélectionné veux-tu approfondir ? Nomme-le pour que je puisse l’expliquer.",
-                "es": "¿Qué artista o aspecto del resultado seleccionado quieres conocer? Nómbralo para que pueda explicarlo.",
-            }
-            artist = action.get("artist") or action.get("artist_name")
-            if action.get("kind") == "track" and not artist:
-                artist = action.get("subtitle")
-            if action.get("kind") == "artist":
-                artist = action.get("title") or action.get("name") or artist
-            # Display rights do not grant model processing or external lookups.
-            # Multiple credited names remain genuinely ambiguous; never choose one.
-            single_artist = isinstance(artist, str) and 0 < len(artist) <= 256 and not re.search(r"[,;/&]|\b(?:feat\.?|featuring|with|and|en|und|et|y)\b", artist, re.I)
-            if single_artist:
-                labels = {
-                    "en": "The selected result credits {artist}. I can identify that catalog credit here; I do not yet have independently qualified context for a further explanation.",
-                    "nl": "Het gekozen resultaat vermeldt {artist} als artiest. Ik kan die catalogusvermelding hier identificeren; voor verdere uitleg ontbreekt nog onafhankelijk gekwalificeerde context.",
-                    "de": "Das ausgewählte Ergebnis nennt {artist} als Künstler. Diese Katalogangabe kann ich hier zuordnen; für eine weitere Erklärung fehlt noch unabhängig qualifizierter Kontext.",
-                    "fr": "Le résultat sélectionné indique {artist} comme artiste. Je peux identifier cette mention du catalogue ; il manque encore un contexte qualifié indépendant pour l’expliquer davantage.",
-                    "es": "El resultado seleccionado acredita a {artist} como artista. Puedo identificar esa mención del catálogo; aún falta contexto cualificado independiente para ampliarla.",
-                }
-            reply = labels[turn.style.get("language", "en")].format(artist=artist)
-            return {"success": True, "text": reply, "dj_text": reply, "items": [action],
-                "text_source": "qualified_catalog_result", "is_generated_text": False,
-                "_private_current_context": True,
-                "playback_actions": [], "intent": {"intent": "selected_result_identification" if single_artist else "selected_result_clarification"}}
-        return None
-    shown = turn.frame.result_set
-    if shown is not None and isinstance(shown.get("music_steering"), dict):
-        from ..mood_music_steering import validate_offer
-        await validate_offer(hass, runtime, shown["music_steering"], turn)
-    if shown is None and activate_reference:
-        raise DialogueError("choice_expired")
-    if shown is None and play_reference and value is None:
-        labels = {"en":"Which shown result should I play? Please search or choose a result first.",
-                  "nl":"Welk getoond resultaat wil je afspelen? Zoek of kies eerst een resultaat.",
-                  "de":"Welches angezeigte Ergebnis soll ich abspielen? Suche oder wähle zuerst ein Ergebnis.",
-                  "fr":"Quel résultat affiché veux-tu écouter ? Recherche ou sélectionne d’abord un résultat.",
-                  "es":"¿Qué resultado mostrado quieres reproducir? Busca o elige un resultado primero."}
-        reply = labels[turn.style.get("language", "en")]
-        return {"success":True,"text":reply,"dj_text":reply,"action":"none",
-                "intent":{"category":"informational", "intent":"clarification_needed"},"playback_actions":[]}
-    if shown is None or turn.history.dialogue.clock() >= shown["deadline"]:
-        raise DialogueError("choice_expired")
-    context = payload.get("conversation_context") or {}
-    expected = context.get("result_set_id") or (value.get("result_set_id") if isinstance(value, dict) else None)
-    if expected and expected != shown["result_set_id"]:
-        raise DialogueError("choice_changed")
-    if value is not None:
-        if not isinstance(value, dict) or set(value) != {"result_set_id", "action_id", "operation"} or value.get("operation") not in {"select", "play", "activate"}:
-            raise DialogueError("invalid_choice_action", 400)
-        chosen = next((i for i, a in enumerate(shown["items"]) if a["action_id"] == value.get("action_id")), None)
-    if (play_reference or activate_reference) and chosen is None and value is None:
-        chosen = next((i for i, a in enumerate(shown["items"]) if a["action_id"] == turn.frame.chosen_action_id), None)
-        if chosen is None:
-            if len(shown["items"]) != 1:
-                raise DialogueError("choice_ambiguous")
-            chosen = 0
-    if version_match and chosen is None:
-        tag = "live" if version_match[1] == "live" else "acoustic"
-        candidates = [i for i, a in enumerate(shown["items"]) if tag in str(a.get("title") or "").casefold()]
-        if len(candidates) != 1:
-            raise DialogueError("choice_ambiguous")
-        chosen = candidates[0]
-    if chosen is None or not 0 <= chosen < len(shown["items"]):
-        raise DialogueError("choice_unavailable")
-    action = shown["items"][chosen]
-    output = action.get("kind") == "output" and bool(action.get("device_id"))
-    if shown["generation"] != turn.generation or (not output and not valid_uri(action.get("uri") or action.get("context_uri"))):
-        raise DialogueError("choice_changed")
-    # Bind authorization to the exact offered set through adapter token/receipt awaits.
-    action_identity = dict(action)
-    def validate_choice_evidence():
-        if turn.history.dialogue.clock() >= shown["deadline"]:
-            raise DialogueError("choice_expired")
-        if shown.get("session_id"):
-            from ..session_runtime import session_runtime_manager
-            active = session_runtime_manager(hass).current_active(turn.scope.removeprefix("profile:"))
-            if active is None or active.session_id != shown["session_id"]:
-                raise DialogueError("choice_expired")
-    def validate_choice():
-        validate_choice_evidence()
-        if (turn.frame.result_set is not shown or shown["generation"] != turn.generation
-            or chosen >= len(shown["items"]) or shown["items"][chosen] != action_identity):
-            raise DialogueError("choice_changed")
-    turn.effect_validators.append(validate_choice)
-    validate_choice_evidence.speech_deadline = shown["deadline"]
-    turn.delivery_validators.append(validate_choice_evidence)
-    await turn.guard()
-    activate = explicit_activate(text) or (isinstance(value, dict) and value["operation"] == "activate")
-    play = explicit_play(text) or (isinstance(value, dict) and value["operation"] == "play")
-    no_play = re.search(r"\b(?:without (?:starting |resuming )?(?:playback|playing)|zonder (?:afspelen|te spelen|muziek te starten)|ohne (?:wiedergabe|abzuspielen)|sans (?:lancer|reprendre|jouer)|sin (?:reproducir|iniciar))\b", text.casefold())
-    if activate and not output:
-        raise DialogueError("invalid_choice_action", 400)
-    if shown.get("first_play_admission") is not None:
-        # This genre selection grants play directly, but explicit negation or
-        # an informational question must never be promoted into that grant.
-        if _nonexecuting_speech_act(text) or no_play:
-            raise DialogueError("playback_effect_not_authorized", 403)
-        from ..mood_music_steering import first_play_choose
-        return await first_play_choose(hass, runtime, action, shown, turn)
-    if play and (_nonexecuting_speech_act(text) or no_play):
-        raise DialogueError("playback_effect_not_authorized", 403)
-    if output and (activate or play):
-        return await _activate_dialogue_output(hass, runtime, payload, action, turn, play=play)
-    if play:
-        from .dialogue import EffectGrant, effect_media
-        turn.effect_grants = (EffectGrant(frozenset({"play"}), "validated_result_play", media=effect_media(action)),)
-        from ..http import _handle_ask_dj_play_recommendation
-        result = await _handle_ask_dj_play_recommendation(hass, runtime, action, payload)
-        await turn.guard()
-        if result.get("action") == "select_output":
-            # A new output offer needs its own frozen identity, not the old
-            # media selection marker that would suppress result-set admission.
-            return result
-        return {**result, "selected_action_id": action["action_id"]}
-    labels = {"en": "Selected; playback is unchanged.", "nl": "Geselecteerd; afspelen is niet gewijzigd.",
-              "de": "Ausgewählt; die Wiedergabe bleibt unverändert.", "fr": "Sélectionné ; la lecture reste inchangée.",
-              "es": "Seleccionado; la reproducción sigue igual."}
-    language = turn.style.get("language", "en")
-    return {"success": True, "text": labels[language], "dj_text": labels[language],
-            "selected_action_id": action["action_id"], "playback_actions": [action], "items": [action]}
+    return await _DialogueChoiceAttempt(
+        hass=hass, runtime=runtime, payload=payload, text=text,
+        turn=turn, index=index, choice_index=choice_index,
+        explicit_play=explicit_play, explicit_activate=explicit_activate,
+        play_selected=play_selected, references_topic=references_topic,
+        error_type=DialogueError, valid_uri=valid_uri,
+    ).execute()
 
 
 async def _activate_dialogue_output(hass, runtime, payload, action, turn, *, play=False):

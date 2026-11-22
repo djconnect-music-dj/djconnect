@@ -39,6 +39,44 @@ class ContentDeletionCoordinator(ArchiveDeletionCoordinator):
         self.manager = manager
         self._content_media_tokens = {}
 
+    async def _entry_target(self, owner, session, target):
+        row = await self.repository.async_entry_record(owner, session, target)
+        if row is None:
+            raise HistoryDeletionError('content_unavailable')
+        if row['kind'] in {'dj_moment', 'dj_publication', 'dj_silence'}:
+            return 'moment', row['reference_id']
+        if row['kind'] in {'conversation_user', 'conversation_dj'}:
+            return 'message', json.loads(row['body']).get('message_id')
+        raise HistoryDeletionError('content_unavailable')
+
+    @staticmethod
+    def _message_target(session, target, messages):
+        selected = next((m for m in messages if m['id'] == target), None)
+        if selected is None:
+            raise HistoryDeletionError('content_unavailable')
+        actual_session = _message_session_id(selected)
+        if session != actual_session:
+            raise HistoryDeletionError('content_unavailable')
+        exchange = selected.get('exchange_id') or selected['id']
+        selected_ids = {m['id'] for m in messages if (m.get('exchange_id') or m['id']) == exchange}
+        return actual_session, exchange, selected_ids
+
+    @staticmethod
+    def _request_target(owner, session, target, messages):
+        selected_ids = {m['id'] for m in messages if m.get('client_message_id') == target}
+        if any(_message_session_id(m) != session for m in messages if m['id'] in selected_ids):
+            raise HistoryDeletionError('content_unavailable')
+        return _request_hash('profile:' + owner, target), selected_ids
+
+    @staticmethod
+    def _moment_target(session, target, active):
+        if not session:
+            raise HistoryDeletionError('content_unavailable')
+        moment_ids = {target}
+        if active is not None and active.session_id == session:
+            moment_ids.update(moment_closure(active, {target}))
+        return moment_ids
+
     async def _resolve(self, owner, selector, messages):
         kind, session, target = (selector[k] for k in ('kind', 'session_id', 'target_id'))
         unit_kind = kind
@@ -47,39 +85,16 @@ class ContentDeletionCoordinator(ArchiveDeletionCoordinator):
         original_ids = set()
         active = self.manager.current_active(owner) if self.manager is not None else None
         if kind == 'entry':
-            row = await self.repository.async_entry_record(owner, session, target)
-            if row is None:
-                raise HistoryDeletionError('content_unavailable')
-            if row['kind'] in {'dj_moment', 'dj_publication', 'dj_silence'}:
-                unit_kind, target = 'moment', row['reference_id']
-            elif row['kind'] in {'conversation_user', 'conversation_dj'}:
-                unit_kind, target = 'message', json.loads(row['body']).get('message_id')
-            else:
-                raise HistoryDeletionError('content_unavailable')
+            unit_kind, target = await self._entry_target(owner, session, target)
         if unit_kind == 'moment':
-            if not session:
-                raise HistoryDeletionError('content_unavailable')
-            moment_ids.add(target)
-            if active is not None and active.session_id == session:
-                moment_ids.update(moment_closure(active, {target}))
+            moment_ids = self._moment_target(session, target, active)
         elif unit_kind == 'message':
-            selected = next((m for m in messages if m['id'] == target), None)
-            if selected is None:
-                raise HistoryDeletionError('content_unavailable')
-            actual_session = _message_session_id(selected)
-            if session != actual_session:
-                raise HistoryDeletionError('content_unavailable')
-            session = actual_session
-            exchange = selected.get('exchange_id') or selected['id']
-            selected_ids.update(m['id'] for m in messages if (m.get('exchange_id') or m['id']) == exchange)
-            target, unit_kind = exchange, 'exchange'
+            session, target, selected_ids = self._message_target(session, target, messages)
+            unit_kind = 'exchange'
         elif unit_kind == 'request':
             original_ids.add(target)
-            selected_ids.update(m['id'] for m in messages if m.get('client_message_id') == target)
-            if any(_message_session_id(m) != session
-                   for m in messages if m['id'] in selected_ids):
-                raise HistoryDeletionError('content_unavailable')
-            unit_kind, target = 'attempt', _request_hash('profile:' + owner, target)
+            target, selected_ids = self._request_target(owner, session, target, messages)
+            unit_kind = 'attempt'
         else:
             raise HistoryDeletionError('invalid_content_delete_request')
         for m in messages:
@@ -87,12 +102,8 @@ class ContentDeletionCoordinator(ArchiveDeletionCoordinator):
                 original_ids.add(m['client_message_id'])
         return {'kind': unit_kind, 'session_id': session, 'target_id': target}, selected_ids, moment_ids, original_ids
 
-    async def _build(self, owner, selector, messages, index):
-        """Pure bounded scope derivation under the existing Store writer boundary."""
-        unit, selected_ids, moment_ids, original_ids = await self._resolve(owner, selector, messages)
-        active = self.manager.current_active(owner) if self.manager is not None else None
-        # Fixed SQL and bounded recursive ID provenance; never infer a relation
-        # from titles, text or adjacency. RAM and durable edges can interleave.
+    async def _moment_rows(self, owner, unit, moment_ids, active):
+        """Close explicit SQL and RAM provenance together within the fixed budget."""
         for _ in range(MAX_UNITS + 1):
             def read(tx):
                 return tx.fetchall(
@@ -114,18 +125,21 @@ class ContentDeletionCoordinator(ArchiveDeletionCoordinator):
             if len(moment_rows) > MAX_UNITS or len(added) > MAX_UNITS:
                 raise HistoryDeletionError('content_delete_capacity')
             if added == moment_ids:
-                break
+                return moment_ids, moment_rows
             moment_ids = added
-        else:
-            raise HistoryDeletionError('content_delete_capacity')
-        moments = {(unit['session_id'], mid) for mid in moment_ids}
-        if unit['kind'] == 'moment':
-            active = self.manager.current_active(owner) if self.manager is not None else None
-            live_root = (active is not None and active.session_id == unit['session_id']
-                and any(m.moment_id == unit['target_id'] for m in active.broadcast.state.dj_moments))
-            if not live_root and not any(row[3] == unit['target_id'] for row in moment_rows):
-                raise HistoryDeletionError('content_unavailable')
-        initial = frozenset((s, e) for s, e, _, _ in moment_rows)
+        raise HistoryDeletionError('content_delete_capacity')
+
+    def _require_moment_root(self, owner, unit, moment_rows):
+        if unit['kind'] != 'moment':
+            return
+        active = self.manager.current_active(owner) if self.manager is not None else None
+        live_root = (active is not None and active.session_id == unit['session_id']
+                     and any(m.moment_id == unit['target_id'] for m in active.broadcast.state.dj_moments))
+        if not live_root and not any(row[3] == unit['target_id'] for row in moment_rows):
+            raise HistoryDeletionError('content_unavailable')
+
+    def _archive_plan(self, owner, messages, index, selected_ids, original_ids, initial, moments):
+        """Close durable exchanges and their bounded in-flight request sources."""
         forced = set()
         for _ in range(MAX_UNITS + 1):
             plan = archive_erasure_plan(owner, messages, frozenset(), message_ids=frozenset(selected_ids),
@@ -133,9 +147,7 @@ class ContentDeletionCoordinator(ArchiveDeletionCoordinator):
                 individual=True, unavailable_client_ids=frozenset(forced), initial_moments=frozenset(moments))
             known = set(plan['retry_hashes'])
             known.update(_request_hash('profile:' + owner, client) for client in forced)
-            added = self.history.dialogue.content_request_sources('profile:' + owner, known,
-                entries=initial | frozenset(index[m] for m in plan['remove_message_ids'] + plan['redact_message_ids'] if m in index),
-                moments=frozenset(moments))
+            added = self._request_sources(owner, plan, known, index, initial, moments)
             if added <= forced:
                 break
             forced.update(added)
@@ -143,26 +155,30 @@ class ContentDeletionCoordinator(ArchiveDeletionCoordinator):
             raise HistoryDeletionError('content_delete_capacity')
         plan['retry_hashes'] = sorted(set(plan['retry_hashes']) | {
             _request_hash('profile:' + owner, client) for client in forced})
-        direct = set(plan['remove_message_ids'])
-        redacted = set(plan['redact_message_ids'])
-        affected = direct | redacted
+        return plan, forced
+
+    def _request_sources(self, owner, plan, known, index, initial, moments):
+        return self.history.dialogue.content_request_sources('profile:' + owner, known,
+            entries=initial | frozenset(index[m] for m in plan['remove_message_ids'] + plan['redact_message_ids'] if m in index),
+            moments=frozenset(moments))
+
+    async def _scope_entries(self, owner, unit, moment_rows, direct, affected):
         entries = []
         for session, entry, kind, reference in moment_rows:
             mode = 'remove' if reference == unit['target_id'] else 'unavailable'
             entries.append([session, entry, kind, reference, mode])
         def read_entries(tx):
             return tx.fetchall(
-                'SELECT session_id,entry_id,kind,reference_id,json_extract(body,\'$.message_id\') '
+                "SELECT session_id,entry_id,kind,reference_id,json_extract(body,'$.message_id') "
                 'FROM djconnect_session_entries WHERE owner_profile_id=? '
                 "AND kind IN ('conversation_user','conversation_dj') AND json_valid(body) "
                 "AND json_extract(body,'$.message_id') IN (SELECT value FROM json_each(?)) LIMIT ?",
                 (owner, json.dumps(sorted(affected)), MAX_UNITS + 1))
         for session, entry, kind, reference, message in await self.persistence.async_in_transaction(read_entries):
             entries.append([session, entry, kind, reference, 'remove' if message in direct else 'unavailable'])
-        session_ids = {e[0] for e in entries} | {s for s, _ in moments}
-        if unit['session_id']:
-            session_ids.add(unit['session_id'])
-        policy = await self.repository.async_retention_policy()
+        return entries
+
+    async def _scope_sessions(self, owner, unit, session_ids, policy):
         sessions = []
         from .session_history_projection import session_retained
         for session in sorted(session_ids):
@@ -174,12 +190,41 @@ class ContentDeletionCoordinator(ArchiveDeletionCoordinator):
             if not live_unit and not session_retained(row, retention_days=policy[0]):
                 raise HistoryDeletionError('content_unavailable')
             sessions.append([session, row['revision']])
+        return sessions
+
+    @staticmethod
+    def _scope_turns(owner, messages, affected, forced, original_ids):
         clients = forced | original_ids | {m.get('client_message_id') for m in messages if m['id'] in affected and m.get('client_message_id')}
         turns = {m.get('session_turn', {}).get('turn_id') for m in messages if m['id'] in affected}
         turns.update('turn-' + uuid5(NAMESPACE_URL, 'profile:' + owner + ':' + client).hex for client in clients)
-        scope = {'unit': unit, 'sessions': sessions, 'entries': sorted(entries),
-                 'moments': sorted([list(pair) for pair in moments]),
-                 'turn_ids': sorted(t for t in turns if t), 'request_hashes': plan['retry_hashes']}
+        return turns
+
+    @staticmethod
+    def _scope_projection(unit, sessions, entries, moments, turns, request_hashes):
+        return {'unit': unit, 'sessions': sessions, 'entries': sorted(entries),
+                'moments': sorted([list(pair) for pair in moments]),
+                'turn_ids': sorted(t for t in turns if t), 'request_hashes': request_hashes}
+
+    async def _build(self, owner, selector, messages, index):
+        """Pure bounded scope derivation under the existing Store writer boundary."""
+        unit, selected_ids, moment_ids, original_ids = await self._resolve(owner, selector, messages)
+        active = self.manager.current_active(owner) if self.manager is not None else None
+        moment_ids, moment_rows = await self._moment_rows(owner, unit, moment_ids, active)
+        moments = {(unit['session_id'], mid) for mid in moment_ids}
+        self._require_moment_root(owner, unit, moment_rows)
+        initial = frozenset((s, e) for s, e, _, _ in moment_rows)
+        plan, forced = self._archive_plan(owner, messages, index, selected_ids, original_ids, initial, moments)
+        direct = set(plan['remove_message_ids'])
+        redacted = set(plan['redact_message_ids'])
+        affected = direct | redacted
+        entries = await self._scope_entries(owner, unit, moment_rows, direct, affected)
+        session_ids = {e[0] for e in entries} | {s for s, _ in moments}
+        if unit['session_id']:
+            session_ids.add(unit['session_id'])
+        policy = await self.repository.async_retention_policy()
+        sessions = await self._scope_sessions(owner, unit, session_ids, policy)
+        turns = self._scope_turns(owner, messages, affected, forced, original_ids)
+        scope = self._scope_projection(unit, sessions, entries, moments, turns, plan['retry_hashes'])
         validate_scope(scope)
         if len(entries) + len(affected) + len(moments) > MAX_UNITS:
             raise HistoryDeletionError('content_delete_capacity')

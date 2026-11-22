@@ -9,6 +9,7 @@ from typing import Any
 
 from homeassistant.core import HomeAssistant
 
+from .pipeline import _pipeline_list
 from .const import (
     CONF_ASSIST_PIPELINE_ID,
 )
@@ -310,20 +311,6 @@ def _tts_pipeline_candidates(hass: HomeAssistant, conf: dict) -> tuple[Any, ...]
         candidates.append(preferred)
     candidates.extend(pipeline for pipeline in available if _pipeline_has_tts(pipeline))
     return tuple(_dedupe_pipelines(candidates))
-
-
-def _pipeline_list(pipelines: Any) -> list[Any]:
-    if isinstance(pipelines, dict):
-        return list(pipelines.values())
-    mapping = getattr(pipelines, "pipelines", None)
-    if isinstance(mapping, dict):
-        return list(mapping.values())
-    if isinstance(mapping, list | tuple):
-        return list(mapping)
-    try:
-        return list(pipelines)
-    except TypeError:
-        return []
 
 
 def _find_pipeline(pipelines: Any, available: list[Any], pipeline_id: str) -> Any | None:

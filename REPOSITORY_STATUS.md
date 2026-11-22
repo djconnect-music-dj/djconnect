@@ -1,3 +1,57 @@
+## 2026-11-22 — Completed Core maintenance delivery preparation
+
+#### Repository Status
+
+Completed Core maintenance checkpoints through `10a8399e47b955e80ee2e4193e1226dd278e2818` are preserved in qualification checkpoint `9e5de89bd59a03c4b17c564c88f241098363afff`. Its 321 product files are byte-identical to that reviewed candidate. The additional 90 files contain only current evidence joins, two consumer fixture references and 46 new versioned JSON derivatives. Main remains `d24cb4ad46015cdc89ae5cbfa866f07a73139663`. The recovery branch is pushed for exact-commit CI; no reviewable PR, merge or new publication has occurred.
+
+#### Management Summary
+
+The user requested preparation of the completed reviewed maintenance work for delivery and stopped further refactoring. Existing behavior, authority and durable owners remain the scope. The unfinished `ask_dj/public_research.py` draft is excluded and preserved separately. This does not declare all technical debt resolved.
+
+#### Roadmap Position
+
+This is completion and qualification of the existing Core maintenance task. Existing product roadmap nodes, immutable DAG history and their relative order are unchanged. No new feature or operational dispatch is issued.
+
+#### Rolling Horizon (Execution Horizon — Next 5 Planned)
+
+The existing product horizon remains unchanged. Current activity is bounded to evidence qualification, independent review and exact candidate checks before the single reviewable maintenance PR. Product follow-ups retain their previous admission requirements.
+
+1. **ASK-DJ-MOMENTS::ACCEPTANCE** — Planned/OPEN. Execution Rationale: selected family has compatible protected source; actual model/editorial/native/accessibility proof requires its own valid operational admission and is not executed by this source Finalization.
+2. **SETTINGS::APPLE::EDITOR** — Planned/NOT_ISSUED. Execution Rationale: existing editor follow-through, dependent on completed SETTINGS::CORE::PRODUCER; separate lane issuance remains required.
+3. **SETTINGS::PI::ADOPTION** — Planned/NOT_ISSUED. Execution Rationale: existing shared-settings consumer order and completed Core dependency; no Pi writer/install authority is created.
+4. **SETTINGS::ESP32::ADOPTION** — Planned/NOT_ISSUED. Execution Rationale: existing capability/legacy disposition follow-through; no firmware work or install is dispatched.
+5. **SETTINGS::VIBECAST::COMPAT** — Planned/NOT_ISSUED. Execution Rationale: existing renderer contract compatibility work in canonical order; no shared-screen/provider authorization is inferred.
+
+#### Execution Priority Override
+
+The latest user direction ends further refactor work and prioritizes a truthful, reviewable delivery of completed changes. Cyclomatic counts and source line totals are not optimization goals or proof of product quality.
+
+#### Blocked Items
+
+Exact final-commit hosted checks and the reviewable PR boundary remain pending. Merge still requires an explicit human decision. Installation, real provider/model, native-device, editorial and joint Moments acceptance are not established by these software checks.
+
+#### Deferred Items
+
+All remaining debt and unrelated product work remain open. The unfinished public-research draft, unrelated VibeCast checkout, historical evidence and existing installation/rollback records are preserved.
+
+#### Engineering Risk
+
+The last pinned partial TDE observation on the completed candidate is VALID but policy FAIL: 875 findings (832 HIGH / 43 CRITICAL labels), SOURCE 125232 and maximum complexity 262. Against the task baseline 1008 findings this is 133 fewer labels; it is not a count of critical product defects. These are interim complexity/size observations, not full final-HEAD standard qualification. The configured 75000 source-size threshold remains exceeded; neither policy thresholds nor source classification are changed.
+
+#### Validation
+
+The existing complete four-worker offline suite accounts for 4869 tests: 4858 PASS, 11 existing SKIP, zero FAIL/ERROR. All 47 formerly failing evidence/consumer gates now pass, including the unchanged deliberately altered-source negative control. The two consumer modules pass 56 tests. All 47 isolated real-HA harness runs pass on the existing pinned 2026.10.0 image; requested Moments also passes separately on its required pinned 2026.11.1 image with six verified local HTTPS requests. Each run uses a read-only candidate, empty private lab and network none with synthetic external inputs. Full Ruff, offline bootstrap projection and Bandit medium/high checks pass locally (Bandit retains 20 low-severity observations). Actual HA proof is source/SDK integration proof, not deployment, provider, physical or editorial acceptance. All 67 predecessor receipts remain byte-identical; fresh cases and counters come from actual new runs, not a hash-only refresh.
+
+#### Repository State
+
+The maintenance candidate remains unmerged. `REVIEWABLE_FROZEN` is not claimed before the single reviewable PR exists. Exact-commit hosted CI is evaluated separately from local software checks; subsequent documentary commits require their own current checks.
+
+#### Workspace State
+
+The isolated qualification checkout is separate from the original unfinished WIP. No cleanup, ref deletion or WORKSPACE_READY claim is made. Original public-research WIP SHA256 `1e42d1f686b95f23824e85dc332d9c3c7d42f29f75136c59937c92e7c962c061` has a verified full-file/base/binary-patch custody copy and remains untouched.
+
+[Immutable Prompt History](docs/history/prompts/2026-11-22-core-maintenance-delivery-preparation.md).
+
 ## 2026-11-20 — Finalize Ask DJ: Moments source delivery
 
 #### Repository Status

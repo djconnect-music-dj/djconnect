@@ -1,5 +1,6 @@
 """Contextual album listing through the existing owner, backend and history."""
 
+
 from datetime import UTC, datetime, timedelta
 import asyncio
 import hashlib
@@ -7,6 +8,7 @@ import re
 
 from .dialogue import current_turn, DialogueError
 from .observations import language, _identified_playback
+from .responses import _core_answer
 
 COPY = {
     "en": (
@@ -285,21 +287,18 @@ async def album_tracks_read(hass, runtime, text, selected=None, *, exclude_curre
     if turn:
         turn.speech_deadline = min(turn.speech_deadline or deadline, deadline)
         observation["valid_until"] = valid_until.isoformat()
-    return {
-        "success": True,
-        "text": message,
-        "dj_text": message,
-        "action": "none",
-        "intent": {"category": "informational", "intent": "album_tracks_information"},
-        "items": items,
-        "playback_actions": items,
-        "sources": sources,
-        "links": sources,
-        "images": [],
-        "text_source": "qualified_catalog_result",
-        "is_generated_text": False,
-        "_album_track_choices": bool(items),
-        "album_track_observation": observation,
-        "_private_current_context": True,
-        "speech_processing_basis": "accepted_local_reply",
-    }
+    return _core_answer(message,
+        action="none",
+        intent={"category": "informational", "intent": "album_tracks_information"},
+        items=items,
+        playback_actions=items,
+        sources=sources,
+        links=sources,
+        images=[],
+        text_source="qualified_catalog_result",
+        is_generated_text=False,
+        _album_track_choices=bool(items),
+        album_track_observation=observation,
+        _private_current_context=True,
+        speech_processing_basis="accepted_local_reply",
+    )

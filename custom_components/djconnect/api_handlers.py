@@ -1612,6 +1612,388 @@ def _conversation_scope_error(payload, user_id):
     return None
 
 
+_NO_ASK_DJ_MESSAGE_RESPONSE = object()
+
+
+def _validate_conversation_profile_privacy(
+    context, current, minimum, SessionConversationError
+):
+    if (
+        not current.privacy_policy.allow_personal_read
+        or not minimum.allow_personal_read
+    ):
+        raise SessionConversationError("history_not_allowed", 403)
+    if (
+        context.privacy_policy.allow_history_persistence
+        and resolve_profile_privacy_policy(
+            context.profile, {}
+        ).allow_history_persistence
+        and (
+            not current.privacy_policy.allow_history_persistence
+            or not minimum.allow_history_persistence
+        )
+    ):
+        raise SessionConversationError("history_not_allowed", 403)
+
+
+def _ask_dj_exchange_callbacks(
+    *,
+    hass,
+    bound_runtime,
+    context,
+    headers,
+    payload,
+    identity,
+    user_id,
+    action_request,
+    _ha_service_runtime,
+    _mood_transition,
+    SessionConversationError,
+):
+
+    async def delegate(confirmed_payload, scope_key, selected_entry, playback_result):
+        if _mood_transition is not None:
+            from .mood_music_steering import response
+
+            if _mood_transition.profile_id != context.profile_id:
+                raise SessionConversationError("unauthorized", 403)
+            return await response(
+                hass,
+                bound_runtime,
+                confirmed_payload,
+                _mood_transition,
+                source_context={
+                    "backend_id": context.backend_id,
+                    "music_account_id": context.music_account_id,
+                    "provider_account_id": str(
+                        getattr(
+                            profile_storage(hass).household.music_accounts.get(
+                                context.music_account_id
+                            ),
+                            "provider_account_id",
+                            "",
+                        )
+                    ),
+                    "provider_entry_id": str(
+                        bound_runtime.config.get("profile_backend_entry_id")
+                        or getattr(
+                            getattr(bound_runtime, "entry", None), "entry_id", ""
+                        )
+                    ),
+                },
+            )
+        return await http_helpers.async_handle_ask_dj(
+            hass,
+            bound_runtime,
+            confirmed_payload,
+            user_id=user_id,
+            conversation_history_scope=scope_key,
+            ephemeral_conversation=bool(confirmed_payload.get("private_session")),
+            confirmed_entry=selected_entry,
+            saved_playback_result=playback_result,
+            action_request=action_request,
+        )
+
+    async def validate_owner():
+        (
+            _runtime,
+            current,
+            current_error,
+            current_status,
+        ) = await _session_profile_context(
+            hass,
+            dict(payload),
+            headers=headers,
+            user_id=user_id,
+            source="session_conversation_complete",
+            _ha_service_runtime=_ha_service_runtime,
+        )
+        if (
+            current_error is not None
+            or _runtime is not bound_runtime
+            or current.profile_id != context.profile_id
+        ):
+            raise SessionConversationError(
+                "session_context_changed", int(current_status or 409)
+            )
+        from .ask_dj.dialogue import source_scope
+
+        if source_scope(current.profile) != source_scope(context.profile):
+            raise SessionConversationError("conversation_context_changed")
+        minimum = resolve_profile_privacy_policy(current.profile, {})
+        _validate_conversation_profile_privacy(
+            context, current, minimum, SessionConversationError
+        )
+
+    def validate_immediate():
+        _conversation_profile_fence(
+            hass,
+            bound_runtime,
+            identity,
+            headers,
+            context,
+            _ha_service_runtime=_ha_service_runtime,
+        )
+
+    return (delegate, validate_owner, validate_immediate)
+
+
+class _AskDjMessageRequest:
+    """Apply transport identity and profile authority to one shared exchange."""
+
+    def __init__(
+        self,
+        hass,
+        data,
+        *,
+        headers,
+        user_id,
+        voice_input,
+        persist_history,
+        action_request,
+        _ha_service_runtime,
+        _mood_transition,
+    ):
+        self.hass = hass
+        self.data = data
+        self.headers = headers
+        self.user_id = user_id
+        self.voice_input = voice_input
+        self.persist_history = persist_history
+        self.action_request = action_request
+        self._ha_service_runtime = _ha_service_runtime
+        self._mood_transition = _mood_transition
+
+    async def execute(self):
+        response = self._resolve_identity()
+        if response is not _NO_ASK_DJ_MESSAGE_RESPONSE:
+            return response
+        self._prepare_payload()
+        self._bind_conversation_payload()
+        response = await self._authorize_profile()
+        if response is not _NO_ASK_DJ_MESSAGE_RESPONSE:
+            return response
+        self._bind_first_play_context()
+        self._bind_callbacks()
+        return await self._exchange_response()
+
+    def _resolve_identity(self):
+        self.identity = identity_payload(self.data)
+        if self._ha_service_runtime is not None:
+            self.runtime = self._ha_service_runtime
+            from .session_conversation import SessionConversationError
+
+            self.error_type = SessionConversationError
+            try:
+                server_identity = _ha_native_service_identity(self.hass, self.runtime)
+            except self.error_type as exc:
+                return (_error_payload(exc.code), exc.status)
+            if any(
+                (
+                    self.identity.get(key) and self.identity[key] != value
+                    for key, value in server_identity.items()
+                )
+            ):
+                return (_error_payload("profile_device_mismatch"), 403)
+            self.identity.update(server_identity)
+            self.client_type = server_identity["client_type"]
+        else:
+            self.runtime = resolve_runtime(
+                self.hass,
+                self.identity.get("device_id")
+                or self.headers.get("X-DJConnect-Device-ID"),
+                self.headers,
+            )
+            if self.runtime is None:
+                return (_error_payload("not_configured"), 503)
+            self.client_type = validate_required_client_type(self.identity)
+            if self.client_type is None:
+                return (_error_payload("invalid_client_type"), 400)
+            self.identity[CONF_CLIENT_TYPE] = self.client_type
+            if not authorize_runtime_device_request(
+                self.runtime,
+                self.headers,
+                self.identity.get("device_id"),
+                self.client_type,
+            ):
+                return (_error_payload("unauthorized"), 401)
+        return _NO_ASK_DJ_MESSAGE_RESPONSE
+
+    def _prepare_payload(self):
+        self.payload = {
+            key: value
+            for key, value in self.data.items()
+            if key not in {"_frozen_playback_selection", "_setting_feedback"}
+        }
+        self.payload.update(
+            {key: value for key, value in self.identity.items() if value is not None}
+        )
+        # Identity merges nested/top-level input; remove internal fields after
+        # that merge too. Only the Python caller may provide these controls.
+        self.payload.pop("_setting_feedback", None)
+        self.payload.pop("_frozen_playback_selection", None)
+        self.payload = enrich_payload_with_mood_zone(self.payload)
+        _debug_ask_dj_request(
+            "message", self.runtime, self.payload, user_id=self.user_id
+        )
+
+    def _bind_conversation_payload(self):
+        from .ask_dj.service import async_exchange
+
+        self.exchange = async_exchange
+        from .session_conversation import SessionConversationError
+
+        self.error_type = SessionConversationError
+        from uuid import uuid4
+
+        # Older id-less transports get a new identity that enables retries.
+        if "conversation_context" not in self.payload and (
+            not self.payload.get("client_message_id")
+        ):
+            self.payload["client_message_id"] = "server-turn-" + uuid4().hex
+        self.payload.pop("_command_action", None)
+        if self.action_request is not None:
+            self.payload["_command_action"] = self.action_request
+        self.payload["input_type"] = "voice" if self.voice_input else "text"
+        if self._mood_transition is not None:
+            self.payload["_setting_feedback"] = True
+        self.payload.setdefault("audio_response", "auto")
+
+    async def _authorize_profile(self):
+        (
+            self.bound_runtime,
+            self.context,
+            error,
+            status,
+        ) = await _session_profile_context(
+            self.hass,
+            self.payload,
+            headers=self.headers,
+            user_id=self.user_id,
+            source="session_conversation",
+            _ha_service_runtime=self._ha_service_runtime,
+        )
+        if error is not None:
+            return (error, status)
+        if (
+            not self.context.privacy_policy.allow_personal_read
+            or not resolve_profile_privacy_policy(
+                self.context.profile, {}
+            ).allow_personal_read
+        ):
+            return (_error_payload("history_not_allowed"), 403)
+        return _NO_ASK_DJ_MESSAGE_RESPONSE
+
+    def _bind_first_play_context(self):
+        # Profile authorization owns the Music DNA namespace; client hints do not.
+        self.payload["music_dna_key"] = self.context.music_dna_key
+        from .mood_music_steering import first_play_requested
+
+        if first_play_requested(self.payload.get("text")):
+            active_offer_session = session_runtime_manager(self.hass).current_active(
+                self.context.profile_id
+            )
+            supplied_context = self.payload.get("conversation_context")
+            supplied_session = (
+                supplied_context.get("session_id")
+                if isinstance(supplied_context, dict)
+                else None
+            )
+            if (
+                active_offer_session is not None
+                and isinstance(supplied_context, (dict, type(None)))
+                and (
+                    not supplied_session
+                    or supplied_session == active_offer_session.session_id
+                )
+            ):
+                self.payload["conversation_context"] = {
+                    "session_id": active_offer_session.session_id,
+                    "thread_id": "for-you-" + active_offer_session.session_id,
+                }
+
+    def _bind_callbacks(self):
+        self.delegate, self.validate_owner, self.validate_immediate = (
+            _ask_dj_exchange_callbacks(
+                hass=self.hass,
+                bound_runtime=self.bound_runtime,
+                context=self.context,
+                headers=self.headers,
+                payload=self.payload,
+                identity=self.identity,
+                user_id=self.user_id,
+                action_request=self.action_request,
+                _ha_service_runtime=self._ha_service_runtime,
+                _mood_transition=self._mood_transition,
+                SessionConversationError=self.error_type,
+            )
+        )
+
+    async def _exchange_response(self):
+        try:
+            choice = self.payload.get("choice_action")
+            if isinstance(choice, dict) and choice.get("operation") == "dismiss":
+                from .ask_dj.service import _context
+                from .mood_music_steering import dismiss_for_you
+
+                history = _history_manager(self.hass, self.bound_runtime)
+                await history.async_load()
+                self.validate_immediate()
+                return (
+                    dismiss_for_you(
+                        self.hass,
+                        self.context.profile_id,
+                        self.context.device_id,
+                        _context(self.payload),
+                        choice,
+                        history,
+                    ),
+                    200,
+                )
+            return await self._run_exchange()
+        except self.error_type as exc:
+            from .historical_playback import UNAVAILABLE, unavailable_message
+
+            message = (
+                unavailable_message(
+                    self.payload.get("locale") or self.payload.get("language")
+                )
+                if exc.code == UNAVAILABLE
+                else None
+            )
+            return (_error_payload(exc.code, message), exc.status)
+        except PermissionError:
+            return (_error_payload("history_unavailable"), 404)
+        except (OSError, RuntimeError):
+            return (_error_payload("history_storage_unavailable"), 503)
+        except ValueError:
+            return (_error_payload("session_context_changed"), 409)
+
+    async def _run_exchange(self):
+        result = await self.exchange(
+            self.hass,
+            self.bound_runtime,
+            self.payload,
+            profile_id=self.context.profile_id,
+            history_manager=_history_manager(self.hass, self.bound_runtime),
+            delegate=self.delegate,
+            validate_owner=self.validate_owner,
+            validate_immediate=self.validate_immediate,
+            client_device_id=self.context.device_id,
+            profile=self.context.profile,
+            persist_history=self.persist_history
+            and self.context.privacy_policy.allow_history_persistence
+            and resolve_profile_privacy_policy(
+                self.context.profile, {}
+            ).allow_history_persistence,
+        )
+        result_status = int(result.pop("_response_status", 200))
+        _debug_ask_dj_result(
+            "message", result, result_status, runtime=self.bound_runtime
+        )
+        return (result, result_status)
+
+
 async def async_handle_ask_dj_message_payload(
     hass: Any,
     data: dict[str, Any],
@@ -1629,169 +2011,16 @@ async def async_handle_ask_dj_message_payload(
     if not isinstance(data, dict):
         _debug_ask_dj_error("message", {}, (_error_payload("invalid_json"), 400))
         return _error_payload("invalid_json"), 400
-    identity = identity_payload(data)
-    if _ha_service_runtime is not None:
-        runtime = _ha_service_runtime
-        from .session_conversation import SessionConversationError
-        try:
-            server_identity = _ha_native_service_identity(hass, runtime)
-        except SessionConversationError as exc:
-            return _error_payload(exc.code), exc.status
-        if any(identity.get(key) and identity[key] != value for key, value in server_identity.items()):
-            return _error_payload("profile_device_mismatch"), 403
-        identity.update(server_identity)
-        client_type = server_identity["client_type"]
-    else:
-        runtime = resolve_runtime(
-            hass, identity.get("device_id") or headers.get("X-DJConnect-Device-ID"), headers,
-        )
-        if runtime is None:
-            return _error_payload("not_configured"), 503
-        client_type = validate_required_client_type(identity)
-        if client_type is None:
-            return _error_payload("invalid_client_type"), 400
-        identity[CONF_CLIENT_TYPE] = client_type
-        if not authorize_runtime_device_request(runtime, headers, identity.get("device_id"), client_type):
-            return _error_payload("unauthorized"), 401
-    payload = {key: value for key, value in data.items() if key not in {"_frozen_playback_selection", "_setting_feedback"}}
-    payload.update({key: value for key, value in identity.items() if value is not None})
-    # identity_payload merges nested and top-level input; internal fields must
-    # be removed after that merge, too. Only the Python caller can set these.
-    payload.pop("_setting_feedback", None)
-    payload.pop("_frozen_playback_selection", None)
-    payload = enrich_payload_with_mood_zone(payload)
-    _debug_ask_dj_request("message", runtime, payload, user_id=user_id)
-    from .ask_dj.service import async_exchange
-    from .session_conversation import SessionConversationError
-    from uuid import uuid4
-
-    # Older id-less transports get an explicit new identity; retaining it enables retries.
-    if "conversation_context" not in payload and not payload.get("client_message_id"):
-        payload["client_message_id"] = "server-turn-" + uuid4().hex
-    payload.pop("_command_action", None)
-    if action_request is not None:
-        payload["_command_action"] = action_request
-    payload["input_type"] = "voice" if voice_input else "text"
-    if _mood_transition is not None:
-        payload["_setting_feedback"] = True
-    payload.setdefault("audio_response","auto")
-    bound_runtime, context, error, status = await _session_profile_context(
-        hass, payload, headers=headers, user_id=user_id, source="session_conversation",
+    return await _AskDjMessageRequest(
+        hass, data,
+        headers=headers,
+        user_id=user_id,
+        voice_input=voice_input,
+        persist_history=persist_history,
+        action_request=action_request,
         _ha_service_runtime=_ha_service_runtime,
-    )
-    if error is not None:
-        return error, status
-    if (
-        not context.privacy_policy.allow_personal_read
-        or not resolve_profile_privacy_policy(context.profile, {}).allow_personal_read
-    ):
-        return _error_payload("history_not_allowed"), 403
-
-    # Profile authorization also owns the Music DNA namespace; client hints do not.
-    payload["music_dna_key"] = context.music_dna_key
-    from .mood_music_steering import first_play_requested
-    if first_play_requested(payload.get('text')):
-        active_offer_session = session_runtime_manager(hass).current_active(context.profile_id)
-        supplied_context = payload.get('conversation_context')
-        supplied_session = supplied_context.get('session_id') if isinstance(supplied_context, dict) else None
-        if (active_offer_session is not None and isinstance(supplied_context, (dict, type(None)))
-                and (not supplied_session or supplied_session == active_offer_session.session_id)):
-            payload['conversation_context'] = {'session_id': active_offer_session.session_id,
-                'thread_id': 'for-you-' + active_offer_session.session_id}
-
-    async def delegate(confirmed_payload, scope_key, selected_entry, playback_result):
-        if _mood_transition is not None:
-            from .mood_music_steering import response
-            if _mood_transition.profile_id != context.profile_id:
-                raise SessionConversationError("unauthorized", 403)
-            return await response(hass, bound_runtime, confirmed_payload, _mood_transition,
-                source_context={
-                    "backend_id":context.backend_id, "music_account_id":context.music_account_id,
-                    "provider_account_id":str(getattr(profile_storage(hass).household.music_accounts.get(
-                        context.music_account_id), "provider_account_id", "")),
-                    "provider_entry_id":str(bound_runtime.config.get("profile_backend_entry_id")
-                        or getattr(getattr(bound_runtime,"entry",None),"entry_id","")),
-                })
-        return await http_helpers.async_handle_ask_dj(
-            hass,
-            bound_runtime,
-            confirmed_payload,
-            user_id=user_id,
-            conversation_history_scope=scope_key,
-            ephemeral_conversation=bool(confirmed_payload.get("private_session")),
-            confirmed_entry=selected_entry,
-            saved_playback_result=playback_result,
-            action_request=action_request,
-        )
-
-    async def validate_owner():
-        _runtime, current, current_error, current_status = await _session_profile_context(
-            hass,
-            dict(payload),
-            headers=headers,
-            user_id=user_id,
-            source="session_conversation_complete",
-            _ha_service_runtime=_ha_service_runtime,
-        )
-        if current_error is not None or _runtime is not bound_runtime or current.profile_id != context.profile_id:
-            raise SessionConversationError("session_context_changed", int(current_status or 409))
-        from .ask_dj.dialogue import source_scope
-        if source_scope(current.profile) != source_scope(context.profile):
-            raise SessionConversationError("conversation_context_changed")
-        minimum = resolve_profile_privacy_policy(current.profile, {})
-        if not current.privacy_policy.allow_personal_read or not minimum.allow_personal_read:
-            raise SessionConversationError("history_not_allowed", 403)
-        if (
-            context.privacy_policy.allow_history_persistence
-            and resolve_profile_privacy_policy(context.profile, {}).allow_history_persistence
-            and (
-                not current.privacy_policy.allow_history_persistence
-                or not minimum.allow_history_persistence
-            )
-        ):
-            raise SessionConversationError("history_not_allowed", 403)
-
-    def validate_immediate():
-        _conversation_profile_fence(hass, bound_runtime, identity, headers, context,
-                                    _ha_service_runtime=_ha_service_runtime)
-
-    try:
-        choice = payload.get('choice_action')
-        if isinstance(choice, dict) and choice.get('operation') == 'dismiss':
-            from .ask_dj.service import _context
-            from .mood_music_steering import dismiss_for_you
-            history = _history_manager(hass, bound_runtime)
-            await history.async_load()
-            validate_immediate()
-            return dismiss_for_you(hass, context.profile_id, context.device_id,
-                                   _context(payload), choice, history), 200
-        result = await async_exchange(
-            hass,
-            bound_runtime,
-            payload,
-            profile_id=context.profile_id,
-            history_manager=_history_manager(hass, bound_runtime),
-            delegate=delegate,
-            validate_owner=validate_owner,
-            validate_immediate=validate_immediate,
-            client_device_id=context.device_id,
-            profile=context.profile,
-            persist_history=persist_history and context.privacy_policy.allow_history_persistence
-            and resolve_profile_privacy_policy(context.profile, {}).allow_history_persistence,
-        )
-        result_status=int(result.pop("_response_status",200))
-        _debug_ask_dj_result("message", result, result_status, runtime=bound_runtime)
-        return result, result_status
-    except SessionConversationError as exc:
-        from .historical_playback import UNAVAILABLE, unavailable_message
-        message = unavailable_message(payload.get("locale") or payload.get("language")) if exc.code == UNAVAILABLE else None
-        return _error_payload(exc.code, message), exc.status
-    except PermissionError:
-        return _error_payload("history_unavailable"), 404
-    except (OSError, RuntimeError):
-        return _error_payload("history_storage_unavailable"), 503
-    except ValueError:
-        return _error_payload("session_context_changed"), 409
+        _mood_transition=_mood_transition,
+    ).execute()
 
 
 async def async_handle_track_insight_payload(
