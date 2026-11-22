@@ -17,7 +17,7 @@ class DisplayAdmissionMaintenanceTests(unittest.TestCase):
         self.assertEqual(validate(self.plan), [])
         self.assertEqual(
             self.plan["planning_maintenance"]["schema_version"],
-            "djconnect-federated-planning-delta/21",
+            "djconnect-federated-planning-delta/22",
         )
         self.assertIn("wire NOT_FROZEN, runtime B_SOFTWARE_QUALIFIED_NOT_INSTALLED", render(self.plan)["README.md"])
 
@@ -36,7 +36,7 @@ class DisplayAdmissionMaintenanceTests(unittest.TestCase):
         # original scope rather than rewriting it through later source Finalizations.
         if p["planning_maintenance"]["schema_version"] in {
             "djconnect-federated-planning-delta/18", "djconnect-federated-planning-delta/19",
-            "djconnect-federated-planning-delta/20", "djconnect-federated-planning-delta/21",
+            "djconnect-federated-planning-delta/20", "djconnect-federated-planning-delta/21", 'djconnect-federated-planning-delta/22',
         }:
             references = p["planning_maintenance"]["document_references"]
             p["planning_maintenance"] = load(ROOT / "history/20261120/live-impression-freeze-maintenance-v17.json")
