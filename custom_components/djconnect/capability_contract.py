@@ -6,6 +6,7 @@ from .domain.profile.dj_settings import SETTINGS_VERSION
 def _platform_capabilities() -> dict[str, bool]:
     """Return platform capability flags that are independent of transport."""
     return {
+        "music_canvas": True,
         "profiles": True,
         "explicit_profile_selection": True,
         "private_sessions": True,
@@ -48,6 +49,7 @@ def _platform_capabilities() -> dict[str, bool]:
 def _contract_versions() -> dict[str, int]:
     """Return additive contract versions clients can feature-detect."""
     return {
+        "music_canvas": 1,
         "profile_context": 1,
         "client_contract_fixtures": 1,
         "session_conversation_history": 1,

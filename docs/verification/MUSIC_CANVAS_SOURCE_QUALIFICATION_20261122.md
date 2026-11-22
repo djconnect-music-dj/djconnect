@@ -1,0 +1,9 @@
+# Music Canvas source qualification — 22 November 2026
+
+Source implementation is NOT_MERGED. Product scope: canonical MUSIC_CANVAS_V1 product and technical contract. The current product manifest binds all 328 integration files; predecessor source, planning and proof records remain unchanged.
+
+The new actual-HA driver exercises paired TLS HTTP, SQLite, multi-client CAS/replay, two Samsung profiles sharing one image, portrait output, deterministic matte changes, off-TV denial, independent target failure, Profile preview isolation, Session-end fences, real HA admin withdrawal, partial cleanup and explicit forget-anyway. Model and physical-device boundaries are declared synthetic. The recovery extension actually closes/reopens SQLite and constructs a fresh Canvas runtime; this is not a restart of an installed HA-dev/prod service.
+
+The pre-recovery source passed all49 isolated actual-HA drivers and 4886 unittest cases (11 existing skips). The recovery delta is being requalified against the entire current source before review-ready status. Apple passed85 XCTest (5 existing skips),1795 Swift Testing tests and an unsigned iPhone/iPad release build; its recovery presentation delta likewise requires final validation. No physical Samsung/SwitchBot, actual provider generation, native accessibility acceptance, signing, installation or deployment is claimed.
+
+The new schema23 migration preserves existing settings and migration identities. Legacy migration fixtures explicitly reconstruct their own old table sets; exact source inventories advance from322 to328. No assertions, negative cases, provider/device boundaries or thresholds are removed. Roadmap maintenance23 preserves the whole maintenance22 snapshot, including immutable copies of the two canonical documents evolved by Canvas, while separately verifying their new current bytes.

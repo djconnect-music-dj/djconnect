@@ -1786,6 +1786,16 @@
           "description": "Abgeschlossene oder unterbrochene Sitzungen werden so viele Tage nach ihrem Ende aufbewahrt. Aktive Sitzungen bleiben erhalten. Gilt für alle Profile dieser Installation."
         }
       }
+    },
+    "music_canvas_asset_access": {
+      "name": "Music Canvas temporärer Bildzugriff",
+      "description": "Externen HTTPS-Ursprung für zeitlich begrenzte Bilddownloads einrichten. Erfordert einen Home Assistant-Administrator.",
+      "fields": {
+        "https_origin": {
+          "name": "HTTPS origin",
+          "description": "Bestehender extern erreichbarer HTTPS-Ursprung von Home Assistant."
+        }
+      }
     }
   }
 }

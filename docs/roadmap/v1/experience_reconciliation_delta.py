@@ -3,6 +3,12 @@ from copy import deepcopy
 import hashlib
 import json
 from pathlib import Path
+from contextvars import ContextVar
+
+# A later increment may evolve a canonical document while retaining the exact
+# earlier source evidence. The caller must independently validate both current
+# bytes and the immutable historical copy before entering this scoped context.
+HISTORICAL_DOCUMENT_SOURCES = ContextVar("historical_document_sources", default={})
 
 PRIOR = 'history/20261017/settings-finalization-maintenance-v14.json'
 NODE = 'CORRECTION::CORE::PERSONAL-DJ-EXPERIENCE'
@@ -51,8 +57,9 @@ def validate(plan, previous_validator):
     references = stripped.get('document_references', [])
     check({r['path'] for r in prior['document_references']} <= {r['path'] for r in references},
           'prior document references retained')
-    check(all((Path(__file__).parents[3] / r['path']).is_file()
-              and hashlib.sha256((Path(__file__).parents[3] / r['path']).read_bytes()).hexdigest() == r['sha256']
+    sources = HISTORICAL_DOCUMENT_SOURCES.get()
+    check(all(Path(sources.get(r['path'], Path(__file__).parents[3] / r['path'])).is_file()
+              and hashlib.sha256(Path(sources.get(r['path'], Path(__file__).parents[3] / r['path'])).read_bytes()).hexdigest() == r['sha256']
               for r in references), 'current canonical document bytes')
     current_references = stripped['document_references']
     stripped['document_references'] = prior['document_references']

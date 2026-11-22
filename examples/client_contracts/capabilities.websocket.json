@@ -99,7 +99,8 @@
     "session_artwork": true,
     "session_speech": true,
     "passive_session_surface": true,
-    "profile_session_settings": true
+    "profile_session_settings": true,
+    "music_canvas": true
   },
   "contract_versions": {
     "profile_context": 1,
@@ -133,7 +134,8 @@
     "session_history_bulk_delete": 1,
     "session_content_delete": 1,
     "session_history_delete_status": 1,
-    "profile_session_settings": 3
+    "profile_session_settings": 3,
+    "music_canvas": 1
   },
   "hybrid_transport": {
     "available": true,
@@ -209,9 +211,9 @@
     "generic_questions": {
       "en": "Tell me more",
       "nl": "Vertel meer",
-      "de": "Erzähl mir mehr",
-      "fr": "Dis-m’en plus",
-      "es": "Cuéntame más"
+      "de": "Erz\u00e4hl mir mehr",
+      "fr": "Dis-m\u2019en plus",
+      "es": "Cu\u00e9ntame m\u00e1s"
     },
     "attribute_required": false,
     "effect": "informational",
@@ -371,7 +373,7 @@
         "examples": [
           {
             "id": "calmer_fluid",
-            "text": "Mach es ruhiger und flüssiger"
+            "text": "Mach es ruhiger und fl\u00fcssiger"
           },
           {
             "id": "faster",
@@ -395,11 +397,11 @@
           },
           {
             "id": "undo",
-            "text": "Rückgängig"
+            "text": "R\u00fcckg\u00e4ngig"
           },
           {
             "id": "reset",
-            "text": "Zurück zum DJ"
+            "text": "Zur\u00fcck zum DJ"
           }
         ],
         "scopes": [
@@ -409,7 +411,7 @@
           },
           {
             "id": "while_in_vibescape",
-            "text": "Während dieses Besuchs"
+            "text": "W\u00e4hrend dieses Besuchs"
           }
         ]
       },
@@ -429,7 +431,7 @@
           },
           {
             "id": "more_gold",
-            "text": "Plus doré"
+            "text": "Plus dor\u00e9"
           },
           {
             "id": "variant",
@@ -441,7 +443,7 @@
           },
           {
             "id": "undo",
-            "text": "Revenir en arrière"
+            "text": "Revenir en arri\u00e8re"
           },
           {
             "id": "reset",
@@ -467,15 +469,15 @@
           },
           {
             "id": "faster",
-            "text": "Haz lo rápido"
+            "text": "Haz lo r\u00e1pido"
           },
           {
             "id": "more_depth",
-            "text": "Más profundidad"
+            "text": "M\u00e1s profundidad"
           },
           {
             "id": "more_gold",
-            "text": "Más dorado"
+            "text": "M\u00e1s dorado"
           },
           {
             "id": "variant",
@@ -487,7 +489,7 @@
           },
           {
             "id": "undo",
-            "text": "Volver atrás"
+            "text": "Volver atr\u00e1s"
           },
           {
             "id": "reset",
@@ -497,7 +499,7 @@
         "scopes": [
           {
             "id": "current_track",
-            "text": "Solo esta canción"
+            "text": "Solo esta canci\u00f3n"
           },
           {
             "id": "while_in_vibescape",

@@ -1444,11 +1444,11 @@ class RequestedMomentsTest(unittest.IsolatedAsyncioTestCase):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads(
             (
-                root / 'examples/client_contracts/requested_moments_v1/actual-ha-wire-technical-debt-20261122-music-origin-20261122-url-boundary-20261122-locale-routing-20261122.json'
+                root / 'examples/client_contracts/requested_moments_v1/music-canvas-20261122-actual-ha-wire-technical-c55a0543.json'
             ).read_text()
         )
         self.assertTrue(proof["source_before_after_equal"])
-        self.assertEqual(len(proof["source_pins"]), 322)
+        self.assertEqual(len(proof["source_pins"]), 328)
         for name, digest in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root / name).read_bytes()).hexdigest(), digest, name)
         receipt = proof["receipt"]

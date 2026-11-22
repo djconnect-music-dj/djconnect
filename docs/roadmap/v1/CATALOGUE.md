@@ -12,6 +12,8 @@ Selected passive Session projection: DJC-CORE-PASSIVE-SESSION-PROJECTION-V1-2026
 
 Selected shared Profile/Session settings consolidation: DJC-PROFILE-SESSION-SETTINGS-CONSOLIDATION-V1-20261016; six shared Persona/voice/gender/Mood/Presence/announcement_output, protected source delivered contract3 (Core producer only), last explicit accepted choice becomes default, atomic active+default acceptance. Source PROTECTED_MERGED; Core producer and migration work only; Apple/other consumers/joint separately open, no automatic dispatch or whole-family completion. Delivered v13 preserved.
 
+Music Canvas v1 owner-selected implementation is LOCAL / NOT_MERGED. Core contracts, persistent preferences, lifecycle, composition and Samsung/SwitchBot adapters feed the native Apple panel. Joint real-provider/native/hardware acceptance stays Planned/OPEN; no Cast route, deployment or automatic dispatch.
+
 Music Origin SOURCE_DELIVERED: Core #1669 and Apple #405 protected merged with their own exact-main software/publication evidence. Avatar-menu/native/history source is delivered; MO01–MO18 real-provider, editorial and physical-device/accessibility acceptance remains OPEN. No installation, deployment, new writer or automatic dispatch.
 
 Ask DJ Moments SOURCE_DELIVERED: Core #1664 and Apple #400 protected merged; both exact-main/publication records independently qualified. Three software leaves Completed; joint AM01–AM12 ACCEPTANCE stays Planned/OPEN, actual installed/model/editorial/a11y acceptance unclaimed. New and inherited TDE maintainability risks remain OPEN, actual assessment FAIL. Original maintenance19 and every earlier receipt remain immutable; no new consumer dispatch.
@@ -128,3 +130,10 @@ A product choice: LIMITED_APP_ATTESTED_REPORTED_ROUTE selected with the stated c
 | `MUSIC-ORIGIN::PRODUCER` | DJC-CORE | Completed | Explicit musical-origin research, narration, direct history and lifecycle fences |
 | `MUSIC-ORIGIN::APPLE` | DJC-APPLE | Completed | Native musical relationship and shared Ask DJ accuracy caption |
 | `MUSIC-ORIGIN::ACCEPTANCE` | DJC-CORE | Planned | Joint MO01–MO18 positive model, editorial, device and accessibility acceptance |
+| `MUSIC-CANVAS::CONTRACT` | DJC-CORE | In progress | Music Canvas product, source policy and native v1 contract |
+| `MUSIC-CANVAS::PROFILE` | DJC-CORE | In progress | Durable Profile preferences and independent Session lifecycle |
+| `MUSIC-CANVAS::PRODUCER` | DJC-CORE | In progress | Bounded image generation, native composition and shared asset lifecycle |
+| `MUSIC-CANVAS::SAMSUNG` | DJC-CORE | In progress | Standalone Samsung Art Mode discovery, pairing and observed delivery |
+| `MUSIC-CANVAS::SWITCHBOT` | DJC-CORE | In progress | Existing HA SwitchBot Cloud native upload and temporary asset lease |
+| `MUSIC-CANVAS::APPLE` | DJC-APPLE | In progress | Native Music Canvas controls, per-screen state and confirmed preference writes |
+| `MUSIC-CANVAS::ACCEPTANCE` | DJC-CORE | Planned | Joint real-provider, Samsung/SwitchBot and native device acceptance |

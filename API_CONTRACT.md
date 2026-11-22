@@ -1,3 +1,7 @@
+## Music Canvas v1
+
+The additive paired-native Music Canvas routes, revisions, operation receipts, screen-profile provenance and capability version1 are specified in [the canonical contract](docs/technical/MUSIC_CANVAS_V1_CONTRACT.md). Existing settings3/playback contracts are unchanged. Desired enabled, delivered cloud status and confirmed display are separate. Client reads and previews never generate artwork.
+
 ## 2026-11-07 — Paired private ephemeral catalogue responses
 
 For nonpersisted paired Ask DJ/Session replies, retain the accepted root projection

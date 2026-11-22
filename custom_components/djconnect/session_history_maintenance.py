@@ -12,6 +12,9 @@ from .historical_projection_retention import HistoricalProjectionRetentionServic
 
 async def async_purge_profile_history(hass, profile_id: str) -> None:
     domain = getattr(hass, "data", {}).get("djconnect", {})
+    canvas = domain.get("music_canvas")
+    if canvas is not None:
+        await canvas.purge_owner(profile_id)
     if "persistence_service" in domain:
         from .persistence.dj_settings import ProfileDJSettingsRepository
         manager = domain.get('session_runtime_manager')

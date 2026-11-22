@@ -45,11 +45,11 @@ class InstallationPrincipalDataTests(unittest.TestCase):
     def test_actual_HA_original_codec_and_same_final_harness_parent_RED_remain_exact(self):
         root = Path(__file__).resolve().parents[1]
         joined = json.loads((root / "examples/client_contracts/installation_principal_data_v1/actual-ha-data-codec-live-impression-20261119-requested-moments-20261120.json").read_text())
-        receipt = json.loads((root / 'examples/client_contracts/installation_principal_data_v1/actual-ha-data-codec-bulletin-diagnostics-current-live-impression-20261119-requested-moments-20261120-technical-debt-20261122-music-origin-20261122-url-boundary-20261122-locale-routing-20261122.json').read_text())
+        receipt = json.loads((root / 'examples/client_contracts/installation_principal_data_v1/music-canvas-20261122-actual-ha-data-codec-bul-19bc3ac2.json').read_text())
         self.assertEqual(receipt["state"], "PASS")
         self.assertEqual(len(receipt["cases"]), 6)
         self.assertEqual(len(receipt["preceding_source_origin_cases"]), 19)
-        self.assertEqual(len(receipt["source_sha256"]), 322)
+        self.assertEqual(len(receipt["source_sha256"]), 328)
         for relative, digest in receipt["source_sha256"].items():
             self.assertEqual(hashlib.sha256((root / relative).read_bytes()).hexdigest(), digest)
         actual = hashlib.sha256((root / joined["codec_harness"]).read_bytes()).hexdigest()

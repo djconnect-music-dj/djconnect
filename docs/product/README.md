@@ -118,3 +118,7 @@ receiver#16 with separate integration dependencies. Historical1175/1176 stay exa
 ## Ask DJ: Moments —20 November2026
 
 [Ask DJ: Moments v1](ASK_DJ_MOMENTS_V1.md) — existing avatarcard explicit rich requests; Core/Apple/source and joint acceptance separate.
+
+## Music Canvas
+
+[Music Canvas v1](MUSIC_CANVAS_V1.md) is the existing Session-to-art product. [Its implementation contract](../technical/MUSIC_CANVAS_V1_CONTRACT.md) owns Core/Apple handoff and distinct provider/hardware acceptance. VibeScape and VibeCast retain their own purposes.

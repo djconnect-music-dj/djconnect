@@ -4,7 +4,9 @@
   "after_dependencies": [
     "cloud",
     "openai_conversation",
-    "wyoming"
+    "wyoming",
+    "ai_task",
+    "switchbot_cloud"
   ],
   "bluetooth": [
     {
@@ -23,7 +25,8 @@
     "bluetooth_adapters",
     "conversation",
     "assist_pipeline",
-    "tts"
+    "tts",
+    "ssdp"
   ],
   "documentation": "https://github.com/djconnect-music-dj/djconnect",
   "integration_type": "device",
@@ -31,7 +34,9 @@
   "issue_tracker": "https://github.com/djconnect-music-dj/djconnect/issues",
   "requirements": [
     "segno>=1.6.1",
-    "defusedxml>=0.7.1"
+    "defusedxml>=0.7.1",
+    "samsungtvws==3.0.7",
+    "Pillow==13.0.0"
   ],
   "version": "4.1.0"
 }

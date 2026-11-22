@@ -10,7 +10,12 @@ class MusicOriginDeltaTest(unittest.TestCase):
     def setUp(self):
         self.plan = load(Path(__file__).with_name("djconnect-platform-v1.json"))
         # Preserve the original source-freeze negative cases after source delivery.
-        if self.plan["planning_maintenance"]["schema_version"] == "djconnect-federated-planning-delta/22":
+        if self.plan["planning_maintenance"]["schema_version"] in {"djconnect-federated-planning-delta/22", "djconnect-federated-planning-delta/23"}:
+            from experience_reconciliation_delta import HISTORICAL_DOCUMENT_SOURCES
+            refs = self.plan["planning_maintenance"].get("music_canvas_receipt", {}).get("predecessor_documents", [])
+            root = Path(__file__).resolve().parents[3]
+            token = HISTORICAL_DOCUMENT_SOURCES.set({r["path"]: root/r["snapshot"] for r in refs})
+            self.addCleanup(HISTORICAL_DOCUMENT_SOURCES.reset, token)
             self.plan["planning_maintenance"] = load(Path(__file__).parent / "history/20261122/music-origin-source-freeze-maintenance-v21.json")
 
     def test_selected_contract_producer_and_native_slices_have_open_joint_acceptance(self):

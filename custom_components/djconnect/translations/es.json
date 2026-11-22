@@ -1786,6 +1786,16 @@
           "description": "Conserva las sesiones terminadas o interrumpidas durante este número de días tras su fin. Las sesiones activas permanecen intactas. Se aplica a todos los perfiles de esta instalación."
         }
       }
+    },
+    "music_canvas_asset_access": {
+      "name": "Music Canvas acceso temporal a imágenes",
+      "description": "Configura el origen HTTPS externo para descargar obras de forma temporal. Requiere un administrador de Home Assistant.",
+      "fields": {
+        "https_origin": {
+          "name": "HTTPS origin",
+          "description": "Origen HTTPS existente de Home Assistant accesible desde el exterior."
+        }
+      }
     }
   }
 }

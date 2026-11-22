@@ -24,7 +24,7 @@ def digest(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
-def validate(plan, previous_validator):
+def validate(plan, previous_validator, *, historical_product=False):
     d = plan["planning_maintenance"]
     receipt = d.get("music_origin_finalization_receipt", {})
     frozen_raw = (Path(__file__).parent / FREEZE).read_bytes()
@@ -113,7 +113,7 @@ def validate(plan, previous_validator):
         actual = {str(p.relative_to(ROOT)): digest(p.read_bytes())
                   for p in (ROOT / "custom_components/djconnect").rglob("*")
                   if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"}
-        check(len(product) == 322 and product == actual, "published product identity")
+        check(len(product) == 322 and (historical_product or product == actual), "published product identity")
     previous = deepcopy(plan)
     previous["planning_maintenance"] = restored
     return errors + previous_validator(previous)

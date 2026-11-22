@@ -24,11 +24,11 @@ class CustodyOriginalHaProofTests(unittest.TestCase):
     def test_actual_HA_original_source_and_harness_remain_exact_metadata_only(self):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads((root / "examples/client_contracts/installation_custody_once_v1/actual-ha-custody-metadata-live-impression-20261119-requested-moments-20261120.json").read_text())
-        raw = json.loads((root / 'examples/client_contracts/installation_custody_once_v1/actual-ha-custody-metadata-bulletin-diagnostics-current-live-impression-20261119-requested-moments-20261120-technical-debt-20261122-music-origin-20261122-url-boundary-20261122-locale-routing-20261122.json').read_text())
+        raw = json.loads((root / 'examples/client_contracts/installation_custody_once_v1/music-canvas-20261122-actual-ha-custody-metada-113be690.json').read_text())
         self.assertEqual(raw["state"], "PASS")
         self.assertEqual(len(raw["cases"]), 4)
         self.assertEqual(len(raw["preceding_installation_once_cases"]), 8)
-        self.assertEqual(len(raw["source_sha256"]), 322)
+        self.assertEqual(len(raw["source_sha256"]), 328)
         for name, digest in raw["source_sha256"].items():
             self.assertEqual(hashlib.sha256((root / name).read_bytes()).hexdigest(), digest, name)
         self.assertEqual(hashlib.sha256((root / proof["harness"]).read_bytes()).hexdigest(),

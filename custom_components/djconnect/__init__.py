@@ -1875,7 +1875,9 @@ def register_http_views(hass: HomeAssistant) -> None:
         from .display_shell import DisplayShellView
         from .visual_director_http import VibeScapeContextView, VibeScapeInterpretView, VibeScapeRevokeView
 
+        from .music_canvas_http import CanvasView, CanvasAssetView
         for view in [
+            CanvasView(hass), CanvasAssetView(hass),
             HelpContextView(hass),
             InstallationManagementPrepareView(hass),
             *surface_views(hass),
@@ -3315,6 +3317,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     except Exception as exc:  # noqa: BLE001
         _LOGGER.error("DJConnect persistence bootstrap failed: %s", exc.__class__.__name__)
         return False
+    # An unavailable optional art feature must not disable pairing or music.
+    try:
+        from .music_canvas_runtime import setup as setup_canvas
+        from .music_canvas_http import register_asset_configuration
+        await setup_canvas(hass)
+        register_asset_configuration(hass)
+    except Exception as exc:
+        _LOGGER.warning("Music Canvas startup unavailable: %s", exc.__class__.__name__)
     # Some Home Assistant startup paths load config entries without first
     # retaining the integration-level setup state. Registering here as well
     # keeps the public HA routes available for every configured runtime.

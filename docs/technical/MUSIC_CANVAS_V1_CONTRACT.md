@@ -1,0 +1,106 @@
+# Music Canvas v1 implementation contract
+
+Product authority: [MUSIC_CANVAS_V1](../product/MUSIC_CANVAS_V1.md). Assignment
+`DJC-MUSIC-CANVAS-V1-20261115`. This additive contract is version 1. It does
+not change the six-axis settings3 contract, playback, VibeScape, or VibeCast.
+
+## Ownership and reuse
+
+| Component | Decision |
+| --- | --- |
+| Profile binding | REUSE loaded paired-device authorization, Profile resolver, privacy and binding generation |
+| Durable state | ADAPT canonical PersistenceService with forward migration; Profile-keyed Canvas preferences and installation-owned device registry |
+| Session | REUSE SessionRuntimeManager.current_active and accepted playback observations; no second session owner |
+| Model credentials | REUSE HA's explicitly configured preferred AI Task image entity; never copy credentials or silently select another provider |
+| Samsung | NEW bounded samsungtvws adapter, HA shared SSDP discovery, independent DJConnect token; no HACS dependency |
+| SwitchBot | ADAPT existing switchbot_cloud.upload_art_frame_image with HA registry device_id and image_url |
+| Composition | NEW executor-side image compositor, native target ratio, deterministic matte, no UI/text overlays |
+| Apple | ADAPT existing paired transport, session menu and shared SwiftUI controls; no local preference authority |
+| Legacy | No existing Canvas implementation to retire; AmbientView is not introduced |
+
+## Native wire
+
+All native routes are POST under `/api/djconnect/v1/music_canvas/`, use the
+existing paired bearer/device identity and transport policy, reject unknown
+fields and return private no-store responses. Every request has
+`contract_version:1,device_id,client_type`; no caller-supplied Profile ID.
+
+* `read`: returns opaque binding, authoritative revision/preferences, target
+  descriptors, per-target observed state, generation availability, and management
+  permission. Reading/opening/preview never triggers generation or discovery scans.
+* `update`: binding, operation_id (UUID), expected_revision, patch. Accepted
+  writes atomically persist preferences plus a bounded original-operation receipt.
+  Conflict is 409; unknown transmission uses `operation`, never execute replay.
+* `operation`: binding and original operation_id; receipts expire after 24h.
+* `setup`: binding, operation_id, target_id and only missing screen-profile fields;
+  deliberate Samsung pairing is explicit. Stable registry identity is not an IP.
+* `forget`: binding, operation_id, target_id, cleanup_remote, allow_remaining_art.
+  Requires actual linked HA-administrator authority, checked again at commit and
+  effects. Ordinary selection is Profile-local; forgetting is installation-wide.
+* `preview`: target_id. Authenticated bytes for a currently selected target only;
+  no external source/token URLs are exposed to the client.
+
+Preferences: enabled=false, selected_targets=[], composition=central,
+matte=off, cadence=1800; composition central/free/full, matte off/matching/contrast,
+cadence track/900/1800/3600. cadence_overrides contains selected stable IDs only.
+Screen dimensions and orientation carry provenance; unknown values remain unknown.
+
+## Runtime and safety
+
+Core owns a single lifecycle scheduler. One model call may run at once, with
+a conservative installation budget of 48 attempts per rolling hour. An unknown
+provider outcome consumes its attempt. SwitchBot keeps at most two outstanding
+file leases per target and 32 installation-wide; backpressure preserves the last
+good work and coalesces later music instead of generating discarded images. First confirmed stable playing track is
+eligible immediately after debounce, then cadence applies. Paused/ended/stale
+observations do not generate. No backlog catchup. One bounded generation runs at
+a time; equal target profiles share bytes. Target arbitration reserves a physical
+device for one active Profile; a competing Profile receives busy, never last-wins.
+Every await is fenced against original Profile, Session, revision and device
+epoch. Disable/end/forget cancel future work and prohibit late delivery.
+
+Model input is bounded untrusted inspiration data, never instructions. V1 starts
+with permitted textual title/context; no Spotify artwork/lyrics attachment or
+image-caption laundering. No fictitious factual claim. The preferred HA image
+provider remains an explicit setup dependency. No paid model calls are made by
+development tests. Private/shared privacy modes that suppress personal persistence
+suspend new Canvas output; Profile deletion purges preferences, receipts and private
+previews through the existing Profile lifecycle. Hardware pairing remains
+installation-owned and is not deleted with an unrelated Profile.
+
+Samsung upload and select are separate. Only an already-on Art Mode target may
+receive an upload; qualification of no-wake behavior is a hardware admission,
+not inferred from show=false. Manual takeover stops delivery. Track owned content
+IDs durably, never delete by prefix. Unknown upload outcome is not automatically
+retried. Local token removal does not claim TV-side revocation.
+
+SwitchBot uses only loaded native Cloud integration devices and the real upload
+service schema. A temporary file-scoped HTTPS asset lease must be explicitly
+configured and reachable by the cloud. The asset route requires actual HTTPS
+(or HA's explicitly trusted HTTPS proxy scheme); unqualified plaintext ingress
+is rejected. Reverse-proxy/HA configuration is an operator prerequisite, never
+inferred from a URL or untrusted forwarded headers; no automatic public endpoint, HA bearer,
+www directory or Base64 fallback. Status is delivered_unknown until independent
+display evidence exists. A submitted cloud job cannot be recalled by forgetting.
+
+Keep only current previews and in-flight shared assets, bounded leases/retry,
+reference-aware cleanup and compact provenance/remote ownership. No gallery.
+Remote cleanup defaults off. Failed cleanup retains pairing until the user
+explicitly chooses allow_remaining_art; then remove local registration, selected
+references and leases, honestly reporting remaining art.
+
+## Qualification boundary
+
+Source tests, real HA contract tests, real-provider generation, Samsung firmware
+no-wake/readback, portrait SwitchBot, native iPhone/iPad/Mac and joint end-to-end
+acceptance are separate results. Hardware not exercised remains NOT_RUN.
+No install, deployment, account creation or new provider expense is authorized
+by this source increment.
+
+Verified references: installed HA2026.11.1 ai_task.task and
+switchbot_cloud.services; samsungtvws3.0.7 Art API signatures. Public upstream:
+https://www.home-assistant.io/integrations/ai_task/
+https://www.home-assistant.io/actions/switchbot_cloud.upload_art_frame_image/
+https://github.com/xchwarze/samsung-tv-ws-api
+
+Golden Scenario relationship: Canvas does not alter Planner/Moment decisions or playback. Existing Session lifecycle, pairing, Profile settings, artwork and Ask DJ Golden regressions remain required. Its new actual-HA probe uses declared synthetic image/hardware boundaries and cannot close real-provider or physical acceptance.
