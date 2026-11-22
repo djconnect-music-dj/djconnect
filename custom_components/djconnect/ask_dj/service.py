@@ -50,6 +50,15 @@ async def _live_reference(manager, profile, target):
     moment = next((m for m in active.broadcast.state.dj_moments if m.moment_id == target["moment_id"]), None)
     if moment is None or moment.moment_type.value == "silence":
         raise SessionConversationError("moment_context_unavailable", 404)
+    from ..music_origin import admitted as origin_admitted, BASIS as ORIGIN_BASIS
+    if moment.music_origin is not None:
+        if (not origin_admitted(moment) or moment.moment_id in active.deleted_moment_ids
+                or moment.moment_id in active.broadcast.content_pending_moment_ids):
+            raise SessionConversationError("moment_context_unqualified",403)
+        return {"text":moment.content,"title":moment.title,"summary":moment.summary,
+            "moment_type":"music_origin","archive_basis":ORIGIN_BASIS,
+            "music_origin":json.loads(moment.music_origin.payload_json),
+            "sources":json.loads(moment.music_origin.sources_json)}
     source = moment.source_fact
     metadata = dict(moment.generation_metadata)
     from ..live_impression import admitted as admitted_live, BASIS as LIVE_BASIS

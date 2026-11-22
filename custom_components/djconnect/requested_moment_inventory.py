@@ -8,6 +8,7 @@ import time
 
 LANGUAGES = ("en", "nl", "de", "fr", "es")
 FAMILIES = (
+    ("music_origin", (), ("Where do I know this song from?", "Waar ken ik dit nummer van?", "Woher kenne ich dieses Lied?", "D’où est-ce que je connais ce morceau ?", "¿De qué me suena esta canción?")),
     (
         "recording_story",
         ("recording_credits",),
@@ -115,6 +116,7 @@ FAMILIES = (
 )
 TYPE_KEYS = {name: keys for name, keys, _ in FAMILIES}
 MOMENT_TYPES = {
+    "music_origin": "music_origin",
     "recording_story": "track",
     "work_composers": "track",
     "artist_story": "artist",
@@ -380,6 +382,9 @@ def descriptors(captured, manager):
                 manager._bulletin_service is not None and captured.bulletin_provider is not None
             )
             reason = None if available else "producer_unavailable"
+        if name == "music_origin":
+            available = bool(captured.playback.title and captured.playback.artist) and captured.narration_provider is not None and capable
+            reason = None if available else reason or "subject_evidence_unavailable"
         kind = (
             "session"
             if name == "dj_bulletin"
@@ -429,7 +434,7 @@ def descriptors(captured, manager):
                     "title": title,
                     "subtitle": "" if kind == "session" else playback.artist or "",
                 },
-                "pending_text": pending_text(active, title),
+                "pending_text": origin_pending(active) if name == "music_origin" else pending_text(active, title),
             }
         )
     return rows
@@ -495,3 +500,13 @@ def reason_text(active, reason, *, locale=None):
         ),
     }
     return values[reason][LANGUAGES.index(locale or language(active))] if reason in values else None
+
+
+def origin_pending(active):
+    return (
+        "I’m looking into where you might know this song from.",
+        "Ik zoek even uit waar dit nummer je bekend van kan voorkomen.",
+        "Ich finde heraus, woher dir dieses Lied bekannt vorkommen könnte.",
+        "Je cherche d’où ce morceau pourrait vous être familier.",
+        "Voy a investigar de qué puede sonarte esta canción.",
+    )[LANGUAGES.index(language(active))]

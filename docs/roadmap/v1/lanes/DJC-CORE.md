@@ -89,5 +89,8 @@ A product choice: LIMITED_APP_ATTESTED_REPORTED_ROUTE selected with the stated c
 - `ASK-DJ-MOMENTS::CONTRACT` — Completed; Existing Interactive DJMoments selected explicitly by user; no parallel engine or install/deploy authority
 - `ASK-DJ-MOMENTS::PRODUCER` — Completed; Existing Interactive DJMoments selected explicitly by user; no parallel engine or install/deploy authority
 - `ASK-DJ-MOMENTS::ACCEPTANCE` — Planned; Existing Interactive DJMoments selected explicitly by user; no parallel engine or install/deploy authority
+- `MUSIC-ORIGIN::CONTRACT` — In progress; Core #1581: one explicit native Music Origin vertical slice; no proactive selection or automatic deployment
+- `MUSIC-ORIGIN::PRODUCER` — In progress; Core #1581: one explicit native Music Origin vertical slice; no proactive selection or automatic deployment
+- `MUSIC-ORIGIN::ACCEPTANCE` — Planned; Core #1581: one explicit native Music Origin vertical slice; no proactive selection or automatic deployment
 
 Fresh owner/writer/resource admission is separate from functional prerequisites. Historical writer observations are not current leases.

@@ -49,6 +49,7 @@ class RequestedMomentProof:
                 "generation_metadata",
                 "narration_acceptance",
                 "live_impression",
+                "music_origin",
                 "bulletin",
             )
         )
@@ -64,6 +65,9 @@ class RequestedMomentProof:
         from .public_artist_narration import ResearchMomentAcceptance, admitted as researched
 
         if type(moment.narration_acceptance) is ResearchMomentAcceptance and not researched(moment):
+            return False
+        from .music_origin import admitted as origin_admitted
+        if moment.music_origin is not None and not origin_admitted(moment):
             return False
         if moment.live_impression is not None:
             from .live_impression import admitted

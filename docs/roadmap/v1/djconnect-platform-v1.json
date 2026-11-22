@@ -37594,7 +37594,7 @@
     }
   ],
   "planning_maintenance": {
-    "schema_version": "djconnect-federated-planning-delta/20",
+    "schema_version": "djconnect-federated-planning-delta/21",
     "decision_id": "DJC-DJ-PRESENCE-ROADMAP-DESIGN-V1-20261011",
     "decision_url": "https://github.com/pcvantol/djconnect/issues/1101#issuecomment-6110375785",
     "design_date": "2026-10-11",
@@ -39968,6 +39968,104 @@
             ]
           }
         ]
+      },
+      {
+        "id": "MUSIC-ORIGIN::CONTRACT",
+        "title": "Music Origin schema1, best-effort research and source consultation contract",
+        "lane": "DJC-CORE",
+        "repository": "djconnect-music-dj/djconnect",
+        "status": "In progress",
+        "assignment_status": "USER_SELECTED",
+        "scope": "Core #1581: one explicit native Music Origin vertical slice; no proactive selection or automatic deployment",
+        "acceptance_boundary": "Software/source, actual HA fixture, native/model/editorial/device AM12 acceptance remain separate",
+        "contract_binding": "docs/product/MUSIC_ORIGIN_MOMENT_V1.md",
+        "source_ids": [
+          "OWNER-MUSIC-ORIGIN-1581"
+        ],
+        "parent_reference": "PROJ::ROADMAP::INTERACTIVE",
+        "family_reference": "Existing Ask DJ / Knowledge / Planner / Moment / Flow",
+        "prerequisite_groups": [],
+        "source_delivery": "SOURCE_DELIVERED"
+      },
+      {
+        "id": "MUSIC-ORIGIN::PRODUCER",
+        "title": "Explicit musical-origin research, narration, direct history and lifecycle fences",
+        "lane": "DJC-CORE",
+        "repository": "djconnect-music-dj/djconnect",
+        "status": "In progress",
+        "assignment_status": "USER_SELECTED",
+        "scope": "Core #1581: one explicit native Music Origin vertical slice; no proactive selection or automatic deployment",
+        "acceptance_boundary": "Software/source, actual HA fixture, native/model/editorial/device AM12 acceptance remain separate",
+        "contract_binding": "docs/product/MUSIC_ORIGIN_MOMENT_V1.md",
+        "source_ids": [
+          "OWNER-MUSIC-ORIGIN-1581"
+        ],
+        "parent_reference": "PROJ::ROADMAP::INTERACTIVE",
+        "family_reference": "Existing Ask DJ / Knowledge / Planner / Moment / Flow",
+        "prerequisite_groups": [
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "MUSIC-ORIGIN-1"
+            ]
+          }
+        ],
+        "source_delivery": "SOURCE_DELIVERED"
+      },
+      {
+        "id": "MUSIC-ORIGIN::APPLE",
+        "title": "Native musical relationship and shared Ask DJ accuracy caption",
+        "lane": "DJC-APPLE",
+        "repository": "djconnect-music-dj/djconnect-app",
+        "status": "In progress",
+        "assignment_status": "USER_SELECTED",
+        "scope": "Core #1581: one explicit native Music Origin vertical slice; no proactive selection or automatic deployment",
+        "acceptance_boundary": "Software/source, actual HA fixture, native/model/editorial/device AM12 acceptance remain separate",
+        "contract_binding": "docs/product/MUSIC_ORIGIN_MOMENT_V1.md",
+        "source_ids": [
+          "OWNER-MUSIC-ORIGIN-1581"
+        ],
+        "parent_reference": "PROJ::ROADMAP::INTERACTIVE",
+        "family_reference": "Existing Ask DJ / Knowledge / Planner / Moment / Flow",
+        "prerequisite_groups": [
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "MUSIC-ORIGIN-2"
+            ]
+          }
+        ],
+        "source_delivery": "SOURCE_DELIVERED"
+      },
+      {
+        "id": "MUSIC-ORIGIN::ACCEPTANCE",
+        "title": "Joint MO01–MO18 positive model, editorial, device and accessibility acceptance",
+        "lane": "DJC-CORE",
+        "repository": "djconnect-music-dj/djconnect",
+        "status": "Planned",
+        "assignment_status": "OPEN_ACCEPTANCE",
+        "scope": "Core #1581: one explicit native Music Origin vertical slice; no proactive selection or automatic deployment",
+        "acceptance_boundary": "Software/source, actual HA fixture, native/model/editorial/device AM12 acceptance remain separate",
+        "contract_binding": "docs/product/MUSIC_ORIGIN_MOMENT_V1.md",
+        "source_ids": [
+          "OWNER-MUSIC-ORIGIN-1581"
+        ],
+        "parent_reference": "PROJ::ROADMAP::INTERACTIVE",
+        "family_reference": "Existing Ask DJ / Knowledge / Planner / Moment / Flow",
+        "prerequisite_groups": [
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "MUSIC-ORIGIN-3"
+            ]
+          },
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "MUSIC-ORIGIN-4"
+            ]
+          }
+        ]
       }
     ],
     "edges": [
@@ -42135,6 +42233,70 @@
         "required_subset": "Versioned actual producer/native contract; source and joint acceptance separate",
         "contract_or_evidence": "docs/technical/ASK_DJ_MOMENTS_AVATAR_CONTRACT_V1.md",
         "reason": "Functional dependency for selected existing Interactive DJMoments; no unrelated global release dependency"
+      },
+      {
+        "id": "MUSIC-ORIGIN-1",
+        "producer": "MUSIC-ORIGIN::CONTRACT",
+        "consumer": "MUSIC-ORIGIN::PRODUCER",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-MUSIC-ORIGIN-1581"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Versioned actual producer/native contract; source and joint acceptance separate",
+        "contract_or_evidence": "docs/product/MUSIC_ORIGIN_MOMENT_V1.md",
+        "reason": "Bounded functional dependency for owner-selected #1581; existing Moments source is delivered"
+      },
+      {
+        "id": "MUSIC-ORIGIN-2",
+        "producer": "MUSIC-ORIGIN::CONTRACT",
+        "consumer": "MUSIC-ORIGIN::APPLE",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-MUSIC-ORIGIN-1581"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Versioned actual producer/native contract; source and joint acceptance separate",
+        "contract_or_evidence": "docs/product/MUSIC_ORIGIN_MOMENT_V1.md",
+        "reason": "Bounded functional dependency for owner-selected #1581; existing Moments source is delivered"
+      },
+      {
+        "id": "MUSIC-ORIGIN-3",
+        "producer": "MUSIC-ORIGIN::PRODUCER",
+        "consumer": "MUSIC-ORIGIN::ACCEPTANCE",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-MUSIC-ORIGIN-1581"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Versioned actual producer/native contract; source and joint acceptance separate",
+        "contract_or_evidence": "docs/product/MUSIC_ORIGIN_MOMENT_V1.md",
+        "reason": "Bounded functional dependency for owner-selected #1581; existing Moments source is delivered"
+      },
+      {
+        "id": "MUSIC-ORIGIN-4",
+        "producer": "MUSIC-ORIGIN::APPLE",
+        "consumer": "MUSIC-ORIGIN::ACCEPTANCE",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-MUSIC-ORIGIN-1581"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Versioned actual producer/native contract; source and joint acceptance separate",
+        "contract_or_evidence": "docs/product/MUSIC_ORIGIN_MOMENT_V1.md",
+        "reason": "Bounded functional dependency for owner-selected #1581; existing Moments source is delivered"
       }
     ],
     "document_references": [
@@ -43519,6 +43681,26 @@
       "tde_assessment": "FAIL",
       "tde_qualification": "FAILED",
       "tde_maintainability_risk": "OPEN_NEW_AND_INHERITED"
+    },
+    "music_origin_receipt": {
+      "assignment_id": "DJC-MUSIC-ORIGIN-MOMENT-V1-20261113",
+      "owner_issue": "https://github.com/djconnect-music-dj/djconnect/issues/1581",
+      "source_base": "b6c47739d1d2be758089551302c97410c6914979",
+      "predecessor_path": "history/20261122/music-origin-predecessor-maintenance-v20.json",
+      "predecessor_sha256": "15616472efa1569a314fcecbb8d3df9229f26bf393b5448b92760b6a1eb00756",
+      "source_delivery": "LOCAL_IMPLEMENTATION_NOT_MERGED",
+      "selection": "USER_SELECTED_MUSIC_ORIGIN",
+      "automatic_dispatch": false,
+      "installed": "NOT_RUN",
+      "live_model": "NOT_RUN",
+      "native": "OPEN_APPLE",
+      "overall_acceptance": "OPEN",
+      "documents": [
+        {
+          "path": "docs/product/MUSIC_ORIGIN_MOMENT_V1.md",
+          "sha256": "e035f213bcbfe38f8fd20fa4a996af4e06d28b9b24fbe90b7766436a416ff237"
+        }
+      ]
     }
   }
 }
