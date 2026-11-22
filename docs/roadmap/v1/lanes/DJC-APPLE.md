@@ -12,6 +12,8 @@ Selected passive Session projection: DJC-CORE-PASSIVE-SESSION-PROJECTION-V1-2026
 
 Selected shared Profile/Session settings consolidation: DJC-PROFILE-SESSION-SETTINGS-CONSOLIDATION-V1-20261016; six shared Persona/voice/gender/Mood/Presence/announcement_output, protected source delivered contract3 (Core producer only), last explicit accepted choice becomes default, atomic active+default acceptance. Source PROTECTED_MERGED; Core producer and migration work only; Apple/other consumers/joint separately open, no automatic dispatch or whole-family completion. Delivered v13 preserved.
 
+Music Origin SOURCE_DELIVERED: Core #1669 and Apple #405 protected merged with their own exact-main software/publication evidence. Avatar-menu/native/history source is delivered; MO01–MO18 real-provider, editorial and physical-device/accessibility acceptance remains OPEN. No installation, deployment, new writer or automatic dispatch.
+
 Ask DJ Moments SOURCE_DELIVERED: Core #1664 and Apple #400 protected merged; both exact-main/publication records independently qualified. Three software leaves Completed; joint AM01–AM12 ACCEPTANCE stays Planned/OPEN, actual installed/model/editorial/a11y acceptance unclaimed. New and inherited TDE maintainability risks remain OPEN, actual assessment FAIL. Original maintenance19 and every earlier receipt remain immutable; no new consumer dispatch.
 
 Live-impressie v1 SOURCE_DELIVERED: Core #1661 and Apple #396 protected merged; exact source trees and independent main evidence qualified. Three software/source leaves Completed; joint LI01–LI20 ACCEPTANCE remains Planned/OPEN. Real-model/editorial and native/physical acceptance are not claimed; installed/shared-TV NOT_RUN. No new implementation or consumer dispatch. The immutable maintenance17 freeze remains historical.
@@ -46,6 +48,6 @@ A product choice: LIMITED_APP_ATTESTED_REPORTED_ROUTE selected with the stated c
 - `SETTINGS::APPLE::EDITOR` — Planned; One Jouw DJ editor and shared Session quick controls; six shared parameters incl announcement_output; no new owning writer or automatic dispatch
 - `LIVE-IMPRESSION::APPLE` — Completed; DJC-LIVE-IMPRESSION-V1-20261108; existing owners, no separate engine or deployment
 - `ASK-DJ-MOMENTS::APPLE` — Completed; Existing Interactive DJMoments selected explicitly by user; no parallel engine or install/deploy authority
-- `MUSIC-ORIGIN::APPLE` — In progress; Core #1581: one explicit native Music Origin vertical slice; no proactive selection or automatic deployment
+- `MUSIC-ORIGIN::APPLE` — Completed; Core #1581: one explicit native Music Origin vertical slice; no proactive selection or automatic deployment
 
 Fresh owner/writer/resource admission is separate from functional prerequisites. Historical writer observations are not current leases.

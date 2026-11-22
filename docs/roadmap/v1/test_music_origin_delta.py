@@ -9,6 +9,9 @@ from validate_snapshot import load, validate
 class MusicOriginDeltaTest(unittest.TestCase):
     def setUp(self):
         self.plan = load(Path(__file__).with_name("djconnect-platform-v1.json"))
+        # Preserve the original source-freeze negative cases after source delivery.
+        if self.plan["planning_maintenance"]["schema_version"] == "djconnect-federated-planning-delta/22":
+            self.plan["planning_maintenance"] = load(Path(__file__).parent / "history/20261122/music-origin-source-freeze-maintenance-v21.json")
 
     def test_selected_contract_producer_and_native_slices_have_open_joint_acceptance(self):
         self.assertEqual(validate(self.plan), [])
