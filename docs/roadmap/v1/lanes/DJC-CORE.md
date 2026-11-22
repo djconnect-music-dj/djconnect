@@ -96,11 +96,11 @@ A product choice: LIMITED_APP_ATTESTED_REPORTED_ROUTE selected with the stated c
 - `MUSIC-ORIGIN::CONTRACT` — Completed; Core #1581: one explicit native Music Origin vertical slice; no proactive selection or automatic deployment
 - `MUSIC-ORIGIN::PRODUCER` — Completed; Core #1581: one explicit native Music Origin vertical slice; no proactive selection or automatic deployment
 - `MUSIC-ORIGIN::ACCEPTANCE` — Planned; Core #1581: one explicit native Music Origin vertical slice; no proactive selection or automatic deployment
-- `MUSIC-CANVAS::CONTRACT` — In progress; Music Canvas v1 only; no Cast/API/Watch or implicit deployment
-- `MUSIC-CANVAS::PROFILE` — In progress; Music Canvas v1 only; no Cast/API/Watch or implicit deployment
-- `MUSIC-CANVAS::PRODUCER` — In progress; Music Canvas v1 only; no Cast/API/Watch or implicit deployment
-- `MUSIC-CANVAS::SAMSUNG` — In progress; Music Canvas v1 only; no Cast/API/Watch or implicit deployment
-- `MUSIC-CANVAS::SWITCHBOT` — In progress; Music Canvas v1 only; no Cast/API/Watch or implicit deployment
+- `MUSIC-CANVAS::CONTRACT` — Completed; Music Canvas v1 only; no Cast/API/Watch or implicit deployment
+- `MUSIC-CANVAS::PROFILE` — Completed; Music Canvas v1 only; no Cast/API/Watch or implicit deployment
+- `MUSIC-CANVAS::PRODUCER` — Completed; Music Canvas v1 only; no Cast/API/Watch or implicit deployment
+- `MUSIC-CANVAS::SAMSUNG` — Completed; Music Canvas v1 only; no Cast/API/Watch or implicit deployment
+- `MUSIC-CANVAS::SWITCHBOT` — Completed; Music Canvas v1 only; no Cast/API/Watch or implicit deployment
 - `MUSIC-CANVAS::ACCEPTANCE` — Planned; Music Canvas v1 only; no Cast/API/Watch or implicit deployment
 
 Fresh owner/writer/resource admission is separate from functional prerequisites. Historical writer observations are not current leases.

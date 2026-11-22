@@ -84,6 +84,9 @@ def validate_delta(plan: dict[str, Any]) -> list[str]:
             errors.append("maintenance: " + reason)
 
     version = d.get("schema_version")
+    if version == "djconnect-federated-planning-delta/24":
+        from music_canvas_finalization_delta import validate as validate_canvas_finalization
+        return validate_canvas_finalization(plan, validate_delta)
     if version == "djconnect-federated-planning-delta/23":
         from music_canvas_delta import validate as validate_canvas
         return validate_canvas(plan, validate_delta)
