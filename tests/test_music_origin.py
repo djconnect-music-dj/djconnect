@@ -11,6 +11,18 @@ class MusicOriginResearchTest(unittest.IsolatedAsyncioTestCase):
     setUpClass = fixtures.RequestedMomentsTest.__dict__["setUpClass"]
     tearDownClass = fixtures.RequestedMomentsTest.__dict__["tearDownClass"]
 
+    def test_all_canonical_menu_questions_share_freeform_origin_routing(self):
+        from custom_components.djconnect.music_origin import is_origin_question
+        from custom_components.djconnect.requested_moment_inventory import FAMILIES
+        labels = next(labels for kind, _, labels in FAMILIES if kind == "music_origin")
+        self.assertEqual(len(labels), 5)
+        for label in labels:
+            with self.subTest(label=label):
+                self.assertTrue(is_origin_question(label))
+                self.assertTrue(is_origin_question(label.casefold().replace("’", "'").strip("¿? ")))
+                self.assertFalse(is_origin_question("Speel iets anders en " + label))
+                self.assertFalse(is_origin_question("Niet: " + label))
+
     async def test_websearch_first_page_or_labelled_excerpt_one_model_call(self):
         from custom_components.djconnect.ask_dj import public_research as research
         from custom_components.djconnect import music_origin as origin
@@ -163,7 +175,7 @@ class MusicOriginActualHAProofTest(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads(
             (
-                root / "examples/client_contracts/music_origin_v1/actual-ha-origin-20261122-url-boundary-20261122.json"
+                root / "examples/client_contracts/music_origin_v1/actual-ha-origin-20261122-url-boundary-20261122-locale-routing-20261122.json"
             ).read_text()
         )
         self.assertEqual(len(proof["source_pins"]), 322)
@@ -181,7 +193,8 @@ class MusicOriginActualHAProofTest(unittest.TestCase):
         self.assertTrue(origin["freeform_same_producer"])
         self.assertEqual(origin["native_type"], "music_origin")
         self.assertEqual(origin["uncertainty"], "possible")
-        self.assertEqual(origin["model_fixture_calls"], 2)
+        self.assertEqual(origin["model_fixture_calls"], 6)
+        self.assertEqual(origin["canonical_freeform_languages"], ["en", "nl", "de", "fr", "es"])
         self.assertEqual({x["scheme"] for x in origin["requests"]}, {"https"})
         self.assertEqual((origin["real_model_calls"], origin["real_provider_calls"]), (0, 0))
         self.assertEqual(

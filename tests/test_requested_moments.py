@@ -1444,7 +1444,7 @@ class RequestedMomentsTest(unittest.IsolatedAsyncioTestCase):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads(
             (
-                root / 'examples/client_contracts/requested_moments_v1/actual-ha-wire-technical-debt-20261122-music-origin-20261122-url-boundary-20261122.json'
+                root / 'examples/client_contracts/requested_moments_v1/actual-ha-wire-technical-debt-20261122-music-origin-20261122-url-boundary-20261122-locale-routing-20261122.json'
             ).read_text()
         )
         self.assertTrue(proof["source_before_after_equal"])
@@ -1548,12 +1548,17 @@ class RequestedMomentsTest(unittest.IsolatedAsyncioTestCase):
         token = dialogue.current_turn.set(turn)
         try:
             with patch.object(self.pipeline,'_assist_context',return_value={'agent_id':'fixture-agent'}), patch.object(self.research,'music_origin_sources',sources),patch.object(self.pipeline,'call_conversation_process_with_agent_retry',model):
-                result = await ask_dj._informational_assist_response(self.hass,self.runtime,
-                    'Waar ken ik dit nummer van?',{}, {}, {},[])
-            self.assertEqual(result['music_origin']['relation']['kind'],'cover')
-            self.assertEqual(result['action'],'none')
-            self.assertEqual(len(prompts),1)
-            self.assertGreaterEqual(len(guards),3)
-            self.assertEqual(ask_dj.classify_ask_dj('Waar ken ik dit nummer van?').category,'informational')
+                from custom_components.djconnect.requested_moment_inventory import FAMILIES, LANGUAGES
+                labels = next(labels for kind, _, labels in FAMILIES if kind == 'music_origin')
+                for language, label in zip(LANGUAGES, labels, strict=True):
+                    with self.subTest(language=language):
+                        turn.style['language'] = language
+                        result = await ask_dj._informational_assist_response(self.hass,self.runtime,
+                            label,{}, {}, {},[])
+                        self.assertEqual(result['music_origin']['relation']['kind'],'cover')
+                        self.assertEqual(result['action'],'none')
+                        self.assertEqual(ask_dj.classify_ask_dj(label).category,'informational')
+            self.assertEqual(len(prompts),5)
+            self.assertGreaterEqual(len(guards),15)
         finally:
             dialogue.current_turn.reset(token)
