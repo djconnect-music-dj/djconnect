@@ -453,8 +453,9 @@ async def realize_session_narration(hass, *, narration, admission, fallback_text
     from .narration_brief import NarrationBrief, RuntimeNarrationBrief, PreparedNarrationBrief, NarratedText, candidate, assessed
     if debug is not None:
         debug.update(fallback_used=True, block_reason="narration_unavailable", model_attempts=0)
+    from .music_origin import OriginBrief
     from .playback_request import PlaybackRequestBrief, POST_DISPATCH_NARRATION_SECONDS
-    if type(narration) not in {NarrationBrief, RuntimeNarrationBrief, PreparedNarrationBrief, PlaybackRequestBrief} or not callable(admission):
+    if type(narration) not in {NarrationBrief, RuntimeNarrationBrief, PreparedNarrationBrief, PlaybackRequestBrief, OriginBrief} or not callable(admission):
         return fallback_text
     context = None
 
@@ -496,6 +497,16 @@ async def realize_session_narration(hass, *, narration, admission, fallback_text
                 note_temporary_source_failure()
             return _speech_from_response(response)
 
+        if type(narration) is OriginBrief:
+            from .music_origin import realize as realize_origin
+            async with asyncio.timeout(60):
+                from .ask_dj.dialogue import current_turn
+                turn = current_turn.get()
+                text = await realize_origin(narration, ask=ask, admission=guard, async_guard=turn.guard if turn is not None else None)
+            guard()
+            if text is not None and debug is not None:
+                debug.update(fallback_used=False, block_reason=None)
+            return text if text is not None else fallback_text
         from .ask_dj.dialogue import current_turn
         turn = current_turn.get()
         from .public_artist_narration import can_research, realize, PUBLIC_STORY_NARRATION_SECONDS

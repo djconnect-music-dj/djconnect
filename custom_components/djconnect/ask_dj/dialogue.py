@@ -958,6 +958,17 @@ def model_source(entry: dict | None) -> dict:
             "basis": "runtime_authored_direction_v1",
             "direction_excerpt": str(entry.get("text") or "")[:2000],
         }
+    if entry.get("archive_basis") == "public_music_origin_v1":
+        from ..music_origin import checked
+        origin = checked(entry.get("music_origin"))
+        if origin is None:
+            return {}
+        return {"basis":"public_music_origin_v1", "subjects":[
+            {"name":origin["subject"]["artist"],"role":"Artist"},
+            {"name":origin["subject"]["title"],"role":"Recording"}],
+            "relationship":origin["relation"],"qualified_excerpt":str(entry.get("text") or "")[:2000],
+            "sources":entry.get("sources",[])[:2],
+            "authority":"original_best_effort_telling_and_uncertainty_not_new_fact_evidence"}
     if entry.get("archive_basis") == "public_live_impression_v1":
         from ..live_impression import checked
         live = checked(entry.get("live_impression"))
@@ -999,7 +1010,7 @@ def selected_public_focus(turn) -> dict:
     """
     entry = getattr(turn, 'selected_read_context', None)
     if (not getattr(turn, 'interpreted_context_research', False) or not isinstance(entry, dict)
-            or entry.get('archive_basis') not in {'public_artist_narration_v1','public_live_impression_v1'}
+            or entry.get('archive_basis') not in {'public_artist_narration_v1','public_live_impression_v1','public_music_origin_v1'}
             or not turn.source_context or model_source(entry) != turn.source_context):
         return {}
     text = entry.get('text')

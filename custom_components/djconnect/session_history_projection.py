@@ -145,9 +145,13 @@ def project_entry(row: dict) -> dict | None:
             "runtime_accepted_settings_v1",
             "owner_metadata_narration_v1",
             "public_artist_narration_v1",
-            "public_live_impression_v1",
+            "public_live_impression_v1", "public_music_origin_v1",
         }:
             return None
+        if body.get("archive_basis") == "public_music_origin_v1":
+            from .music_origin import checked
+            if checked(body.get("music_origin")) is None:
+                return None
         if body.get("archive_basis") == "public_live_impression_v1":
             from .live_impression import checked
             if checked(body.get("live_impression")) is None:

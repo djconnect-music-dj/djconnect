@@ -1,7 +1,10 @@
 {
   "schema_version": 1,
   "suite": "askdj_release_matrix_v1",
-  "release_languages": ["en", "nl"],
+  "release_languages": [
+    "en",
+    "nl"
+  ],
   "existing_single_turn_cases": "examples/ask_dj_e2e_cases.json",
   "additional_route_contracts": {
     "artist_fun_queue": {
@@ -83,6 +86,10 @@
     "for_you_actual_refresh_and_speaker_wire": {
       "file": "tests/test_for_you_refresh_contract.py",
       "method": "test_original_ha_fixture_matches_the_current_producer_and_harness"
+    },
+    "music_origin_story": {
+      "file": "tests/test_requested_moments.py",
+      "method": "test_music_origin_equivalent_freeform_uses_same_producer_without_playback"
     }
   },
   "families": [

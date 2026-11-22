@@ -2243,3 +2243,108 @@ def unavailable_answer(language, *, ambiguous=False, answer_unverified=False):
         ),
     }
     return messages.get(language, messages["en"])[0 if ambiguous else 1]
+
+
+class _OriginSearchResults(HTMLParser):
+    """Read only labelled public search results, never navigation text as evidence."""
+    def __init__(self):
+        super().__init__()
+        self.rows, self.field, self.depth = [], '', 0
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        classes = attrs.get('class', '').split()
+        if tag == 'a' and 'result__a' in classes and len(self.rows) < 24:
+            self.rows.append({'url': attrs.get('href', ''), 'title': '', 'snippet': ''})
+            self.field, self.depth = 'title', 1
+        elif 'result__snippet' in classes and self.rows:
+            self.field, self.depth = 'snippet', 1
+        elif self.field and tag not in {'br', 'img', 'meta', 'input', 'hr'}:
+            self.depth += 1
+
+    def handle_endtag(self, tag):
+        if self.field:
+            self.depth -= 1
+            if self.depth <= 0:
+                self.field = ''
+
+    def handle_data(self, data):
+        if self.field and self.rows:
+            self.rows[-1][self.field] += data
+
+
+@dataclass(frozen=True)
+class MusicOriginSource(PublicSource):
+    consultation: str = 'page_read'
+
+    def metadata(self):
+        return {**super().metadata(), 'consultation': self.consultation}
+
+
+async def music_origin_sources(title, artist, locale, guard):
+    """One explicit origin lookup in this existing guarded public-research owner.
+
+    Unlike ordinary biography admission, a labelled search excerpt can contribute
+    best-effort information. It is never represented as a fetched publisher page.
+    """
+    from dataclasses import asdict
+    if not all(isinstance(v, str) and 0 < len(v) <= 160
+               and safe_subject(v, qualified=True) and not UNSAFE_QUERY.search(v)
+               and not PRIVATE_RELATION.search(v) for v in (title, artist)):
+        return []
+    query = f'{artist} "{title}" sample interpolation cover soundtrack origin'
+    search = 'https://html.duckduckgo.com/html/?' + urlencode({'q': query})
+    sources = []
+    async def collect(fetch):
+        await guard()
+        if not await fetch.robots(search):
+            return
+        status, body, _ = await fetch.request(search, maximum=512 * 1024)
+        if status != 200:
+            note_temporary_source_failure()
+            return
+        parser = _OriginSearchResults()
+        parser.feed(body)
+        origins = set()
+        for row in parser.rows:
+            if len(sources) == 2 or fetch.requests >= fetch.maximum_requests:
+                break
+            url = urljoin(search, row['url'])
+            if urlsplit(url).hostname in {'duckduckgo.com', 'html.duckduckgo.com'}:
+                url = parse_qs(urlsplit(url).query).get('uddg', [''])[0]
+            host = urlsplit(url).hostname
+            if not public_url(url) or not host or host in origins or host.endswith('duckduckgo.com'):
+                continue
+            # WhoSampled scraping is deliberately outside this producer.
+            if host == 'whosampled.com' or host.endswith('.whosampled.com'):
+                continue
+            origins.add(host)
+            text, consultation, final = '', 'search_excerpt', url
+            snippet = ' '.join(row['snippet'].split())[:900]
+            try:
+                if fetch.requests < fetch.maximum_requests - 1 and await fetch.robots(url):
+                    code, page_body, final = await fetch.request(url, maximum=512 * 1024)
+                    if code == 200:
+                        page = PageText()
+                        page.feed(page_body)
+                        text = excerpt(page.text(), 'sample interpolation cover soundtrack original', 1600)
+                        if text:
+                            consultation = 'page_read'
+            except (ResearchUnavailable, TimeoutError, OSError):
+                final = url
+            # A blocked publisher is not fetched by another route; an already
+            # received public search excerpt stays explicitly labelled as such.
+            text = text or snippet
+            if not text:
+                continue
+            source = _source('Public web', row['title'] or host, final, text, locale)
+            if source is not None:
+                sources.append(MusicOriginSource(**asdict(source), consultation=consultation))
+    try:
+        async with asyncio.timeout(20):
+            async with PublicFetch(guard) as fetch:
+                await collect(fetch)
+    except (ResearchUnavailable, TimeoutError, OSError):
+        note_temporary_source_failure()
+    await guard()
+    return sources

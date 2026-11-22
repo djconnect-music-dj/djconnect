@@ -84,6 +84,9 @@ def validate_delta(plan: dict[str, Any]) -> list[str]:
             errors.append("maintenance: " + reason)
 
     version = d.get("schema_version")
+    if version == "djconnect-federated-planning-delta/21":
+        from music_origin_delta import validate as validate_origin
+        return validate_origin(plan, validate_delta)
     if version in ("djconnect-federated-planning-delta/17", "djconnect-federated-planning-delta/18", "djconnect-federated-planning-delta/19", "djconnect-federated-planning-delta/20"):
         from moments_avatar_delta import validate as validate_moments
         from moments_avatar_finalization_delta import validate as validate_moments_final

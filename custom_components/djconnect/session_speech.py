@@ -546,12 +546,13 @@ def _spotify_moment_source(source, moment):
 def _moment_processor_basis(moment):
     source = moment.source_fact
     from .public_artist_narration import ResearchMomentAcceptance
+    from .music_origin import admitted as admitted_origin
     from .live_impression import admitted as admitted_live
     from .settings_confirmation import context as settings_context
     from .bulletin_runtime import admitted as bulletin_admitted
     return ("public_news_bulletin_v1" if bulletin_admitted(moment)
         else "runtime_accepted_settings_v1" if settings_context(moment) is not None
-        else "qualified_dialogue_v1" if type(moment.narration_acceptance) is ResearchMomentAcceptance or admitted_live(moment)
+        else "qualified_dialogue_v1" if type(moment.narration_acceptance) is ResearchMomentAcceptance or admitted_live(moment) or admitted_origin(moment)
         else "spotify_owner_local_read_v1" if _spotify_moment_source(source, moment)
         else "cc0_normalized_fields_v1" if source is not None else "runtime_authored_direction_v1")
 
@@ -602,7 +603,7 @@ async def resolve_moment(hass, profile_id, reference, *, history=None):
 def _retained_speech_style(entry):
     """Use only the admitted stored owner's original style and attribution fields."""
     if entry["kind"] == "dj_moment" and entry.get("archive_basis") in {
-            "cc0_normalized_fields_v1", "runtime_authored_direction_v1", "runtime_accepted_settings_v1", "owner_metadata_narration_v1", "public_artist_narration_v1", "public_live_impression_v1"}:
+            "cc0_normalized_fields_v1", "runtime_authored_direction_v1", "runtime_accepted_settings_v1", "owner_metadata_narration_v1", "public_artist_narration_v1", "public_live_impression_v1", "public_music_origin_v1"}:
         style = {"language": entry.get("locale"), "persona": entry.get("persona"),
                  "mood": entry.get("mood"),
                  "persona_revision": entry.get("persona_revision")}
@@ -624,6 +625,10 @@ def retained_projection(entry):
     if original is None:
         return unavailable(reference, "original_source_unqualified")
     style, attribution = original
+    if entry.get("archive_basis") == "public_music_origin_v1":
+        from .music_origin import checked
+        if checked(entry.get("music_origin")) is None:
+            return unavailable(reference, "original_source_unqualified")
     if entry.get("archive_basis") == "public_live_impression_v1":
         from .live_impression import checked
         if checked(entry.get("live_impression")) is None:
@@ -665,7 +670,7 @@ async def resolve_retained(hass, history, profile_id, reference, *, moment_only=
              else entry.get("speech_processing_basis") or "retained_owner_local_read_v1")
     if basis == 'owner_metadata_narration_v1':
         basis = 'spotify_owner_local_read_v1'
-    elif basis in {'public_artist_narration_v1','public_live_impression_v1'}:
+    elif basis in {'public_artist_narration_v1','public_live_impression_v1','public_music_origin_v1'}:
         basis = 'qualified_dialogue_v1'
     expires = min(time.time() + TTL, datetime.fromisoformat(entry["retained_until"]).timestamp())
     if descriptor["manual_allowed"]:

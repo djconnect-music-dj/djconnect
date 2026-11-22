@@ -46,5 +46,6 @@ A product choice: LIMITED_APP_ATTESTED_REPORTED_ROUTE selected with the stated c
 - `SETTINGS::APPLE::EDITOR` — Planned; One Jouw DJ editor and shared Session quick controls; six shared parameters incl announcement_output; no new owning writer or automatic dispatch
 - `LIVE-IMPRESSION::APPLE` — Completed; DJC-LIVE-IMPRESSION-V1-20261108; existing owners, no separate engine or deployment
 - `ASK-DJ-MOMENTS::APPLE` — Completed; Existing Interactive DJMoments selected explicitly by user; no parallel engine or install/deploy authority
+- `MUSIC-ORIGIN::APPLE` — In progress; Core #1581: one explicit native Music Origin vertical slice; no proactive selection or automatic deployment
 
 Fresh owner/writer/resource admission is separate from functional prerequisites. Historical writer observations are not current leases.

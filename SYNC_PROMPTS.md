@@ -1,3 +1,7 @@
+## 2026-11-22 — Music Origin Moment v1 consumer contract
+
+Core #1581 selects `music_origin` / `music_origin_story` on existing requested-Moments operations, with schema1 relation/direction/uncertainty and original track subject. Apple consumes the same avatar, persistence/history and speech owners, preserving nuance; one shared disclaimer above both composers. See [design](docs/product/MUSIC_ORIGIN_MOMENT_V1.md). No new API or proactive selection. Source qualification and actual provider/native acceptance are separate.
+
 ## Pi private execution migration proposal — 16 November 2026
 
 The source repository and the private operations repository have distinct GitHub

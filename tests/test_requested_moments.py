@@ -270,7 +270,7 @@ class RequestedMomentsTest(unittest.IsolatedAsyncioTestCase):
             self.session = self.manager.current_active("profile-a")
             ledger = deepcopy(self.session.presence_ledger.__dict__)
             menu = await self.menu()
-            self.assertEqual(len(menu["types"]), 10)
+            self.assertEqual(len(menu["types"]), 11)
             self.assertEqual((self.calls, self.urls), ([], []))
             result, status, envelope = await self.submit(menu)
             self.assertIn("state", result, result)
@@ -1444,11 +1444,11 @@ class RequestedMomentsTest(unittest.IsolatedAsyncioTestCase):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads(
             (
-                root / 'examples/client_contracts/requested_moments_v1/actual-ha-wire-technical-debt-20261122.json'
+                root / 'examples/client_contracts/requested_moments_v1/actual-ha-wire-technical-debt-20261122-music-origin-20261122.json'
             ).read_text()
         )
         self.assertTrue(proof["source_before_after_equal"])
-        self.assertEqual(len(proof["source_pins"]), 321)
+        self.assertEqual(len(proof["source_pins"]), 322)
         for name, digest in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root / name).read_bytes()).hexdigest(), digest, name)
         receipt = proof["receipt"]
@@ -1462,7 +1462,7 @@ class RequestedMomentsTest(unittest.IsolatedAsyncioTestCase):
         for name, digest in receipt["source_files_sha256"].items():
             self.assertEqual(hashlib.sha256((root / name).read_bytes()).hexdigest(), digest, name)
         extension = receipt["extension"]
-        self.assertEqual(extension["inventory_count"], 10)
+        self.assertEqual(extension["inventory_count"], 11)
         self.assertEqual(
             (extension["fixture_model_calls"], extension["fixture_public_reads"]), (2, 3)
         )
@@ -1476,3 +1476,84 @@ class RequestedMomentsTest(unittest.IsolatedAsyncioTestCase):
             ("NOT_RUN", "NOT_RUN", "NOT_RUN"),
         )
         self.assertEqual(proof["editorial_acceptance"], "OPEN")
+
+
+    async def test_music_origin_real_owner_commit_best_effort_and_fixture(self):
+        from custom_components.djconnect import music_origin
+        from custom_components.djconnect.ask_dj.public_research import MusicOriginSource
+        from datetime import datetime, UTC, timedelta
+        await self.manager.async_update_allowed_capability_intents(
+            owner_profile_id="profile-a", session_id=self.session.session_id,
+            allowed_capability_intents=frozenset({"artist_story", "track_context"}))
+        self.session = self.manager.current_active("profile-a")
+        stamp = datetime.now(UTC)
+        source = MusicOriginSource("Public web", "Synthetic interview", "https://example.org/interview",
+            "The artist says this song may interpolate the earlier recording Original Light by Sample Artist.",
+            "en", stamp.isoformat(), (stamp+timedelta(hours=1)).isoformat(), "public_page_short_reference", consultation="search_excerpt")
+        calls = []
+        async def sources(*args):
+            await args[-1]()
+            return [source]
+        async def model(hass, data, **kwargs):
+            calls.append(data)
+            answer = {"found":True,"title":"Een bekende melodie", "summary":"Een mogelijke verbinding.",
+                "text":"Misschien herken je de melodie: volgens het interview is dit nummer mogelijk gebaseerd op Original Light van Sample Artist. Het verband is niet helemaal zeker, maar maakt het luisteren interessant.",
+                "relation":{"kind":"interpolation","direction":"current_to_related","uncertainty":"possible",
+                    "target":{"kind":"recording","title":"Original Light","artist":"Sample Artist"}}, "source_indices":[0]}
+            return {"response":{"speech":{"plain":{"speech":json.dumps(answer)}}}}
+        with patch.object(self.pipeline,"_assist_context",return_value={"agent_id":"fixture-agent"}), patch.object(self.research,"music_origin_sources",sources), patch.object(self.pipeline,"call_conversation_process_with_agent_retry",model):
+            before = deepcopy(self.session.presence_ledger.__dict__)
+            menu = await self.menu()
+            self.assertEqual(calls, [])
+            result,status,envelope = await self.submit(menu,"music_origin")
+            self.assertEqual((status,result["state"]),(200,"accepted"),result)
+            moment=result["result"]["moment"]
+            self.assertEqual(moment["type"],"music_origin")
+            self.assertEqual(moment["knowledge_intent"]["type"],"music_origin_story")
+            self.assertEqual(moment["music_origin"]["relation"]["uncertainty"],"possible")
+            self.assertEqual(moment["sources"][0]["consultation"],"search_excerpt")
+            self.assertTrue(result["result"]["presentation_admission"]["display_allowed"])
+            self.assertEqual(len(calls),1)
+            self.assertEqual(before,self.manager.current_active("profile-a").presence_ledger.__dict__)
+            rows=await self.manager._historical_projections.async_entry_records("profile-a",self.session.session_id)
+            saved=[x for x in rows if x["reference_id"]==moment["moment_id"]]
+            self.assertEqual(len(saved),1)
+            self.assertEqual(json.loads(saved[0]["body"])["music_origin"],moment["music_origin"])
+            retry,_=await self.execute(envelope)
+            self.assertEqual(retry["operation_receipt"]["phase"],"confirmed")
+            recovered,_=await self.read_status(envelope)
+            self.assertEqual(recovered["moment_id"],moment["moment_id"])
+            self.assertEqual(len(calls),1)
+            self.emit("music-origin-v1",{"inventory":menu,"response":result})
+            self.assertTrue(music_origin.admitted(self.manager.current_active("profile-a").moment_engine.moments[-1]))
+
+    async def test_music_origin_equivalent_freeform_uses_same_producer_without_playback(self):
+        from custom_components.djconnect import ask_dj
+        from custom_components.djconnect.ask_dj import dialogue
+        from custom_components.djconnect.ask_dj.public_research import _source
+        from types import SimpleNamespace
+        guards, prompts = [], []
+        async def guard(): guards.append(True)
+        turn = SimpleNamespace(style={'language':'nl','persona':'home_dj','mood':'chill'},
+            source_context={},selected_read_context={'music_origin':{'subject':{'title':'Current Song','artist':'Current Artist'}}},guard=guard)
+        async def sources(*args):
+            await args[-1]()
+            return [_source('Public web','Interview','https://example.org/source','A possible cover of Earlier Song.','en')]
+        async def model(hass,data,**kwargs):
+            prompts.append(data['text'])
+            value={'found':True,'title':'Een herkenbare melodie','summary':'Een mogelijke cover.',
+                'text':'Misschien herken je dit als een mogelijke cover van Earlier Song. Dat is de aanwijzing uit het interview; de exacte versie blijft onzeker.',
+                'relation':{'kind':'cover','direction':'current_to_related','uncertainty':'possible','target':{'kind':'recording','title':'Earlier Song','artist':''}},'source_indices':[0]}
+            return {'response':{'speech':{'plain':{'speech':json.dumps(value)}}}}
+        token = dialogue.current_turn.set(turn)
+        try:
+            with patch.object(self.pipeline,'_assist_context',return_value={'agent_id':'fixture-agent'}), patch.object(self.research,'music_origin_sources',sources),patch.object(self.pipeline,'call_conversation_process_with_agent_retry',model):
+                result = await ask_dj._informational_assist_response(self.hass,self.runtime,
+                    'Waar ken ik dit nummer van?',{}, {}, {},[])
+            self.assertEqual(result['music_origin']['relation']['kind'],'cover')
+            self.assertEqual(result['action'],'none')
+            self.assertEqual(len(prompts),1)
+            self.assertGreaterEqual(len(guards),3)
+            self.assertEqual(ask_dj.classify_ask_dj('Waar ken ik dit nummer van?').category,'informational')
+        finally:
+            dialogue.current_turn.reset(token)

@@ -388,6 +388,14 @@ async def _music(hass, request, manager, authority):
     from .public_artist_narration import ResearchedArtistText
     from .live_impression import LiveImpressionText
 
+    if request.type_id == "music_origin":
+        from .music_origin import OriginBrief, MusicOriginText, create_moment
+        active = _guard(request, manager, authority)
+        playback = request.captured.playback
+        brief = OriginBrief(playback.title, playback.artist, active.locale, active.dj_persona.value, active.selected_mood)
+        text = await request.captured.narration_provider[1](brief, lambda: _guard(request, manager, authority))
+        _guard(request, manager, authority)
+        return (create_moment(active, moment_identifier(request.identifier), text), text) if type(text) is MusicOriginText else (None, None)
     selected = await _fact(hass, request, manager, authority)
     if selected is None:
         return None, None

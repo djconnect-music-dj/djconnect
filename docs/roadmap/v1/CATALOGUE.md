@@ -122,3 +122,7 @@ A product choice: LIMITED_APP_ATTESTED_REPORTED_ROUTE selected with the stated c
 | `ASK-DJ-MOMENTS::PRODUCER` | DJC-CORE | Completed | Explicit rich Moment request through existing Knowledge, narration and durable acceptance |
 | `ASK-DJ-MOMENTS::APPLE` | DJC-APPLE | Completed | Single avatarcard chooser, pending, original rich result and history |
 | `ASK-DJ-MOMENTS::ACCEPTANCE` | DJC-CORE | Planned | Joint AM01–AM12 real model, device, editorial and accessibility acceptance |
+| `MUSIC-ORIGIN::CONTRACT` | DJC-CORE | In progress | Music Origin schema1, best-effort research and source consultation contract |
+| `MUSIC-ORIGIN::PRODUCER` | DJC-CORE | In progress | Explicit musical-origin research, narration, direct history and lifecycle fences |
+| `MUSIC-ORIGIN::APPLE` | DJC-APPLE | In progress | Native musical relationship and shared Ask DJ accuracy caption |
+| `MUSIC-ORIGIN::ACCEPTANCE` | DJC-CORE | Planned | Joint MO01–MO18 positive model, editorial, device and accessibility acceptance |

@@ -88,5 +88,9 @@ A product choice: LIMITED_APP_ATTESTED_REPORTED_ROUTE selected with the stated c
 - `CORRECTION::CORE::PERSONAL-DJ-EXPERIENCE` — In progress: Historical Speech realization is not current all-family acceptance. No consumer dispatch..
 - `LIVE-IMPRESSION::ACCEPTANCE` — Planned: Software/source delivery distinct from real sources, HA model, native and physical acceptance.
 - `ASK-DJ-MOMENTS::ACCEPTANCE` — Planned: Software/source, actual HA fixture, native/model/editorial/device AM12 acceptance remain separate.
+- `MUSIC-ORIGIN::CONTRACT` — In progress: Software/source, actual HA fixture, native/model/editorial/device AM12 acceptance remain separate.
+- `MUSIC-ORIGIN::PRODUCER` — In progress: Software/source, actual HA fixture, native/model/editorial/device AM12 acceptance remain separate.
+- `MUSIC-ORIGIN::APPLE` — In progress: Software/source, actual HA fixture, native/model/editorial/device AM12 acceptance remain separate.
+- `MUSIC-ORIGIN::ACCEPTANCE` — Planned: Software/source, actual HA fixture, native/model/editorial/device AM12 acceptance remain separate.
 
 Policy values/budgets/default and exact presence route/schema remain unqualified design details. No runtime/native/browser/installed/hardware PASS.

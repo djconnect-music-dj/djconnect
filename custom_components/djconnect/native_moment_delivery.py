@@ -127,6 +127,17 @@ class _NativeAdmission:
         )
         return self.result
 
+    def origin(self):
+        from .music_origin import admitted
+        if not admitted(self.moment):
+            return self.result
+        self.result.update(qualification="qualified", source_expires_at=None,
+            display_expires_at=self.boundary.utc_at(self.deadline),
+            current_display_allowed=bool(self.playing and self.playback_item_id == self.boundary.playback_item_id
+                and self.boundary.published_monotonic <= self.now < self.deadline),
+            active_flow_display_allowed=self.moment.moment_id in self.flow_ids)
+        return self.result
+
     def live(self):
         from .live_impression import admitted as admitted_live
 
@@ -453,6 +464,8 @@ class _NativeAdmission:
     def project(self):
         if self.moment.moment_type.value == "silence":
             return self.silence()
+        if getattr(self.moment, "music_origin", None) is not None:
+            return self.origin()
         if getattr(self.moment, "live_impression", None) is not None:
             return self.live()
         self.source = getattr(self.moment, "source_fact", None)

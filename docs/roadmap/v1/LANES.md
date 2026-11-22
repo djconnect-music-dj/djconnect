@@ -24,8 +24,8 @@ Selected Core display-admission: DJC-CORE-VIBECAST-DISPLAY-ADMISSION-V1-20261016
 
 A product choice: LIMITED_APP_ATTESTED_REPORTED_ROUTE selected with the stated copied-QR/wrong-scanner destination risk. Independent HA-owner attestation is not claimed; SECURITY_REVIEW/KEY-STATE open, WIRE not frozen and A runtime not implemented. This is no completion, consumer dispatch or deployment.
 
-- [DJC-CORE](lanes/DJC-CORE.md) — 65 bounded records; no new writer.
-- [DJC-APPLE](lanes/DJC-APPLE.md) — 22 bounded records; no new writer.
+- [DJC-CORE](lanes/DJC-CORE.md) — 68 bounded records; no new writer.
+- [DJC-APPLE](lanes/DJC-APPLE.md) — 23 bounded records; no new writer.
 - [DJC-ESP32](lanes/DJC-ESP32.md) — 1 bounded records; no new writer.
 - [DJC-PI](lanes/DJC-PI.md) — 1 bounded records; no new writer.
 - [DJC-WINDOWS](lanes/DJC-WINDOWS.md) — 0 bounded records; no new writer.

@@ -185,6 +185,7 @@ class KnowledgeIntentType(StrEnum):
     TRACK_CONTEXT = "track_context"
     ARTIST_STORY = "artist_story"
     LIVE_IMPRESSION = "live_impression"
+    MUSIC_ORIGIN_STORY = "music_origin_story"
     ALBUM_STORY = "album_story"
     GENRE_STORY = "genre_story"
     RECOMMENDATION = "recommendation"
@@ -274,6 +275,7 @@ class DJMomentType(StrEnum):
     TRACK = "track"
     MUSIC_ANNOUNCEMENT = "music_announcement"
     ARTIST = "artist"
+    MUSIC_ORIGIN = "music_origin"
     LIVE_IMPRESSION = "live_impression"
     ALBUM = "album"
     GENRE = "genre"
@@ -505,6 +507,7 @@ class DJMoment:
     settings_confirmation: Any = field(default=None, repr=False)
     bulletin: Any = field(default=None, repr=False)
     track_announcement: Any = field(default=None, repr=False)
+    music_origin: Any = field(default=None, repr=False, compare=False)
     live_impression: Any = field(default=None, repr=False, compare=False)
     user_requested: Any = field(default=None, repr=False, compare=False)
 
@@ -518,6 +521,10 @@ class DJMoment:
             research_sources = bulletin_sources(self)
         from .live_impression import projection as live_projection
 
+        from .music_origin import admitted as origin_admitted
+        origin = origin_admitted(self)
+        if origin:
+            research_sources = json.loads(self.music_origin.sources_json)
         live = live_projection(self)
         if live is not None:
             research_sources = json.loads(self.live_impression.sources_json)
@@ -568,12 +575,15 @@ class DJMoment:
         }
 
     def _family_projection_fields(self, live):
+        from .music_origin import admitted as origin_admitted
         return {
             **(
                 {"user_requested": self.user_requested.data()}
                 if self.user_requested is not None
                 else {}
             ),
+            **({"music_origin": json.loads(self.music_origin.payload_json)}
+               if self.music_origin is not None and origin_admitted(self) else {}),
             **({"live_impression": live} if live is not None else {}),
             **(
                 {"music_announcement": self.track_announcement.data()}
@@ -7009,6 +7019,9 @@ class _MomentPersistenceGuard:
     def _receipts_current(self):
         from .narration_brief import RuntimeNarrationAcceptance
 
+        from .music_origin import admitted as origin_admitted
+        if self.moment.music_origin is not None and not origin_admitted(self.moment):
+            return False
         receipt = self.moment.narration_acceptance
         if self.moment.bulletin is not None:
             from .bulletin_runtime import admitted as bulletin_admitted
@@ -7239,7 +7252,12 @@ class _MomentPersistenceAttempt:
         )
 
     def _primary_basis(self):
-        if self.moment.live_impression is not None:
+        if self.moment.music_origin is not None:
+            from .music_origin import BASIS, admitted
+            if not admitted(self.moment):
+                return False
+            self.basis = BASIS
+        elif self.moment.live_impression is not None:
             if not self.live_admitted(self.moment):
                 return False
             self.basis = self.live_basis
@@ -7314,6 +7332,10 @@ class _MomentPersistenceAttempt:
                 "locale": self.active.locale,
             },
         }
+        if self.basis == "public_music_origin_v1":
+            self.entry["body"].update(title=self.moment.title,
+                music_origin=json.loads(self.moment.music_origin.payload_json),
+                sources=json.loads(self.moment.music_origin.sources_json))
         if self.basis == self.live_basis:
             from .ask_dj.dialogue import normalized_subjects
 

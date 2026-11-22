@@ -176,7 +176,7 @@ async def qualify(hass, manager, history, request, client):
          patch.object(pipeline, "call_conversation_process_with_agent_retry", traced_agent_call), \
          patch.object(pipeline, "_call_conversation_process_transport", fixture.model):
         inventory, code = await read("ask_dj/moments", {"session_id": sid})
-        assert code == 200 and len(inventory["types"]) == 10
+        assert code == 200 and len(inventory["types"]) == 11
         assert fixture.calls == fixture.urls == []
         chosen = next(t for t in inventory["types"] if t["type_id"] == "artist_story")
         envelope = {"contract_version": 1, "operation_id": str(uuid.uuid7()), "operation_epoch": epoch,
@@ -208,7 +208,7 @@ async def qualify(hass, manager, history, request, client):
         "requests": receipts, "fixture_model_calls": len(fixture.calls), "fixture_public_reads": len(fixture.urls),
         "live_provider_calls": 0, "source_vector_sha256": fixture.vector_sha256,
         "operation_id": envelope["operation_id"], "moment_id": result["moment"]["moment_id"],
-        "entry_id": result["entry_id"], "inventory_count": 10, "proactive_ledger_unchanged": True,
+        "entry_id": result["entry_id"], "inventory_count": 11, "proactive_ledger_unchanged": True,
         "installed_or_physical_acceptance": "NOT_CLAIMED"}
 
 

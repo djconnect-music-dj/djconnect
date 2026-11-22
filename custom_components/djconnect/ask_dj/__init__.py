@@ -1841,6 +1841,9 @@ def classify_ask_dj(text: str) -> AskDjIntent:
     """Classify Ask DJ text into informational, action or hybrid buckets."""
     normalized = _normalize(text)
     nonexecuting = _nonexecuting_speech_act(normalized)
+    from ..music_origin import is_origin_question
+    if not nonexecuting and is_origin_question(text):
+        return AskDjIntent("informational", "music_origin_story", "none")
     from .observations import forecast_question, previous_question, current_artist_question
     from .observations import release_question
     from .album_tracks import album_tracks_question
@@ -4306,6 +4309,44 @@ async def _informational_assist_response(
     from .dialogue import current_turn, requests_lookup, DialogueError
     from . import public_research
     turn = current_turn.get()
+    from ..music_origin import is_origin_question, OriginBrief, MusicOriginText
+    if turn is not None and is_origin_question(text):
+        # The existing dialogue operation owns dedup/history. Share the exact
+        # origin producer, not the ordinary Wikipedia-first/strict story gates.
+        await turn.guard()
+        selected = getattr(turn, "selected_read_context", None) or {}
+        original = (selected.get("music_origin") or turn.source_context.get("music_origin") or {}).get("subject") or {}
+        # The service's original playback identity also permits a paused track.
+        # Never retarget a title-less question to a newer observation.
+        if not original and not selected and getattr(turn, "captured_playback_item_id", ""):
+            from ..session_runtime import session_runtime_manager
+            scope = getattr(turn, "scope", "")
+            active = session_runtime_manager(hass).current_active(scope.removeprefix("profile:")) if scope.startswith("profile:") else None
+            if active is not None and active.broadcast.state.playback.item_id == turn.captured_playback_item_id:
+                playback = active.broadcast.state.playback
+                original = {"title":playback.title, "artist":playback.artist}
+        title = original.get("title") or playback_context.get("track_name") or playback_context.get("title")
+        artist = original.get("artist") or playback_context.get("artist") or playback_context.get("artist_name")
+        style = turn.style
+        language = style.get("language", "en")
+        messages = {"nl":"Welk nummer bedoel je?", "en":"Which song do you mean?", "de":"Welches Lied meinst du?", "fr":"De quel morceau parlez-vous ?", "es":"¿A qué canción te refieres?"}
+        if not title or not artist:
+            return _core_answer(messages.get(language,messages["en"]), action="none", images=[])
+        from ..pipeline import realize_session_narration
+        brief = OriginBrief(title, artist, language, style.get("persona","home_dj"), style.get("mood","groove"))
+        rendered = await realize_session_narration(hass,narration=brief,admission=lambda:None,
+            fallback_text="",conf=runtime.config)
+        await turn.guard()
+        if type(rendered) is MusicOriginText:
+            accepted = rendered.accepted
+            return _core_answer(str(rendered),action="none",images=[],
+                sources=json.loads(accepted.sources_json),music_origin=json.loads(accepted.payload_json),
+                model_processing_basis="qualified_dialogue_v1",knowledge_basis="public_music_origin_v1")
+        from ..requested_moment_inventory import feedback
+        from types import SimpleNamespace
+        from .public_research import operation_source_outcome
+        state = "temporarily_unavailable" if (operation_source_outcome.get() or {}).get("temporary") else "not_found"
+        return _core_answer(feedback(SimpleNamespace(locale=language),state),action="none",images=[])
     preparation = _InformationalResearchPreparation(
         hass=hass,
         runtime=runtime,
