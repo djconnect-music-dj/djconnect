@@ -10,7 +10,7 @@ class MusicOriginDeltaTest(unittest.TestCase):
     def setUp(self):
         self.plan = load(Path(__file__).with_name("djconnect-platform-v1.json"))
         # Preserve the original source-freeze negative cases after source delivery.
-        if self.plan["planning_maintenance"]["schema_version"] in {"djconnect-federated-planning-delta/22", "djconnect-federated-planning-delta/23"}:
+        if self.plan["planning_maintenance"]["schema_version"] in {"djconnect-federated-planning-delta/22", "djconnect-federated-planning-delta/23", "djconnect-federated-planning-delta/24"}:
             from experience_reconciliation_delta import HISTORICAL_DOCUMENT_SOURCES
             refs = self.plan["planning_maintenance"].get("music_canvas_receipt", {}).get("predecessor_documents", [])
             root = Path(__file__).resolve().parents[3]

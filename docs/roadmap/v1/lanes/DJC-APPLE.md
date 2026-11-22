@@ -51,6 +51,6 @@ A product choice: LIMITED_APP_ATTESTED_REPORTED_ROUTE selected with the stated c
 - `LIVE-IMPRESSION::APPLE` — Completed; DJC-LIVE-IMPRESSION-V1-20261108; existing owners, no separate engine or deployment
 - `ASK-DJ-MOMENTS::APPLE` — Completed; Existing Interactive DJMoments selected explicitly by user; no parallel engine or install/deploy authority
 - `MUSIC-ORIGIN::APPLE` — Completed; Core #1581: one explicit native Music Origin vertical slice; no proactive selection or automatic deployment
-- `MUSIC-CANVAS::APPLE` — In progress; Music Canvas v1 only; no Cast/API/Watch or implicit deployment
+- `MUSIC-CANVAS::APPLE` — Completed; Music Canvas v1 only; no Cast/API/Watch or implicit deployment
 
 Fresh owner/writer/resource admission is separate from functional prerequisites. Historical writer observations are not current leases.

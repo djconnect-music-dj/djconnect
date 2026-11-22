@@ -93,12 +93,6 @@ A product choice: LIMITED_APP_ATTESTED_REPORTED_ROUTE selected with the stated c
 - `LIVE-IMPRESSION::ACCEPTANCE` — Planned: Software/source delivery distinct from real sources, HA model, native and physical acceptance.
 - `ASK-DJ-MOMENTS::ACCEPTANCE` — Planned: Software/source, actual HA fixture, native/model/editorial/device AM12 acceptance remain separate.
 - `MUSIC-ORIGIN::ACCEPTANCE` — Planned: Software/source, actual HA fixture, native/model/editorial/device AM12 acceptance remain separate.
-- `MUSIC-CANVAS::CONTRACT` — In progress: Software, installed, real provider, native and physical hardware are separate.
-- `MUSIC-CANVAS::PROFILE` — In progress: Software, installed, real provider, native and physical hardware are separate.
-- `MUSIC-CANVAS::PRODUCER` — In progress: Software, installed, real provider, native and physical hardware are separate.
-- `MUSIC-CANVAS::SAMSUNG` — In progress: Software, installed, real provider, native and physical hardware are separate.
-- `MUSIC-CANVAS::SWITCHBOT` — In progress: Software, installed, real provider, native and physical hardware are separate.
-- `MUSIC-CANVAS::APPLE` — In progress: Software, installed, real provider, native and physical hardware are separate.
 - `MUSIC-CANVAS::ACCEPTANCE` — Planned: Software, installed, real provider, native and physical hardware are separate.
 
 Policy values/budgets/default and exact presence route/schema remain unqualified design details. No runtime/native/browser/installed/hardware PASS.

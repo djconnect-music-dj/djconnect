@@ -37594,7 +37594,7 @@
     }
   ],
   "planning_maintenance": {
-    "schema_version": "djconnect-federated-planning-delta/23",
+    "schema_version": "djconnect-federated-planning-delta/24",
     "decision_id": "DJC-DJ-PRESENCE-ROADMAP-DESIGN-V1-20261011",
     "decision_url": "https://github.com/pcvantol/djconnect/issues/1101#issuecomment-6110375785",
     "design_date": "2026-10-11",
@@ -40072,7 +40072,7 @@
         "title": "Music Canvas product, source policy and native v1 contract",
         "lane": "DJC-CORE",
         "repository": "djconnect-music-dj/djconnect",
-        "status": "In progress",
+        "status": "Completed",
         "assignment_status": "USER_SELECTED",
         "scope": "Music Canvas v1 only; no Cast/API/Watch or implicit deployment",
         "acceptance_boundary": "Software, installed, real provider, native and physical hardware are separate",
@@ -40082,14 +40082,15 @@
         ],
         "parent_reference": "PROJ::ROADMAP::INTERACTIVE",
         "family_reference": "Existing Profile / Session / provider / native client owners",
-        "prerequisite_groups": []
+        "prerequisite_groups": [],
+        "source_delivery": "SOURCE_DELIVERED"
       },
       {
         "id": "MUSIC-CANVAS::PROFILE",
         "title": "Durable Profile preferences and independent Session lifecycle",
         "lane": "DJC-CORE",
         "repository": "djconnect-music-dj/djconnect",
-        "status": "In progress",
+        "status": "Completed",
         "assignment_status": "USER_SELECTED",
         "scope": "Music Canvas v1 only; no Cast/API/Watch or implicit deployment",
         "acceptance_boundary": "Software, installed, real provider, native and physical hardware are separate",
@@ -40106,14 +40107,15 @@
               "MUSIC-CANVAS-1"
             ]
           }
-        ]
+        ],
+        "source_delivery": "SOURCE_DELIVERED"
       },
       {
         "id": "MUSIC-CANVAS::PRODUCER",
         "title": "Bounded image generation, native composition and shared asset lifecycle",
         "lane": "DJC-CORE",
         "repository": "djconnect-music-dj/djconnect",
-        "status": "In progress",
+        "status": "Completed",
         "assignment_status": "USER_SELECTED",
         "scope": "Music Canvas v1 only; no Cast/API/Watch or implicit deployment",
         "acceptance_boundary": "Software, installed, real provider, native and physical hardware are separate",
@@ -40130,14 +40132,15 @@
               "MUSIC-CANVAS-2"
             ]
           }
-        ]
+        ],
+        "source_delivery": "SOURCE_DELIVERED"
       },
       {
         "id": "MUSIC-CANVAS::SAMSUNG",
         "title": "Standalone Samsung Art Mode discovery, pairing and observed delivery",
         "lane": "DJC-CORE",
         "repository": "djconnect-music-dj/djconnect",
-        "status": "In progress",
+        "status": "Completed",
         "assignment_status": "USER_SELECTED",
         "scope": "Music Canvas v1 only; no Cast/API/Watch or implicit deployment",
         "acceptance_boundary": "Software, installed, real provider, native and physical hardware are separate",
@@ -40154,14 +40157,15 @@
               "MUSIC-CANVAS-3"
             ]
           }
-        ]
+        ],
+        "source_delivery": "SOURCE_DELIVERED"
       },
       {
         "id": "MUSIC-CANVAS::SWITCHBOT",
         "title": "Existing HA SwitchBot Cloud native upload and temporary asset lease",
         "lane": "DJC-CORE",
         "repository": "djconnect-music-dj/djconnect",
-        "status": "In progress",
+        "status": "Completed",
         "assignment_status": "USER_SELECTED",
         "scope": "Music Canvas v1 only; no Cast/API/Watch or implicit deployment",
         "acceptance_boundary": "Software, installed, real provider, native and physical hardware are separate",
@@ -40178,14 +40182,15 @@
               "MUSIC-CANVAS-4"
             ]
           }
-        ]
+        ],
+        "source_delivery": "SOURCE_DELIVERED"
       },
       {
         "id": "MUSIC-CANVAS::APPLE",
         "title": "Native Music Canvas controls, per-screen state and confirmed preference writes",
         "lane": "DJC-APPLE",
         "repository": "djconnect-music-dj/djconnect-app",
-        "status": "In progress",
+        "status": "Completed",
         "assignment_status": "USER_SELECTED",
         "scope": "Music Canvas v1 only; no Cast/API/Watch or implicit deployment",
         "acceptance_boundary": "Software, installed, real provider, native and physical hardware are separate",
@@ -40202,7 +40207,8 @@
               "MUSIC-CANVAS-5"
             ]
           }
-        ]
+        ],
+        "source_delivery": "SOURCE_DELIVERED"
       },
       {
         "id": "MUSIC-CANVAS::ACCEPTANCE",
@@ -44113,6 +44119,32 @@
           "sha256": "735828e91a7cdf368ab9f4d77db800151e15bd88379213d85e3d71384d05bc40"
         }
       ]
+    },
+    "music_canvas_finalization_receipt": {
+      "assignment_id": "DJC-MUSIC-CANVAS-V1-20261115",
+      "predecessor_path": "history/20261122/music-canvas-source-freeze-maintenance-v23.json",
+      "predecessor_sha256": "402dfea9926b63e307799a7a2139fa449d24a0394ab592531ecd13fd696ab545",
+      "source_delivery": "PROTECTED_MERGED",
+      "overall_acceptance": "OPEN",
+      "installed": "NOT_RUN",
+      "live_model": "NOT_RUN",
+      "physical_acceptance": "OPEN",
+      "automatic_dispatch": false,
+      "consumer_writes": false,
+      "source_readback_path": "docs/verification/music-canvas-source-publication-readback-20261122.json",
+      "source_readback_sha256": "bb233f110aa8b5dfea7afa6ad5a3a04b4c179ff71e28997ebce62ef1310b403b",
+      "documents": [
+        {
+          "path": "docs/technical/MUSIC_CANVAS_SOURCE_FINALIZATION_20261122.md",
+          "sha256": "96066e51a8865b1c8a759231041baab9e5e046992cb27537a5505d473b7897c1"
+        },
+        {
+          "path": "docs/history/prompts/2026-11-22-music-canvas-source-finalization.md",
+          "sha256": "3032b74abaef12ad2609ca85aae2d9ca24f0245c0def1688ebaf7af3ff20647e"
+        }
+      ],
+      "native": "SOURCE_SOFTWARE_ONLY_PHYSICAL_OPEN",
+      "deployment": "NOT_RUN"
     }
   }
 }
