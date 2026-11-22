@@ -16,6 +16,12 @@ This is completion and qualification of the existing Core maintenance task. Exis
 
 The existing product horizon remains unchanged. Current activity is bounded to evidence qualification, independent review and exact candidate checks before the single reviewable maintenance PR. Product follow-ups retain their previous admission requirements.
 
+1. **ASK-DJ-MOMENTS::ACCEPTANCE** — Planned/OPEN. Execution Rationale: selected family has compatible protected source; actual model/editorial/native/accessibility proof requires its own valid operational admission and is not executed by this source Finalization.
+2. **SETTINGS::APPLE::EDITOR** — Planned/NOT_ISSUED. Execution Rationale: existing editor follow-through, dependent on completed SETTINGS::CORE::PRODUCER; separate lane issuance remains required.
+3. **SETTINGS::PI::ADOPTION** — Planned/NOT_ISSUED. Execution Rationale: existing shared-settings consumer order and completed Core dependency; no Pi writer/install authority is created.
+4. **SETTINGS::ESP32::ADOPTION** — Planned/NOT_ISSUED. Execution Rationale: existing capability/legacy disposition follow-through; no firmware work or install is dispatched.
+5. **SETTINGS::VIBECAST::COMPAT** — Planned/NOT_ISSUED. Execution Rationale: existing renderer contract compatibility work in canonical order; no shared-screen/provider authorization is inferred.
+
 ### Execution Priority Override
 
 The latest user direction ends further refactor work and prioritizes a truthful, reviewable delivery of completed changes. Cyclomatic counts and source line totals are not optimization goals or proof of product quality.
