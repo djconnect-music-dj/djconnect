@@ -146,9 +146,12 @@ class NativePairEnrollment:
     derivation and Core signing custody. It is never selected by the app.
     """
 
-    def __init__(self, hass, transport, selection, *, publisher=None, wall=time.time, monotonic=time.monotonic):
+    def __init__(self, hass, transport, selection=None, *, publisher=None, wall=time.time, monotonic=time.monotonic):
         self.hass = hass
         self.transport = transport
+        if selection is None:
+            from .native_installation_key_custody import InstallationWidgetKeyCustodian
+            selection = InstallationWidgetKeyCustodian(self)
         self.selection = selection
         self.publisher = publisher
         self.wall = wall
