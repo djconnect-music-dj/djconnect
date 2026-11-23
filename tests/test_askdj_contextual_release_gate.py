@@ -607,7 +607,7 @@ class ContextualReleaseGateTest(unittest.TestCase):
     def test_all_literal_core_routes_and_owner_bindings_are_accounted_for(self):
         inventory=load('djc_release_inventory','tools/verification/askdj_release_inventory.py')
         proof=inventory.validate()
-        self.assertEqual(proof['literal_core_routes'],52)
+        self.assertEqual(proof['literal_core_routes'],55)
         self.assertEqual(proof['executable_help_cases'],60)
         self.assertEqual(proof['conversation_families'],44)
         self.assertEqual(proof['conversation_steps'],385)

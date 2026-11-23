@@ -459,6 +459,19 @@
           "profile_id": "DJConnect-Profil",
           "allow_personal_access": "Persönlichen Zugriff erlauben"
         }
+      },
+      "guest_participation": {
+        "title": "Gemeinsam am DJ teilnehmen",
+        "description": "Starte zuerst eine VibeCast-Freigabe. Einstellungen gelten nur für diese Live-Freigabe. Eine Wunschentscheidung ändert die Teilnahme nicht.",
+        "data": {
+          "share_id": "Live-Freigabe",
+          "participation_mode": "Teilnahme",
+          "screen_focus": "Geteilte Moments auf dem Bildschirm zeigen",
+          "max_pending": "Offene Wünsche pro Gast",
+          "request_id": "Musikwunsch",
+          "decision": "Wunschentscheidung",
+          "shared_voice_endpoints": "Sprachgerät im Raum"
+        }
       }
     },
     "error": {
@@ -482,10 +495,13 @@
       "profile_platform_failed": "Das verknüpfte Profil konnte nicht aktualisiert werden. Prüfe die Gerätekopplung und versuche es erneut.",
       "profile_shared_backend_change": "Dieses Profil ist mit mehreren Geräten verknüpft. Verknüpfe dieses Gerät mit einem eigenen Profil, bevor du das Musik-Backend änderst.",
       "shared_dj_settings_required": "Dieses alte Formular hat nichts gespeichert. Ändere deine DJ-Vorlieben in einem DJConnect-Client, der gemeinsame Profileinstellungen unterstützt.",
-      "profile_connection_unavailable": "Die bestehende Musikverbindung ist nicht verfügbar oder nicht eindeutig. Stelle sie wieder her oder wähle ein anderes Profil."
+      "profile_connection_unavailable": "Die bestehende Musikverbindung ist nicht verfügbar oder nicht eindeutig. Stelle sie wieder her oder wähle ein anderes Profil.",
+      "guest_participation_unavailable": "Die Live-Freigabe, der Wunsch oder die Berechtigung hat sich geändert. Öffne die Einstellungen erneut."
     },
     "abort": {
-      "client_retired": "Dieser Client wird nicht mehr unterstützt. Wähle einen unterstützten Client."
+      "client_retired": "Dieser Client wird nicht mehr unterstützt. Wähle einen unterstützten Client.",
+      "guest_participation_updated": "Teilnahme aktualisiert.",
+      "guest_no_live_share": "Starte zuerst eine Live-VibeCast-Freigabe."
     }
   },
   "entity": {

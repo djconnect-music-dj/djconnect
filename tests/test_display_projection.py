@@ -29,6 +29,7 @@ class DisplayProjectionTests(unittest.TestCase):
             "issuer_epoch", "claim_id", "browser_generation", "code")}, share={"mode": "create", "consent": True, **({"include_output_status": True} if include_output_status else {})})
         collected = self.state.collect(**{key: claim[key] for key in (
             "issuer_epoch", "claim_id", "browser_generation", "claim_secret")}, browser_nonce=nonce)
+        self.collected = collected  # Original synthetic grant, retained only by this disposable fixture.
         self.display = self.state._displays[collected["display_id"]]
         return self.moments[0]
 

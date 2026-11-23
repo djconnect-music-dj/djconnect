@@ -64,6 +64,10 @@ class _FencedResponse(web.Response):
             from .display_delivery import MAX_DISPLAY_ARTWORK_BYTES
             raw, mime = result.media
             limit = MAX_DISPLAY_ARTWORK_BYTES
+            from .guest_focus_media import SharedFocusMediaResult
+            if type(result) is SharedFocusMediaResult:
+                from .live_impression import MAX_IMAGE_BYTES
+                limit = MAX_IMAGE_BYTES
         if len(raw) > limit:
             self._display_complete()
             raise DisplayAdmissionError("display_capacity", 503)
@@ -110,12 +114,14 @@ class _FencedResponse(web.Response):
 
 
 class DisplayTransitionView(HomeAssistantView):
+    namespace = "display"
+    service_class = None
     requires_auth = False  # The service enforces ordinary paired/display auth.
 
     def __init__(self, hass, action):
         self.hass, self.action = hass, action
-        self.url = "/api/djconnect/v1/display/" + action
-        self.name = "api:djconnect:display:" + action.replace("/", ":")
+        self.url = "/api/djconnect/v1/" + self.namespace + "/" + action
+        self.name = "api:djconnect:" + self.namespace + ":" + action.replace("/", ":")
 
     async def post(self, request):
         result = None
@@ -133,7 +139,7 @@ class DisplayTransitionView(HomeAssistantView):
             # Transport peer only. Trusted reverse proxies share a source budget;
             # the hard global bound remains effective. Never trust X-Forwarded-For.
             source = str(peer[0])[:128] if isinstance(peer, tuple) and peer else "unknown"
-            result = await DisplayAdmissionService(self.hass, manager).post(self.action, body,
+            result = await (self.service_class or DisplayAdmissionService)(self.hass, manager).post(self.action, body,
                 headers=request.headers, origins=request.headers.getall("Origin", []), source=source)
             result.release()
             return _FencedResponse(result)

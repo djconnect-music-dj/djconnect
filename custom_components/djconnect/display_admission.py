@@ -105,6 +105,14 @@ class DisplayAdmissionState:
         self._shares: dict[str, _Share] = {}
         self._displays: dict[str, _Display] = {}
         self._attempts: dict[str, tuple[int, float]] = {}
+        self._participation = None
+
+    @property
+    def participation(self):
+        if self._participation is None:
+            from .guest_admission import GuestAdmissionState
+            self._participation = GuestAdmissionState(self)
+        return self._participation
 
     def _drop_display(self, display_id: str) -> None:
         display = self._displays.pop(display_id, None)
@@ -118,6 +126,8 @@ class DisplayAdmissionState:
 
     def _drop_share(self, share_id: str) -> None:
         self._shares.pop(share_id, None)
+        if self._participation is not None:
+            self._participation.revoke_share(share_id)
         for claim_id, claim in tuple(self._claims.items()):
             if claim.share_id == share_id:
                 del self._claims[claim_id]
@@ -137,6 +147,8 @@ class DisplayAdmissionState:
             if display.lease_deadline <= now or not display.owner.valid():
                 self._drop_display(display_id)
         self._attempts = {key: item for key, item in self._attempts.items() if item[1] > now}
+        if self._participation is not None:
+            self._participation.prune()
 
     def screen_reservation(self, profile_id: str, session_id: str) -> tuple[str, str, int] | None:
         """Read the current reservation without pruning during response release."""
@@ -161,6 +173,8 @@ class DisplayAdmissionState:
             self._drop_display(display_id)
         self._claims.clear()
         self._shares.clear()
+        if self._participation is not None:
+            self._participation.clear()
         self._attempts.clear()
         self.issuer_epoch = secrets.token_urlsafe(32)
 

@@ -79,7 +79,7 @@
     }catch(_){return null;}
   }
   function later(fn,delay){const timer=setTimeout(()=>{timers.delete(timer);fn();},delay);timers.add(timer);return timer;}
-  function clearContent(){clearArtwork();window.dispatchEvent(new Event("djconnect-display-clear"));}
+  function clearContent(){clearParticipation();clearArtwork();window.dispatchEvent(new Event("djconnect-display-clear"));}
   let claimCanResume=false;
   const artwork=new Map();
   let wantedArtwork=new Map(), artworkBusy=false;
@@ -98,6 +98,81 @@
     wantedArtwork.clear();
     for(const reference of artwork.keys())removeArtwork(reference);
     publishArtwork();
+  }
+  const participationLabels={en:["Scan to join the music conversation","Guest invitation"],nl:["Scan om mee te praten over de muziek","Gastuitnodiging"],de:["Scannen und über die Musik mitreden","Gasteinladung"],fr:["Scanne pour parler de la musique","Invitation des invités"],es:["Escanea para hablar de la música","Invitación para invitados"]};
+  let guestPanel=null,guestQR=null,guestCaption=null,guestPollGeneration=-1,guestQRDeadline=0;
+  let sharedPhoto=null,sharedPhotoWanted=null,failedSharedPhotoRevision=null;
+  function clearSharedPhoto(){
+    sharedPhotoWanted=null;
+    if(sharedPhoto){sharedPhoto.controller.abort();clearTimeout(sharedPhoto.timer);if(sharedPhoto.url)URL.revokeObjectURL(sharedPhoto.url);sharedPhoto=null;}
+    window.dispatchEvent(new CustomEvent("djconnect-shared-photo",{detail:null}));
+  }
+  async function updateSharedPhoto(focus,g,started){
+    const photo=focus.photo;
+    if(!focus.focus_revision || !photo || !/^[a-f0-9]{64}$/.test(photo.revision)){clearSharedPhoto();return;}
+    if(failedSharedPhotoRevision===focus.focus_revision || (sharedPhoto && sharedPhoto.revision===focus.focus_revision))return;
+    clearSharedPhoto();
+    const controller=new AbortController(), pending={revision:focus.focus_revision,controller,url:null,timer:null};
+    sharedPhoto=pending;sharedPhotoWanted=focus.focus_revision;requests.add(controller);
+    const until=Math.min(lease,started+Math.min(30,focus.expires_in)*1000);
+    pending.timer=setTimeout(clearSharedPhoto,Math.max(1,until-now()));
+    const timeout=setTimeout(()=>controller.abort(),20000);
+    try{
+      const response=await fetch("/api/djconnect/v1/participation/display/focus-photo",{method:"POST",credentials:"omit",cache:"no-store",redirect:"error",
+        headers:{"Content-Type":"application/json",Authorization:"Bearer "+grant.grant_token},
+        body:JSON.stringify({contract_version:1,...binding(),focus_revision:focus.focus_revision}),signal:controller.signal});
+      const size=Number(response.headers.get("Content-Length")),mime=response.headers.get("Content-Type");
+      if(!response.ok || !(size>0 && size<=2097152) || !["image/jpeg","image/png"].includes(mime))throw new Error("photo unavailable");
+      const bytes=await response.arrayBuffer();if(bytes.byteLength!==size)throw new Error("photo size");
+      const hash=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",bytes))).map(b=>b.toString(16).padStart(2,"0")).join("");
+      if(hash!==photo.revision || g!==generation || expired() || now()>=until || sharedPhoto!==pending || sharedPhotoWanted!==focus.focus_revision)return;
+      pending.url=URL.createObjectURL(new Blob([bytes],{type:mime}));
+      window.dispatchEvent(new CustomEvent("djconnect-shared-photo",{detail:{focus_revision:focus.focus_revision,
+        url:pending.url,photo,locale:effectiveLocale}}));
+    }catch(_){if(sharedPhoto===pending){failedSharedPhotoRevision=focus.focus_revision;clearSharedPhoto();}}
+    finally{clearTimeout(timeout);requests.delete(controller);}
+  }
+  function clearParticipation(){
+    failedSharedPhotoRevision=null;clearSharedPhoto();
+    guestQRDeadline=0;
+    if(guestPanel){guestPanel.hidden=true;guestQR.removeAttribute("src");}
+    window.dispatchEvent(new CustomEvent("djconnect-shared-focus",{detail:{focused_moment_id:null}}));
+  }
+  async function participationPost(action){
+    const controller=new AbortController();requests.add(controller);
+    const timeout=setTimeout(()=>controller.abort(),10000);
+    try{
+      const response=await fetch("/api/djconnect/v1/participation/display/"+action,{method:"POST",credentials:"omit",cache:"no-store",redirect:"error",
+        headers:{"Content-Type":"application/json",Authorization:"Bearer "+grant.grant_token},
+        body:JSON.stringify({contract_version:1,...binding()}),signal:controller.signal});
+      if(!response.ok)throw new Error("participation unavailable");
+      const raw=await response.text();if(raw.length>96000)throw new Error("size");return JSON.parse(raw);
+    }finally{clearTimeout(timeout);requests.delete(controller);}
+  }
+  window.addEventListener("djconnect-display-return",()=>{if(!expired())void participationPost("return").catch(()=>{});});
+  async function participationPoll(g){
+    if(g!==generation || expired())return;
+    const started=now();
+    try{
+      const focus=await participationPost("focus");
+      if(g!==generation || expired())return;
+      window.dispatchEvent(new CustomEvent("djconnect-shared-focus",{detail:focus}));
+      void updateSharedPhoto(focus,g,started);
+      const invitation=await participationPost("invitation");
+      if(g!==generation || expired() || !(invitation.expires_in>0))return;
+      if(!/^data:image\/svg\+xml;base64,[A-Za-z0-9+/=]+$/.test(invitation.qr_data_uri))return;
+      if(!guestPanel){
+        guestPanel=document.createElement("aside");guestPanel.className="guest-participation";
+        guestQR=document.createElement("img");guestQR.width=176;guestQR.height=176;
+        guestCaption=document.createElement("p");guestPanel.append(guestQR,guestCaption);document.body.append(guestPanel);
+        const style=document.createElement("style");style.textContent=".guest-participation{position:fixed;right:1.5rem;bottom:2.5rem;z-index:40;max-width:13rem;padding:.75rem;border-radius:1rem;background:#17172de8;color:white;text-align:center}.guest-participation img{max-width:100%;height:auto;background:white}.guest-participation p{font:500 .85rem/1.3 system-ui;margin:.5rem 0 0}.guest-participation[hidden]{display:none}";document.head.append(style);
+      }
+      const labels=participationLabels[effectiveLocale]||participationLabels.en;
+      guestCaption.textContent=labels[0];guestQR.alt=labels[1];guestQR.src=invitation.qr_data_uri;
+      guestQRDeadline=started+invitation.expires_in*1000;guestPanel.hidden=now()>=guestQRDeadline;
+      later(()=>{if(guestPanel && now()>=guestQRDeadline){guestPanel.hidden=true;guestQR.removeAttribute("src");}},Math.max(1,guestQRDeadline-now()));
+    }catch(_){if(g===generation && guestPanel){guestPanel.hidden=true;guestQR.removeAttribute("src");}}
+    finally{if(g===generation && !expired())later(()=>participationPoll(g),3000);}
   }
   function updateArtwork(snapshot){
     const wanted=new Map();
@@ -279,6 +354,7 @@
         // The renderer receives only the Core's explicit shared allowlist.
         window.dispatchEvent(new CustomEvent("djconnect-display-snapshot",{detail:snapshot}));
         void updateArtwork(snapshot);panel.hidden=true;
+        if(guestPollGeneration!==g){guestPollGeneration=g;void participationPoll(g);}
       }catch(_){terminal("denied");}
     };
     current.onclose=event=>{

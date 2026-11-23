@@ -77,7 +77,7 @@ def command_family(command, value=None):
         "set_shuffle": "shuffle", "set_repeat": "repeat", "seek_relative": "seek",
         "save_current_track": "favorite", "set_current_track_favorite": "favorite",
         "toggle_current_track_favorite": "favorite", "create_playlist": "playlist",
-        "queue": "queue", "clear_queue": "queue",
+        "queue": "queue", "enqueue_track": "queue", "clear_queue": "queue",
     }.get(command)
 
 
@@ -224,6 +224,7 @@ class DialogueTurn:
     delivery_validators: list[Any] = field(default_factory=list)
     speech_deadline: float | None = None
     fast_control: bool = False
+    participant_actor: Any = None
     accepted_lifecycle: tuple[str, str] | None = None
     reused_result_set: dict | None = None  # Original Core offer; no new actions or leases.
     pending: dict | None = None
@@ -317,6 +318,17 @@ current_turn: ContextVar[DialogueTurn | None] = ContextVar("djconnect_dialogue_t
 
 async def guard_effect_dispatch(*, method=None, path=None, body=None, service=None, target=None, data=None) -> None:
     """Revalidate after adapter awaits, immediately before each effect dispatch."""
+    from ..guest_conversation import current_guest
+    if current_guest.get() is not None:
+        from ..guest_requests import admission_for
+        admission = admission_for(current_guest.get())
+        if admission is None or path is None or service is not None:
+            raise DialogueError("guest_action_not_permitted", 403)
+        turn = current_turn.get()
+        if turn is not None:
+            await turn.guard()
+        admission.guard(method, path, body, dispatch=True)
+        return
     from ..hybrid_service import guard_transport_effect, validate_transport_effect_now
     await guard_transport_effect()
     turn = current_turn.get()
@@ -345,6 +357,7 @@ async def guard_effect_dispatch(*, method=None, path=None, body=None, service=No
                 turn.require_effect("play")
             if family == "queue":
                 media = tuple(parse_qs(parsed.query).get("uri", []))
+                output_id = str((parse_qs(parsed.query).get("device_id") or [""])[0])
         elif service is not None:
             family = {"media_play": "play", "play_media": "play", "media_pause": "pause",
                 "media_next_track": "next", "media_previous_track": "previous",
@@ -537,6 +550,12 @@ class DialogueState:
             # Retry only the accepted RAM response, never reconstruct current
             # artwork/playback from an archival message or repeat its effect.
             deadline = turn.playback_reply_deadline
+        elif turn.participant_actor is not None and response.get("success") is True:
+            # The same bounded receipt cache also owns nonarchival guest
+            # replies. Eviction leaves a conflict tombstone, never a new call.
+            turn.participant_actor.validate()
+            deadline = min(turn.participant_actor.grant.lease_deadline,
+                           (frame.result_set or {}).get('deadline', float('inf')))
         elif (not turn.effect_started and response.get("text_source") == "qualified_catalog_result"
                 and frame.result_set and response.get("result_set", {}).get("result_set_id")):
             deadline = frame.result_set['deadline']

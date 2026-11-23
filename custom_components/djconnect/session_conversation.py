@@ -283,6 +283,9 @@ def history_grant_revision(hass, owner: str, household=None) -> str:
 
 
 def query_service(hass, history_manager=None) -> HistoricalProjectionQueryService:
+    from .guest_conversation import actor_for, GuestPrivateQuery
+    if actor_for(hass) is not None:
+        return GuestPrivateQuery()
     domain = hass.data.setdefault("djconnect", {})
     query = domain.get("session_history_query")
     if query is None:

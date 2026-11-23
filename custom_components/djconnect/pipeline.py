@@ -281,6 +281,10 @@ async def _reserve_qualified_model_call(hass, data, model_guard):
         raise DialogueError("conversation_call_budget", 503)
     if turn is not None:
         turn.prompt_bytes = max(turn.prompt_bytes, len(str(data.get("text") or "").encode()))
+    from .guest_conversation import actor_for
+    guest = actor_for(hass)
+    if guest is not None:
+        await guest.before_model()
     # No instruction-only tool sandbox: enforce HA's advertised control boundary.
     from .ask_dj.dialogue import qualify_agent
     agent = qualify_agent(hass, data.get("agent_id"))

@@ -14,6 +14,8 @@ Selected shared Profile/Session settings consolidation: DJC-PROFILE-SESSION-SETT
 
 Music Canvas v1 owner-selected implementation is SOURCE_DELIVERED / PROTECTED_MERGED. Core contracts, persistent preferences, lifecycle, composition and Samsung/SwitchBot adapters feed the native Apple panel. Joint real-provider/native/hardware acceptance stays Planned/OPEN; no Cast route, deployment or automatic dispatch.
 
+HA shared guest stage3 is implemented locally and remains unmerged: admitted browser/native guests use the same Core service and bounded host-reviewed enqueue. Existing WEB owners are In progress; maintained browser/media source is partial, receiver consumption and physical/provider/editorial acceptance remain open. No automatic dispatch, installation or deployment.
+
 HA-native DJ conversation is owner-selected IN_PROGRESS: personal ingress, explicit endpoint/Profile admission and the existing lifecycle/Voor jou service are protected source delivered (stages1–2 only). Shared guest/request/display owners remain dependencies; no whole-assignment completion, physical satellite/provider acceptance, installation or deployment is claimed.
 
 Music Origin SOURCE_DELIVERED: Core #1669 and Apple #405 protected merged with their own exact-main software/publication evidence. Avatar-menu/native/history source is delivered; MO01–MO18 real-provider, editorial and physical-device/accessibility acceptance remains OPEN. No installation, deployment, new writer or automatic dispatch.
@@ -71,12 +73,12 @@ Frozen raw SHA256 `5b7ae65fba263150e1deacbec865cc44622033afb9125fae995a61b88a348
 | [docs/product/SESSION_HISTORY_SUMMARY_ACCEPTANCE_V1.md](../../../docs/product/SESSION_HISTORY_SUMMARY_ACCEPTANCE_V1.md) | `2ca903977e3cd59888295a7081be577b93175b682a4d162b12159acaa78092a9` |
 | [docs/verification/SESSION_HISTORY_SUMMARY_V1_SOURCE_READBACK.md](../../../docs/verification/SESSION_HISTORY_SUMMARY_V1_SOURCE_READBACK.md) | `5a65bd4853a878c2d6e8a50603fd6b5fb4d1e41225853d94097d010e38faadf4` |
 | [docs/history/prompts/2026-10-13-session-history-summary-finalization.md](../../../docs/history/prompts/2026-10-13-session-history-summary-finalization.md) | `b3d248b51a46e9e4b74439f2331b888ec5e70a80d348ec598601ca8447bada0c` |
-| [docs/product/ASK_DJ_CONVERSATIONAL_EXPERIENCE_V1.md](../../../docs/product/ASK_DJ_CONVERSATIONAL_EXPERIENCE_V1.md) | `cf56c06b16b2f6af0733f432b41bc8077a43f487a437132ed8fe300ee2ccf74f` |
-| [docs/product/ASK_DJ_CONTEXTUAL_DIALOGUE_CONTRACT_V1.md](../../../docs/product/ASK_DJ_CONTEXTUAL_DIALOGUE_CONTRACT_V1.md) | `f1cde20ed447e58761ee6822e3a1b33958330b61498530413a7a2a99f54315c8` |
+| [docs/product/ASK_DJ_CONVERSATIONAL_EXPERIENCE_V1.md](../../../docs/product/ASK_DJ_CONVERSATIONAL_EXPERIENCE_V1.md) | `c96b70357c51867dfd7d1a237cec0a2e2dcd9dd1193a212579cb0068d1f20985` |
+| [docs/product/ASK_DJ_CONTEXTUAL_DIALOGUE_CONTRACT_V1.md](../../../docs/product/ASK_DJ_CONTEXTUAL_DIALOGUE_CONTRACT_V1.md) | `183b81d1d5e5f7298a8ccc777cdd0c81dc6356bbcb158e2af78d1c764ec9421e` |
 | [docs/product/MOMENT_TRACK_INSIGHT_DRILLDOWN_V1.md](../../../docs/product/MOMENT_TRACK_INSIGHT_DRILLDOWN_V1.md) | `6057cd78740abff3a9a6a8c0d6f34f4218a89e10f11ad18a516933e38476cb77` |
 | [DJCONNECT_STORAGE_ARCHITECTURE.md](../../../DJCONNECT_STORAGE_ARCHITECTURE.md) | `40fd31bd4ff256821ec30e2d0430fe7af5ef615fa6e125969cfebbc66d035da5` |
 | [docs/technical/HTTP_API.md](../../../docs/technical/HTTP_API.md) | `080f816226ab2a73acceafa674ed194636c8619f237c7c9056cc7ff7a108b154` |
-| [docs/technical/VOICE_TRANSPORT.md](../../../docs/technical/VOICE_TRANSPORT.md) | `fd7fc4bf74fc84646899d62a46cb8ae710723d977b166e022b450bef11c815fb` |
+| [docs/technical/VOICE_TRANSPORT.md](../../../docs/technical/VOICE_TRANSPORT.md) | `08697d5d9ac49774014d47d1ab6b5c8bd6f942f7b64a436b84ac209e83467dba` |
 | [docs/product/EXPRESSIVE_DJ_PERSONA_CONTRACT.md](../../../docs/product/EXPRESSIVE_DJ_PERSONA_CONTRACT.md) | `c5ed33865b61700edc0133d033d4c17550691744f33c3a271c5b6129e758c842` |
 | [docs/product/KNOWLEDGE_SOURCE_ARCHITECTURE.md](../../../docs/product/KNOWLEDGE_SOURCE_ARCHITECTURE.md) | `35a9bf6760100ed4c0d6766a4c0ada4df2d506f3008f0dd98617844be97cf235` |
 | [docs/verification/ASK_DJ_CONTEXTUAL_DIALOGUE_V1_SOURCE_READBACK.md](../../../docs/verification/ASK_DJ_CONTEXTUAL_DIALOGUE_V1_SOURCE_READBACK.md) | `377bda221f6c6fe0bc542ba53844f67e0a7582f8995175d7b42739f21c6e5157` |
@@ -153,9 +155,11 @@ Frozen raw SHA256 `5b7ae65fba263150e1deacbec865cc44622033afb9125fae995a61b88a348
 | [docs/technical/ASK_DJ_MOMENTS_AVATAR_CONTRACT_V1.md](../../../docs/technical/ASK_DJ_MOMENTS_AVATAR_CONTRACT_V1.md) | `ef7ce68a6af69b34d46037321a3a0774d68bbd1aa90e851ab55f8272acdc07af` |
 | [docs/technical/ASK_DJ_MOMENTS_SOURCE_FINALIZATION_20261120.md](../../../docs/technical/ASK_DJ_MOMENTS_SOURCE_FINALIZATION_20261120.md) | `0a80444ba9e1f0f07c75c49eff227fd60dbf0ae3ca8d406aeff924130dd30719` |
 | [docs/history/prompts/2026-11-20-ask-dj-moments-finalization.md](../../../docs/history/prompts/2026-11-20-ask-dj-moments-finalization.md) | `1c14b90e27b34b64bc37fa533779f310450e6ad0d9e84eeefa3dd9fb08ea212d` |
-| [docs/technical/AUDIO_RENDERER_HOST_ARCHITECTURE.md](../../../docs/technical/AUDIO_RENDERER_HOST_ARCHITECTURE.md) | `d2cd87afe0c6d95f09840e916ac647072b1a9c0f4d389514842ec76b4a7b4f00` |
-| [docs/technical/ROOM_PRESENTATION_ROUTING_ARCHITECTURE.md](../../../docs/technical/ROOM_PRESENTATION_ROUTING_ARCHITECTURE.md) | `4ef1672710d821898517308e0a3573253812960e582d86987527b0759bb7f127` |
-| [CLIENT_CAPABILITY_MATRIX.md](../../../CLIENT_CAPABILITY_MATRIX.md) | `87bdef492c6193cb643a25f7efb56b5b97bea6d7ec267a1a5f8b884d898d1474` |
-| [DJCONNECT_CAPABILITY_MODEL.md](../../../DJCONNECT_CAPABILITY_MODEL.md) | `5870301180d5f8ef95a43a04972107363975db813cb1ea23065409727a6d1df6` |
-| [docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md](../../../docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md) | `9be208409d92e43cdcf79b29e06c1b460da588808b651b7acab6c97006bb7a86` |
-| [SYNC_PROMPTS.md](../../../SYNC_PROMPTS.md) | `2312eed6db047fe8d1e9c5c1597f3d6c1b869b1e2d98a7bf51646cb867c6f95a` |
+| [docs/technical/AUDIO_RENDERER_HOST_ARCHITECTURE.md](../../../docs/technical/AUDIO_RENDERER_HOST_ARCHITECTURE.md) | `a001495ed5c203193406844fa891be2f0581b61ca3b1f7bbc9542baae655aade` |
+| [docs/technical/ROOM_PRESENTATION_ROUTING_ARCHITECTURE.md](../../../docs/technical/ROOM_PRESENTATION_ROUTING_ARCHITECTURE.md) | `110e5d1d9ca11908c19ae8735af36447ec3268265ec53402dcd00f0aa501a767` |
+| [CLIENT_CAPABILITY_MATRIX.md](../../../CLIENT_CAPABILITY_MATRIX.md) | `c0d06385f8fd232a214aed220e0b52b5fb31306c94a8a832e15555277120ec55` |
+| [DJCONNECT_CAPABILITY_MODEL.md](../../../DJCONNECT_CAPABILITY_MODEL.md) | `5b085dd73c78a3b9d78de709d447f460fb39dc4dcbf25d99c6c35f7480bc3be3` |
+| [docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md](../../../docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md) | `a28eea33f6039995a0ecda36c05a9b06ba73c96631ec4caaa692ef4617016382` |
+| [SYNC_PROMPTS.md](../../../SYNC_PROMPTS.md) | `877e633734af30b3c21475a2dde47f155c38cf5174b573baea551738f140bf8e` |
+| [docs/technical/VIBECAST_GUEST_PARTICIPATION_V1.md](../../../docs/technical/VIBECAST_GUEST_PARTICIPATION_V1.md) | `cc83bdabe475acc9125fd0023434553299645744427906f683df8fa8399aecbb` |
+| [docs/history/prompts/2026-11-23-ha-shared-guest-participation.md](../../../docs/history/prompts/2026-11-23-ha-shared-guest-participation.md) | `7afb9a0dddb34d28c05b4259651468cb0374b0004c5abfe34ced0829fea5fb2f` |

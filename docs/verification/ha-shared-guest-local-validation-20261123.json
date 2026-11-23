@@ -1,0 +1,23 @@
+{
+  "product_manifest_sha256": "ba864d325c166416152d1ae259bd3feebe53916b8e8f232b44b0c7d2064db207",
+  "full_root": {
+    "tests": 4951,
+    "passed": 4940,
+    "existing_skips": 11,
+    "exit_code": 0,
+    "log_sha256": "38a6f7913b03adbdbf2f2354a1768b839c66351376907e65f7eeb90ddc340bed"
+  },
+  "actual_ha_executions": 54,
+  "product_files": 343,
+  "source_before_after_equal": true,
+  "ruff": "PASS",
+  "bandit_medium_high": "NONE",
+  "host": "MATCH",
+  "bootstrap": "PASS",
+  "generated_roadmap": "PASS",
+  "installed": "NOT_RUN",
+  "deployment": "NOT_RUN",
+  "real_provider": "NOT_RUN",
+  "physical_satellite": "NOT_RUN",
+  "editorial_acceptance": "OPEN"
+}

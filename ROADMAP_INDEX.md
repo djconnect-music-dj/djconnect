@@ -1,3 +1,45 @@
+## 2026-11-23 — HA-native shared guest stage3 source candidate
+
+### Repository Status
+
+Owner-selected [HA-native DJ conversation #1532](https://github.com/djconnect-music-dj/djconnect/issues/1532) continues on sole Core branch `codex/ha-native-shared-participation-20261123`, based on exact qualified main `bbf56161c4b920ce43f701d3e951e721bba9d6df`. Source #1675 and separate Finalization #1676 are protected merged and individually qualified, including internal publications. The owner separately authorized deletion of only old local `codex/ha-native-dj-conversation-20261122`: complete tree equality, absent remote, no worktree/unpublished work and compare-and-delete were verified. That narrow exception resolved the old `git cherry +` cleanup block; it grants no other deletion. Predecessor admission was `MERGED_RECONCILED` / `WORKSPACE_READY` before this new writer.
+
+### Management Summary
+
+Admitted browser and shared HA-native guests now use the same Core conversation, original choices and request records. The paired host explicitly enables information/request/focus policy; personal Profile history, Music DNA and owner controls stay inaccessible. Requests require host review or explicit bounded automatic enqueue, use the current Spotify output and original recording, and journal one dispatch. Accepted, observed-in-queue and actually-playing statuses are distinct. The maintained Core guest page and display QR/focus/return source use the same share; no second intelligence, Session, queue planner or voice engine exists.
+
+### Roadmap Position
+
+Maintenance27 preserves maintenance26 and all old source/publication proof. Only the eight existing WEB guest/shared/chat/request/effect-policy/enqueue/browser/media owners are selected In progress. Browser/media are explicitly Core-source partial; no receiver deployment, public Live-impressie producer promotion or whole-family completion. `HA-NATIVE-VOICE::ACCEPTANCE` remains Planned / OPEN_ACCEPTANCE. See `docs/technical/VIBECAST_GUEST_PARTICIPATION_V1.md` and immutable prompt `docs/history/prompts/2026-11-23-ha-shared-guest-participation.md`.
+
+### Rolling Horizon (Execution Horizon — Next 5 Planned)
+
+1. **HA-NATIVE-VOICE::ACCEPTANCE** — Planned / OPEN_ACCEPTANCE; source review, real provider/editorial, browser and physical satellite acceptance remain.
+2. **MUSIC-CANVAS::ACCEPTANCE** — Planned / OPEN; earlier source qualification unchanged.
+3. **MUSIC-ORIGIN::ACCEPTANCE** — Planned / OPEN; earlier source qualification unchanged.
+4. **ASK-DJ-MOMENTS::ACCEPTANCE** — Planned / OPEN_ACCEPTANCE; earlier source qualification unchanged.
+5. **SETTINGS::APPLE::EDITOR** — Planned / NOT_ISSUED; no successor dispatch.
+
+The canonical maintenance27 projection records existing selection, not automatic new execution authority.
+
+### Validation and Acceptance
+
+Current qualification is recorded in `docs/verification/ha-shared-guest-qualification-20261123.json`: all343 product files are pinned before/after isolated real HA SDK runs, including the original regression matrix, personal native stages, shared guest driver and display adapters. Model/Spotify/hardware responses are declared fixtures. The new shared driver covers real HA registry, Context/ConversationInput, config/options flows, once-only journaled requests, private-data denial and withdrawal. The browser script contract is a Node DOM/HTTP fixture, not an actual browser or physical scan. Current full regression/static/bootstrap/roadmap results are recorded in `docs/verification/HA_SHARED_GUEST_SOURCE_STATUS_20261123.md`; protected exact-head CI and human review are separate.
+
+The final response fence also rechecks the original public context after awaited HTTP headers: a withdrawn Moment cannot escape in a prepared guest response. Actual event-photo access is conditional on already-public original source, exact display/focus/source/license/image identity and host permission; today's owner-only Live-impressie producer is not made public. No provider/editorial or physical speech/barge-in acceptance is inferred from software fixtures.
+
+### Blocked Items
+
+The new source requires a concrete review PR, current-head checks and an explicit owner merge decision. The integral task remains OPEN for real browser/provider/editorial and physical satellite acceptance. Provider output authority cannot be invented; uncertain enqueue is read back without retrying the effect or retargeting another output.
+
+### Deferred Items
+
+Installation, deployment, receiver package consumption and device activation are not executed. Existing original checkouts, unrelated WIP/branches, rollback and old evidence are preserved. No numerical size or cyclomatic-complexity cleanup is included.
+
+### Repository and Workspace State
+
+`LOCAL_IMPLEMENTATION_NOT_MERGED` / stage3 `LOCAL_SHARED_PARTICIPATION_VALIDATING`. The reviewable PR will establish `REVIEWABLE_FROZEN`; source merge and separate Finalization remain external gates. The current active source branch is retained until its own qualified delivery and cleanup.
+
 ## 2026-11-20 — Live-impressie source delivered; joint acceptance remains open
 
 Core PR [#1661](https://github.com/djconnect-music-dj/djconnect/pull/1661) merged as

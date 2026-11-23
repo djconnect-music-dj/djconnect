@@ -540,3 +540,9 @@ main { height:auto; min-width:0 }
   .flow-card, .flow-live { color:CanvasText; background:Canvas; border:2px solid CanvasText }
   .flow-meta { color:CanvasText }
 }
+
+.shared-moment-focus{position:fixed;inset:14% 16%;z-index:60;overflow:auto;padding:2.5rem;border:1px solid #8e84aa;border-radius:2rem;background:#211d39f5;box-shadow:0 1rem 4rem #0009;color:#f5f0ff;font:1.35rem/1.6 system-ui}
+.shared-moment-focus h2{font-size:1.6rem}.shared-moment-focus img{float:right;max-width:32%;max-height:45%;margin:0 0 1rem 1.5rem;border-radius:1rem}.shared-moment-focus button{display:block;margin-top:1.5rem;padding:.75rem 1rem;border-radius:.75rem;border:1px solid #aba0c9;background:#3f355e;color:inherit;font:inherit}
+@media(max-width:700px){.shared-moment-focus{inset:8% 4%;font-size:1.1rem;padding:1.25rem}}
+
+.shared-moment-focus figure{max-width:48%;float:right;margin:0 0 1.5rem 1.5rem}.shared-moment-focus figure img{float:none;display:block;width:100%;max-width:100%;max-height:50vh;margin:0;object-fit:contain}.shared-moment-focus figcaption{font-size:.7rem;line-height:1.4;overflow-wrap:anywhere}.shared-moment-focus figcaption a{color:inherit}

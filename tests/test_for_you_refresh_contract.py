@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class ForYouRefreshContractTests(unittest.TestCase):
     def test_original_ha_fixture_matches_the_current_producer_and_harness(self):
-        record = json.loads((ROOT/'examples/client_contracts/session_for_you_v1/ha-native-voice-20261122-music-canvas-recovery-20-fe51d2ed.json').read_text())
+        record = json.loads((ROOT/'examples/client_contracts/session_for_you_v1/ha-shared-guest-20261123-music-canvas-recovery-20-fe51d2ed.json').read_text())
         self.assertTrue(record['source_unchanged'])
         for name, digest in record['source_pins'].items():
             self.assertEqual(hashlib.sha256((ROOT/name).read_bytes()).hexdigest(), digest, name)
@@ -38,7 +38,7 @@ class ForYouRefreshContractTests(unittest.TestCase):
             self.assertFalse(played['for_you']['visible'])
 
     def test_output_readback_proof_is_exact_and_keeps_unconfirmed_effects_closed(self):
-        record = json.loads((ROOT/'examples/client_contracts/session_for_you_v1/ha-native-voice-20261122-music-canvas-recovery-20-271b82ec.json').read_text())
+        record = json.loads((ROOT/'examples/client_contracts/session_for_you_v1/ha-shared-guest-20261123-music-canvas-recovery-20-271b82ec.json').read_text())
         self.assertTrue(record['source_unchanged'])
         for name, digest in record['source_pins'].items():
             self.assertEqual(hashlib.sha256((ROOT/name).read_bytes()).hexdigest(), digest, name)

@@ -85,8 +85,9 @@ def validate(root=ROOT):
     blockers = release_blockers(matrix, languages=RELEASE_LANGUAGES)
     base_raw = (root/matrix['existing_single_turn_cases']).read_bytes()
     base = json.loads(base_raw)
-    source = ast.parse((root/'custom_components/djconnect/ask_dj/__init__.py').read_text())
-    names = {node.args[1].value for node in ast.walk(source)
+    sources = [ast.parse((root/path).read_text()) for path in (
+        'custom_components/djconnect/ask_dj/__init__.py','custom_components/djconnect/ask_dj/service.py')]
+    names = {node.args[1].value for source in sources for node in ast.walk(source)
              if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
              and node.func.id == 'AskDjIntent' and len(node.args) > 1
              and isinstance(node.args[1], ast.Constant) and isinstance(node.args[1].value, str)}

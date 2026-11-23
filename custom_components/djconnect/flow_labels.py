@@ -9,6 +9,16 @@ from typing import Any
 
 LABELS = {
     "en": {
+        "guest_participation": "Shared DJ participation",
+        "guest_off": "Off",
+        "guest_information": "Music questions",
+        "guest_review": "Requests with host review",
+        "guest_auto_queue": "Automatically queue requests",
+        "guest_none": "Change participation settings",
+        "guest_consider": "Consider",
+        "guest_accept": "Accept",
+        "guest_reject": "Reject",
+
         "default": "Default",
         "select_device": "Select device",
         "none": "None",
@@ -33,6 +43,16 @@ LABELS = {
         "repair_device_pairing": "Re-pair with new pairing code",
     },
     "nl": {
+        "guest_participation": "Samen meedoen met de DJ",
+        "guest_off": "Uit",
+        "guest_information": "Muziekvragen",
+        "guest_review": "Verzoeken met hostbeoordeling",
+        "guest_auto_queue": "Verzoeken automatisch in de wachtrij",
+        "guest_none": "Deelname-instellingen wijzigen",
+        "guest_consider": "Overwegen",
+        "guest_accept": "Accepteren",
+        "guest_reject": "Afwijzen",
+
         "default": "Standaard",
         "select_device": "Selecteer apparaat",
         "none": "Geen",
@@ -57,6 +77,16 @@ LABELS = {
         "repair_device_pairing": "Opnieuw koppelen met nieuwe koppelcode",
     },
     "de": {
+        "guest_participation": "Gemeinsam am DJ teilnehmen",
+        "guest_off": "Aus",
+        "guest_information": "Musikfragen",
+        "guest_review": "Wünsche mit Gastgeberprüfung",
+        "guest_auto_queue": "Wünsche automatisch einreihen",
+        "guest_none": "Teilnahmeeinstellungen ändern",
+        "guest_consider": "Erwägen",
+        "guest_accept": "Annehmen",
+        "guest_reject": "Ablehnen",
+
         "default": "Standard",
         "select_device": "Gerät auswählen",
         "none": "Keine",
@@ -81,6 +111,16 @@ LABELS = {
         "repair_device_pairing": "Mit neuem Kopplungscode erneut koppeln",
     },
     "fr": {
+        "guest_participation": "Participer ensemble au DJ",
+        "guest_off": "Désactivé",
+        "guest_information": "Questions musicales",
+        "guest_review": "Demandes examinées par l’hôte",
+        "guest_auto_queue": "Mettre les demandes en file automatiquement",
+        "guest_none": "Modifier les paramètres de participation",
+        "guest_consider": "Examiner",
+        "guest_accept": "Accepter",
+        "guest_reject": "Refuser",
+
         "default": "Par défaut",
         "select_device": "Choisir un appareil",
         "none": "Aucun",
@@ -105,6 +145,16 @@ LABELS = {
         "repair_device_pairing": "Associer à nouveau avec un nouveau code",
     },
     "es": {
+        "guest_participation": "Participación compartida con el DJ",
+        "guest_off": "Desactivada",
+        "guest_information": "Preguntas musicales",
+        "guest_review": "Peticiones revisadas por el anfitrión",
+        "guest_auto_queue": "Añadir peticiones a la cola automáticamente",
+        "guest_none": "Cambiar ajustes de participación",
+        "guest_consider": "Considerar",
+        "guest_accept": "Aceptar",
+        "guest_reject": "Rechazar",
+
         "default": "Predeterminado",
         "select_device": "Seleccionar dispositivo",
         "none": "Ninguno",

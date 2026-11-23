@@ -48,6 +48,7 @@ class DisplayShellView(HomeAssistantView):
     url = "/djconnect/vibecast/display"
     name = "api:djconnect:display:shell"
     requires_auth = False
+    filename = "vibecast_display.html"
 
     def __init__(self, hass):
         self.hass = hass
@@ -62,7 +63,7 @@ class DisplayShellView(HomeAssistantView):
         # Public top-level GET normally has no Origin. It allocates no state and
         # contains no installation/Profile/Session, claim, grant or owner token.
         page = await self.hass.async_add_executor_job(
-            (Path(__file__).parent / "vibecast_display.html").read_text)
+            (Path(__file__).parent / self.filename).read_text)
         if selected_ha_origin(self.hass) != origin:
             return web.json_response({"success": False, "error": "display_context_changed"},
                                      status=409, headers=SECURITY_HEADERS)

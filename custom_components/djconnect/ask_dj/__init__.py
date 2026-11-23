@@ -659,7 +659,8 @@ async def _async_blocked_preference_response(
     music_dna_key: str | None,
 ) -> dict[str, Any] | None:
     """Record and answer an explicit music-preference exclusion."""
-    if not blocked_preference:
+    from ..guest_conversation import actor_for
+    if actor_for(hass) is not None or not blocked_preference:
         return None
     classification = AskDjIntent("informational", "blocked_music_preference", "none")
     result = await _record_blocked_music_preference_response(

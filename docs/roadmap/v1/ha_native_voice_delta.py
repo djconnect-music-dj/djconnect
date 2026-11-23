@@ -19,7 +19,7 @@ def sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
-def validate(plan, previous_validator):
+def validate(plan, previous_validator, *, historical_product=False):
     from experience_reconciliation_delta import HISTORICAL_DOCUMENT_SOURCES
     from music_canvas_finalization_delta import validate as canvas_final
     from music_canvas_delta import validate as canvas_source
@@ -66,7 +66,7 @@ def validate(plan, previous_validator):
           'actual existing functional dependencies, not a parallel guest queue')
     docs = receipt.get('documents', [])
     check({d.get('path') for d in docs} == DOCS | {DESIGN, 'SYNC_PROMPTS.md'}
-          and all(sha((ROOT/d['path']).read_bytes()) == d.get('sha256') for d in docs), 'current canonical documents')
+          and all(sha(HISTORICAL_DOCUMENT_SOURCES.get().get(d['path'], ROOT/d['path']).read_bytes()) == d.get('sha256') for d in docs), 'current canonical documents')
     references = {r['path']:r['sha256'] for r in delta['document_references']}
     previous_refs = {r['path']:r['sha256'] for r in prior['document_references']}
     check(set(references) == {r['path'] for r in prior['document_references']} | DOCS | {DESIGN, 'SYNC_PROMPTS.md'}
@@ -86,10 +86,12 @@ def validate(plan, previous_validator):
               if p.is_file() and '__pycache__' not in p.parts and p.suffix != '.pyc'}
     check(receipt.get('product_manifest_path') == manifest_path
           and receipt.get('product_manifest_sha256') == sha(manifest_raw)
-          and json.loads(manifest_raw) == actual and len(actual) == 331, 'exact full current product inventory')
+          and (len(json.loads(manifest_raw)) == 331 if historical_product else
+               json.loads(manifest_raw) == actual and len(actual) == 331), 'exact full current product inventory')
     previous = dict(plan)
     previous['planning_maintenance'] = restored
-    token = HISTORICAL_DOCUMENT_SOURCES.set({r['path']:ROOT/r['snapshot'] for r in snapshots})
+    token = HISTORICAL_DOCUMENT_SOURCES.set({**HISTORICAL_DOCUMENT_SOURCES.get(),
+        **{r['path']:ROOT/r['snapshot'] for r in snapshots}})
     try:
         # Old 328-file publication is checked against its immutable published
         # package manifest; the new exact 331-file candidate is checked above.

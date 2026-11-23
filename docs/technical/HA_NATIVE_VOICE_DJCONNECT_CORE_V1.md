@@ -1,5 +1,11 @@
 # HA-native DJ conversation
 
+## 2026-11-23 shared HA and browser participation candidate
+
+The selected continuation of Core #1532 stage3 is implemented locally on `codex/ha-native-shared-participation-20261123`, based on `bbf56161c4b920ce43f701d3e951e721bba9d6df`. The same Core application service now admits temporary shared-room and browser guests, with host policy, exact-recording proposals, once-only queue dispatch/readback and eligible shared Moment focus/return. The actual paired host and the separate HA OptionsFlow administrator role remain distinct from guest and display principals. No personal Profile history, Music DNA, owner image/audio grants, private transcript or unrestricted controls are granted to a room participant. Core owns the maintained shared renderer and guest page; no duplicate Apple conversation engine or central API/firmware change is introduced.
+
+This is a source candidate, not a protected merge, internal publication, installed capability or physical speech/screen acceptance. Existing broader WEB/Apple/receiver distribution and hardware/editorial acceptance remain open. The previous sections retain the personal-stage scope; the versioned shared contract and limits are in [VIBECAST_GUEST_PARTICIPATION_V1.md](VIBECAST_GUEST_PARTICIPATION_V1.md).
+
 Owner: Core #1532, `DJC-HA-VOICE-CORE-CONVERGENCE-V1-20261107`.
 Implementation selection: owner request of 22 November 2026. Source baseline:
 `d987f79f8c281dab3cbcc1dc4bc5981d129f5d23`. Implementation and physical

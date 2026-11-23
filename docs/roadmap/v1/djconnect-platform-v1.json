@@ -37594,7 +37594,7 @@
     }
   ],
   "planning_maintenance": {
-    "schema_version": "djconnect-federated-planning-delta/26",
+    "schema_version": "djconnect-federated-planning-delta/27",
     "decision_id": "DJC-DJ-PRESENCE-ROADMAP-DESIGN-V1-20261011",
     "decision_url": "https://github.com/pcvantol/djconnect/issues/1101#issuecomment-6110375785",
     "design_date": "2026-10-11",
@@ -38902,8 +38902,8 @@
         "title": "Explicit shared Flow NowPlaying Forecast projection",
         "lane": "DJC-CORE",
         "repository": "pcvantol/djconnect",
-        "status": "Planned",
-        "assignment_status": "NOT_ISSUED",
+        "status": "In progress",
+        "assignment_status": "SELECTED_IN_PROGRESS",
         "scope": "Explicit shared Flow NowPlaying Forecast projection",
         "acceptance_boundary": "Explicit shared Flow NowPlaying Forecast projection; exact source/consumer, visible/audible/physical and joint acceptance OPEN",
         "contract_binding": "docs/product/VIBECAST_ONBOARDING_GUEST_AUTHORITY_V1.md",
@@ -38929,8 +38929,8 @@
         "title": "Independent shared artwork and speech grants expiry attribution",
         "lane": "DJC-CORE",
         "repository": "pcvantol/djconnect",
-        "status": "Planned",
-        "assignment_status": "NOT_ISSUED",
+        "status": "In progress",
+        "assignment_status": "SELECTED_CORE_SOURCE_PARTIAL",
         "scope": "Independent shared artwork and speech grants expiry attribution",
         "acceptance_boundary": "Independent shared artwork and speech grants expiry attribution; exact source/consumer, visible/audible/physical and joint acceptance OPEN",
         "contract_binding": "docs/product/VIBECAST_ONBOARDING_GUEST_AUTHORITY_V1.md",
@@ -38954,8 +38954,8 @@
         "title": "Invitation redemption guest principal and revocation",
         "lane": "DJC-CORE",
         "repository": "pcvantol/djconnect",
-        "status": "Planned",
-        "assignment_status": "NOT_ISSUED",
+        "status": "In progress",
+        "assignment_status": "SELECTED_IN_PROGRESS",
         "scope": "Invitation redemption guest principal and revocation",
         "acceptance_boundary": "Invitation redemption guest principal and revocation; exact source/consumer, visible/audible/physical and joint acceptance OPEN",
         "contract_binding": "docs/product/VIBECAST_ONBOARDING_GUEST_AUTHORITY_V1.md",
@@ -38978,8 +38978,8 @@
         "title": "One responsive web UI and accountless browser join",
         "lane": "DJC-VIBECAST",
         "repository": "pcvantol/djconnect-vibecast-receiver",
-        "status": "Planned",
-        "assignment_status": "NOT_ISSUED",
+        "status": "In progress",
+        "assignment_status": "SELECTED_CORE_SOURCE_PARTIAL",
         "scope": "One responsive web UI and accountless browser join",
         "acceptance_boundary": "One responsive web UI and accountless browser join; exact source/consumer, visible/audible/physical and joint acceptance OPEN",
         "contract_binding": "docs/product/VIBECAST_WEB_FIRST_EXPERIENCE_V1.md",
@@ -39226,8 +39226,8 @@
         "title": "Guest Ask DJ isolated thread safe dispatch and spend budgets",
         "lane": "DJC-CORE",
         "repository": "pcvantol/djconnect",
-        "status": "Planned",
-        "assignment_status": "NOT_ISSUED",
+        "status": "In progress",
+        "assignment_status": "SELECTED_IN_PROGRESS",
         "scope": "Guest Ask DJ isolated thread safe dispatch and spend budgets",
         "acceptance_boundary": "Guest Ask DJ isolated thread safe dispatch and spend budgets; exact source/consumer, visible/audible/physical and joint acceptance OPEN",
         "contract_binding": "docs/product/VIBECAST_ONBOARDING_GUEST_AUTHORITY_V1.md",
@@ -39251,8 +39251,8 @@
         "title": "Exact recording clarification and guest proposal dialogue",
         "lane": "DJC-CORE",
         "repository": "pcvantol/djconnect",
-        "status": "Planned",
-        "assignment_status": "NOT_ISSUED",
+        "status": "In progress",
+        "assignment_status": "SELECTED_IN_PROGRESS",
         "scope": "Exact recording clarification and guest proposal dialogue",
         "acceptance_boundary": "Exact recording clarification and guest proposal dialogue; exact source/consumer, visible/audible/physical and joint acceptance OPEN",
         "contract_binding": "docs/product/VIBECAST_WEB_FIRST_EXPERIENCE_V1.md",
@@ -39275,8 +39275,8 @@
         "title": "DJ request consideration fairness and uncertain-effect policy",
         "lane": "DJC-CORE",
         "repository": "pcvantol/djconnect",
-        "status": "Planned",
-        "assignment_status": "NOT_ISSUED",
+        "status": "In progress",
+        "assignment_status": "SELECTED_IN_PROGRESS",
         "scope": "DJ request consideration fairness and uncertain-effect policy",
         "acceptance_boundary": "DJ request consideration fairness and uncertain-effect policy; exact source/consumer, visible/audible/physical and joint acceptance OPEN",
         "contract_binding": "docs/product/VIBECAST_ONBOARDING_GUEST_AUTHORITY_V1.md",
@@ -39299,8 +39299,8 @@
         "title": "Real enqueue reconciliation and observed-recording Persona announcement",
         "lane": "DJC-CORE",
         "repository": "pcvantol/djconnect",
-        "status": "Planned",
-        "assignment_status": "NOT_ISSUED",
+        "status": "In progress",
+        "assignment_status": "SELECTED_IN_PROGRESS",
         "scope": "Real enqueue reconciliation and observed-recording Persona announcement",
         "acceptance_boundary": "Real enqueue reconciliation and observed-recording Persona announcement; exact source/consumer, visible/audible/physical and joint acceptance OPEN",
         "contract_binding": "docs/product/VIBECAST_WEB_FIRST_EXPERIENCE_V1.md",
@@ -43025,11 +43025,11 @@
       },
       {
         "path": "docs/product/ASK_DJ_CONVERSATIONAL_EXPERIENCE_V1.md",
-        "sha256": "cf56c06b16b2f6af0733f432b41bc8077a43f487a437132ed8fe300ee2ccf74f"
+        "sha256": "c96b70357c51867dfd7d1a237cec0a2e2dcd9dd1193a212579cb0068d1f20985"
       },
       {
         "path": "docs/product/ASK_DJ_CONTEXTUAL_DIALOGUE_CONTRACT_V1.md",
-        "sha256": "f1cde20ed447e58761ee6822e3a1b33958330b61498530413a7a2a99f54315c8"
+        "sha256": "183b81d1d5e5f7298a8ccc777cdd0c81dc6356bbcb158e2af78d1c764ec9421e"
       },
       {
         "path": "docs/product/MOMENT_TRACK_INSIGHT_DRILLDOWN_V1.md",
@@ -43045,7 +43045,7 @@
       },
       {
         "path": "docs/technical/VOICE_TRANSPORT.md",
-        "sha256": "fd7fc4bf74fc84646899d62a46cb8ae710723d977b166e022b450bef11c815fb"
+        "sha256": "08697d5d9ac49774014d47d1ab6b5c8bd6f942f7b64a436b84ac209e83467dba"
       },
       {
         "path": "docs/product/EXPRESSIVE_DJ_PERSONA_CONTRACT.md",
@@ -43353,27 +43353,35 @@
       },
       {
         "path": "docs/technical/AUDIO_RENDERER_HOST_ARCHITECTURE.md",
-        "sha256": "d2cd87afe0c6d95f09840e916ac647072b1a9c0f4d389514842ec76b4a7b4f00"
+        "sha256": "a001495ed5c203193406844fa891be2f0581b61ca3b1f7bbc9542baae655aade"
       },
       {
         "path": "docs/technical/ROOM_PRESENTATION_ROUTING_ARCHITECTURE.md",
-        "sha256": "4ef1672710d821898517308e0a3573253812960e582d86987527b0759bb7f127"
+        "sha256": "110e5d1d9ca11908c19ae8735af36447ec3268265ec53402dcd00f0aa501a767"
       },
       {
         "path": "CLIENT_CAPABILITY_MATRIX.md",
-        "sha256": "87bdef492c6193cb643a25f7efb56b5b97bea6d7ec267a1a5f8b884d898d1474"
+        "sha256": "c0d06385f8fd232a214aed220e0b52b5fb31306c94a8a832e15555277120ec55"
       },
       {
         "path": "DJCONNECT_CAPABILITY_MODEL.md",
-        "sha256": "5870301180d5f8ef95a43a04972107363975db813cb1ea23065409727a6d1df6"
+        "sha256": "5b085dd73c78a3b9d78de709d447f460fb39dc4dcbf25d99c6c35f7480bc3be3"
       },
       {
         "path": "docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md",
-        "sha256": "9be208409d92e43cdcf79b29e06c1b460da588808b651b7acab6c97006bb7a86"
+        "sha256": "a28eea33f6039995a0ecda36c05a9b06ba73c96631ec4caaa692ef4617016382"
       },
       {
         "path": "SYNC_PROMPTS.md",
-        "sha256": "2312eed6db047fe8d1e9c5c1597f3d6c1b869b1e2d98a7bf51646cb867c6f95a"
+        "sha256": "877e633734af30b3c21475a2dde47f155c38cf5174b573baea551738f140bf8e"
+      },
+      {
+        "path": "docs/technical/VIBECAST_GUEST_PARTICIPATION_V1.md",
+        "sha256": "cc83bdabe475acc9125fd0023434553299645744427906f683df8fa8399aecbb"
+      },
+      {
+        "path": "docs/history/prompts/2026-11-23-ha-shared-guest-participation.md",
+        "sha256": "7afb9a0dddb34d28c05b4259651468cb0374b0004c5abfe34ced0829fea5fb2f"
       }
     ],
     "implementation_receipt": {
@@ -44524,6 +44532,131 @@
           "sha256": "97fc993cb8da4ee137d23b6759801c6fc2a3e5ae67c9e58693a1de57567022bb"
         }
       ]
+    },
+    "ha_shared_guest_receipt": {
+      "assignment_id": "DJC-HA-VOICE-CORE-CONVERGENCE-V1-20261107",
+      "base_sha": "bbf56161c4b920ce43f701d3e951e721bba9d6df",
+      "branch": "codex/ha-native-shared-participation-20261123",
+      "predecessor_path": "history/20261123/ha-shared-guest-predecessor-maintenance-v26.json",
+      "predecessor_sha256": "735f7eb1567cf4c70e1f69990f01acbbbaac5b4529cdbb187bab966f80403286",
+      "selected_nodes": [
+        "WEB::GUEST",
+        "WEB::SHARED",
+        "WEB::CHAT",
+        "WEB::REQUEST",
+        "WEB::EFFECT-POLICY",
+        "WEB::ENQUEUE",
+        "WEB::BROWSER",
+        "WEB::MEDIA"
+      ],
+      "source_delivery": "LOCAL_IMPLEMENTATION_NOT_MERGED",
+      "stage3": "LOCAL_SHARED_PARTICIPATION_VALIDATING",
+      "overall_acceptance": "OPEN",
+      "installed": "NOT_RUN",
+      "deployment": "NOT_RUN",
+      "real_provider": "NOT_RUN",
+      "physical_satellite": "NOT_RUN",
+      "editorial_acceptance": "OPEN",
+      "automatic_dispatch": false,
+      "consumer_writes": false,
+      "documents": [
+        {
+          "path": "docs/product/ASK_DJ_CONVERSATIONAL_EXPERIENCE_V1.md",
+          "sha256": "c96b70357c51867dfd7d1a237cec0a2e2dcd9dd1193a212579cb0068d1f20985"
+        },
+        {
+          "path": "docs/product/ASK_DJ_CONTEXTUAL_DIALOGUE_CONTRACT_V1.md",
+          "sha256": "183b81d1d5e5f7298a8ccc777cdd0c81dc6356bbcb158e2af78d1c764ec9421e"
+        },
+        {
+          "path": "docs/technical/VOICE_TRANSPORT.md",
+          "sha256": "08697d5d9ac49774014d47d1ab6b5c8bd6f942f7b64a436b84ac209e83467dba"
+        },
+        {
+          "path": "docs/technical/AUDIO_RENDERER_HOST_ARCHITECTURE.md",
+          "sha256": "a001495ed5c203193406844fa891be2f0581b61ca3b1f7bbc9542baae655aade"
+        },
+        {
+          "path": "docs/technical/ROOM_PRESENTATION_ROUTING_ARCHITECTURE.md",
+          "sha256": "110e5d1d9ca11908c19ae8735af36447ec3268265ec53402dcd00f0aa501a767"
+        },
+        {
+          "path": "CLIENT_CAPABILITY_MATRIX.md",
+          "sha256": "c0d06385f8fd232a214aed220e0b52b5fb31306c94a8a832e15555277120ec55"
+        },
+        {
+          "path": "DJCONNECT_CAPABILITY_MODEL.md",
+          "sha256": "5b085dd73c78a3b9d78de709d447f460fb39dc4dcbf25d99c6c35f7480bc3be3"
+        },
+        {
+          "path": "docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md",
+          "sha256": "a28eea33f6039995a0ecda36c05a9b06ba73c96631ec4caaa692ef4617016382"
+        },
+        {
+          "path": "SYNC_PROMPTS.md",
+          "sha256": "877e633734af30b3c21475a2dde47f155c38cf5174b573baea551738f140bf8e"
+        },
+        {
+          "path": "docs/technical/VIBECAST_GUEST_PARTICIPATION_V1.md",
+          "sha256": "cc83bdabe475acc9125fd0023434553299645744427906f683df8fa8399aecbb"
+        },
+        {
+          "path": "docs/history/prompts/2026-11-23-ha-shared-guest-participation.md",
+          "sha256": "7afb9a0dddb34d28c05b4259651468cb0374b0004c5abfe34ced0829fea5fb2f"
+        }
+      ],
+      "predecessor_documents": [
+        {
+          "path": "docs/product/ASK_DJ_CONVERSATIONAL_EXPERIENCE_V1.md",
+          "snapshot": "docs/roadmap/v1/history/20261123/ha-shared-guest-predecessor-documents/docs/product/ASK_DJ_CONVERSATIONAL_EXPERIENCE_V1.md",
+          "sha256": "cf56c06b16b2f6af0733f432b41bc8077a43f487a437132ed8fe300ee2ccf74f"
+        },
+        {
+          "path": "docs/product/ASK_DJ_CONTEXTUAL_DIALOGUE_CONTRACT_V1.md",
+          "snapshot": "docs/roadmap/v1/history/20261123/ha-shared-guest-predecessor-documents/docs/product/ASK_DJ_CONTEXTUAL_DIALOGUE_CONTRACT_V1.md",
+          "sha256": "f1cde20ed447e58761ee6822e3a1b33958330b61498530413a7a2a99f54315c8"
+        },
+        {
+          "path": "docs/technical/VOICE_TRANSPORT.md",
+          "snapshot": "docs/roadmap/v1/history/20261123/ha-shared-guest-predecessor-documents/docs/technical/VOICE_TRANSPORT.md",
+          "sha256": "fd7fc4bf74fc84646899d62a46cb8ae710723d977b166e022b450bef11c815fb"
+        },
+        {
+          "path": "docs/technical/AUDIO_RENDERER_HOST_ARCHITECTURE.md",
+          "snapshot": "docs/roadmap/v1/history/20261123/ha-shared-guest-predecessor-documents/docs/technical/AUDIO_RENDERER_HOST_ARCHITECTURE.md",
+          "sha256": "d2cd87afe0c6d95f09840e916ac647072b1a9c0f4d389514842ec76b4a7b4f00"
+        },
+        {
+          "path": "docs/technical/ROOM_PRESENTATION_ROUTING_ARCHITECTURE.md",
+          "snapshot": "docs/roadmap/v1/history/20261123/ha-shared-guest-predecessor-documents/docs/technical/ROOM_PRESENTATION_ROUTING_ARCHITECTURE.md",
+          "sha256": "4ef1672710d821898517308e0a3573253812960e582d86987527b0759bb7f127"
+        },
+        {
+          "path": "CLIENT_CAPABILITY_MATRIX.md",
+          "snapshot": "docs/roadmap/v1/history/20261123/ha-shared-guest-predecessor-documents/CLIENT_CAPABILITY_MATRIX.md",
+          "sha256": "87bdef492c6193cb643a25f7efb56b5b97bea6d7ec267a1a5f8b884d898d1474"
+        },
+        {
+          "path": "DJCONNECT_CAPABILITY_MODEL.md",
+          "snapshot": "docs/roadmap/v1/history/20261123/ha-shared-guest-predecessor-documents/DJCONNECT_CAPABILITY_MODEL.md",
+          "sha256": "5870301180d5f8ef95a43a04972107363975db813cb1ea23065409727a6d1df6"
+        },
+        {
+          "path": "docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md",
+          "snapshot": "docs/roadmap/v1/history/20261123/ha-shared-guest-predecessor-documents/docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md",
+          "sha256": "9be208409d92e43cdcf79b29e06c1b460da588808b651b7acab6c97006bb7a86"
+        },
+        {
+          "path": "SYNC_PROMPTS.md",
+          "snapshot": "docs/roadmap/v1/history/20261123/ha-shared-guest-predecessor-documents/SYNC_PROMPTS.md",
+          "sha256": "2312eed6db047fe8d1e9c5c1597f3d6c1b869b1e2d98a7bf51646cb867c6f95a"
+        }
+      ],
+      "product_manifest_path": "docs/verification/ha-shared-guest-product-manifest.json",
+      "product_manifest_sha256": "ba864d325c166416152d1ae259bd3feebe53916b8e8f232b44b0c7d2064db207",
+      "product_file_count": 343,
+      "qualification_path": "docs/verification/ha-shared-guest-qualification-20261123.json",
+      "qualification_sha256": "158f4c6337486ed7ca663db6d1afb72b5786a776fe0cdc1a8b9163e51790ca71"
     }
   }
 }

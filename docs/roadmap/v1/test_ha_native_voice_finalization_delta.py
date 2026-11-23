@@ -17,7 +17,7 @@ class NativeVoiceFinalizationTests(unittest.TestCase):
         nodes = {n['id']:n for n in self.plan['planning_maintenance']['nodes']}
         self.assertEqual(nodes['HA-NATIVE-VOICE::ADOPTION']['status'], 'In progress')
         self.assertEqual(nodes['HA-NATIVE-VOICE::ACCEPTANCE']['status'], 'Planned')
-        self.assertEqual(nodes['WEB::ENQUEUE']['status'], 'Planned')
+        self.assertEqual(nodes['WEB::ENQUEUE']['status'], 'In progress')
 
     def test_false_shared_install_dispatch_or_publication_claim_is_rejected(self):
         for key, value in (('stage3', 'SOURCE_DELIVERED'), ('overall_acceptance', 'PASS'),

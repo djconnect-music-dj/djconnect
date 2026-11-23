@@ -168,6 +168,11 @@ def guard_model(hass, data):
     if value is None or value.hass is not hass:
         return
     value.validate()
+    require_native_backend(hass, data)
+
+
+def require_native_backend(hass, data):
+    """The same nonrecursive backend rule for personal and shared native input."""
     from homeassistant.components.conversation import async_get_agent
     identifier = data.get("agent_id")
     agent = async_get_agent(hass, identifier) if identifier else None
@@ -176,16 +181,39 @@ def guard_model(hass, data):
         raise SessionConversationError("native_voice_backend_agent_required", 409)
 
 
+def conversation_reference(user_input, entry_id, endpoint_id):
+    """Stable first-delivery reference when HA has not returned a conversation ID.
+
+    This derives an identifier only; endpoint/Profile admission remains separate.
+    A retry of the same real HA Context must not manufacture a new conversation.
+    """
+    supplied = getattr(user_input, 'conversation_id', None)
+    if supplied:
+        if not isinstance(supplied, str) or not supplied.strip() or len(supplied) > 128:
+            raise SessionConversationError('invalid_conversation_context', 400)
+        return supplied
+    origin = getattr(getattr(user_input, 'context', None), 'id', None)
+    if isinstance(origin, str) and origin and len(origin) <= 128:
+        return 'ha-' + hashlib.sha256(json.dumps([entry_id, endpoint_id, origin]).encode()).hexdigest()
+    return uuid4().hex
+
+
 async def exchange(hass, runtime, user_input):
     """Translate HA transport once; the existing app boundary owns the complete turn."""
     if current_admission.get() is not None:
         raise SessionConversationError("native_voice_recursive_agent", 409)
+    from .guest_conversation import current_guest, voice_exchange
+    if current_guest.get() is not None:
+        raise SessionConversationError("native_voice_recursive_agent", 409)
+    shared = await voice_exchange(hass, runtime, user_input)
+    if shared is not None:
+        return shared
     value = await admit(hass, runtime, user_input)
     from .pipeline import _assist_context
     token = current_admission.set(value)
     try:
         guard_model(hass, _assist_context(hass, runtime.config))
-        conversation_id = getattr(user_input, "conversation_id", None) or uuid4().hex
+        conversation_id = conversation_reference(user_input, runtime.entry.entry_id, value.device_id)
         if not isinstance(conversation_id, str) or len(conversation_id) > 128:
             raise SessionConversationError("invalid_conversation_context", 400)
         if not getattr(runtime, "native_voice_epoch", None):
@@ -239,6 +267,13 @@ async def exchange(hass, runtime, user_input):
 
 
 COPY = {
+    "shared_context": (
+        "De kamer-toegang is gewijzigd. Activeer Assist opnieuw en stel je vraag nog eens.",
+        "Room access has changed. Activate Assist again and ask your question again.",
+        "Der Raumzugriff hat sich geändert. Aktiviere Assist erneut und stelle deine Frage noch einmal.",
+        "L’accès de la pièce a changé. Réactive Assist et pose à nouveau ta question.",
+        "El acceso de la sala ha cambiado. Activa Assist de nuevo y repite tu pregunta.",
+    ),
     "empty": (
         "Ik heb niets verstaan. Probeer het nog eens.", "I did not hear anything. Please try again.",
         "Ich habe nichts verstanden. Bitte versuche es noch einmal.",

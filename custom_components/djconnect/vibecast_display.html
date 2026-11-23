@@ -544,6 +544,12 @@ main { height:auto; min-width:0 }
   .flow-card, .flow-live { color:CanvasText; background:Canvas; border:2px solid CanvasText }
   .flow-meta { color:CanvasText }
 }
+
+.shared-moment-focus{position:fixed;inset:14% 16%;z-index:60;overflow:auto;padding:2.5rem;border:1px solid #8e84aa;border-radius:2rem;background:#211d39f5;box-shadow:0 1rem 4rem #0009;color:#f5f0ff;font:1.35rem/1.6 system-ui}
+.shared-moment-focus h2{font-size:1.6rem}.shared-moment-focus img{float:right;max-width:32%;max-height:45%;margin:0 0 1rem 1.5rem;border-radius:1rem}.shared-moment-focus button{display:block;margin-top:1.5rem;padding:.75rem 1rem;border-radius:.75rem;border:1px solid #aba0c9;background:#3f355e;color:inherit;font:inherit}
+@media(max-width:700px){.shared-moment-focus{inset:8% 4%;font-size:1.1rem;padding:1.25rem}}
+
+.shared-moment-focus figure{max-width:48%;float:right;margin:0 0 1.5rem 1.5rem}.shared-moment-focus figure img{float:none;display:block;width:100%;max-width:100%;max-height:50vh;margin:0;object-fit:contain}.shared-moment-focus figcaption{font-size:.7rem;line-height:1.4;overflow-wrap:anywhere}.shared-moment-focus figcaption a{color:inherit}
 </style></head><body class="idle"><div class="atmosphere" aria-hidden="true"></div><div class="browser-edge browser-edge-top" aria-hidden="true"></div><div class="browser-edge browser-edge-bottom" aria-hidden="true"></div><main><header><span class="receiver-brand"><svg id="receiver-mark" class="receiver-mark" width="40" height="40" viewBox="0 0 100 100" aria-hidden="true" focusable="false" fill="currentColor">
   <path d="M13 57C8-4 92-4 87 57" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
   <circle cx="50" cy="53" r="28" fill="none" stroke="currentColor" stroke-width="4.5"/>
@@ -713,7 +719,7 @@ main { height:auto; min-width:0 }
 </aside>
 </div></section><footer><section id="up-next" class="up-next" hidden><img id="next-art" alt=""><div><span id="next-label" class="up-next-label"></span><strong id="next-title"></strong><span id="next-artist"></span></div></section><progress id="progress" max="1" value="0" hidden></progress><div class="meta"><span id="time"></span></div></footer></main>
 <footer class="renderer-footer">
-  <span id="renderer-build"><span id="renderer-build-label">VibeCast versie</span> 4.1.0 (5609cb96)</span>
+  <span id="renderer-build"><span id="renderer-build-label">VibeCast versie</span> 4.1.0 (53b5697d)</span>
   <a href="https://djconnect.dev/" rel="noreferrer">
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m9 15 6-6m-5 0h5v5"/></svg>
     djconnect.dev
@@ -1534,12 +1540,56 @@ main { height:auto; min-width:0 }
     window.addEventListener("djconnect-display-artwork",({detail}) => {
       displayArtwork=new Map((Array.isArray(detail) ? detail : []).filter(cover=>String(cover.url).startsWith("blob:"))
         .map(({reference,item_id,url})=>[reference,{item_id,url}]));
+      if(focusedOverlay){
+        const old=Array.from(focusedOverlay.children).find(node=>node.tagName==="IMG");
+        const item=(projection.shared_flow||[]).concat(projection.dj_moments||[]).find(value=>value.moment_id===focusedMomentId);
+        if(old && (!item || !displayArtwork.has((item.artwork||{}).reference)))old.remove();
+      }
       render(false);
+    });
+    let focusedOverlay=null,focusTimer=null,focusedMomentId=null,focusedRevision=null;
+    function clearSharedFocus(){
+      if(focusTimer)clearTimeout(focusTimer);focusTimer=null;
+      if(focusedOverlay)focusedOverlay.remove();focusedOverlay=null;focusedMomentId=focusedRevision=null;
+    }
+    window.addEventListener("djconnect-display-clear",clearSharedFocus);
+    window.addEventListener("djconnect-shared-focus",({detail})=>{
+      if(focusedOverlay && focusedRevision===(detail && detail.focus_revision))return;
+      clearSharedFocus();
+      const item=(projection.shared_flow||[]).concat(projection.dj_moments||[]).find(value=>value.moment_id===(detail && detail.focused_moment_id));
+      const deadline=Math.min(Date.now()+Number((detail && detail.expires_in)||0)*1000,Date.parse((item && item.flow_expires_at)||(item && item.display_expires_at)||""));
+      if(!item || !item.content || !(deadline>Date.now()))return;
+      const overlay=document.createElement("section"),title=document.createElement("h2"),body=document.createElement("p");
+      overlay.className="shared-moment-focus";overlay.setAttribute("role","region");
+      title.textContent=item.title||"";body.textContent=item.content;overlay.append(title,body);
+      const cover=displayArtwork.get((item.artwork && item.artwork.reference));
+      if(item.type!=="live_impression" && cover && cover.item_id===item.playback_item_id && String(cover.url).startsWith("blob:")){
+        const img=document.createElement("img");img.src=cover.url;img.alt="";overlay.prepend(img);
+      }
+      const close=document.createElement("button");close.type="button";close.textContent=(flowLabels[root.lang]||flowLabels.en)[1];
+      close.onclick=()=>{clearSharedFocus();window.dispatchEvent(new Event("djconnect-display-return"));};overlay.append(close);document.body.append(overlay);focusedOverlay=overlay;focusedMomentId=item.moment_id;focusedRevision=detail.focus_revision;
+      focusTimer=setTimeout(clearSharedFocus,deadline-Date.now());
+    });
+    window.addEventListener("djconnect-shared-photo",({detail})=>{
+      if(!focusedOverlay)return;
+      const previous=focusedOverlay.querySelector("figure");if(previous)previous.remove();
+      if(!detail || detail.focus_revision!==focusedRevision || !String(detail.url).startsWith("blob:"))return;
+      const photo=detail.photo||{},figure=document.createElement("figure"),img=document.createElement("img"),caption=document.createElement("figcaption");
+      img.src=detail.url;img.alt=(photo.alt_text||{})[detail.locale] || (photo.alt_text||{}).en || "";
+      caption.textContent=[photo.caption,photo.author,photo.credit,photo.license].filter(Boolean).join(" — ");
+      if(/^https:\/\/commons\.wikimedia\.org\/wiki\/File:/.test(photo.source_url)){
+        const link=document.createElement("a");link.href=photo.source_url;link.textContent=photo.source_url;link.target="_blank";link.rel="noreferrer noopener";caption.append(document.createElement("br"),link);
+      }
+      if(/^https:\/\/creativecommons\.org\//.test(photo.license_url)){
+        const link=document.createElement("a");link.href=photo.license_url;link.textContent=photo.license;link.target="_blank";link.rel="noreferrer noopener";caption.append(document.createElement("br"),link);
+      }
+      figure.append(img,caption);focusedOverlay.prepend(figure);
     });
     window.addEventListener("djconnect-display-snapshot",({detail}) => {
       if (!detail || detail.contract_version !== 1 || !detail.session || detail.session.runtime_state !== "active") return;
       const labels=detail.session_presentation || {};
       sessionId=detail.session.session_id; ended=false; snapshotAccepted=true;
+      if(focusedOverlay && !(detail.shared_flow||[]).concat(detail.dj_moments||[]).some(item=>item.moment_id===focusedMomentId))clearSharedFocus();
       apply({...detail,session:{...detail.session,selected_mood:labels.mood,dj_persona:labels.persona,selected_presence:labels.presence}});
       e("state").textContent=text.live;
     });
@@ -1627,7 +1677,7 @@ main { height:auto; min-width:0 }
     }catch(_){return null;}
   }
   function later(fn,delay){const timer=setTimeout(()=>{timers.delete(timer);fn();},delay);timers.add(timer);return timer;}
-  function clearContent(){clearArtwork();window.dispatchEvent(new Event("djconnect-display-clear"));}
+  function clearContent(){clearParticipation();clearArtwork();window.dispatchEvent(new Event("djconnect-display-clear"));}
   let claimCanResume=false;
   const artwork=new Map();
   let wantedArtwork=new Map(), artworkBusy=false;
@@ -1646,6 +1696,81 @@ main { height:auto; min-width:0 }
     wantedArtwork.clear();
     for(const reference of artwork.keys())removeArtwork(reference);
     publishArtwork();
+  }
+  const participationLabels={en:["Scan to join the music conversation","Guest invitation"],nl:["Scan om mee te praten over de muziek","Gastuitnodiging"],de:["Scannen und über die Musik mitreden","Gasteinladung"],fr:["Scanne pour parler de la musique","Invitation des invités"],es:["Escanea para hablar de la música","Invitación para invitados"]};
+  let guestPanel=null,guestQR=null,guestCaption=null,guestPollGeneration=-1,guestQRDeadline=0;
+  let sharedPhoto=null,sharedPhotoWanted=null,failedSharedPhotoRevision=null;
+  function clearSharedPhoto(){
+    sharedPhotoWanted=null;
+    if(sharedPhoto){sharedPhoto.controller.abort();clearTimeout(sharedPhoto.timer);if(sharedPhoto.url)URL.revokeObjectURL(sharedPhoto.url);sharedPhoto=null;}
+    window.dispatchEvent(new CustomEvent("djconnect-shared-photo",{detail:null}));
+  }
+  async function updateSharedPhoto(focus,g,started){
+    const photo=focus.photo;
+    if(!focus.focus_revision || !photo || !/^[a-f0-9]{64}$/.test(photo.revision)){clearSharedPhoto();return;}
+    if(failedSharedPhotoRevision===focus.focus_revision || (sharedPhoto && sharedPhoto.revision===focus.focus_revision))return;
+    clearSharedPhoto();
+    const controller=new AbortController(), pending={revision:focus.focus_revision,controller,url:null,timer:null};
+    sharedPhoto=pending;sharedPhotoWanted=focus.focus_revision;requests.add(controller);
+    const until=Math.min(lease,started+Math.min(30,focus.expires_in)*1000);
+    pending.timer=setTimeout(clearSharedPhoto,Math.max(1,until-now()));
+    const timeout=setTimeout(()=>controller.abort(),20000);
+    try{
+      const response=await fetch("/api/djconnect/v1/participation/display/focus-photo",{method:"POST",credentials:"omit",cache:"no-store",redirect:"error",
+        headers:{"Content-Type":"application/json",Authorization:"Bearer "+grant.grant_token},
+        body:JSON.stringify({contract_version:1,...binding(),focus_revision:focus.focus_revision}),signal:controller.signal});
+      const size=Number(response.headers.get("Content-Length")),mime=response.headers.get("Content-Type");
+      if(!response.ok || !(size>0 && size<=2097152) || !["image/jpeg","image/png"].includes(mime))throw new Error("photo unavailable");
+      const bytes=await response.arrayBuffer();if(bytes.byteLength!==size)throw new Error("photo size");
+      const hash=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",bytes))).map(b=>b.toString(16).padStart(2,"0")).join("");
+      if(hash!==photo.revision || g!==generation || expired() || now()>=until || sharedPhoto!==pending || sharedPhotoWanted!==focus.focus_revision)return;
+      pending.url=URL.createObjectURL(new Blob([bytes],{type:mime}));
+      window.dispatchEvent(new CustomEvent("djconnect-shared-photo",{detail:{focus_revision:focus.focus_revision,
+        url:pending.url,photo,locale:effectiveLocale}}));
+    }catch(_){if(sharedPhoto===pending){failedSharedPhotoRevision=focus.focus_revision;clearSharedPhoto();}}
+    finally{clearTimeout(timeout);requests.delete(controller);}
+  }
+  function clearParticipation(){
+    failedSharedPhotoRevision=null;clearSharedPhoto();
+    guestQRDeadline=0;
+    if(guestPanel){guestPanel.hidden=true;guestQR.removeAttribute("src");}
+    window.dispatchEvent(new CustomEvent("djconnect-shared-focus",{detail:{focused_moment_id:null}}));
+  }
+  async function participationPost(action){
+    const controller=new AbortController();requests.add(controller);
+    const timeout=setTimeout(()=>controller.abort(),10000);
+    try{
+      const response=await fetch("/api/djconnect/v1/participation/display/"+action,{method:"POST",credentials:"omit",cache:"no-store",redirect:"error",
+        headers:{"Content-Type":"application/json",Authorization:"Bearer "+grant.grant_token},
+        body:JSON.stringify({contract_version:1,...binding()}),signal:controller.signal});
+      if(!response.ok)throw new Error("participation unavailable");
+      const raw=await response.text();if(raw.length>96000)throw new Error("size");return JSON.parse(raw);
+    }finally{clearTimeout(timeout);requests.delete(controller);}
+  }
+  window.addEventListener("djconnect-display-return",()=>{if(!expired())void participationPost("return").catch(()=>{});});
+  async function participationPoll(g){
+    if(g!==generation || expired())return;
+    const started=now();
+    try{
+      const focus=await participationPost("focus");
+      if(g!==generation || expired())return;
+      window.dispatchEvent(new CustomEvent("djconnect-shared-focus",{detail:focus}));
+      void updateSharedPhoto(focus,g,started);
+      const invitation=await participationPost("invitation");
+      if(g!==generation || expired() || !(invitation.expires_in>0))return;
+      if(!/^data:image\/svg\+xml;base64,[A-Za-z0-9+/=]+$/.test(invitation.qr_data_uri))return;
+      if(!guestPanel){
+        guestPanel=document.createElement("aside");guestPanel.className="guest-participation";
+        guestQR=document.createElement("img");guestQR.width=176;guestQR.height=176;
+        guestCaption=document.createElement("p");guestPanel.append(guestQR,guestCaption);document.body.append(guestPanel);
+        const style=document.createElement("style");style.textContent=".guest-participation{position:fixed;right:1.5rem;bottom:2.5rem;z-index:40;max-width:13rem;padding:.75rem;border-radius:1rem;background:#17172de8;color:white;text-align:center}.guest-participation img{max-width:100%;height:auto;background:white}.guest-participation p{font:500 .85rem/1.3 system-ui;margin:.5rem 0 0}.guest-participation[hidden]{display:none}";document.head.append(style);
+      }
+      const labels=participationLabels[effectiveLocale]||participationLabels.en;
+      guestCaption.textContent=labels[0];guestQR.alt=labels[1];guestQR.src=invitation.qr_data_uri;
+      guestQRDeadline=started+invitation.expires_in*1000;guestPanel.hidden=now()>=guestQRDeadline;
+      later(()=>{if(guestPanel && now()>=guestQRDeadline){guestPanel.hidden=true;guestQR.removeAttribute("src");}},Math.max(1,guestQRDeadline-now()));
+    }catch(_){if(g===generation && guestPanel){guestPanel.hidden=true;guestQR.removeAttribute("src");}}
+    finally{if(g===generation && !expired())later(()=>participationPoll(g),3000);}
   }
   function updateArtwork(snapshot){
     const wanted=new Map();
@@ -1827,6 +1952,7 @@ main { height:auto; min-width:0 }
         // The renderer receives only the Core's explicit shared allowlist.
         window.dispatchEvent(new CustomEvent("djconnect-display-snapshot",{detail:snapshot}));
         void updateArtwork(snapshot);panel.hidden=true;
+        if(guestPollGeneration!==g){guestPollGeneration=g;void participationPoll(g);}
       }catch(_){terminal("denied");}
     };
     current.onclose=event=>{

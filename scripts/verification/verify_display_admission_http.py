@@ -123,6 +123,9 @@ async def main():
     hass.config.external_url = selected
     device_registry.async_setup(hass)
     await device_registry.async_load(hass, load_empty=True)
+    # HA 2026.11 registries await initialized ConfigEntries even when empty.
+    hass.config_entries = ConfigEntries(hass, {})
+    await hass.config_entries.async_initialize()
     await entity_registry.async_load(hass, load_empty=True)
     await area_registry.async_load(hass, load_empty=True)
     hass.auth = await auth.auth_manager_from_config(hass, [{"type": "homeassistant"}], [])

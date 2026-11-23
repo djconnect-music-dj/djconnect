@@ -71,7 +71,7 @@ class DisplayTransportTests(unittest.IsolatedAsyncioTestCase):
         def release():
             if not current:
                 raise self.module.DisplayAdmissionError("display_context_changed")
-        response = self.module._FencedResponse(SimpleNamespace(payload={"grant_token": "unit-secret"}, release=release, complete=Mock()))
+        response = self.module._FencedResponse(SimpleNamespace(media=None, payload={"grant_token": "unit-secret"}, release=release, complete=Mock()))
         transport = Mock()
         response._req = SimpleNamespace(transport=transport)
         current = False
@@ -83,7 +83,7 @@ class DisplayTransportTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_current_response_releases_only_once_through_normal_aiohttp_body_writer(self):
         release = Mock()
-        response = self.module._FencedResponse(SimpleNamespace(payload={"success": True}, release=release, complete=Mock()))
+        response = self.module._FencedResponse(SimpleNamespace(media=None, payload={"success": True}, release=release, complete=Mock()))
         self.assertEqual(json.loads(response.body), {"success": True})
         with patch.object(self.module.web.Response, "write_eof", new_callable=AsyncMock) as write:
             await response.write_eof()
@@ -92,15 +92,15 @@ class DisplayTransportTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_route_list_is_closed_and_read_only_scope_not_catch_all(self):
         views = self.module.transition_views(SimpleNamespace())
-        self.assertEqual(len(views), 10)
-        self.assertEqual(len({view.url for view in views}), 10)
+        self.assertEqual(len(views), 11)
+        self.assertEqual(len({view.url for view in views}), 11)
         self.assertTrue(all("{" not in view.url for view in views))
 
     async def test_blocked_prepare_aborts_and_frees_actual_shared_reservation(self):
         from custom_components.djconnect.display_delivery import display_live_hub
         hub = display_live_hub(SimpleNamespace())
         complete = hub.reserve_projection("blocked")
-        response = self.module._FencedResponse(SimpleNamespace(payload={"success": True}, release=Mock(), complete=complete))
+        response = self.module._FencedResponse(SimpleNamespace(media=None, payload={"success": True}, release=Mock(), complete=complete))
         request = SimpleNamespace(transport=Mock())
         async def blocked(*_args):
             await asyncio.Event().wait()
@@ -117,7 +117,7 @@ class DisplayTransportTests(unittest.IsolatedAsyncioTestCase):
         from custom_components.djconnect.display_delivery import display_live_hub
         hub = display_live_hub(SimpleNamespace())
         complete = hub.reserve_projection("blocked")
-        response = self.module._FencedResponse(SimpleNamespace(payload={"success": True}, release=Mock(), complete=complete))
+        response = self.module._FencedResponse(SimpleNamespace(media=None, payload={"success": True}, release=Mock(), complete=complete))
         response._req = SimpleNamespace(transport=Mock())
         response._display_send_deadline = asyncio.get_running_loop().time() + 0.02
         async def blocked(*_args):

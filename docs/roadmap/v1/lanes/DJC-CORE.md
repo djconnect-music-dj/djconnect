@@ -14,6 +14,8 @@ Selected shared Profile/Session settings consolidation: DJC-PROFILE-SESSION-SETT
 
 Music Canvas v1 owner-selected implementation is SOURCE_DELIVERED / PROTECTED_MERGED. Core contracts, persistent preferences, lifecycle, composition and Samsung/SwitchBot adapters feed the native Apple panel. Joint real-provider/native/hardware acceptance stays Planned/OPEN; no Cast route, deployment or automatic dispatch.
 
+HA shared guest stage3 is implemented locally and remains unmerged: admitted browser/native guests use the same Core service and bounded host-reviewed enqueue. Existing WEB owners are In progress; maintained browser/media source is partial, receiver consumption and physical/provider/editorial acceptance remain open. No automatic dispatch, installation or deployment.
+
 HA-native DJ conversation is owner-selected IN_PROGRESS: personal ingress, explicit endpoint/Profile admission and the existing lifecycle/Voor jou service are protected source delivered (stages1–2 only). Shared guest/request/display owners remain dependencies; no whole-assignment completion, physical satellite/provider acceptance, installation or deployment is claimed.
 
 Music Origin SOURCE_DELIVERED: Core #1669 and Apple #405 protected merged with their own exact-main software/publication evidence. Avatar-menu/native/history source is delivered; MO01–MO18 real-provider, editorial and physical-device/accessibility acceptance remains OPEN. No installation, deployment, new writer or automatic dispatch.
@@ -67,17 +69,17 @@ A product choice: LIMITED_APP_ATTESTED_REPORTED_ROUTE selected with the stated c
 - `WEB::DISPOSITION` — Planned; Implement reviewed web-first legacy disposition
 - `WEB::TRUST` — In progress; Qualify browser-bound onboarding and guest trust contract
 - `WEB::DISPLAY` — In progress; Separate HA code and readonly display grant
-- `WEB::SHARED` — Planned; Explicit shared Flow NowPlaying Forecast projection
-- `WEB::MEDIA` — Planned; Independent shared artwork and speech grants expiry attribution
-- `WEB::GUEST` — Planned; Invitation redemption guest principal and revocation
+- `WEB::SHARED` — In progress; Explicit shared Flow NowPlaying Forecast projection
+- `WEB::MEDIA` — In progress; Independent shared artwork and speech grants expiry attribution
+- `WEB::GUEST` — In progress; Invitation redemption guest principal and revocation
 - `WEB::DISCOVERY` — Planned; Admission-scoped HA local discovery announcement
 - `WEB::REACTIONS` — Planned; Five subject-bound ephemeral reactions and bounded sparkle
 - `WEB::AGGREGATE` — Planned; Temporary audience aggregation and host lock budget policy
 - `WEB::INFLUENCE` — Planned; Bounded DJ-led Mood direction influence and owner confirmation
-- `WEB::CHAT` — Planned; Guest Ask DJ isolated thread safe dispatch and spend budgets
-- `WEB::REQUEST` — Planned; Exact recording clarification and guest proposal dialogue
-- `WEB::EFFECT-POLICY` — Planned; DJ request consideration fairness and uncertain-effect policy
-- `WEB::ENQUEUE` — Planned; Real enqueue reconciliation and observed-recording Persona announcement
+- `WEB::CHAT` — In progress; Guest Ask DJ isolated thread safe dispatch and spend budgets
+- `WEB::REQUEST` — In progress; Exact recording clarification and guest proposal dialogue
+- `WEB::EFFECT-POLICY` — In progress; DJ request consideration fairness and uncertain-effect policy
+- `WEB::ENQUEUE` — In progress; Real enqueue reconciliation and observed-recording Persona announcement
 - `WEB::JOINT` — Planned; Joint browser native media lifecycle physical five-language acceptance
 - `SPEECH::CORE::CONTRACT` — Completed; Shared narration and speech/source contract; existing owner selection6189231491 only
 - `SPEECH::CORE::DELIVERY` — Completed; Owner speech/manual replay and renderer voice admission; existing owner selection6189231491 only

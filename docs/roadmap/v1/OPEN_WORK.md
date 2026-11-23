@@ -14,6 +14,8 @@ Selected shared Profile/Session settings consolidation: DJC-PROFILE-SESSION-SETT
 
 Music Canvas v1 owner-selected implementation is SOURCE_DELIVERED / PROTECTED_MERGED. Core contracts, persistent preferences, lifecycle, composition and Samsung/SwitchBot adapters feed the native Apple panel. Joint real-provider/native/hardware acceptance stays Planned/OPEN; no Cast route, deployment or automatic dispatch.
 
+HA shared guest stage3 is implemented locally and remains unmerged: admitted browser/native guests use the same Core service and bounded host-reviewed enqueue. Existing WEB owners are In progress; maintained browser/media source is partial, receiver consumption and physical/provider/editorial acceptance remain open. No automatic dispatch, installation or deployment.
+
 HA-native DJ conversation is owner-selected IN_PROGRESS: personal ingress, explicit endpoint/Profile admission and the existing lifecycle/Voor jou service are protected source delivered (stages1–2 only). Shared guest/request/display owners remain dependencies; no whole-assignment completion, physical satellite/provider acceptance, installation or deployment is claimed.
 
 Music Origin SOURCE_DELIVERED: Core #1669 and Apple #405 protected merged with their own exact-main software/publication evidence. Avatar-menu/native/history source is delivered; MO01–MO18 real-provider, editorial and physical-device/accessibility acceptance remains OPEN. No installation, deployment, new writer or automatic dispatch.
@@ -67,20 +69,20 @@ A product choice: LIMITED_APP_ATTESTED_REPORTED_ROUTE selected with the stated c
 - `WEB::BOOTSTRAP` — Planned: Temporary encrypted rendezvous service; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
 - `WEB::DISPLAY` — In progress: Separate HA code and readonly display grant; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
 - `WEB::OWNER-SCANNER` — Planned: Paired owner scanner and explicit installation confirmation; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
-- `WEB::SHARED` — Planned: Explicit shared Flow NowPlaying Forecast projection; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
-- `WEB::MEDIA` — Planned: Independent shared artwork and speech grants expiry attribution; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
-- `WEB::GUEST` — Planned: Invitation redemption guest principal and revocation; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
-- `WEB::BROWSER` — Planned: One responsive web UI and accountless browser join; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
+- `WEB::SHARED` — In progress: Explicit shared Flow NowPlaying Forecast projection; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
+- `WEB::MEDIA` — In progress: Independent shared artwork and speech grants expiry attribution; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
+- `WEB::GUEST` — In progress: Invitation redemption guest principal and revocation; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
+- `WEB::BROWSER` — In progress: One responsive web UI and accountless browser join; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
 - `WEB::DISTRIBUTION` — Planned: Public website/CI/Pages/domain, service adapter, Apple/HA onboarding and full shared guest acceptance are distinct; no executor ACK or product PASS.
 - `WEB::DISCOVERY` — Planned: Admission-scoped HA local discovery announcement; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
 - `WEB::APP` — Planned: Isolated temporary guest shell discovery scanner leave home restore; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
 - `WEB::REACTIONS` — Planned: Five subject-bound ephemeral reactions and bounded sparkle; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
 - `WEB::AGGREGATE` — Planned: Temporary audience aggregation and host lock budget policy; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
 - `WEB::INFLUENCE` — Planned: Bounded DJ-led Mood direction influence and owner confirmation; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
-- `WEB::CHAT` — Planned: Guest Ask DJ isolated thread safe dispatch and spend budgets; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
-- `WEB::REQUEST` — Planned: Exact recording clarification and guest proposal dialogue; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
-- `WEB::EFFECT-POLICY` — Planned: DJ request consideration fairness and uncertain-effect policy; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
-- `WEB::ENQUEUE` — Planned: Real enqueue reconciliation and observed-recording Persona announcement; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
+- `WEB::CHAT` — In progress: Guest Ask DJ isolated thread safe dispatch and spend budgets; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
+- `WEB::REQUEST` — In progress: Exact recording clarification and guest proposal dialogue; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
+- `WEB::EFFECT-POLICY` — In progress: DJ request consideration fairness and uncertain-effect policy; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
+- `WEB::ENQUEUE` — In progress: Real enqueue reconciliation and observed-recording Persona announcement; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
 - `WEB::JOINT` — Planned: Joint browser native media lifecycle physical five-language acceptance; exact source/consumer, visible/audible/physical and joint acceptance OPEN.
 - `SPEECH::APPLE::ADOPTION` — Planned: Core software, installed, native/audible and joint evidence independent; no consumer dispatch.
 - `SPEECH::JOINT::ACCEPTANCE` — Planned: Core software, installed, native/audible and joint evidence independent; no consumer dispatch.
