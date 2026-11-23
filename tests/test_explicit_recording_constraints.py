@@ -181,3 +181,33 @@ class InlineRecordingOutputTests(unittest.TestCase):
                 'Play Children by Artist from the album Piano on Speaker',{},object(),
                 inventory=AsyncMock(return_value=[{'id':'one','name':'Speaker'}]),offer=offer,turn=turn))
         offer.assert_not_awaited()
+
+    def test_actual_current_supplier_failure_empty_and_unsupported_never_read_ui_cache(self):
+        cases=(RuntimeError('actual inventory unavailable'),
+               {'success':True,'inventory':'current_provider','devices':[]},
+               {'success':True,'devices':[{'id':'old-id','name':'Speaker'}]})
+        text='Play Children by Armin van Buuren from the album Piano on Speaker'
+        runtime=types.SimpleNamespace(device_status={'available_outputs':[{'id':'old-id','name':'Speaker'}]})
+        for value in cases:
+            with self.subTest(value=value):
+                read=AsyncMock(side_effect=value) if isinstance(value,Exception) else AsyncMock(return_value=value)
+                turn=types.SimpleNamespace(guard=AsyncMock(),play_output_id='old-id')
+                offer=AsyncMock()
+                with patch('custom_components.djconnect.use_cases.run_music_command',read):
+                    result=asyncio.run(self.output.prepare(object(),runtime,text,{},object(),
+                        inventory=self.output.current_inventory,offer=offer,turn=turn))
+                self.assertEqual(result,(text,None))
+                self.assertEqual(read.await_args.args[2:],('devices',{'inventory':'current_provider'}))
+                offer.assert_not_awaited()
+
+    def test_current_supplier_uses_actual_provider_result_without_known_device_merge(self):
+        backend_module=importlib.import_module('custom_components.djconnect.spotify_backend')
+        runtime=types.SimpleNamespace(config={},device_status={'available_outputs':[{'id':'old-id','name':'Speaker'}]})
+        backend=backend_module.SpotifyBackend(object(),runtime)
+        for actual in ([],[{'id':'live-id','name':'Live speaker'}]):
+            with self.subTest(actual=actual):
+                backend._request=AsyncMock(return_value={'devices':actual})
+                result=asyncio.run(backend.current_output_devices())
+                self.assertEqual([d['id'] for d in result],[d['id'] for d in actual])
+                self.assertEqual(runtime.device_status['available_outputs'],[{'id':'old-id','name':'Speaker'}])
+                backend._request.assert_awaited_once_with('GET','/me/player/devices')

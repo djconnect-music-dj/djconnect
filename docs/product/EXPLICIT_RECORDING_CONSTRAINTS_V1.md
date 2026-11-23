@@ -13,7 +13,11 @@ matching recordings fail closed without a playback write. Punctuation/case and
 Unicode normalization do not permit edition, remix or album substitutions.
 
 An inline speaker suffix may be separated only after exactly one current,
-non-cached, unrestricted backend inventory device matches. If its exact device
+non-cached, unrestricted backend inventory device matches. The internal devices
+read variant `inventory=current_provider` invokes a direct provider inventory
+read, without cache, known-device merge, persistence or UI-state fallback.
+An exception, malformed/empty current result or an adapter lacking that contract
+provides no positive output match. If its exact device
 ID is already selected by the existing dialogue output owner, Core retains that
 binding. Otherwise Core offers the existing Play-here continuation; its existing
 owner revalidates the device ID and single-use retained request before dispatch.

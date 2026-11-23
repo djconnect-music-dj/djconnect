@@ -199,6 +199,9 @@ async def handle_spotify_command(
     if normalized == "status":
         return {"success": True, "playback": await backend.playback_state()}
     if normalized == "devices":
+        if value == {"inventory":"current_provider"}:
+            return {"success":True,"inventory":"current_provider",
+                    "devices":await backend.current_output_devices()}
         return {"success": True, "devices": await backend.devices()}
     if normalized == "queue":
         return {"success": True, **await backend.queue()}
@@ -1045,6 +1048,17 @@ class SpotifyBackend:
         sample = state.sample
         if sample and sample[0] == track_id and time.monotonic() < sample[1]:
             playback["is_liked"] = playback["favorite_status"] = sample[2]
+
+    async def current_output_devices(self) -> list[dict[str, Any]]:
+        """Current provider inventory only; never cache/merge/persist a fallback."""
+        data = await self._request("GET", "/me/player/devices")
+        from .ask_dj.dialogue import current_turn
+        turn = current_turn.get()
+        if turn is not None:
+            await turn.guard()
+        if not isinstance(data, dict) or not isinstance(data.get("devices"), list):
+            raise SpotifyBackendError("Current output inventory is unavailable")
+        return [_normalize_device(device) for device in data["devices"] if isinstance(device, dict)]
 
     async def devices(self, *, fresh: bool = False) -> list[dict[str, Any]]:
         async def load():

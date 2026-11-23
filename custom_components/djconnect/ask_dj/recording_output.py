@@ -4,6 +4,19 @@ import re
 from ..music_intent import parse_spoken_music_request
 
 
+async def current_inventory(hass, runtime):
+    """A source read, not a freshness label inferred from retained UI state."""
+    from ..use_cases import run_music_command
+    try:
+        result = await run_music_command(hass, runtime, 'devices', {'inventory':'current_provider'})
+    except Exception:  # An unavailable source cannot authorize suffix removal.
+        return []
+    if (not isinstance(result, dict) or result.get('success') is not True
+            or result.get('inventory') != 'current_provider' or not isinstance(result.get('devices'), list)):
+        return []
+    return result['devices']
+
+
 def inventory_suffix(text, devices):
     """Matching produces data, never an output grant or transfer."""
     if not parse_spoken_music_request(text).get('album'):

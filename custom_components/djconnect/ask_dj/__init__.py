@@ -2179,9 +2179,9 @@ async def _handle_hybrid(
     if not classification.play:
         return await _deferred_playback_request_response(hass, runtime, text)
     from .dialogue import current_turn
-    from .recording_output import prepare
+    from .recording_output import prepare, current_inventory
     text, output_response = await prepare(hass, runtime, text, payload, classification,
-        inventory=_available_output_devices, offer=_playback_output_selection_response,
+        inventory=current_inventory, offer=_playback_output_selection_response,
         turn=current_turn.get())
     if output_response is not None:
         return output_response
