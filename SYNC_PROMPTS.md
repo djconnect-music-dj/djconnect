@@ -8144,3 +8144,10 @@ committed device/Profile/source, SQLite consent and signer before publication.
 Resolve/publication are not native enrollment. Production audience and tables
 are separate from existing HA-dev CF-machine qualification. Original App Attest,
 first-key proof/ACK and independent widget target/policy/native gates remain.
+
+Native installation key custody is partitioned by the actual origin,
+installation ID and original committed PairJournal registration binding, not a
+caller hash or global shared HA ID. Original-pair credential rotation cannot
+regenerate it. The private original publication credential ledger is strictly
+negative-only for the existing retirement journal after unpair/restart; it must
+never enter positive enrollment, issuer or native-clock restoration.
