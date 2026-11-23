@@ -8151,3 +8151,11 @@ caller hash or global shared HA ID. Original-pair credential rotation cannot
 regenerate it. The private original publication credential ledger is strictly
 negative-only for the existing retirement journal after unpair/restart; it must
 never enter positive enrollment, issuer or native-clock restoration.
+
+The signed Widget delegation request and exact role-ACK fields are frozen in
+`NATIVE_INSTALLATION_PUBLISHER_V1.md`. Core signs the canonical actual first-key
+receipt plus unchanged Surface Enrolment with its original P-256 custodian.
+Only an actual current own-principal API winner may supply a role acknowledgement;
+its original role expiry is distinct from the initial first-key request window.
+Root owns the private once-only first-key→WidgetRoleKeyCustody transition. No
+status/replay, raw signer export, operator alias or invented native clock qualifies.
