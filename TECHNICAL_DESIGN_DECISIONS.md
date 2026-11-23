@@ -1607,3 +1607,11 @@ prebody whole-attempt budgets, original purpose/challenge deadlines and
 once/UNKNOWN history; synchronous child-only negative withdrawal precedes
 awaits. No original transcript mutation, new clock profile, provider activation
 or native acceptance follows from this documentary selection.
+# Native installation crypto qualification (24 November 2026)
+
+Concrete installation-owned key custody tests require real cryptography50.0.1,
+matching the already inspected Home Assistant environment. Pin it in the existing
+developer requirements consumed by normal unit CI; do not skip or mock the
+cryptographic tests when a lightweight environment lacks the library. Existing
+runtime dependency ownership remains with Home Assistant. This is a test-tool
+selection, not a native enrollment, provider or device acceptance claim.
