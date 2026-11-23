@@ -321,7 +321,9 @@ async def execute_plan(hass, runtime, text, plan, scope):
                 raise DialogueError("conversation_context_changed", 409)
             if pending is not None and plan.angle == "age":
                 bind_age_pending(turn)
-                turn.public_age_target = plan.age_target
+                # A valid legacy plan can omit the optional target. It must
+                # not undo an already accepted choice of musician age.
+                turn.public_age_target = plan.age_target or ("person_age" if pending["stage"] == "choose_person" else "")
             turn.effect_validators.append(validate_recent)
             turn.delivery_validators.append(validate_recent)
             turn.source_request_hashes.add(recent.request_hash)

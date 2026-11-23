@@ -289,3 +289,34 @@ class AgeClarificationTests(unittest.IsolatedAsyncioTestCase):
             p=r.research_projection('Example Band',[source],{'state':'available'})
             self.assertIsNone(band_age_question(p,'nl',age_target='person_age'))
         self.assertNotEqual(band_age_question(projection,'nl',age_target='invented'),'Welke muzikant bedoel je?')
+
+
+    async def test_legacy_plan_cannot_undo_person_choice_but_explicit_band_choice_can(self):
+        from custom_components.djconnect.ask_dj import public_research as r
+        f=shared.SharedDialogueTest();await f.asyncSetUp()
+        target=['person_age'];calls=[]
+        async def research(subject,question,language,guard,**kwargs):
+            await guard();self.assertEqual(subject,'Example Band')
+            return self.sources(),{'state':'available','synthetic_source':True}
+        async def agent(hass,data,**kwargs):
+            p=json.loads(data['text'].split('\nData:\n',1)[1]);calls.append(p)
+            proposal={'read':'research','reference':'recent','exclude_current':False,'angle':'age'}
+            if target[0]: proposal['age_target']=target[0]
+            return {'response':{'speech':{'plain':{'speech':json.dumps(proposal)}}}}
+        try:
+            with patch.object(r,'research',research),patch.object(f.pipeline,'_call_conversation_process_transport',agent):
+                first,code=await f.request('Hoe oud is Example Band?',identifier='stage-first',language='nl')
+                self.assertEqual(code,200,first)
+                chosen,code=await f.request('Leeftijd',identifier='stage-person',language='nl')
+                self.assertEqual(code,200,chosen);self.assertEqual(chosen['text'],'Welke muzikant bedoel je?')
+                frame=next(iter(f.history.dialogue.owners['profile:profile-a'].values()))
+                deadline=frame.pending['deadline']
+                target[0]=''
+                again,code=await f.request('De muzikant',identifier='stage-name-unspecified',language='nl')
+                self.assertEqual(code,200,again);self.assertEqual(again['text'],chosen['text'])
+                self.assertEqual(frame.pending['stage'],'choose_person');self.assertEqual(frame.pending['deadline'],deadline)
+                target[0]='band_duration'
+                band,code=await f.request('Ik bedoel de band zelf',identifier='stage-explicit-switch',language='nl')
+                self.assertEqual(code,200,band);self.assertIn('1996',band['text']);self.assertIsNone(frame.pending)
+                self.assertEqual(len(calls),3);self.assertEqual(f.effects,[])
+        finally: await f.asyncTearDown()
