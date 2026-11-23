@@ -14,6 +14,8 @@ Selected shared Profile/Session settings consolidation: DJC-PROFILE-SESSION-SETT
 
 Music Canvas v1 owner-selected implementation is SOURCE_DELIVERED / PROTECTED_MERGED. Core contracts, persistent preferences, lifecycle, composition and Samsung/SwitchBot adapters feed the native Apple panel. Joint real-provider/native/hardware acceptance stays Planned/OPEN; no Cast route, deployment or automatic dispatch.
 
+HA shared guest stage3 is implemented locally and remains unmerged: admitted browser/native guests use the same Core service and bounded host-reviewed enqueue. Existing WEB owners are In progress; maintained browser/media source is partial, receiver consumption and physical/provider/editorial acceptance remain open. No automatic dispatch, installation or deployment.
+
 HA-native DJ conversation is owner-selected IN_PROGRESS: personal ingress, explicit endpoint/Profile admission and the existing lifecycle/Voor jou service are protected source delivered (stages1–2 only). Shared guest/request/display owners remain dependencies; no whole-assignment completion, physical satellite/provider acceptance, installation or deployment is claimed.
 
 Music Origin SOURCE_DELIVERED: Core #1669 and Apple #405 protected merged with their own exact-main software/publication evidence. Avatar-menu/native/history source is delivered; MO01–MO18 real-provider, editorial and physical-device/accessibility acceptance remains OPEN. No installation, deployment, new writer or automatic dispatch.
@@ -89,20 +91,20 @@ A product choice: LIMITED_APP_ATTESTED_REPORTED_ROUTE selected with the stated c
 | `WEB::BOOTSTRAP` | DJC-API | Planned | Temporary encrypted rendezvous service |
 | `WEB::DISPLAY` | DJC-CORE | In progress | Separate HA code and readonly display grant |
 | `WEB::OWNER-SCANNER` | DJC-APPLE | Planned | Paired owner scanner and explicit installation confirmation |
-| `WEB::SHARED` | DJC-CORE | Planned | Explicit shared Flow NowPlaying Forecast projection |
-| `WEB::MEDIA` | DJC-CORE | Planned | Independent shared artwork and speech grants expiry attribution |
-| `WEB::GUEST` | DJC-CORE | Planned | Invitation redemption guest principal and revocation |
-| `WEB::BROWSER` | DJC-VIBECAST | Planned | One responsive web UI and accountless browser join |
+| `WEB::SHARED` | DJC-CORE | In progress | Explicit shared Flow NowPlaying Forecast projection |
+| `WEB::MEDIA` | DJC-CORE | In progress | Independent shared artwork and speech grants expiry attribution |
+| `WEB::GUEST` | DJC-CORE | In progress | Invitation redemption guest principal and revocation |
+| `WEB::BROWSER` | DJC-VIBECAST | In progress | One responsive web UI and accountless browser join |
 | `WEB::DISTRIBUTION` | DJC-VIBECAST | Planned | Receiver public bootstrap selected; serviceadapter conditionally selected; full E2E separately gated |
 | `WEB::DISCOVERY` | DJC-CORE | Planned | Admission-scoped HA local discovery announcement |
 | `WEB::APP` | DJC-APPLE | Planned | Isolated temporary guest shell discovery scanner leave home restore |
 | `WEB::REACTIONS` | DJC-CORE | Planned | Five subject-bound ephemeral reactions and bounded sparkle |
 | `WEB::AGGREGATE` | DJC-CORE | Planned | Temporary audience aggregation and host lock budget policy |
 | `WEB::INFLUENCE` | DJC-CORE | Planned | Bounded DJ-led Mood direction influence and owner confirmation |
-| `WEB::CHAT` | DJC-CORE | Planned | Guest Ask DJ isolated thread safe dispatch and spend budgets |
-| `WEB::REQUEST` | DJC-CORE | Planned | Exact recording clarification and guest proposal dialogue |
-| `WEB::EFFECT-POLICY` | DJC-CORE | Planned | DJ request consideration fairness and uncertain-effect policy |
-| `WEB::ENQUEUE` | DJC-CORE | Planned | Real enqueue reconciliation and observed-recording Persona announcement |
+| `WEB::CHAT` | DJC-CORE | In progress | Guest Ask DJ isolated thread safe dispatch and spend budgets |
+| `WEB::REQUEST` | DJC-CORE | In progress | Exact recording clarification and guest proposal dialogue |
+| `WEB::EFFECT-POLICY` | DJC-CORE | In progress | DJ request consideration fairness and uncertain-effect policy |
+| `WEB::ENQUEUE` | DJC-CORE | In progress | Real enqueue reconciliation and observed-recording Persona announcement |
 | `WEB::JOINT` | DJC-CORE | Planned | Joint browser native media lifecycle physical five-language acceptance |
 | `SPEECH::APPLE::ADOPTION` | DJC-APPLE | Planned | Native shared speech, voice and autoplay adoption |
 | `SPEECH::CORE::CONTRACT` | DJC-CORE | Completed | Shared narration and speech/source contract |

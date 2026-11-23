@@ -62,7 +62,7 @@ class HelpContainerPreflightTest(unittest.TestCase):
     def test_unknown_cleanup_cannot_produce_a_passing_setup_receipt(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
-            products = {f'synthetic-{i}': 'a' * 64 for i in range(331)}
+            products = {f'synthetic-{i}': 'a' * 64 for i in range(343)}
             result = SimpleNamespace(returncode=0, stdout=json.dumps(valid({})).encode())
             with patch.object(preflight, 'product_hashes', return_value=products), \
                  patch.object(preflight, 'profile_source_hashes', return_value={}), \
@@ -78,10 +78,16 @@ class HelpContainerPreflightTest(unittest.TestCase):
         source = Path(__file__).resolve().parents[1]
         products = preflight.product_hashes(source)
         expected = preflight.profile_source_hashes(source)
-        self.assertEqual(len(products), 331)
+        self.assertEqual(len(products), 343)
         for module in ('live_impression','live_impression_research','live_impression_media',
                        'requested_moments','requested_moment_inventory','requested_moment_proof'):
             self.assertIn(f'custom_components/djconnect/{module}.py',products)
+        for module in ('guest_admission','guest_conversation','guest_focus_media','guest_host',
+                       'guest_presentation','guest_requests','guest_service','guest_transport'):
+            self.assertIn(f'custom_components/djconnect/{module}.py', products)
+        self.assertIn('custom_components/djconnect/vibecast_guest.html', products)
+        for name in ('guest.html','guest.css','guest.js'):
+            self.assertIn('custom_components/djconnect/vibecast_renderer/'+name, products)
         self.assertIn('custom_components/djconnect/watch_preference_client.py', products)
         self.assertIn('custom_components/djconnect/ask_dj/person_age.py', products)
         self.assertIn('custom_components/djconnect/ask_dj/spotify_collection_offers.py', products)
@@ -108,7 +114,7 @@ class HelpContainerPreflightTest(unittest.TestCase):
                  patch.object(preflight, 'container_absent', return_value=True):
                 self.assertEqual(preflight.run(source, directory / 'current'), 0)
                 self.assertEqual(execute.call_count, 2)  # One probe plus owned cleanup.
-            for size in (308, 310):
+            for size in (308, 310, 331, 342, 344):
                 with patch.object(preflight, 'product_hashes', return_value={str(i): 'a' * 64 for i in range(size)}), \
                      patch.object(preflight.subprocess, 'run') as execute:
                     with self.assertRaisesRegex(ValueError, 'preflight_source_or_owner_invalid'):

@@ -459,6 +459,19 @@
           "profile_id": "DJConnect profile",
           "allow_personal_access": "Allow personal access"
         }
+      },
+      "guest_participation": {
+        "title": "Shared DJ participation",
+        "description": "Start a VibeCast share first. Settings apply to this live share only. Choosing a request decision leaves participation settings as they are.",
+        "data": {
+          "share_id": "Live share",
+          "participation_mode": "Participation",
+          "screen_focus": "Allow shared Moment focus",
+          "max_pending": "Pending requests per guest",
+          "request_id": "Song request",
+          "decision": "Request decision",
+          "shared_voice_endpoints": "Room voice device"
+        }
       }
     },
     "error": {
@@ -482,10 +495,13 @@
       "profile_platform_failed": "The linked profile could not be updated. Check device pairing and try again.",
       "profile_shared_backend_change": "This profile is linked to multiple devices. Link this device to its own profile before changing the music backend.",
       "shared_dj_settings_required": "This old form has saved nothing. Use a DJConnect client that supports shared Profile settings to change your DJ preferences.",
-      "profile_connection_unavailable": "The existing music connection is unavailable or ambiguous. Restore that connection, or choose another profile."
+      "profile_connection_unavailable": "The existing music connection is unavailable or ambiguous. Restore that connection, or choose another profile.",
+      "guest_participation_unavailable": "The live share, request or permission changed. Open these settings again."
     },
     "abort": {
-      "client_retired": "This client is no longer supported. Choose a supported client."
+      "client_retired": "This client is no longer supported. Choose a supported client.",
+      "guest_participation_updated": "Participation updated.",
+      "guest_no_live_share": "Start a live VibeCast share first."
     }
   },
   "entity": {

@@ -175,10 +175,10 @@ class MusicOriginActualHAProofTest(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads(
             (
-                root / 'examples/client_contracts/music_origin_v1/ha-native-voice-20261122-music-canvas-recovery-20-bbfcb56c.json'
+                root / 'examples/client_contracts/music_origin_v1/ha-shared-guest-20261123-music-canvas-recovery-20-bbfcb56c.json'
             ).read_text()
         )
-        self.assertEqual(len(proof["source_pins"]), 331)
+        self.assertEqual(len(proof["source_pins"]), 343)
         for name, digest in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root / name).read_bytes()).hexdigest(), digest, name)
         raw = proof["receipt"]

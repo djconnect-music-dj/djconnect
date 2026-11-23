@@ -271,8 +271,8 @@ class MusicDNAArtworkTest(unittest.IsolatedAsyncioTestCase):
         root = Path(__file__).resolve().parents[1]
         path = root / "examples/client_contracts/music_dna_artwork_v1/profile-and-legacy-core-consolidation-20261022-live-impression-20261119-requested-moments-20261120.json"
         original = json.loads(path.read_text())
-        fixture = json.loads(path.with_name('ha-native-voice-20261122-music-canvas-recovery-20-efe44abc.json').read_text())
-        self.assertEqual(len(fixture["integration_source_hashes"]), 331)
+        fixture = json.loads(path.with_name('ha-shared-guest-20261123-music-canvas-recovery-20-efe44abc.json').read_text())
+        self.assertEqual(len(fixture["integration_source_hashes"]), 343)
         for relative, expected in fixture["integration_source_hashes"].items():
             self.assertEqual(hashlib.sha256((root / relative).read_bytes()).hexdigest(), expected, relative)
         self.assertEqual(hashlib.sha256((root / original["harness"]).read_bytes()).hexdigest(), original["harness_sha256"])

@@ -97,8 +97,16 @@ async def _live_reference(manager, profile, target):
 
 async def async_exchange(hass, runtime, payload, *, profile_id, history_manager, delegate,
                          validate_owner, persist_history=True, profile=None, validate_immediate=None,
-                         client_device_id=""):
+                         client_device_id="", actor=None, participant_request=False):
     """Reserve a bounded turn, execute without broad locks, commit through existing owners."""
+    if actor is not None:
+        from ..guest_conversation import GuestConversationActor, actor_for
+        if type(actor) is not GuestConversationActor or actor_for(hass) is not actor:
+            raise SessionConversationError("guest_grant_invalid", 403)
+        actor.validate()
+        if profile_id != actor.profile.profile_id or profile is not actor.profile:
+            raise SessionConversationError("guest_grant_invalid", 403)
+        persist_history = False
     client_id = payload.get("client_message_id")
     if not _identifier(client_id):
         raise SessionConversationError("client_message_id_required", 400)
@@ -111,6 +119,24 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
         raise SessionConversationError("invalid_conversation_text", 400)
     from . import classify_ask_dj
     intent = classify_ask_dj(text)
+    if actor is not None:
+        from ..guest_presentation import presentation_action
+        if presentation_action(text) and not participant_request:
+            from . import AskDjIntent
+            intent = AskDjIntent('informational', 'guest_screen_focus', 'none')
+        from ..guest_requests import status_action
+        if status_action(text) and not participant_request:
+            from . import AskDjIntent
+            intent = AskDjIntent('informational', 'guest_request_status', 'none')
+        actor.authorize_intent(intent, text=text, request=participant_request)
+        if set(context) - {"thread_id", "result_set_id", "selected_moment"}:
+            raise SessionConversationError("guest_private_context_unavailable", 403)
+        if context.get("selected_moment") is not None:
+            from ..guest_presentation import selected_shared_moment
+            selected_shared_moment(actor, context["selected_moment"])
+        if participant_request:
+            from . import AskDjIntent
+            intent = AskDjIntent("informational", "guest_request", "none")
     if intent.intent == "session_lifecycle":
         # Lifecycle captures its exact target inside the reserved common turn.
         # A response retry must not acquire a different digest merely because
@@ -123,8 +149,9 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
     digest = hashlib.sha256(json.dumps({"context": context, "text": text,
         "choice_action": payload.get("choice_action"), "command_action": payload.get("_command_action"),
         "track_insight_target":payload.get("track_insight_target"),
-        "options":{k:payload.get(k) for k in ("language","locale","mood","dj_persona","audio_response","privacy_mode","speech_contract_version")}}, sort_keys=True).encode()).hexdigest()
-    scope, thread = "profile:" + profile_id, context.get("thread_id") or "default"
+        "options":{**{k:payload.get(k) for k in ("language","locale","mood","dj_persona","audio_response","privacy_mode","speech_contract_version")},
+                   **({"participant_request": participant_request} if actor is not None else {})}}, sort_keys=True).encode()).hexdigest()
+    scope, thread = actor.scope if actor is not None else "profile:" + profile_id, context.get("thread_id") or "default"
     history_manager.register_session_request(scope, client_id)
     token = None
     turn = None
@@ -134,18 +161,19 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
         await history_manager.async_load()
         await validate_owner()
         from ..persona_reactions import withdraw_for_interaction
-        withdraw_for_interaction(hass, profile_id)
+        if actor is None:
+            withdraw_for_interaction(hass, profile_id)
         scope_revision = await history_manager.async_scope_revision(scope)
         if await history_manager.async_session_request_cleared(scope, client_id):
             raise SessionConversationError("conversation_history_changed")
-        grant = await async_history_grant_revision(hass, profile_id)
+        grant = actor.revision if actor is not None else await async_history_grant_revision(hass, profile_id)
         manager = session_runtime_manager(hass)
         def query():
             return query_service(hass, history_manager)
         active = await manager.async_get_active(profile_id)
         shared_settings = None
         settings_token = None
-        if manager._settings_repository is not None:
+        if actor is None and manager._settings_repository is not None:
             from ..domain.profile.dj_settings import DJSettings
             def settings_read_authority():
                 if validate_immediate is not None:
@@ -255,7 +283,13 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
             await admission(owner=validate_owner, immediate=validate_immediate)
             from ..transport_delivery import register_delivery_admission
             register_delivery_admission(lambda: admission(owner=validate_owner, immediate=validate_immediate))
+            if actor is not None:
+                from ..guest_conversation import GuestServiceResult
+                original_now = getattr(admission, 'validate_now', validate_immediate)
+                return GuestServiceResult(result, original_now)
             return result
+        if actor is not None:
+            await actor.before_turn()
         if intent.intent in {"current_artist_information", "current_release_information", "album_tracks_information"}:
             # Even a subsequently rejected read is not consent to retry older music.
             frame.retry = None
@@ -268,6 +302,8 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
         # A previous subject is used only while its source and Session are still valid.
         for dependency in ([] if reset_topic else frame.dependencies):
             try:
+                if actor is not None:
+                    actor.require_shared_dependencies([dependency])
                 if "moment_id" in dependency:
                     await _live_reference(manager, profile_id, dependency)
                 else:
@@ -279,6 +315,8 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
             dependencies.extend(d for d in deepcopy(frame.dependencies) if d not in dependencies)
         if live:
             dependencies.append(live)
+        if actor is not None:
+            actor.require_shared_dependencies(dependencies)
         captured = active.broadcast.state.playback.item_id if active else ""
         # Only genuinely current-playback questions bind to a playback item.
         track_bound = not target and not live and (intent.intent in {"current_track_reference", "current_artist_information", "current_release_information", "album_tracks_information", "track_insight", "dj_announcement"}
@@ -344,10 +382,15 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
             from ..persistence.content_deletion import request_deleted_now
             service = getattr(hass, 'data', {}).get('djconnect', {}).get('persistence_service')
             withdrawn = getattr(service, 'content_request_fences', {}).get(profile_id, set())
+            if actor is not None:
+                actor.validate()
+                return False
             return (request_deleted_now(hass, profile_id, client_id)
                     or bool(source_request_hashes & withdrawn))
 
         def validate_content_dependencies():
+            if actor is not None:
+                actor.require_shared_dependencies(dependencies)
             service = getattr(hass, 'data', {}).get('djconnect', {}).get('persistence_service')
             fences = getattr(service, 'content_source_fences', {})
             for dependency in dependencies:
@@ -363,32 +406,13 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
                             or not any(m.moment_id == mid for m in current.broadcast.state.dj_moments)):
                         raise SessionConversationError('source_withdrawn', 409)
 
-        async def guard(*, check_runtime=True, owner=validate_owner, immediate=validate_immediate):
-            if requests_withdrawn():
-                raise SessionConversationError('conversation_history_changed')
-            await owner()
-            if await history_manager.async_scope_revision(scope) != scope_revision:
-                raise SessionConversationError("conversation_history_changed")
-            if await async_history_grant_revision(hass, profile_id) != grant:
-                frame.reset("rights_changed")
-                raise SessionConversationError("conversation_context_changed")
-            if check_runtime:
-                current = await manager.async_get_active(profile_id)
-                if playback_fence_session and not disposed_by_this_turn(playback_fence_session) and (current is None or current.session_id != playback_fence_session
-                    or (track_bound and not explicit_action and current.broadcast.state.playback.item_id != captured)):
-                    raise SessionConversationError("session_context_changed")
-            for dependency in dependencies:
-                if "moment_id" in dependency:
-                    await _live_reference(manager, profile_id, dependency)
-                else:
-                    opened = await query().async_open_source_entry(profile_id, dependency["session_id"], dependency["entry_id"])
-                    capture_retained_deadline(opened["entry"])
+        def guard_now(*, immediate=validate_immediate):
             # Nothing may yield after this final committed-state/paired-owner fence.
             validate_content_dependencies()
             validate_retained_deadline()
             if history_manager.scope_revision(scope) != scope_revision:
                 raise SessionConversationError("conversation_history_changed")
-            if history_grant_revision(hass, profile_id) != grant:
+            if (actor.revision if actor is not None else history_grant_revision(hass, profile_id)) != grant:
                 raise SessionConversationError("conversation_context_changed")
             if playback_fence_session and not disposed_by_this_turn(playback_fence_session):
                 current = manager.current_active(profile_id)
@@ -404,12 +428,35 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
             if requests_withdrawn():
                 raise SessionConversationError('conversation_history_changed')
 
+        async def guard(*, check_runtime=True, owner=validate_owner, immediate=validate_immediate):
+            if requests_withdrawn():
+                raise SessionConversationError('conversation_history_changed')
+            await owner()
+            if await history_manager.async_scope_revision(scope) != scope_revision:
+                raise SessionConversationError("conversation_history_changed")
+            if (actor.revision if actor is not None else await async_history_grant_revision(hass, profile_id)) != grant:
+                frame.reset("rights_changed")
+                raise SessionConversationError("conversation_context_changed")
+            if check_runtime:
+                current = await manager.async_get_active(profile_id)
+                if playback_fence_session and not disposed_by_this_turn(playback_fence_session) and (current is None or current.session_id != playback_fence_session
+                    or (track_bound and not explicit_action and current.broadcast.state.playback.item_id != captured)):
+                    raise SessionConversationError("session_context_changed")
+            for dependency in dependencies:
+                if "moment_id" in dependency:
+                    await _live_reference(manager, profile_id, dependency)
+                else:
+                    opened = await query().async_open_source_entry(profile_id, dependency["session_id"], dependency["entry_id"])
+                    capture_retained_deadline(opened["entry"])
+            guard_now(immediate=immediate)
+
         turn = DialogueTurn(frame, scope, thread, client_id, digest, generation, guard, history_manager,
                             style=style_projection(payload, active, profile, settings=shared_settings), session_id=session_id,
                             captured_playback_item_id=captured if track_bound and intent.intent in {"current_artist_information", "current_release_information", "album_tracks_information"} else "",
                             source_context=model_source(selected), selected_read_context=selected,
                             dependencies=dependencies, fast_control=fast, reset_topic=reset_topic,
                             archiveable=persist_history, client_device_id=client_device_id)
+        turn.participant_actor = actor
         from ..session_runtime import capture_first_play_retirement
         turn.retire_startup_after_play = capture_first_play_retirement(hass, profile_id)
         turn.source_request_hashes = source_request_hashes
@@ -420,10 +467,10 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
         # including synthesis/provider awaits after the chat has been accepted.
         turn.delivery_validators.extend((validate_retained_deadline, validate_content_dependencies))
         accepted_offer = None
-        async def joined_admission(*, owner, immediate):
-            await guard(owner=owner, immediate=immediate)
-            # Local read/effect adapters can add narrower Session, item or
-            # output fences even without an explicit conversation_context.
+        def joined_now(*, immediate=validate_immediate):
+            guard_now(immediate=immediate)
+            # The HTTP adapter can recheck the original committed state after
+            # awaited header preparation, without a new grant or async read.
             for validate in turn.delivery_validators:
                 validate()
             if accepted_offer is not None:
@@ -432,10 +479,14 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
                 if frame.result_set is not accepted_offer:
                     raise DialogueError("choice_changed")
 
+        async def joined_admission(*, owner, immediate):
+            await guard(owner=owner, immediate=immediate)
+            joined_now(immediate=immediate)
+
         from ..transport_delivery import register_delivery_admission
         register_delivery_admission(lambda: joined_admission(owner=validate_owner, immediate=validate_immediate))
 
-        turn.effect_grants = () if historical_play else request_effect_grants(text, intent)
+        turn.effect_grants = () if historical_play or actor is not None else request_effect_grants(text, intent)
         token = current_turn.set(turn)
         saved = await history_manager.async_saved_exchange(scope, client_id) if persist_history and not historical_play else None
         if saved:
@@ -675,6 +726,8 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
                 "style_basis": "accepted_turn" if not result.get("deduplicated") or (saved and saved["assistant_message"].get("session_turn", {}).get("effective_style")) else "legacy_unknown",
                 "model_source_basis": turn.source_context.get("basis"),
                 "metrics": {"agent_calls": turn.agent_calls, "lookup_calls": turn.lookup_calls, "prompt_bytes": turn.prompt_bytes}}}
+        if actor is not None:
+            response['_guest_request_mode'] = bool(participant_request)
         from ..session_speech import remember
         from . import _should_generate_audio_response
         requested_audio = (False if turn.first_play_request
@@ -728,8 +781,17 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
             deadline()
             await joined_admission(owner=owner, immediate=immediate)
             deadline()
+        def response_now():
+            if (turn.playback_reply_deadline is not None
+                    and history_manager.dialogue.clock() >= turn.playback_reply_deadline):
+                raise SessionConversationError('choice_expired', 409)
+            joined_now()
+        response_admission.validate_now = response_now
         future.set_result((deepcopy(response), response_admission))
         history_manager.dialogue.remember_catalogue_read(turn, response, future)
+        if actor is not None:
+            from ..guest_conversation import GuestServiceResult
+            return GuestServiceResult(response, response_now)
         return response
     except (SessionConversationError, DialogueError) as exc:
         if (turn is not None and turn.effect_started and frame.generation == turn.generation

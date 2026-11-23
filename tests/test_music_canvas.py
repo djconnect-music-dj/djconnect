@@ -33,15 +33,15 @@ class CanvasDomainTests(unittest.TestCase):
         import hashlib
         import json
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/ha-native-voice-20261122-actual-ha.json").read_text())
-        self.assertEqual(len(proof["source_pins"]), 331)
+        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/ha-shared-guest-20261123-actual-ha.json").read_text())
+        self.assertEqual(len(proof["source_pins"]), 343)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), expected, name)
         self.assertTrue(proof["source_before_after_equal"])
-        matrix = json.loads((root/"docs/verification/ha-native-voice-actual-ha-matrix-20261122.json").read_text())
+        matrix = json.loads((root/"docs/verification/ha-shared-guest-actual-ha-matrix-20261123.json").read_text())
         self.assertEqual(matrix["source_pins"], proof["source_pins"])
         self.assertTrue(matrix["source_before_after_equal"])
-        self.assertEqual(len(matrix["results"]), 51)
+        self.assertEqual(len(matrix["results"]), 54)
         for row in matrix["results"]:
             self.assertEqual(row["exit_code"], 0, row["harness"])
             self.assertEqual(hashlib.sha256((root/row["harness"]).read_bytes()).hexdigest(), row["harness_sha256"])

@@ -202,6 +202,8 @@ async def handle_spotify_command(
         return {"success": True, "devices": await backend.devices()}
     if normalized == "queue":
         return {"success": True, **await backend.queue()}
+    if normalized == "enqueue_track":
+        return await backend.enqueue_track(value)
     if normalized == "playlists":
         limit = _playlist_limit(value)
         playlists = await backend.playlists(limit=limit)
@@ -586,6 +588,8 @@ class SpotifyBackend:
         force_refresh: bool,
         retry_on_unauthorized: bool,
     ) -> Any:
+        from .guest_conversation import guard_spotify
+        guard_spotify(method, path)
         token = await self._access_token(force_refresh=force_refresh)
         from .ask_dj.dialogue import current_turn, DialogueError
         turn = current_turn.get()
@@ -609,6 +613,18 @@ class SpotifyBackend:
         if scope is not None and method.upper() == "GET":
             scope.require_current()
         request_options = {}
+        from .guest_requests import admission_for
+        guest_request = admission_for()
+        if guest_request is not None and method.upper() != 'GET':
+            attempts = 0
+            async def one_guest_attempt(request, handler):
+                nonlocal attempts
+                guest_request.validate()
+                if attempts:
+                    raise SpotifyBackendError('guest_request_outcome_unknown')
+                attempts += 1
+                return await handler(request)
+            request_options = {'middlewares':(one_guest_attempt,), 'allow_redirects':False}
         if scope is not None and method.upper() != "GET":
             transport_attempts = 0
             async def one_transport_attempt(request, handler):
@@ -1042,6 +1058,15 @@ class SpotifyBackend:
         _persist_runtime_device_status(self.hass, self.runtime)
         self.runtime.update()
         return devices
+
+    async def enqueue_track(self, value) -> dict[str, Any]:
+        if (not isinstance(value, dict) or set(value) != {'uri', 'device_id'}
+                or not isinstance(value['uri'], str)
+                or not re.fullmatch(r'spotify:track:[A-Za-z0-9]{22}', value['uri'])
+                or not isinstance(value['device_id'], str) or not 1 <= len(value['device_id']) <= 128):
+            raise SpotifyBackendError('queue_recording_invalid')
+        await self._request('POST', '/me/player/queue?' + urlencode(value), expected_empty=True)
+        return {'success':True}
 
     async def queue(self) -> dict[str, Any]:
         data = await self._request("GET", "/me/player/queue")

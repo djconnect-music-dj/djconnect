@@ -1871,6 +1871,7 @@ def register_http_views(hass: HomeAssistant) -> None:
         from .installation_management import InstallationManagementPrepareView
         from .hybrid_transport import HybridActionsView, HybridContextView, HybridOperationView, HybridOperationStatusView, HybridRecoveryView, HybridReadView
         from .display_transport import transition_views
+        from .guest_transport import participation_views
         from .display_live import DisplayLiveView
         from .display_shell import DisplayShellView
         from .visual_director_http import VibeScapeContextView, VibeScapeInterpretView, VibeScapeRevokeView
@@ -1885,7 +1886,7 @@ def register_http_views(hass: HomeAssistant) -> None:
             *host_wake_views(hass),
             *native_pair_enrollment_views(hass),
             *rich_views(hass),
-            *transition_views(hass), DisplayLiveView(hass), DisplayShellView(hass),
+            *transition_views(hass), *participation_views(hass), DisplayLiveView(hass), DisplayShellView(hass),
             HybridActionsView(hass), HybridContextView(hass), HybridOperationView(hass),
             HybridOperationStatusView(hass), HybridRecoveryView(hass), HybridReadView(hass),
             DJConnectPairedLiveView(hass),

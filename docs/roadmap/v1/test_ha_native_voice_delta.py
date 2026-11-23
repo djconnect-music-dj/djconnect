@@ -15,7 +15,7 @@ class NativeVoicePlanningTests(unittest.TestCase):
         self.assertEqual(nodes['HA-NATIVE-VOICE::ADOPTION']['status'], 'In progress')
         self.assertEqual(nodes['HA-NATIVE-VOICE::ACCEPTANCE']['status'], 'Planned')
         for name in ('WEB::CHAT','WEB::REQUEST','WEB::ENQUEUE'):
-            self.assertEqual(nodes[name]['status'], 'Planned')
+            self.assertEqual(nodes[name]['status'], 'In progress')
 
     def test_no_publication_install_guest_or_predecessor_overclaim(self):
         for field, value in (('source_delivery','PROTECTED_MERGED'),('installed','PASS'),

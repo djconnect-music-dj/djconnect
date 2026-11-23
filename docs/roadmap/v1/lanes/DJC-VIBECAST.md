@@ -14,6 +14,8 @@ Selected shared Profile/Session settings consolidation: DJC-PROFILE-SESSION-SETT
 
 Music Canvas v1 owner-selected implementation is SOURCE_DELIVERED / PROTECTED_MERGED. Core contracts, persistent preferences, lifecycle, composition and Samsung/SwitchBot adapters feed the native Apple panel. Joint real-provider/native/hardware acceptance stays Planned/OPEN; no Cast route, deployment or automatic dispatch.
 
+HA shared guest stage3 is implemented locally and remains unmerged: admitted browser/native guests use the same Core service and bounded host-reviewed enqueue. Existing WEB owners are In progress; maintained browser/media source is partial, receiver consumption and physical/provider/editorial acceptance remain open. No automatic dispatch, installation or deployment.
+
 HA-native DJ conversation is owner-selected IN_PROGRESS: personal ingress, explicit endpoint/Profile admission and the existing lifecycle/Voor jou service are protected source delivered (stages1–2 only). Shared guest/request/display owners remain dependencies; no whole-assignment completion, physical satellite/provider acceptance, installation or deployment is claimed.
 
 Music Origin SOURCE_DELIVERED: Core #1669 and Apple #405 protected merged with their own exact-main software/publication evidence. Avatar-menu/native/history source is delivered; MO01–MO18 real-provider, editorial and physical-device/accessibility acceptance remains OPEN. No installation, deployment, new writer or automatic dispatch.
@@ -32,7 +34,7 @@ A product choice: LIMITED_APP_ATTESTED_REPORTED_ROUTE selected with the stated c
 
 - `QUAL::VIBECAST::DJ-PRESENCE-COMPAT` — Planned; Core shared-renderer + receiver owner, both existing software builds
 - `FORECAST::VIBECAST::VISIBLE` — Planned; Bounded Session Direction Forecast projection; no internal Horizon/queue/second Planner or consumer admission
-- `WEB::BROWSER` — Planned; One responsive web UI and accountless browser join
+- `WEB::BROWSER` — In progress; One responsive web UI and accountless browser join
 - `WEB::DISTRIBUTION` — Planned; Receiver16 PUBLIC_WEB_DELIVERY and conditionally RENDEZVOUS_INTEGRATION alongside pinned Cast output; API/Core/Apple producers not selected
 - `SETTINGS::VIBECAST::COMPAT` — Planned; Shared renderer allowed Session fields without Profile preferences; six shared parameters incl announcement_output; no new owning writer or automatic dispatch
 

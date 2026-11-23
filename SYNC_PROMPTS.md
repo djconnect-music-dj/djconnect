@@ -1,3 +1,9 @@
+## 2026-11-23 — selected shared HA/VibeCast participation continuation
+
+Owner continues Core #1532 stage3 after protected source #1675 / Finalization #1676. Explicit owner exception removed only the old fully merged local source branch; clean synchronized main bbf56161 is WORKSPACE_READY. Sole Core writer: codex/ha-native-shared-participation-20261123. This is implementation selection for the existing WEB::CHAT/REQUEST/EFFECT-POLICY/ENQUEUE/SHARED contracts, not a second guest engine or consumer writer.
+
+Before consumer changes, the new Core producer contract is defined in docs/technical/VIBECAST_GUEST_PARTICIPATION_V1.md. Existing B share/display authority remains authoritative; invitations and room voice receive their own temporary principal, independent of personal Profile access. Host policy, exact recording consideration, queue result and observed playback remain distinct. The one common Ask DJ service owns dialogue; guest context must exclude host DNA/private history and deny owner controls at effects. Core owns shared renderer sources; generated HTML must come from scripts/build_vibecast.py. No API-rendezvous/firmware work or deployment is selected. Source/review/merge/install/physical acceptance remain separate; #1532 remains OPEN while implementation and acceptance are unfinished.
+
 ## HA-native DJ conversation — selected 22 November 2026
 
 Core #1532 owns the thin native ingress to the same Ask DJ application service,

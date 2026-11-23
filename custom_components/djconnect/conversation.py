@@ -99,7 +99,8 @@ class DJConnectConversationAgent(conversation.ConversationEntity):
             except SessionConversationError as exc:
                 # Stable code only: never log user speech, private replies or provider errors.
                 _LOGGER.warning("DJConnect native conversation rejected: %s", exc.code)
-                key = ("backend" if exc.code in {"native_voice_backend_agent_required", "native_voice_recursive_agent"}
+                key = ("shared_context" if exc.code in {"guest_voice_context_required", "guest_voice_context_changed"}
+                       else "backend" if exc.code in {"native_voice_backend_agent_required", "native_voice_recursive_agent"}
                        else "admission" if exc.code in {"native_voice_endpoint_required", "native_voice_personal_access_required"}
                        else "unavailable")
                 speech = copy_for(key, language)

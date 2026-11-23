@@ -102,6 +102,198 @@
     "session_lifecycle": {
       "file": "tests/test_native_voice.py",
       "method": "test_explicit_lifecycle_uses_existing_owner_without_music_effect"
+    },
+    "guest_request": {
+      "file": "tests/test_guest_requests.py",
+      "method": "test_ambiguous_recordings_offer_original_core_choices_and_selection_proposes_once"
+    },
+    "guest_request_status": {
+      "file": "tests/test_guest_conversation.py",
+      "method": "test_guest_request_status_uses_common_service_without_model_or_private_queries"
+    },
+    "guest_screen_focus": {
+      "file": "tests/test_guest_conversation.py",
+      "method": "test_native_presentation_route_enters_common_service_without_model_or_publication"
+    },
+    "guest_regression_admission_participation_defaults_off_and_never_copies_display_token": {
+      "file": "tests/test_guest_admission.py",
+      "method": "test_participation_defaults_off_and_never_copies_display_token"
+    },
+    "guest_regression_admission_single_use_redemption_does_not_mint_another_grant_after_lost_response": {
+      "file": "tests/test_guest_admission.py",
+      "method": "test_single_use_redemption_does_not_mint_another_grant_after_lost_response"
+    },
+    "guest_regression_admission_rotation_withdraws_invitation_without_rejecting_admitted_guest": {
+      "file": "tests/test_guest_admission.py",
+      "method": "test_rotation_withdraws_invitation_without_rejecting_admitted_guest"
+    },
+    "guest_regression_admission_share_end_and_source_withdrawal_immediately_close_original_grant": {
+      "file": "tests/test_guest_admission.py",
+      "method": "test_share_end_and_source_withdrawal_immediately_close_original_grant"
+    },
+    "guest_regression_admission_policy_withdrawal_and_regrant_never_reauthorize_original_principal": {
+      "file": "tests/test_guest_admission.py",
+      "method": "test_policy_withdrawal_and_regrant_never_reauthorize_original_principal"
+    },
+    "guest_regression_admission_expiry_renewal_replay_and_runtime_clear_preserve_original_deadline": {
+      "file": "tests/test_guest_admission.py",
+      "method": "test_expiry_renewal_replay_and_runtime_clear_preserve_original_deadline"
+    },
+    "guest_regression_admission_real_endpoint_binding_does_not_name_a_human_or_survive_registry_change": {
+      "file": "tests/test_guest_admission.py",
+      "method": "test_real_endpoint_binding_does_not_name_a_human_or_survive_registry_change"
+    },
+    "guest_regression_admission_foreign_owner_and_malformed_policy_cannot_grant_participation": {
+      "file": "tests/test_guest_admission.py",
+      "method": "test_foreign_owner_and_malformed_policy_cannot_grant_participation"
+    },
+    "guest_regression_service_only_current_paired_host_can_configure_or_issue_invitation": {
+      "file": "tests/test_guest_service.py",
+      "method": "test_only_current_paired_host_can_configure_or_issue_invitation"
+    },
+    "guest_regression_service_guest_is_separate_from_host_and_display_and_cannot_promote_itself": {
+      "file": "tests/test_guest_service.py",
+      "method": "test_guest_is_separate_from_host_and_display_and_cannot_promote_itself"
+    },
+    "guest_regression_service_withdrawal_after_response_preparation_rejects_original_release": {
+      "file": "tests/test_guest_service.py",
+      "method": "test_withdrawal_after_response_preparation_rejects_original_release"
+    },
+    "guest_regression_service_wrong_origin_and_foreign_payload_cannot_enter_guest_scope": {
+      "file": "tests/test_guest_service.py",
+      "method": "test_wrong_origin_and_foreign_payload_cannot_enter_guest_scope"
+    },
+    "guest_regression_service_share_end_invalidates_guest_without_ending_another_session": {
+      "file": "tests/test_guest_service.py",
+      "method": "test_share_end_invalidates_guest_without_ending_another_session"
+    },
+    "guest_regression_conversation_same_application_service_separate_scope_and_no_private_archive": {
+      "file": "tests/test_guest_conversation.py",
+      "method": "test_same_application_service_separate_scope_and_no_private_archive"
+    },
+    "guest_regression_conversation_guest_retry_deduplicates_on_its_own_original_frame": {
+      "file": "tests/test_guest_conversation.py",
+      "method": "test_guest_retry_deduplicates_on_its_own_original_frame"
+    },
+    "guest_regression_conversation_owner_actions_dna_and_private_history_references_never_reach_delegate": {
+      "file": "tests/test_guest_conversation.py",
+      "method": "test_owner_actions_dna_and_private_history_references_never_reach_delegate"
+    },
+    "guest_regression_conversation_withdrawal_during_await_rejects_reply_and_discards_operational_scope": {
+      "file": "tests/test_guest_conversation.py",
+      "method": "test_withdrawal_during_await_rejects_reply_and_discards_operational_scope"
+    },
+    "guest_regression_conversation_private_queries_effects_and_spotify_reads_are_denied_at_boundaries": {
+      "file": "tests/test_guest_conversation.py",
+      "method": "test_private_queries_effects_and_spotify_reads_are_denied_at_boundaries"
+    },
+    "guest_regression_conversation_actual_lower_current_track_reply_uses_shared_status_without_private_memory": {
+      "file": "tests/test_guest_conversation.py",
+      "method": "test_actual_lower_current_track_reply_uses_shared_status_without_private_memory"
+    },
+    "guest_regression_conversation_original_common_delivery_fence_survives_dto_mapping_and_rejects_late_frame_reset": {
+      "file": "tests/test_guest_conversation.py",
+      "method": "test_original_common_delivery_fence_survives_dto_mapping_and_rejects_late_frame_reset"
+    },
+    "guest_regression_conversation_native_presentation_route_enters_common_service_without_model_or_publication": {
+      "file": "tests/test_guest_conversation.py",
+      "method": "test_native_presentation_route_enters_common_service_without_model_or_publication"
+    },
+    "guest_regression_conversation_guest_request_status_uses_common_service_without_model_or_private_queries": {
+      "file": "tests/test_guest_conversation.py",
+      "method": "test_guest_request_status_uses_common_service_without_model_or_private_queries"
+    },
+    "guest_regression_conversation_guest_runtime_view_cannot_read_or_overwrite_host_private_runtime_cache": {
+      "file": "tests/test_guest_conversation.py",
+      "method": "test_guest_runtime_view_cannot_read_or_overwrite_host_private_runtime_cache"
+    },
+    "guest_regression_requests_ambiguous_recordings_offer_original_core_choices_and_selection_proposes_once": {
+      "file": "tests/test_guest_requests.py",
+      "method": "test_ambiguous_recordings_offer_original_core_choices_and_selection_proposes_once"
+    },
+    "guest_regression_requests_disabled_policy_cannot_become_request_authority": {
+      "file": "tests/test_guest_requests.py",
+      "method": "test_disabled_policy_cannot_become_request_authority"
+    },
+    "guest_regression_requests_actual_adapter_one_post_durable_receipt_and_readonly_retry_without_host_dna": {
+      "file": "tests/test_guest_requests.py",
+      "method": "test_actual_adapter_one_post_durable_receipt_and_readonly_retry_without_host_dna"
+    },
+    "guest_regression_requests_uncertain_post_is_never_repeated_and_matching_queue_can_confirm": {
+      "file": "tests/test_guest_requests.py",
+      "method": "test_uncertain_post_is_never_repeated_and_matching_queue_can_confirm"
+    },
+    "guest_regression_requests_withdrawn_host_or_policy_denies_before_any_backend_read": {
+      "file": "tests/test_guest_requests.py",
+      "method": "test_withdrawn_host_or_policy_denies_before_any_backend_read"
+    },
+    "guest_regression_requests_other_guest_cannot_read_an_unrelated_request": {
+      "file": "tests/test_guest_requests.py",
+      "method": "test_other_guest_cannot_read_an_unrelated_request"
+    },
+    "guest_regression_presentation_focus_uses_original_publication_without_duplicate_or_playback_change": {
+      "file": "tests/test_guest_presentation.py",
+      "method": "test_focus_uses_original_publication_without_duplicate_or_playback_change"
+    },
+    "guest_regression_presentation_shared_information_does_not_grant_screen_focus": {
+      "file": "tests/test_guest_presentation.py",
+      "method": "test_shared_information_does_not_grant_screen_focus"
+    },
+    "guest_regression_presentation_private_or_unknown_reference_cannot_be_shown": {
+      "file": "tests/test_guest_presentation.py",
+      "method": "test_private_or_unknown_reference_cannot_be_shown"
+    },
+    "guest_regression_presentation_withdrawn_publication_removes_original_focus": {
+      "file": "tests/test_guest_presentation.py",
+      "method": "test_withdrawn_publication_removes_original_focus"
+    },
+    "guest_regression_presentation_expired_guest_cannot_keep_focus_on_display": {
+      "file": "tests/test_guest_presentation.py",
+      "method": "test_expired_guest_cannot_keep_focus_on_display"
+    },
+    "guest_regression_presentation_five_language_commands_only_select_presentation": {
+      "file": "tests/test_guest_presentation.py",
+      "method": "test_five_language_commands_only_select_presentation"
+    },
+    "guest_regression_admission_identical_host_policy_and_endpoint_retry_keep_original_guest": {
+      "file": "tests/test_guest_admission.py",
+      "method": "test_identical_host_policy_and_endpoint_retry_keep_original_guest"
+    },
+    "guest_regression_admission_owner_invitation_and_display_qr_keep_the_same_single_use_invitation": {
+      "file": "tests/test_guest_admission.py",
+      "method": "test_owner_invitation_and_display_qr_keep_the_same_single_use_invitation"
+    },
+    "guest_regression_admission_fresh_turn_and_actual_model_budgets_are_distinct_and_share_scoped": {
+      "file": "tests/test_guest_admission.py",
+      "method": "test_fresh_turn_and_actual_model_budgets_are_distinct_and_share_scoped"
+    },
+    "guest_regression_requests_output_change_after_ack_cannot_claim_current_queue_or_resend": {
+      "file": "tests/test_guest_requests.py",
+      "method": "test_output_change_after_ack_cannot_claim_current_queue_or_resend"
+    },
+    "guest_regression_focus_media_independent_display_purpose_original_pixels_and_licensing_no_owner_registry": {
+      "file": "tests/test_guest_focus_media.py",
+      "method": "test_independent_display_purpose_original_pixels_and_licensing_no_owner_registry"
+    },
+    "guest_regression_focus_media_owner_only_moment_cannot_be_promoted_by_guest_or_display": {
+      "file": "tests/test_guest_focus_media.py",
+      "method": "test_owner_only_moment_cannot_be_promoted_by_guest_or_display"
+    },
+    "guest_regression_focus_media_foreign_focus_and_guest_bearer_never_fetch_event_pixels": {
+      "file": "tests/test_guest_focus_media.py",
+      "method": "test_foreign_focus_and_guest_bearer_never_fetch_event_pixels"
+    },
+    "guest_regression_focus_media_revocation_after_fetch_or_before_body_release_closes_original_scope": {
+      "file": "tests/test_guest_focus_media.py",
+      "method": "test_revocation_after_fetch_or_before_body_release_closes_original_scope"
+    },
+    "guest_regression_focus_media_different_pixels_cannot_replace_original_event_image": {
+      "file": "tests/test_guest_focus_media.py",
+      "method": "test_different_pixels_cannot_replace_original_event_image"
+    },
+    "guest_regression_service_public_context_withdrawal_after_headers_blocks_original_body": {
+      "file": "tests/test_guest_service.py",
+      "method": "test_public_context_withdrawal_after_headers_blocks_original_body"
     }
   },
   "families": [
@@ -10548,7 +10740,13 @@
     "tests/test_mood_music_steering.py",
     "tests/test_ask_dj_biographical_dates.py",
     "tests/test_session_retention_policy.py",
-    "tests/test_ask_dj_band_story.py"
+    "tests/test_ask_dj_band_story.py",
+    "tests/test_guest_admission.py",
+    "tests/test_guest_service.py",
+    "tests/test_guest_conversation.py",
+    "tests/test_guest_requests.py",
+    "tests/test_guest_presentation.py",
+    "tests/test_guest_focus_media.py"
   ],
   "issue_policy": {
     "new_findings": "Add a named failing reproduction and semantic expected answer in the same corrective candidate; preserve it after the fix.",

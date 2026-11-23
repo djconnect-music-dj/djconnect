@@ -186,6 +186,19 @@ def profile_backend_runtime(hass: Any, runtime: Any, *, provider_only: bool = Fa
         # A retained adapter may not renew its authority by rebinding a stale view.
         _ = runtime.provider
         runtime = runtime.caller
+    from .guest_conversation import GuestRuntimeView
+    if isinstance(runtime, GuestRuntimeView):
+        actor = runtime.actor
+        actor.validate()
+        if actor.hass is not hass:
+            raise ProfileStorageValidationError("profile_connection_unavailable")
+        owner_id = profile_backend_entry_id(hass, actor.profile.profile_id)
+        if not owner_id and actor.profile.preferences.default_backend_id == MUSIC_BACKEND_LATER_MANUAL:
+            return runtime
+        owner = hass.data.get(DOMAIN, {}).get(owner_id)
+        if owner is None:
+            raise ProfileStorageValidationError("profile_connection_unavailable")
+        return owner if provider_only else ProfileBackendView(hass, runtime, owner)
     from .native_voice import NativeRuntimeView
     if isinstance(runtime, NativeRuntimeView):
         admission = runtime.admission

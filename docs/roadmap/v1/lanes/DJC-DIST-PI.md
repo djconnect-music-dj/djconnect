@@ -14,6 +14,8 @@ Selected shared Profile/Session settings consolidation: DJC-PROFILE-SESSION-SETT
 
 Music Canvas v1 owner-selected implementation is SOURCE_DELIVERED / PROTECTED_MERGED. Core contracts, persistent preferences, lifecycle, composition and Samsung/SwitchBot adapters feed the native Apple panel. Joint real-provider/native/hardware acceptance stays Planned/OPEN; no Cast route, deployment or automatic dispatch.
 
+HA shared guest stage3 is implemented locally and remains unmerged: admitted browser/native guests use the same Core service and bounded host-reviewed enqueue. Existing WEB owners are In progress; maintained browser/media source is partial, receiver consumption and physical/provider/editorial acceptance remain open. No automatic dispatch, installation or deployment.
+
 HA-native DJ conversation is owner-selected IN_PROGRESS: personal ingress, explicit endpoint/Profile admission and the existing lifecycle/Voor jou service are protected source delivered (stages1–2 only). Shared guest/request/display owners remain dependencies; no whole-assignment completion, physical satellite/provider acceptance, installation or deployment is claimed.
 
 Music Origin SOURCE_DELIVERED: Core #1669 and Apple #405 protected merged with their own exact-main software/publication evidence. Avatar-menu/native/history source is delivered; MO01–MO18 real-provider, editorial and physical-device/accessibility acceptance remains OPEN. No installation, deployment, new writer or automatic dispatch.

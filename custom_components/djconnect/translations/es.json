@@ -459,6 +459,19 @@
           "profile_id": "Perfil de DJConnect",
           "allow_personal_access": "Permitir acceso personal"
         }
+      },
+      "guest_participation": {
+        "title": "Participación compartida con el DJ",
+        "description": "Inicia primero una sesión compartida de VibeCast. Los ajustes solo se aplican a esta sesión en directo. Una decisión sobre una petición conserva los ajustes de participación.",
+        "data": {
+          "share_id": "Sesión compartida en directo",
+          "participation_mode": "Participación",
+          "screen_focus": "Mostrar Moments compartidos en pantalla",
+          "max_pending": "Peticiones pendientes por invitado",
+          "request_id": "Petición musical",
+          "decision": "Decisión sobre la petición",
+          "shared_voice_endpoints": "Dispositivo de voz de la sala"
+        }
       }
     },
     "error": {
@@ -482,10 +495,13 @@
       "profile_platform_failed": "No se pudo actualizar el perfil vinculado. Comprueba el emparejamiento del dispositivo e inténtalo de nuevo.",
       "profile_shared_backend_change": "Este perfil está vinculado a varios dispositivos. Vincula este dispositivo a su propio perfil antes de cambiar el backend de música.",
       "shared_dj_settings_required": "Este formulario antiguo no ha guardado nada. Cambia tus preferencias de DJ en un cliente DJConnect compatible con los ajustes compartidos del perfil.",
-      "profile_connection_unavailable": "La conexión musical existente no está disponible o es ambigua. Restablécela o elige otro perfil."
+      "profile_connection_unavailable": "La conexión musical existente no está disponible o es ambigua. Restablécela o elige otro perfil.",
+      "guest_participation_unavailable": "La sesión, la petición o el permiso ha cambiado. Abre de nuevo los ajustes."
     },
     "abort": {
-      "client_retired": "Este cliente ya no es compatible. Elige un cliente compatible."
+      "client_retired": "Este cliente ya no es compatible. Elige un cliente compatible.",
+      "guest_participation_updated": "Participación actualizada.",
+      "guest_no_live_share": "Inicia primero una sesión compartida de VibeCast en directo."
     }
   },
   "entity": {

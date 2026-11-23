@@ -34,6 +34,12 @@ class NativeVoiceTest(unittest.IsolatedAsyncioTestCase):
                 async_get_agent=lambda *a: object()),
         }), patch.object(self.app.pipeline, '_get_default_assist_pipeline', return_value=SimpleNamespace(id='fixture-pipeline', conversation_engine='conversation.fixture', language='en')),
             patch.object(self.app.pipeline, '_get_assist_pipeline', return_value=SimpleNamespace(id='fixture-pipeline', conversation_engine='conversation.fixture', language='en'))]
+        # Import-from-package can retain an earlier registry module even when
+        # sys.modules is patched; isolate both Python import routes causally.
+        self.patches.append(patch.object(sys.modules['homeassistant.helpers'], 'device_registry',
+            SimpleNamespace(async_get=lambda _: self.registry), create=True))
+        self.patches.append(patch.object(sys.modules['homeassistant.components'], 'conversation',
+            SimpleNamespace(ConversationEntity=object, async_get_agent=lambda *a: object()), create=True))
         for value in self.patches:
             value.start()
         await self.storage.async_set_profile_mapping('personal_voice_endpoint', 'kitchen', 'profile-a')
@@ -73,6 +79,16 @@ class NativeVoiceTest(unittest.IsolatedAsyncioTestCase):
         second = await self.native.exchange(self.hass, self.runtime, self.input())
         self.assertEqual(len(self.app.prompts), count)
         self.assertEqual(first[0]['text'], second[0]['text'])
+        self.assertEqual(self.app.effects, [])
+
+    async def test_first_delivery_without_ha_conversation_id_retries_original_reference(self):
+        value = self.input(conversation=None)
+        first = await self.native.exchange(self.hass, self.runtime, value)
+        count = len(self.app.prompts)
+        second = await self.native.exchange(self.hass, self.runtime, value)
+        self.assertEqual(first[1], second[1])
+        self.assertEqual(first[0]['text'], second[0]['text'])
+        self.assertEqual(len(self.app.prompts), count)
         self.assertEqual(self.app.effects, [])
 
     async def test_same_ha_conversation_on_two_satellites_has_separate_core_threads(self):
@@ -264,13 +280,13 @@ class NativeVoiceActualHAEvidenceTest(unittest.TestCase):
         import json
         from pathlib import Path
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root/'examples/client_contracts/ha_native_voice_v1/actual-ha.json').read_text())
+        proof = json.loads((root/'examples/client_contracts/ha_native_voice_v1/ha-shared-guest-20261123-personal-regression.json').read_text())
         self.assertTrue(proof['source_before_after_equal'])
         actual = {str(path.relative_to(root)):hashlib.sha256(path.read_bytes()).hexdigest()
                   for path in (root/'custom_components/djconnect').rglob('*')
                   if path.is_file() and '__pycache__' not in path.parts and path.suffix != '.pyc'}
         self.assertEqual(proof['source_pins'], actual)
-        self.assertEqual(len(actual), 331)
+        self.assertEqual(len(actual), 343)
         for path, digest in proof['harness_pins'].items():
             self.assertEqual(hashlib.sha256((root/path).read_bytes()).hexdigest(), digest)
         self.assertEqual(len(proof['executions']), 2)
@@ -286,7 +302,7 @@ class NativeVoiceActualHAEvidenceTest(unittest.TestCase):
             'native_session_start_same_three_offers_no_playback_no_retry_regeneration',
             'native_saved_lifecycle_replay_retains_original_target_after_disposal'})
         self.assertEqual(set(cases.values()), {'PASS'})
-        self.assertEqual(proof['shared_guest_request_display_delivery'], 'OPEN_NOT_IMPLEMENTED')
+        self.assertEqual(proof['shared_guest_request_display_delivery'], 'NOT_QUALIFIED_BY_PERSONAL_GATE')
         self.assertEqual(proof['installed'], 'NOT_RUN')
 
 

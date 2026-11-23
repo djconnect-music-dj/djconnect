@@ -21457,7 +21457,7 @@
   "source_pins": {
     "custom_components/djconnect/ask_dj/examples_v1.json": "5c8c52c044782f18dae53f10d6babe02b6c6e414131e52f16255d65ad60f730b",
     "docs/verification/NATIVE_CLIENT_GOLDEN_CONTRACT_V1.md": "f8836420ada5ac69e01620f060baa948ed4c01e9392b6977827fe32ccd738b3f",
-    "docs/verification/fixtures/askdj_golden_release_matrix_v1.json": "3ae356f2e1a2ea793a64c6bcca82c8f531ff4cf92e424bcda1a81825749a30dc",
+    "docs/verification/fixtures/askdj_golden_release_matrix_v1.json": "11e8e52bd5ca70cdae18e6e405fdde62797d8208f1c6eb2997b6249dc6e3ed74",
     "docs/verification/fixtures/dj_moment_persona_mood_golden_v1.json": "ea5fed1e1fd7a5646d8ac902904116f74ef25a249823bb8a50c5b4bd9f950c06",
     "examples/ask_dj_e2e_cases.json": "b5234d0a0766991f5f9af53d5738d8344d082c2224380a7b6ef9ac1daf2749d4",
     "examples/client_contracts/music_announcement_v1/actual-ha-wire.json": "62e31ca902f620ba5d7ea51da13bd8a842a4225daba46a3ed48c5cac7a3f3aa7",

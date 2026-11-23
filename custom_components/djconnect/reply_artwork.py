@@ -54,6 +54,9 @@ def public(value):
 
 def source_admission(hass, runtime, owner):
     """Capture the existing loaded source, never pick a substitute account on read."""
+    from .guest_conversation import GuestRuntimeView
+    if isinstance(runtime, GuestRuntimeView):
+        return None, None  # A guest may not inherit personal media grants.
     from .profile_backend import profile_backend_runtime
     from .profile_context import profile_storage
     from .forecast_imagery import artist_authority

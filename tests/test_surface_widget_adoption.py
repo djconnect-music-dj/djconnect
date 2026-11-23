@@ -381,9 +381,9 @@ class WidgetActualHAContractTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         wire = json.loads((root / 'examples/client_contracts/surface_push_v1/widget-adoption-actual-ha-live-impression-20261119-requested-moments-20261120.json').read_text())
         self.assertEqual(wire['ha_sdk_version'], '2026.10.0')
-        current = json.loads((root / 'examples/client_contracts/surface_push_v1/ha-native-voice-20261122-music-canvas-recovery-20-944e7869.json').read_text())
+        current = json.loads((root / 'examples/client_contracts/surface_push_v1/ha-shared-guest-20261123-music-canvas-recovery-20-944e7869.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
-        self.assertEqual(len(current['source_pins']), 331)
+        self.assertEqual(len(current['source_pins']), 343)
         self.assertEqual(current['harness'], wire['harness'])
         self.assertEqual(current['harness_sha256'], wire['harness_sha256'])
         extension = current['receipt']['extension']

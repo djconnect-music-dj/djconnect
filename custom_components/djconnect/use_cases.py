@@ -34,6 +34,7 @@ class MusicCommand(StrEnum):
     DEVICES = "devices"
     SET_OUTPUT = "set_output"
     QUEUE = "queue"
+    ENQUEUE_TRACK = "enqueue_track"
     PLAYLISTS = "playlists"
     SEARCH_PLAYLISTS = "search_playlists"
     SEARCH_TRACKS = "search_tracks"
@@ -185,6 +186,7 @@ class MusicBackendCapabilities:
     supports_search: bool = False
     supports_playlists: bool = False
     supports_queue: bool = False
+    supports_enqueue_track: bool = False
     supports_outputs: bool = False
     supports_volume: bool = False
     supports_favorites: bool = False
@@ -250,6 +252,7 @@ class SpotifyDirectBackend:
         supports_search=True,
         supports_playlists=True,
         supports_queue=True,
+        supports_enqueue_track=True,
         supports_outputs=True,
         supports_volume=True,
         supports_favorites=True,
@@ -486,6 +489,12 @@ class DJConnectUseCases:
     ) -> dict[str, Any]:
         """Run a normalized DJConnect music command through the backend."""
         normalized = normalize_music_command(command)
+        from .guest_conversation import actor_for
+        guest = actor_for(self.hass)
+        if guest is not None:
+            if normalized == "status":
+                return guest.shared_status()
+            guest.allow_command(normalized)
         if not isinstance(self.backend, ManualMusicBackend):
             self._ensure_capability(normalized)
         from .ask_dj.dialogue import current_turn, current_effect, command_family, CommandEffect, DialogueError
@@ -494,7 +503,9 @@ class DJConnectUseCases:
         token = None
         if turn is not None and family:
             await turn.guard()
-            if not any(family in grant.families for grant in turn.effect_grants):
+            from .guest_requests import admission_for
+            request_admission = admission_for(guest) if guest is not None else None
+            if not (request_admission is not None and normalized == 'enqueue_track') and not any(family in grant.families for grant in turn.effect_grants):
                 raise DialogueError("playback_effect_not_authorized", 403)
             token = current_effect.set(CommandEffect(family, normalized, deepcopy(value), play))
         try:
@@ -585,6 +596,7 @@ _CAPABILITY_BY_COMMAND = {
     MusicCommand.DEVICES.value: "supports_outputs",
     MusicCommand.SET_OUTPUT.value: "supports_outputs",
     MusicCommand.QUEUE.value: "supports_queue",
+    MusicCommand.ENQUEUE_TRACK.value: "supports_enqueue_track",
     MusicCommand.PLAYLISTS.value: "supports_playlists",
     MusicCommand.SEARCH_PLAYLISTS.value: "supports_playlists",
     MusicCommand.SEARCH_TRACKS.value: "supports_search",

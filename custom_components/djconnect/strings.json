@@ -459,6 +459,19 @@
           "profile_id": "DJConnect profile",
           "allow_personal_access": "Allow personal access"
         }
+      },
+      "guest_participation": {
+        "title": "Samen meedoen met de DJ",
+        "description": "Start eerst een VibeCast-deelsessie. Instellingen gelden alleen voor deze live deelsessie. Bij een verzoekbesluit blijven de deelname-instellingen zoals ze zijn.",
+        "data": {
+          "share_id": "Live deelsessie",
+          "participation_mode": "Deelname",
+          "screen_focus": "Gedeelde Moments op het scherm laten zien",
+          "max_pending": "Open verzoeken per gast",
+          "request_id": "Verzoeknummer",
+          "decision": "Besluit over verzoek",
+          "shared_voice_endpoints": "Spraakapparaat in de kamer"
+        }
       }
     },
     "error": {
@@ -482,10 +495,13 @@
       "profile_platform_failed": "Het gekoppelde profiel kon niet worden bijgewerkt. Controleer de apparaatkoppeling en probeer opnieuw.",
       "profile_shared_backend_change": "Dit profiel is gekoppeld aan meerdere apparaten. Koppel dit apparaat aan een eigen profiel voordat je de muziekbackend wijzigt.",
       "shared_dj_settings_required": "This old form has saved nothing. Use a DJConnect client that supports shared Profile settings to change your DJ preferences.",
-      "profile_connection_unavailable": "The existing music connection is unavailable or ambiguous. Restore that connection, or choose another profile."
+      "profile_connection_unavailable": "The existing music connection is unavailable or ambiguous. Restore that connection, or choose another profile.",
+      "guest_participation_unavailable": "De live deelsessie, het verzoek of de toestemming is gewijzigd. Open deze instellingen opnieuw."
     },
     "abort": {
-      "client_retired": "Deze client wordt niet meer ondersteund. Kies een ondersteunde client."
+      "client_retired": "Deze client wordt niet meer ondersteund. Kies een ondersteunde client.",
+      "guest_participation_updated": "Deelname bijgewerkt.",
+      "guest_no_live_share": "Start eerst een live VibeCast-deelsessie."
     }
   },
   "entity": {

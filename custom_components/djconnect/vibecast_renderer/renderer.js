@@ -812,12 +812,56 @@
     window.addEventListener("djconnect-display-artwork",({detail}) => {
       displayArtwork=new Map((Array.isArray(detail) ? detail : []).filter(cover=>String(cover.url).startsWith("blob:"))
         .map(({reference,item_id,url})=>[reference,{item_id,url}]));
+      if(focusedOverlay){
+        const old=Array.from(focusedOverlay.children).find(node=>node.tagName==="IMG");
+        const item=(projection.shared_flow||[]).concat(projection.dj_moments||[]).find(value=>value.moment_id===focusedMomentId);
+        if(old && (!item || !displayArtwork.has((item.artwork||{}).reference)))old.remove();
+      }
       render(false);
+    });
+    let focusedOverlay=null,focusTimer=null,focusedMomentId=null,focusedRevision=null;
+    function clearSharedFocus(){
+      if(focusTimer)clearTimeout(focusTimer);focusTimer=null;
+      if(focusedOverlay)focusedOverlay.remove();focusedOverlay=null;focusedMomentId=focusedRevision=null;
+    }
+    window.addEventListener("djconnect-display-clear",clearSharedFocus);
+    window.addEventListener("djconnect-shared-focus",({detail})=>{
+      if(focusedOverlay && focusedRevision===(detail && detail.focus_revision))return;
+      clearSharedFocus();
+      const item=(projection.shared_flow||[]).concat(projection.dj_moments||[]).find(value=>value.moment_id===(detail && detail.focused_moment_id));
+      const deadline=Math.min(Date.now()+Number((detail && detail.expires_in)||0)*1000,Date.parse((item && item.flow_expires_at)||(item && item.display_expires_at)||""));
+      if(!item || !item.content || !(deadline>Date.now()))return;
+      const overlay=document.createElement("section"),title=document.createElement("h2"),body=document.createElement("p");
+      overlay.className="shared-moment-focus";overlay.setAttribute("role","region");
+      title.textContent=item.title||"";body.textContent=item.content;overlay.append(title,body);
+      const cover=displayArtwork.get((item.artwork && item.artwork.reference));
+      if(item.type!=="live_impression" && cover && cover.item_id===item.playback_item_id && String(cover.url).startsWith("blob:")){
+        const img=document.createElement("img");img.src=cover.url;img.alt="";overlay.prepend(img);
+      }
+      const close=document.createElement("button");close.type="button";close.textContent=(flowLabels[root.lang]||flowLabels.en)[1];
+      close.onclick=()=>{clearSharedFocus();window.dispatchEvent(new Event("djconnect-display-return"));};overlay.append(close);document.body.append(overlay);focusedOverlay=overlay;focusedMomentId=item.moment_id;focusedRevision=detail.focus_revision;
+      focusTimer=setTimeout(clearSharedFocus,deadline-Date.now());
+    });
+    window.addEventListener("djconnect-shared-photo",({detail})=>{
+      if(!focusedOverlay)return;
+      const previous=focusedOverlay.querySelector("figure");if(previous)previous.remove();
+      if(!detail || detail.focus_revision!==focusedRevision || !String(detail.url).startsWith("blob:"))return;
+      const photo=detail.photo||{},figure=document.createElement("figure"),img=document.createElement("img"),caption=document.createElement("figcaption");
+      img.src=detail.url;img.alt=(photo.alt_text||{})[detail.locale] || (photo.alt_text||{}).en || "";
+      caption.textContent=[photo.caption,photo.author,photo.credit,photo.license].filter(Boolean).join(" — ");
+      if(/^https:\/\/commons\.wikimedia\.org\/wiki\/File:/.test(photo.source_url)){
+        const link=document.createElement("a");link.href=photo.source_url;link.textContent=photo.source_url;link.target="_blank";link.rel="noreferrer noopener";caption.append(document.createElement("br"),link);
+      }
+      if(/^https:\/\/creativecommons\.org\//.test(photo.license_url)){
+        const link=document.createElement("a");link.href=photo.license_url;link.textContent=photo.license;link.target="_blank";link.rel="noreferrer noopener";caption.append(document.createElement("br"),link);
+      }
+      figure.append(img,caption);focusedOverlay.prepend(figure);
     });
     window.addEventListener("djconnect-display-snapshot",({detail}) => {
       if (!detail || detail.contract_version !== 1 || !detail.session || detail.session.runtime_state !== "active") return;
       const labels=detail.session_presentation || {};
       sessionId=detail.session.session_id; ended=false; snapshotAccepted=true;
+      if(focusedOverlay && !(detail.shared_flow||[]).concat(detail.dj_moments||[]).some(item=>item.moment_id===focusedMomentId))clearSharedFocus();
       apply({...detail,session:{...detail.session,selected_mood:labels.mood,dj_persona:labels.persona,selected_presence:labels.presence}});
       e("state").textContent=text.live;
     });
