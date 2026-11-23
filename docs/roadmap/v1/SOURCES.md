@@ -14,6 +14,8 @@ Selected shared Profile/Session settings consolidation: DJC-PROFILE-SESSION-SETT
 
 Music Canvas v1 owner-selected implementation is SOURCE_DELIVERED / PROTECTED_MERGED. Core contracts, persistent preferences, lifecycle, composition and Samsung/SwitchBot adapters feed the native Apple panel. Joint real-provider/native/hardware acceptance stays Planned/OPEN; no Cast route, deployment or automatic dispatch.
 
+Bounded same-tab guest invitation correction is implemented locally, not merged. Fresh real-browser/declared HTTP proof and all54 HA probes bind the current343 product files. Existing nodes, historical publication proofs and physical/provider/installed acceptance remain unchanged; the retained source branch has an owner-approved admission exception only for this repair.
+
 Shared HA guest Core source #1677 is protected merged and exact-main qualified. Broader WEB owners remain In progress; browser/receiver, provider/editorial, installed and physical acceptance are OPEN. The following local source receipt is preserved history.
 
 HA shared guest stage3 is implemented locally and remains unmerged: admitted browser/native guests use the same Core service and bounded host-reviewed enqueue. Existing WEB owners are In progress; maintained browser/media source is partial, receiver consumption and physical/provider/editorial acceptance remain open. No automatic dispatch, installation or deployment.
@@ -165,3 +167,5 @@ Frozen raw SHA256 `5b7ae65fba263150e1deacbec865cc44622033afb9125fae995a61b88a348
 | [SYNC_PROMPTS.md](../../../SYNC_PROMPTS.md) | `877e633734af30b3c21475a2dde47f155c38cf5174b573baea551738f140bf8e` |
 | [docs/technical/VIBECAST_GUEST_PARTICIPATION_V1.md](../../../docs/technical/VIBECAST_GUEST_PARTICIPATION_V1.md) | `cc83bdabe475acc9125fd0023434553299645744427906f683df8fa8399aecbb` |
 | [docs/history/prompts/2026-11-23-ha-shared-guest-participation.md](../../../docs/history/prompts/2026-11-23-ha-shared-guest-participation.md) | `7afb9a0dddb34d28c05b4259651468cb0374b0004c5abfe34ced0829fea5fb2f` |
+| [docs/verification/HA_GUEST_INVITATION_REPAIR_20261123.md](../../../docs/verification/HA_GUEST_INVITATION_REPAIR_20261123.md) | `50c64e5477b365ba112bbb1ae999eaeac137e97c8eff7813471d9c8f63bf20b2` |
+| [docs/history/prompts/2026-11-23-ha-guest-invitation-repair.md](../../../docs/history/prompts/2026-11-23-ha-guest-invitation-repair.md) | `d6eb4ad2a89aaae9bd692a83909e088331ebc30f6bcf538cc626c11d9bd65665` |

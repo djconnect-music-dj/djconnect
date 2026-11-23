@@ -1,3 +1,45 @@
+## 2026-11-23 — Same-tab guest invitation repair source candidate
+
+### Repository Status
+
+Qualified predecessor Core PR [#1678](https://github.com/djconnect-music-dj/djconnect/pull/1678) merged as `48c25f820fbfa39270137e3c7a4f01823511875f` from `1c033dac697e240bfee0ec056a9b5ba83784f6dd`; complete trees match. Its own main CI/coverage45193962202, internal publication45195098557, downloaded343-file package and all12 original policy checks passed. Repository State: `MERGED_RECONCILED` for that delivered predecessor. Current repair is LOCAL_IMPLEMENTATION_NOT_MERGED on sole branch `codex/ha-guest-invitation-repair-20261123`.
+
+The owner replied “ga verder” to the concrete bounded workspace-exception request. Keep `codex/ha-native-shared-participation-20261123` at `bf0494f6d5756b1756c526c46d04a9631e6b81b3`; waive only its branch-removal readiness prerequisite for this repair. No deletion, source merge, internal release, installation, deployment or paid-provider permission is inferred. Fresh remote/base, no open Core PR/competing writer, clean starting tree and host MATCH were checked. Original checkouts remain untouched.
+
+### Management Summary
+
+A real browser reproduced fresh invitation navigation in an existing guest tab retaining the fragment and hiding Join. The correction clears the original temporary scope and fully reloads into the same existing invitation bootstrap. The fragment disappears and joining requires a new explicit click; invalid invitations stay closed. Only maintained guest.js and its generated guest HTML change in the product; backend rights/wire, history, queue, providers and five-language copy are unchanged.
+
+### Roadmap Position
+
+Maintenance29 preserves maintenance28, all prior source/publication proof and every node/edge/status. Existing broader WEB/adoption owners remain In progress and HA-native acceptance stays Planned / OPEN_ACCEPTANCE. This is a bounded correction, not whole-family acceptance or successor dispatch. New current evidence binds the same343-file inventory; old343/331-file records remain historical and protected by their actual downloaded archives.
+
+### Rolling Horizon (Execution Horizon — Next 5 Planned)
+
+1. **HA-NATIVE-VOICE::ACCEPTANCE** — Planned / OPEN_ACCEPTANCE; browser repair delivery and physical/provider/editorial/installed acceptance remain.
+2. **MUSIC-CANVAS::ACCEPTANCE** — Planned / OPEN; earlier source delivery unchanged.
+3. **MUSIC-ORIGIN::ACCEPTANCE** — Planned / OPEN; earlier source delivery unchanged.
+4. **ASK-DJ-MOMENTS::ACCEPTANCE** — Planned / OPEN_ACCEPTANCE; earlier source delivery unchanged.
+5. **SETTINGS::APPLE::EDITOR** — Planned / NOT_ISSUED; no dispatch.
+
+Canonical tentative projection; no automatic next selection or consumer writer.
+
+### Validation and Acceptance
+
+The causal source check fails on delivered guest.js and passes after the repair; all5 prior checks remain plus2 new cases. Actual browser retest passes5 navigation/isolation cases with declared loopback HTTP fixtures, including different fixture guests only after explicit rejoin. All54 actual isolated HA SDK regressions pass on the same unchanged343-file product source. Fresh45 inherited proof bindings and personal/shared/Canvas receipts preserve their immediate prior main proofs; no threshold, skip or historical outcome is relabeled. Maintained build checks pass8 tests. Full root/static/bootstrap/roadmap results are recorded in the source review PR and `docs/verification/HA_GUEST_INVITATION_REPAIR_20261123.md`.
+
+### Blocked Items
+
+The new source requires its own reviewable PR, exact-head CI and separate owner merge decision. Canonical real browser/HA/provider/editorial/physical/installed acceptance remains open beyond the narrowly tested browser navigation behavior. No fixture is a physical satellite, real provider effect or receiver distribution proof.
+
+### Deferred Items
+
+No release, installation, deployment, paid-provider execution, broader UI redesign, consumer repository change or source-branch deletion. Unrelated WIP/branches and rollback proof are preserved.
+
+### Repository and Workspace State
+
+The new PR establishes `REVIEWABLE_FROZEN`; current source remains local/unmerged. The owner-directed workspace exception is only for this one repair with the completed source branch retained. Protected merge, separate Finalization and its own qualified main/publication remain independent gates.
+
 ## 2026-11-23 — Shared HA-native guest source Finalization
 
 ### Repository Status

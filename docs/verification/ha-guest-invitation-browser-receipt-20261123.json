@@ -1,0 +1,59 @@
+{
+  "scope": "REAL_BROWSER_WITH_DECLARED_SYNTHETIC_HTTP_NOT_HA_PROVIDER_PHYSICAL",
+  "base_sha": "48c25f820fbfa39270137e3c7a4f01823511875f",
+  "product_manifest_path": "docs/verification/ha-guest-invitation-product-manifest.json",
+  "product_manifest_sha256": "038a05f6dd5d365966dcedf21582872f82fe3f11061bb00ae043435a65eea873",
+  "product_file_count": 343,
+  "source_before_after_equal": true,
+  "browser": "ChatGPT in-app browser via CUA",
+  "predecessor_finding": {
+    "id": "HA-GUEST-SAME-TAB-INVITATION",
+    "trigger": "Navigate to a fresh invitation fragment in an already open guest tab",
+    "actual": "New fragment remains in URL; join button stays hidden; manual reload restores joining and clears fragment",
+    "expected": "Fresh invitation is handled without retaining the fragment or old guest context",
+    "old_access_resurrected": false,
+    "old_transcript_retained": false,
+    "real_secret_used": false
+  },
+  "predecessor_observation_sha256": "9edb89664bb0804dd25e28dfd70649fe7e4dc2e421d402969fa23c7893fb812d",
+  "checks": {
+    "fresh_same_document_invitation_erases_fragment": "PASS",
+    "old_transcript_and_draft_discarded": "PASS",
+    "explicit_join_required_after_rotation": "PASS",
+    "different_fixture_guest_after_explicit_rejoin": "PASS",
+    "malformed_fragment_stays_closed_and_is_erased": "PASS"
+  },
+  "new_invitation_dom": {
+    "conversationHidden": true,
+    "draft": "",
+    "joinVisible": true,
+    "messages": 0,
+    "urlHasFragment": false
+  },
+  "invalid_invitation_dom": {
+    "conversationHidden": true,
+    "draft": "",
+    "joinHidden": true,
+    "messages": 0,
+    "urlHasFragment": false
+  },
+  "no_auto_join": {
+    "last_get_sequence": 5,
+    "posts_after_new_invitation_reload": 0,
+    "request_count": 5
+  },
+  "distinct_fixture_guest_count": 2,
+  "request_log_sha256": "747451cb250ce4eb3d84331c2c34205db7f4451fb6ee437ece1e2f9fbb9e42dd",
+  "fixture_server_sha256": "7ec6d9d8d49126e22ea1ff921dcbb22567e7ee6b39249b09263c0fe8ff56f347",
+  "node_before_exit_code": 1,
+  "node_before_log_sha256": "bf4f760b03fa7d9f71e0537bfce4394c1ed338409c3bee0178ef2453b77fabde",
+  "node_after_log_sha256": "33191f56be98bb055f3d51b9787f02f73a5e68c153de3c68381002b7f14da68f",
+  "installed": "NOT_RUN",
+  "deployment": "NOT_RUN",
+  "real_provider": "NOT_RUN",
+  "physical_satellite": "NOT_RUN",
+  "editorial_acceptance": "OPEN",
+  "predecessor_guest_source_sha256": "083b40d89fc85e58fa47b1a4c41c55f150672cff908550da0a1dfc30d7dcacc9",
+  "current_guest_source_sha256": "09c1081111c9a37ad5c8007403214264e0dfdc99ddda5359e67c81fdad6c1ab2",
+  "node_harness_sha256": "5a02c72daeec5c248918486f231d8f378d880814fcf7dbd535ca170b5ec4d429"
+}

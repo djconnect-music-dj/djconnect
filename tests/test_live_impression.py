@@ -356,7 +356,7 @@ class LiveImpressionTest(unittest.IsolatedAsyncioTestCase):
     def test_tracked_actual_ha_http_receipt_binds_final_source_and_declared_fixture_scope(self):
         from pathlib import Path
         root=Path(__file__).resolve().parents[1]
-        proof=json.loads((root/'examples/client_contracts/live_impression_v1/ha-shared-guest-20261123-music-canvas-recovery-20-1fcc2b3e.json').read_text())
+        proof=json.loads((root/'examples/client_contracts/live_impression_v1/ha-guest-invitation-20261123-ha-shared-guest-20261123-0ca17a83.json').read_text())
         self.assertTrue(proof['source_before_after_equal'])
         self.assertEqual(len(proof['source_pins']),343)
         for path,digest in proof['source_pins'].items():
