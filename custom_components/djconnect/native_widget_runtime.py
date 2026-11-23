@@ -1,4 +1,4 @@
-"""Select the first-key service only from the HA-dev process configuration."""
+"""Select dormant automatic custody or an explicit bounded HA-dev assignment."""
 
 import base64
 import json
@@ -92,10 +92,14 @@ def _service(hass, path):
 
 
 async def select_from_runtime(hass):
-    """Leave all native enrollment routes closed if HA-dev has no valid assignment."""
+    """Wire ordinary custody without effects; an explicit invalid assignment stays closed."""
     path = os.environ.get(_CONFIG_ENV)
     domain = hass.data.setdefault(DOMAIN, {})
-    if not path or KEY in domain:
+    if KEY in domain:
+        return
+    if not path:
+        from .native_installation_runtime import create_installation_service
+        domain[KEY] = create_installation_service(hass)
         return
     try:
         service = await hass.async_add_executor_job(_service, hass, path)

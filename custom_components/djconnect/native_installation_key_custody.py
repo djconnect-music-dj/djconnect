@@ -34,7 +34,7 @@ def _unique(items):
     return result
 
 
-def _private_read(path):
+def _private_read(path, maximum=_MAX_FILE):
     try:
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     except FileNotFoundError:
@@ -43,8 +43,8 @@ def _private_read(path):
         info = os.fstat(stream.fileno())
         require(stat.S_ISREG(info.st_mode) and info.st_uid == os.geteuid()
                 and stat.S_IMODE(info.st_mode) == 0o600
-                and 0 < info.st_size <= _MAX_FILE, _ERROR, 503)
-        raw = stream.read(_MAX_FILE + 1)
+                and 0 < info.st_size <= maximum, _ERROR, 503)
+        raw = stream.read(maximum + 1)
         require(len(raw) == info.st_size, _ERROR, 503)
         return json.loads(raw, object_pairs_hook=_unique)
 
@@ -91,7 +91,8 @@ def _generate():
 def _selection(document, store, claim):
     from cryptography.hazmat.primitives.serialization import load_der_private_key
     require(type(document) is dict and document.get("key") == store.key
-            and document.get("version") == 1 and type(document.get("data")) is dict, _ERROR, 503)
+            and type(document.get("version")) is int and document["version"] == 1
+            and type(document.get("data")) is dict, _ERROR, 503)
     data = document["data"]
     require(set(data) == {"claim", "binding_key_b64", "signing_key_der_b64"}
             and data["claim"] == claim, _ERROR, 503)
@@ -133,7 +134,7 @@ class InstallationWidgetKeyCustodian:
         transport, publisher = service.transport, service.publisher
         binding = {**service.install_binding(pair), "credential_id": credential_id,
                    "credential_sha256": hashlib.sha256(token.encode("ascii")).hexdigest()}
-        identity = hashlib.sha256(canonical([binding["origin"], binding["installation"]]).encode()).hexdigest()
+        identity = hashlib.sha256(canonical([binding["origin"], binding["installation"], pair.registration.binding]).encode()).hexdigest()
         store = _store(pair, identity)
 
         def current():

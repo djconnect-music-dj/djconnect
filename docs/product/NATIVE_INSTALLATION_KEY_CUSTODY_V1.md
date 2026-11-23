@@ -21,10 +21,12 @@ The existing WidgetEnrollmentSelection produces the exact original HMAC binding
 dialect and P-256 signer; no Surface binding namespace is copied or equated.
 
 Custody uses an HA private atomic Store (`private=True, atomic_writes=True`).
-Its name is derived from the actual origin and installation; the private record
+Its name is derived from the actual origin, installation and original committed
+PairJournal registration binding; the private record
 is bound to the original pair-store/generation and credential identity/digest.
-A different credential or pairing cannot silently turn an existing installation
-into a fresh key. The original credential remains secret in its existing store.
+A different credential cannot silently turn the same original pair into a fresh
+key. Each genuinely fresh ordinary pair requires its own explicit opt-in and
+receives a separate partition; no installation-global signing key is claimed. The original credential remains secret in its existing store.
 No private signing/binding material, token or stored record enters the wire,
 logs or qualification evidence.
 
