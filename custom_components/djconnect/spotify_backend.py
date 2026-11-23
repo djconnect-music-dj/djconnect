@@ -273,6 +273,7 @@ async def handle_spotify_command(
         item = await backend.search_media(
             _search_query(value),
             str(value.get("type") or "track") if isinstance(value, dict) else "track",
+            **({"constraints":value["constraints"]} if isinstance(value,dict) and "constraints" in value else {}),
         )
         return {"success": True, "item": item, "media": item}
     if normalized == "listening_profile":
@@ -1317,14 +1318,17 @@ class SpotifyBackend:
         )
         return albums
 
-    async def search_media(self, query: str, media_type: str = "track") -> dict[str, Any]:
+    async def search_media(self, query: str, media_type: str = "track", *, constraints=None) -> dict[str, Any]:
         """Search a single Spotify media item without changing playback."""
         query = str(query or "").strip()
         if not query:
             raise SpotifyBackendError("Provide a Spotify search query")
         spotify_type = _spotify_search_type(media_type)
         market = str(self.conf.get("spotify_market") or DEFAULT_SPOTIFY_MARKET)
-        if spotify_type == "artist":
+        if constraints is not None:
+            from .recording_constraints import resolve_recording
+            item, data = await resolve_recording(self, constraints, media_type)
+        elif spotify_type == "artist":
             item, data = await self._search_artist_result(query)
         else:
             params = urlencode({"q": query, "type": spotify_type, "limit": 1, "market": market})
@@ -2101,6 +2105,14 @@ class SpotifyBackend:
             media_type = str(value.get("type") or "artist").strip().lower()
             if not query:
                 raise ValueError("Provide a Spotify URI or search query")
+            if "constraints" in value:
+                from .recording_constraints import resolve_recording
+                item, data = await resolve_recording(self, value["constraints"], media_type)
+                resolved = _normalize_search_item(item, "track", query)
+                self.runtime.last_resolved_media = resolved
+                self.runtime.last_spotify_search = _spotify_search_debug(
+                    query=query, spotify_type="track", data=data, selected=resolved)
+                return item["uri"]
             if query.startswith("spotify:"):
                 return query
             return await self._search_uri(query, media_type)

@@ -193,6 +193,11 @@ def parse_spoken_music_request(text: str) -> dict[str, str | None]:
     playlist = _match_single_value(_PLAYLIST_QUERY_PATTERNS, query)
     if playlist:
         return _parsed_request("playlist", playlist, playlist=playlist)
+    # A recording from an album is more specific than the broad artist/album
+    # shorthand below. Keep the entire album text; unknown output suffixes are
+    # never silently discarded or treated as output selection authority.
+    if recording := _album_recording_request(query):
+        return recording
     artist_track = _match_artist_title(_ARTIST_WITH_TRACK_QUERY_PATTERNS, query)
     if artist_track:
         artist, title = artist_track
@@ -218,6 +223,27 @@ def parse_spoken_music_request(text: str) -> dict[str, str | None]:
         return parse_spoken_music_request("play " + target)
     artist = extract_artist_query(query)
     return _parsed_request("artist", artist, artist=artist)
+
+
+def _album_recording_request(text):
+    subject = music_command_subject(text)
+    if not subject:
+        return None
+    # Explicit connectors distinguish a track-on-album request from e.g.
+    # "play Artist album Title". Artist surnames containing "van" stay intact.
+    match = re.fullmatch(
+        r"(?:(?:(?:the|het|de|das|der|die|le|la|el)\s+)?(?:track|song|nummer|liedje|chanson|titre|canci[oó]n)\s+)?"
+        r"(?P<title>.+?)\s+(?:van|by|von|de)\s+(?P<artist>.+?)\s+"
+        r"(?:van het album|van album|from the album|from album|vom album|"
+        r"aus dem album|de l['’]album|sur l['’]album|del [aá]lbum)\s+(?P<album>.+)",
+        subject, re.I)
+    if not match:
+        return None
+    title, artist, album = (clean_music_query(match[key]) for key in ('title', 'artist', 'album'))
+    if not all((title, artist, album)):
+        return None
+    return {**_parsed_request('track', _query_with_artist(title, artist), title=title, artist=artist),
+            'album': album}
 
 
 def _parsed_request(

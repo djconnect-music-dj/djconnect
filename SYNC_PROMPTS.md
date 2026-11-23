@@ -8106,3 +8106,11 @@ production-audience first-key enrollment. The exact selection is in
 `docs/product/NATIVE_SURFACE_PUSH_V1.md`; no debug trial flag or local preference
 can substitute for authoritative consent, an original issuer or a native clock
 qualification. Other push channels remain independently admitted.
+
+## Explicit track / album identity (2026-11-23)
+
+See `docs/product/EXPLICIT_RECORDING_CONSTRAINTS_V1.md`. A literal track +
+artist + album request stays a track request. Preserve all original constraints
+through the existing Core intent and provider dispatch; verify bounded provider
+candidates before any playback write. No first-result substitution, new public
+wire or client authority. Inline speaker selection remains its existing owner.

@@ -1479,6 +1479,8 @@ def _contextualize_play_request_from_recent_actions(
     ):
         return text
     parsed = parse_spoken_music_request(text)
+    if parsed.get("album"):
+        return text  # A recent result cannot replace explicit recording constraints.
     query = str(parsed.get("query") or "").strip()
     if not query:
         query = _play_request_title_candidate(text)
@@ -2176,6 +2178,13 @@ async def _handle_hybrid(
 ) -> dict[str, Any]:
     if not classification.play:
         return await _deferred_playback_request_response(hass, runtime, text)
+    from .dialogue import current_turn
+    from .recording_output import prepare
+    text, output_response = await prepare(hass, runtime, text, payload, classification,
+        inventory=_available_output_devices, offer=_playback_output_selection_response,
+        turn=current_turn.get())
+    if output_response is not None:
+        return output_response
     try:
         result = await run_text_command(
             hass,
@@ -2229,9 +2238,10 @@ async def _playback_output_selection_response(
     text: str,
     payload: dict[str, Any],
     classification: AskDjIntent,
-    *, selection=None,
+    *, selection=None, devices=None,
 ) -> dict[str, Any]:
-    devices = await _available_output_devices(hass, runtime)
+    if devices is None:
+        devices = await _available_output_devices(hass, runtime)
     actions = _output_device_play_request_actions(devices, text, payload, selection=selection)
     if not actions:
         return {}
@@ -2282,7 +2292,9 @@ async def _deferred_playback_request_response(
             hass,
             runtime,
             "search_media",
-            {"query": query, "type": media_type},
+            {"query": query, "type": media_type,
+             **({"constraints":{key:parsed.get(key) for key in ("title","artist","album")}}
+                if parsed.get("album") else {})},
         )
     except Exception as exc:  # noqa: BLE001
         _LOGGER.debug("DJConnect deferred playback search failed: %s", exc)
