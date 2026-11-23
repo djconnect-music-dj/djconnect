@@ -1393,6 +1393,13 @@ def classify_conversation_turn(
             _conversational_response_text(normalized),
         )
     if _is_clarification_or_correction(normalized):
+        from .dialogue import current_turn
+        from .exploration import captured_age_pending
+        turn = current_turn.get()
+        if turn is not None and captured_age_pending(turn) is not None:
+            # This is an actual pending choice, not a rewrite of the previous
+            # question. The ordinary semantic read keeps this reply verbatim.
+            return AskDjConversationTurn(_conversation_kind_for_intent(text), text)
         merged = _merge_with_previous_user_request(text, memory_context)
         return AskDjConversationTurn("clarification_or_correction", merged)
     return AskDjConversationTurn(_conversation_kind_for_intent(text), text)
@@ -3116,10 +3123,12 @@ async def _group_inception_research_response(
     from .exploration import band_age_question
 
     original_group_sources = tuple(fetched_sources)
+    original_group_research = json.loads(json.dumps(turn.public_research, ensure_ascii=False))
     group_language = turn.style.get("language", "en")
+    age_target = turn.public_age_target
     group_answer = (
         group_inception_answer(original_group_sources, subject, group_language)
-        if band_age_question(turn.public_research, group_language, question=text)
+        if band_age_question(original_group_research, group_language, question=text, age_target=age_target)
         is None
         else None
     )
@@ -3127,7 +3136,8 @@ async def _group_inception_research_response(
 
         def original_group_date_delivery_guard():
             if (
-                group_inception_answer(original_group_sources, subject, group_language)
+                (None if band_age_question(original_group_research, group_language, question=text, age_target=age_target)
+                 is not None else group_inception_answer(original_group_sources, subject, group_language))
                 != group_answer
             ):
                 raise DialogueError("conversation_context_changed", 409)
@@ -3246,21 +3256,24 @@ async def _current_events_research_response(
 async def _group_age_research_response(
     fetched_sources, turn, text, research_state, DialogueError
 ):
-    from .exploration import band_age_question
+    from .exploration import band_age_question, stage_age_pending
 
     original_research = json.loads(json.dumps(turn.public_research, ensure_ascii=False))
     language = turn.style.get("language", "en")
-    question = band_age_question(original_research, language, question=text)
+    age_target = turn.public_age_target
+    question = band_age_question(original_research, language, question=text, age_target=age_target)
     if question is not None:
 
         def original_group_evidence():
             if (
-                band_age_question(original_research, language, question=text)
+                band_age_question(original_research, language, question=text, age_target=age_target)
                 != question
             ):
                 raise DialogueError("conversation_context_changed", 409)
 
         turn.delivery_validators.append(original_group_evidence)
+        stage_age_pending(turn, original_research.get("resolved_public_subject"), text,
+                          person=age_target == "person_age")
         await turn.guard()
         return _core_answer(
             question,
@@ -3476,7 +3489,7 @@ class _InformationalResearchPreparation:
             )
             if response is not _NO_INFORMATIONAL_RESEARCH_RESPONSE:
                 return response
-        if self.public_research.direct_question(self.text)[0] == "age":
+        if self.research_angle == "age" or self.public_research.direct_question(self.text)[0] == "age":
             response = await _person_age_research_response(
                 self.fetched_sources, self.subject, self.turn, self.error_type
             )

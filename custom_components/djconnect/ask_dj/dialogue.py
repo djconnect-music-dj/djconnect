@@ -270,6 +270,12 @@ class DialogueTurn:
     installed_production_revision: int | None = None
     unused_production_request_hash: str | None = None
     recording_research: bool = False
+    public_age_target: str = ""  # Validated turn-local route, never a client fact/grant.
+    consume_public_age_pending: bool = False
+    public_age_completion_pending: dict | None = None
+    public_age_completion_revision: int | None = None
+    public_age_completion_reference: PublicQueryReference | None = None
+    public_age_completion_reference_revision: int | None = None
 
     def __post_init__(self):
         self.read_context_revision = self.frame.read_context_revision
@@ -460,8 +466,10 @@ class DialogueState:
                     or set(message.get('_source_request_hashes', ())) & request_hashes
                     or depends(message.get('_dependencies', ())))
         for frame in self.owners.get(scope, {}).values():
-            if (isinstance(frame.pending, dict) and frame.pending.get('type') == 'recording_production'
-                    and frame.pending.get('request_hash') in request_hashes):
+            if (isinstance(frame.pending, dict)
+                    and frame.pending.get('type') in {'recording_production', 'public_age_clarification'}
+                    and (frame.pending.get('request_hash') in request_hashes
+                         or set(frame.pending.get('source_request_hashes', ())) & request_hashes)):
                 frame.set_pending(None)
             if (frame.public_query_reference is not None
                     and frame.public_query_reference.request_hash in request_hashes):
@@ -587,6 +595,12 @@ class DialogueState:
                 or frame.public_query_revision != turn.public_reference_revision_at_start
                 or not result.get("success")):
             return
+        age_pending = (turn.pending is not None
+                       and turn.pending.get('type') == 'public_age_clarification')
+        if ((age_pending or turn.consume_public_age_pending)
+                and (frame.pending is not turn.pending_at_start
+                     or frame.pending_revision != turn.pending_revision_at_start)):
+            raise DialogueError('conversation_context_changed', 409)
         if turn.reset_topic:
             preserve_newer = (isinstance(frame.pending, dict)
                 and frame.pending.get('type') == 'recording_production'
@@ -625,7 +639,7 @@ class DialogueState:
             frame.set_pending(None)
             if turn.consume_production_pending:
                 turn.consumed_production_revision = frame.pending_revision
-        if turn.clear_pending:
+        if turn.clear_pending or turn.consume_public_age_pending:
             frame.set_pending(None)
         if turn.pending is not None:
             production = turn.pending.get('type') == 'recording_production'
@@ -635,6 +649,11 @@ class DialogueState:
             if production:
                 turn.installed_production_pending = frame.pending
                 turn.installed_production_revision = frame.pending_revision
+        if age_pending or turn.consume_public_age_pending:
+            turn.public_age_completion_pending = frame.pending
+            turn.public_age_completion_revision = frame.pending_revision
+            turn.public_age_completion_reference = frame.public_query_reference
+            turn.public_age_completion_reference_revision = frame.public_query_revision
         if result.get("selected_action_id"):
             frame.chosen_action_id = result["selected_action_id"]
             # Catalog selection is a new local subject, not a model-processing
