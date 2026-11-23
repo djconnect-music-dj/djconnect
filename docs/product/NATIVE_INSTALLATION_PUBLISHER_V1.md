@@ -184,3 +184,28 @@ are committed, with original event/body/origin/publisher/pair binding intact.
 Pruning uses the same private writer lock and atomic readback. Time, status,
 missing rows, a single ACK, malformed state or capacity pressure cannot discard
 pending credentials or create a positive restore path.
+
+## Concrete original Widget owner transition
+
+The production register winner may consume its sealed first-key RAM handoff
+once into the signed Widget enrolment request. Before its first enrolment await,
+Core captures the actual PairedAuthority, original loaded provider source,
+committed pair and consent, original signer/SPKI and credential, and new role
+wall/monotonic anchors. Surface SHA bindings derive from those actual original
+objects and identifiers; native HMAC bindings and SPKI hashes are not relabelled.
+Only the exact genuine winning HTTP ACK creates the distinct RAM role owner.
+An unknown/replayed/malformed outcome consumes the attempt without adoption.
+
+The accepted role has its own original maximum eight-hour grant, clipped to the
+selected native policy expiry. The first-key handoff is consumed, never extended.
+Live issuer calls and Widget service adoption recheck the same original
+pair/Profile/provider/consent/signer and role clocks. Original historical
+status/withdraw use separate retained management custody and cannot issue a
+purpose or provider effect. No restart/status/config/JSON path recreates an
+owner. Production issuer transport has no CF headers; the old `djce_` redemption
+flow is not part of this direct native delegation transition.
+
+This backend transition does not qualify native clock-rate, cold extension
+restoration or target permission. Those actual producers must still be present
+before native registration or OS push delivery. Re-enabling after withdrawal
+requires the separately specified fresh native assertion/role challenge.

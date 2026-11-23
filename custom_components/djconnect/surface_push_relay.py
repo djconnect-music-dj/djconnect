@@ -51,8 +51,9 @@ async def post_once(hass, runtime, action, payload, admission):
     _assert_safe_payload(body)
     if purpose.private_transport is not None:
         from .surface_widget_private_transport import PrivateWidgetHTTPS
+        from .native_widget_transport import ProductionWidgetHTTPS
         transport = purpose.private_transport
-        require(type(transport) is PrivateWidgetHTTPS, "surface_widget_access_invalid", 503)
+        require(type(transport) in (PrivateWidgetHTTPS, ProductionWidgetHTTPS), "surface_widget_access_invalid", 503)
         reply = await transport.relay(admission, action, body, deadline=transport.monotonic() + 10)
         return reply.body
     token = purpose.authorize(action, body)
