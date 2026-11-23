@@ -154,6 +154,8 @@ class NativePairEnrollment:
         self.wall = wall
         self.monotonic = monotonic
         self.pending = {}
+        from .native_enrollment_handoff import _RegisteredEnrollmentHandoffs
+        self._registered_handoffs = _RegisteredEnrollmentHandoffs(self)
         self.bootstrap_pending = set()
         self.consent_writes = set()
         self.consent_fences = WeakValueDictionary()
@@ -170,6 +172,7 @@ class NativePairEnrollment:
             self.hass, self.poll_retirements, timedelta(seconds=30))
 
     def stop_retirement_delivery(self):
+        self._registered_handoffs.invalidate()
         unsubscribe, self._retirement_unsubscribe = self._retirement_unsubscribe, None
         if unsubscribe is not None:
             unsubscribe()
@@ -312,6 +315,7 @@ class NativePairEnrollment:
         require(binding not in self.consent_writes, "native_widget_consent_pending", 409)
         self.consent_writes.add(binding)
         self.consent_fences.pop(binding, None)
+        self._registered_handoffs.withdraw_pair(pair.registration)
         try:
             result = await write_widget_consent(
                 pair, enabled=enabled, operation_id=operation_id, expected_revision=expected_revision)
@@ -452,12 +456,18 @@ class NativePairEnrollment:
         require(credential == original.credential, "native_install_credential_changed", 403)
         return token
 
+    async def take_registered_enrollment(self, operation_id):
+        """Internal once-only custody handoff; no HTTP route or widget permission."""
+        return await self._registered_handoffs.take(operation_id)
+
     async def register(self, headers, *, device_id, client_type, operation_id, apple_proof):
         deadline, original = self.original(headers, device_id, client_type, operation_id, recoverable=False)
         _validate_attestation(apple_proof)
         reservation = (deadline, None)
         self.pending[device_id] = reservation
+        attempt = None
         try:
+            attempt = self._registered_handoffs.begin(original, deadline, reservation)
             token = await self.original_credential(original)
             guard = partial(self.guard, original.pair, original.authority, deadline, original.consent_current)
             guard()
@@ -470,6 +480,7 @@ class NativePairEnrollment:
                     guard=guard, deadline=deadline, operation_expiry=original.challenge["expires_at_ms"])
                 guard()
                 receipt = original.receipt(reply.body)
+                self._registered_handoffs.publish(attempt, receipt)
                 original.recoverable = True
                 self.pending[device_id] = (deadline, original)
                 return receipt
@@ -484,6 +495,7 @@ class NativePairEnrollment:
                         self.pending[device_id] = (deadline, original)
                 raise
         finally:
+            self._registered_handoffs.abort(attempt)
             if self.pending.get(device_id) is reservation:
                 del self.pending[device_id]
 

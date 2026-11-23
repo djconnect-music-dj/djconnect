@@ -533,3 +533,231 @@ class NativePairEnrollmentTests(unittest.IsolatedAsyncioTestCase):
         await self.settle()
         self.assertEqual((await self.post("status", **identity))[0], 503)
         self.assertEqual(len(self.calls), 4)
+
+
+    async def registered_winner(self):
+        status, challenge = await self.post("challenge")
+        self.assertEqual(status, 200, challenge)
+        operation = challenge["operation_id"]
+        status, receipt = await self.post("register", operation_id=operation, apple_proof=self.proof())
+        self.assertEqual(status, 200, receipt)
+        return operation, receipt
+
+    async def test_registered_winner_handoff_is_once_only_opaque_and_bound(self):
+        import copy
+        import pickle
+        from custom_components.djconnect.native_enrollment_handoff import RegisteredEnrollmentWitness
+        with self.assertRaises(TypeError):
+            RegisteredEnrollmentWitness()
+        fake = object.__new__(RegisteredEnrollmentWitness)
+        with self.assertRaises(SurfacePushError):
+            await fake.validate()
+        operation, receipt = await self.registered_winner()
+        original = self.service.pending[self.runtime.pairing_device_id][1]
+        witness = await self.service.take_registered_enrollment(operation)
+        self.assertIs(witness.original_pair, original.pair)
+        self.assertEqual(witness.public_key_spki, original.spki)
+        self.assertEqual(dict(witness.receipt), receipt)
+        with self.assertRaises(TypeError):
+            witness.receipt["registry_generation"] = "forged"
+        for encode in (copy.copy, copy.deepcopy, pickle.dumps, json.dumps):
+            with self.assertRaises(TypeError):
+                encode(witness)
+        self.assertEqual(await witness.sign(b"synthetic internal custody check"), "A" * 86)
+        with self.assertRaises(SurfacePushError):
+            await self.service.take_registered_enrollment(operation)
+        self.assertEqual((await self.post("register", operation_id=operation, apple_proof=self.proof()))[0], 409)
+        self.assertEqual((await self.post("status", operation_id=operation))[0], 200)
+        with self.assertRaises(SurfacePushError):
+            await self.service.take_registered_enrollment(operation)
+
+    async def test_unknown_then_registered_status_never_mints_winner(self):
+        _, challenge = await self.post("challenge")
+        operation = challenge["operation_id"]
+        with self.assertRaises(SurfacePushError):
+            await self.service.take_registered_enrollment(operation)
+        self.lose_receipt = True
+        self.assertEqual((await self.post("register", operation_id=operation, apple_proof=self.proof()))[0], 502)
+        self.lose_receipt = False
+        self.assertEqual((await self.post("status", operation_id=operation))[0], 200)
+        with self.assertRaises(SurfacePushError):
+            await self.service.take_registered_enrollment(operation)
+
+    async def test_winner_revoked_before_and_after_take_loses_signer_custody(self):
+        for take_first in (False, True):
+            with self.subTest(take_first=take_first):
+                operation, _ = await self.registered_winner()
+                witness = await self.service.take_registered_enrollment(operation) if take_first else None
+                current = await self.widget_consent()
+                await self.widget_consent(enabled=False, expected_revision=current[1]["revision"])
+                with self.assertRaises(SurfacePushError):
+                    if witness is None:
+                        await self.service.take_registered_enrollment(operation)
+                    else:
+                        await witness.sign(b"must not sign")
+                current = await self.widget_consent()
+                await self.widget_consent(enabled=True, expected_revision=current[1]["revision"])
+                self.service.pending.clear()
+
+    async def test_late_withdrawal_and_owner_stop_before_ack_create_no_winner(self):
+        for mutation in ("withdraw", "stop", "pending_aba"):
+            with self.subTest(mutation=mutation):
+                self.service.pending.clear()
+                current = await self.widget_consent()
+                if not current[1]["enabled"]:
+                    await self.widget_consent(enabled=True, expected_revision=current[1]["revision"])
+                original_transport = self.upstream
+                async def late(action, *args, **kwargs):
+                    reply = await original_transport(action, *args, **kwargs)
+                    if action == "register":
+                        if mutation == "withdraw":
+                            current = await self.widget_consent()
+                            await self.widget_consent(enabled=False, expected_revision=current[1]["revision"])
+                        elif mutation == "stop":
+                            self.service.stop_retirement_delivery()
+                        else:
+                            self.service.pending[self.runtime.pairing_device_id] = tuple(list(self.service.pending[self.runtime.pairing_device_id]))
+                    return reply
+                self.service.transport.post_first_key = late
+                _, challenge = await self.post("challenge")
+                operation = challenge["operation_id"]
+                self.assertEqual((await self.post("register", operation_id=operation, apple_proof=self.proof()))[0], 403)
+                with self.assertRaises(SurfacePushError):
+                    await self.service.take_registered_enrollment(operation)
+
+    async def test_cancelled_register_cannot_publish_winner(self):
+        original_transport = self.service.transport.post_first_key
+        async def cancelled(action, *args, **kwargs):
+            reply = await original_transport(action, *args, **kwargs)
+            if action == "register":
+                asyncio.current_task().cancel()
+            return reply
+        self.service.transport.post_first_key = cancelled
+        _, challenge = await self.post("challenge")
+        operation = challenge["operation_id"]
+        task = asyncio.create_task(self.post("register", operation_id=operation, apple_proof=self.proof()))
+        with self.assertRaises(asyncio.CancelledError):
+            await task
+        with self.assertRaises(SurfacePushError):
+            await self.service.take_registered_enrollment(operation)
+
+    async def test_original_clock_bounds_cannot_be_renewed_or_replaced(self):
+        wall, mono = [100000.0], [1000.0]
+        self.service.wall, self.service.monotonic = lambda: wall[0], lambda: mono[0]
+        operation, receipt = await self.registered_winner()
+        witness = await self.service.take_registered_enrollment(operation)
+        deadline = self.service.pending[self.runtime.pairing_device_id][0]
+        mono[0] = deadline
+        with self.assertRaises(SurfacePushError):
+            await witness.validate()
+        mono[0] = 1000.0
+        with self.assertRaises(SurfacePushError):
+            await witness.validate()  # Clock rollback never restores a closed winner.
+        self.assertEqual(receipt["expires_at_ms"], 100060000)
+
+    async def test_credential_rotation_and_parallel_take_fail_closed(self):
+        operation, _ = await self.registered_winner()
+        results = await asyncio.gather(self.service.take_registered_enrollment(operation),
+            self.service.take_registered_enrollment(operation), return_exceptions=True)
+        self.assertEqual(sum(isinstance(result, SurfacePushError) for result in results), 1)
+        witness = next(result for result in results if not isinstance(result, BaseException))
+        saved = json.loads(self.install_path.read_text())
+        saved["data"]["credential_id"] = "rotated-credential"
+        self.install_path.write_text(json.dumps(saved))
+        with self.assertRaises(SurfacePushError):
+            await witness.sign(b"old credential may not sign")
+        saved["data"]["credential_id"] = "credential"
+        self.install_path.write_text(json.dumps(saved))
+        with self.assertRaises(SurfacePushError):
+            await witness.validate()
+
+
+    async def test_taken_winner_invalidates_on_service_replacement(self):
+        operation, _ = await self.registered_winner()
+        witness = await self.service.take_registered_enrollment(operation)
+        self.domain[KEY] = object()
+        with self.assertRaises(SurfacePushError):
+            await witness.validate()
+        self.domain[KEY] = self.service
+        with self.assertRaises(SurfacePushError):
+            await witness.validate()  # Restoring a service pointer does not resurrect custody.
+
+    async def test_late_revocation_during_take_consumes_without_returning_witness(self):
+        operation, _ = await self.registered_winner()
+        credential = self.service.original_credential
+        async def paused(original):
+            result = await credential(original)
+            await self.widget_consent(enabled=False, expected_revision=1)
+            return result
+        self.service.original_credential = paused
+        with self.assertRaises(SurfacePushError):
+            await self.service.take_registered_enrollment(operation)
+        with self.assertRaises(SurfacePushError):
+            await self.service.take_registered_enrollment(operation)
+
+    async def test_winner_ack_and_original_signer_are_not_mutable_substitutions(self):
+        operation, receipt = await self.registered_winner()
+        witness = await self.service.take_registered_enrollment(operation)
+        receipt["registry_generation"] = "caller-mutated"
+        self.assertEqual(witness.receipt["registry_generation"], "registered")
+        original = self.service.pending[self.runtime.pairing_device_id][1]
+        original.authority.sign = lambda message: bytes(64)
+        with self.assertRaises(SurfacePushError):
+            await witness.sign(b"replacement signer is not the original custodian")
+
+    async def test_signer_replacement_during_register_await_cannot_mint_winner(self):
+        transport = self.service.transport.post_first_key
+        async def replaced(action, *args, **kwargs):
+            reply = await transport(action, *args, **kwargs)
+            if action == "register":
+                # This is the actual captured authority, not a caller JSON field.
+                for attempt in self.service._registered_handoffs._attempts:
+                    attempt.original.authority.sign = lambda statement: bytes(64)
+            return reply
+        self.service.transport.post_first_key = replaced
+        _, challenge = await self.post("challenge")
+        operation = challenge["operation_id"]
+        self.assertEqual((await self.post("register", operation_id=operation, apple_proof=self.proof()))[0], 403)
+        with self.assertRaises(SurfacePushError):
+            await self.service.take_registered_enrollment(operation)
+
+    async def test_reentrant_withdrawal_inside_guard_cannot_return_live_custody(self):
+        operation, _ = await self.registered_winner()
+        witness = await self.service.take_registered_enrollment(operation)
+        original = self.service.pending[self.runtime.pairing_device_id][1]
+        current = original.authority.current
+        def withdraw():
+            self.service._registered_handoffs.withdraw_pair(original.pair.registration)
+            return current()
+        original.authority.current = withdraw
+        with self.assertRaises(SurfacePushError):
+            await witness.sign(b"withdrawn inside original currentness callback")
+
+    async def test_replacement_clock_cannot_extend_original_custody(self):
+        operation, _ = await self.registered_winner()
+        witness = await self.service.take_registered_enrollment(operation)
+        mono = self.service.monotonic
+        self.service.monotonic = lambda: mono() - 100
+        with self.assertRaises(SurfacePushError):
+            await witness.validate()
+        self.service.monotonic = mono
+        with self.assertRaises(SurfacePushError):
+            await witness.validate()
+
+    async def test_transport_replacement_after_take_permanently_closes_winner(self):
+        operation, _ = await self.registered_winner()
+        witness = await self.service.take_registered_enrollment(operation)
+        transport = self.service.transport
+        self.service.transport = SimpleNamespace(origin=transport.origin)
+        with self.assertRaises(SurfacePushError):
+            await witness.validate()
+        self.service.transport = transport
+        with self.assertRaises(SurfacePushError):
+            await witness.validate()
+
+    async def test_pair_retirement_closes_already_taken_winner(self):
+        operation, _ = await self.registered_winner()
+        witness = await self.service.take_registered_enrollment(operation)
+        self.registration.retire()
+        with self.assertRaises(SurfacePushError):
+            await witness.sign(b"retired original pair cannot sign")
