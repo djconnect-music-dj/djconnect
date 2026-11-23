@@ -37594,7 +37594,7 @@
     }
   ],
   "planning_maintenance": {
-    "schema_version": "djconnect-federated-planning-delta/25",
+    "schema_version": "djconnect-federated-planning-delta/26",
     "decision_id": "DJC-DJ-PRESENCE-ROADMAP-DESIGN-V1-20261011",
     "decision_url": "https://github.com/pcvantol/djconnect/issues/1101#issuecomment-6110375785",
     "design_date": "2026-10-11",
@@ -44495,6 +44495,35 @@
       ],
       "product_manifest_path": "docs/verification/ha-native-voice-product-manifest.json",
       "product_manifest_sha256": "687e79a5c49618f8dcd849726e8cba0323f490bd96fa36f30388423d9c8e0545"
+    },
+    "ha_native_voice_finalization_receipt": {
+      "assignment_id": "DJC-HA-VOICE-CORE-CONVERGENCE-V1-20261107",
+      "scope": "PERSONAL_NATIVE_AND_COMMON_LIFECYCLE_FOR_YOU",
+      "source_delivery": "PROTECTED_MERGED",
+      "stage1": "SOURCE_DELIVERED",
+      "stage2": "SOURCE_DELIVERED",
+      "stage3": "NOT_IMPLEMENTED_DEPENDENT_EXISTING_WEB_OWNERS",
+      "overall_acceptance": "OPEN",
+      "installed": "NOT_RUN",
+      "deployment": "NOT_RUN",
+      "real_provider": "NOT_RUN",
+      "physical_satellite": "NOT_RUN",
+      "automatic_dispatch": false,
+      "consumer_writes": false,
+      "predecessor_path": "history/20261123/ha-native-voice-source-freeze-maintenance-v25.json",
+      "predecessor_sha256": "b8d4a7712114621352e554a424bbd07790340554ae2f64a9904000ee6c0e28e6",
+      "source_readback_path": "docs/verification/ha-native-voice-source-publication-readback-20261123.json",
+      "source_readback_sha256": "4c05185e0a1bb7a49b37409867508bac86c353d5f46a33b7984d2b714c0cb9e3",
+      "documents": [
+        {
+          "path": "docs/technical/HA_NATIVE_VOICE_SOURCE_FINALIZATION_20261123.md",
+          "sha256": "2d0e671ca32dc29b45875a98527c440556eb87ad5628ee65c2aa9f12f3e7e0d1"
+        },
+        {
+          "path": "docs/history/prompts/2026-11-23-ha-native-voice-source-finalization.md",
+          "sha256": "97fc993cb8da4ee137d23b6759801c6fc2a3e5ae67c9e58693a1de57567022bb"
+        }
+      ]
     }
   }
 }

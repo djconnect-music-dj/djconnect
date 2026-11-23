@@ -9,8 +9,8 @@ from pathlib import Path
 import re
 
 ROOT = Path(__file__).resolve().parents[2]
-REGISTER = ROOT / 'docs/governance/djconnect-open-work-ha-native-voice-20261122.json'
-REPORT = REGISTER.with_name('DJC_PLATFORM_OPEN_WORK_HA_NATIVE_VOICE_20261122.md')
+REGISTER = ROOT / 'docs/governance/djconnect-open-work-ha-native-voice-finalization-20261123.json'
+REPORT = REGISTER.with_name('DJC_PLATFORM_OPEN_WORK_HA_NATIVE_VOICE_FINALIZATION_20261123.md')
 # Immutable dated source snapshot, independently compared with Git cc9b49fe.
 SOURCE_MANIFEST = REGISTER.with_name('core-source-manifest-cc9b49fe.json')
 SOURCE_MANIFEST_SHA256 = '780022ac088d59f5ac46fde6846e151de40c0e1c5fd3cdfda5dbb23550080eb4'
@@ -177,7 +177,8 @@ def render(data: dict) -> str:
     """One readable view from the evidence register, without duplicating roadmap authority."""
     github = data['github_open']
     combined = data.get('combined_branch_status_reconciliation', {})
-    native = data.get('ha_native_voice_delta_20261122', {})
+    native_finalization = bool(data.get('ha_native_voice_finalization_20261123'))
+    native = data.get('ha_native_voice_finalization_20261123') or data.get('ha_native_voice_delta_20261122', {})
     count = Counter(r['kind'] for r in github)
     proofs = {r['id']: r for r in data['proofs']}
     dev_count = len(proofs['installed-dev']['files'])
@@ -186,11 +187,13 @@ def render(data: dict) -> str:
     quality = proofs['local-real-model-quality']
     out = [
         '# DJConnect integral open-work reconciliation — historical inventory with bounded updates\n\n',
-        (f"22 November native voice update: {native['source_delivery']}; "
+        (("23 November native voice source Finalization: " if native_finalization else "22 November native voice update: ")
+         + f"{native['source_delivery']}; "
          f"shared guest/request/display {native['shared_guest_request_display']}; "
          f"whole-task acceptance {native['overall_acceptance']}. "
-         "See `docs/verification/HA_NATIVE_VOICE_SOURCE_STATUS_20261122.md`. "
-         "The inventory below remains dated; installation/provider/satellite evidence was not refreshed.\n\n"
+         + ("See `docs/technical/HA_NATIVE_VOICE_SOURCE_FINALIZATION_20261123.md`. "
+          if native_finalization else "See `docs/verification/HA_NATIVE_VOICE_SOURCE_STATUS_20261122.md`. ")
+         + "The inventory below remains dated; installation/provider/satellite evidence was not refreshed.\n\n"
          if native else ''),
         ("Current combined local checkpoint: "
          f"{combined['reported_issues']} reported issues, {combined['conversation_families']} families, "

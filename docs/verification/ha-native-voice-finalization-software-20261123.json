@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "scope": "HA_NATIVE_STAGES_1_2_SOURCE_FINALIZATION_ONLY",
+  "source_pr": "https://github.com/djconnect-music-dj/djconnect/pull/1675",
+  "source_main": "44b33e53e9cccad8b555acea56b60f436c328a61",
+  "unit_regression": {
+    "success": true,
+    "tests_success": true,
+    "coverage_requested": false,
+    "discovered": 4902,
+    "tests_run": 4902,
+    "accounted": 4902,
+    "workers": 4,
+    "exit_codes": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "skipped": 11,
+    "elapsed_seconds": 66.6227223330061
+  },
+  "unit_log_sha256": "2369615c6f0d69b534b1b50ccbf6a49cafda6d562bee945057f791f269cc2415",
+  "planning": {
+    "status": "PASS",
+    "tests": 219,
+    "existing_skips": 1
+  },
+  "ruff": "PASS",
+  "projection": "PASS_OFFLINE",
+  "open_work_audit": "PASS_AUDIT_ONLY",
+  "product_inputs_unchanged": true,
+  "product_files": 331,
+  "manifest_sha256": "687e79a5c49618f8dcd849726e8cba0323f490bd96fa36f30388423d9c8e0545",
+  "source_publication": "CANONICAL_12_PASS_EXACT_331_ARCHIVE",
+  "whole_assignment": "OPEN",
+  "shared_guest_request_display": "NOT_IMPLEMENTED",
+  "installed": "NOT_RUN",
+  "deployment": "NOT_RUN",
+  "independent_finalization_review": "PENDING",
+  "finalization_ci_and_own_main_publication": "PENDING",
+  "workspace_state": "NOT_READY_SOURCE_BRANCH_CHERRY_PLUS_PRESERVED"
+}
