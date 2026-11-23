@@ -5,7 +5,7 @@ These seams do not prove native enrollment, clock or provider/device delivery.
 import base64
 import asyncio
 import hashlib
-import time
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch
@@ -23,7 +23,9 @@ class NativeWidgetIssuerTests(IsolatedAsyncioTestCase):
         self.f = fixtures.NativeInstallationRuntimeTests()
         await self.f.asyncSetUp()
         await self.f.production()
-        self.clock = [time.time(), time.monotonic()]
+        # Explicit virtual clocks inside the selected bounded development policy.
+        # A later CI date must not pretend to qualify a new production policy.
+        self.clock = [datetime(2026, 11, 24, tzinfo=UTC).timestamp(), 1000.0]
         self.f.service.wall = lambda: self.clock[0]
         self.f.service.monotonic = lambda: self.clock[1]
         self.valid = True
