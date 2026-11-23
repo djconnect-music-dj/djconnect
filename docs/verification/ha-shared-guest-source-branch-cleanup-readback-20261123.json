@@ -1,0 +1,20 @@
+{
+  "repository": "djconnect-music-dj/djconnect",
+  "source_pr": 1677,
+  "source_branch": "codex/ha-native-shared-participation-20261123",
+  "source_head": "bf0494f6d5756b1756c526c46d04a9631e6b81b3",
+  "merged_main": "fdc8fe7868012c51cb77eca02ae13c5ff2bb7349",
+  "source_tree": "f8d580f5e0da138172f4d67e475a6ae9d0ede1c4",
+  "main_tree": "f8d580f5e0da138172f4d67e475a6ae9d0ede1c4",
+  "full_tree_equal": true,
+  "remote_branch": "ABSENT",
+  "checked_out_in_worktree": false,
+  "unique_source_content": false,
+  "cherry_plus_commits": [
+    "3f4f175c1e575b9cdda1d1e2b2027b2b5c265abc",
+    "bf0494f6d5756b1756c526c46d04a9631e6b81b3"
+  ],
+  "deletion": "NOT_PERFORMED",
+  "decision": "PRESERVE_REQUIRES_NAMED_OWNER_EXCEPTION",
+  "earlier_owner_exception": "OLD_BRANCH_ONLY_NOT_REUSED"
+}

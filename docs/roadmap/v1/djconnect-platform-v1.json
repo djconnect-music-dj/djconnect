@@ -37594,7 +37594,7 @@
     }
   ],
   "planning_maintenance": {
-    "schema_version": "djconnect-federated-planning-delta/27",
+    "schema_version": "djconnect-federated-planning-delta/28",
     "decision_id": "DJC-DJ-PRESENCE-ROADMAP-DESIGN-V1-20261011",
     "decision_url": "https://github.com/pcvantol/djconnect/issues/1101#issuecomment-6110375785",
     "design_date": "2026-10-11",
@@ -44657,6 +44657,34 @@
       "product_file_count": 343,
       "qualification_path": "docs/verification/ha-shared-guest-qualification-20261123.json",
       "qualification_sha256": "158f4c6337486ed7ca663db6d1afb72b5786a776fe0cdc1a8b9163e51790ca71"
+    },
+    "ha_shared_guest_finalization_receipt": {
+      "assignment_id": "DJC-HA-VOICE-CORE-CONVERGENCE-V1-20261107",
+      "scope": "SHARED_HA_CORE_AND_MAINTAINED_BROWSER_SOURCE",
+      "source_delivery": "PROTECTED_MERGED",
+      "stage3": "SOURCE_DELIVERED_WITH_OPEN_ACCEPTANCE",
+      "overall_acceptance": "OPEN",
+      "browser_receiver_acceptance": "OPEN",
+      "installed": "NOT_RUN",
+      "deployment": "NOT_RUN",
+      "real_provider": "NOT_RUN",
+      "physical_satellite": "NOT_RUN",
+      "automatic_dispatch": false,
+      "consumer_writes": false,
+      "predecessor_path": "history/20261123/ha-shared-guest-source-freeze-maintenance-v27.json",
+      "predecessor_sha256": "e49cad6bf4b924ef24394d423be5a1384d3c1fbae836472d9094d607e26956d9",
+      "source_readback_path": "docs/verification/ha-shared-guest-source-publication-readback-20261123.json",
+      "source_readback_sha256": "7d09734650cada03131cf0af2c0c2ed49423c74270aa6b683b87017b37299447",
+      "documents": [
+        {
+          "path": "docs/technical/HA_SHARED_GUEST_SOURCE_FINALIZATION_20261123.md",
+          "sha256": "4d37a4f7f11229e97973ac83d55f605a45643e878f3a53a808c6c4c06b81e9a5"
+        },
+        {
+          "path": "docs/history/prompts/2026-11-23-ha-shared-guest-source-finalization.md",
+          "sha256": "6d16b93a17e6f3c24ff4920024f8f4261a76e9b11a74ce83767de3332a5a35c9"
+        }
+      ]
     }
   }
 }

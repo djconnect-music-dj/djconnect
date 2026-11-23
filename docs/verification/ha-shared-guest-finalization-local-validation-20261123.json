@@ -1,0 +1,21 @@
+{
+  "scope": "GOVERNANCE_ONLY_SOURCE_FINALIZATION",
+  "source_main": "fdc8fe7868012c51cb77eca02ae13c5ff2bb7349",
+  "product_bytes_changed": false,
+  "product_file_count": 343,
+  "root_tests": 4951,
+  "passed": 4940,
+  "existing_skips": 11,
+  "root_exit_code": 0,
+  "root_log_sha256": "71c886fd61b8422b02d4339fdbf71dd1e9ee5291c267a8ef59de96dd9ba89467",
+  "lifecycle_tests": 7,
+  "lifecycle": "PASS",
+  "four_current_handoffs": "IDENTICAL_AFTER_HEADING_NORMALIZATION",
+  "ruff": "PASS",
+  "roadmap": "PASS",
+  "bootstrap": "PASS",
+  "host": "MATCH",
+  "installed": "NOT_RUN",
+  "deployment": "NOT_RUN",
+  "whole_assignment": "OPEN"
+}
