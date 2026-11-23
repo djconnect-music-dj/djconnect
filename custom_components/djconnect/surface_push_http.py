@@ -37,6 +37,15 @@ def parse(raw):
 
 
 def validate(kind, data):
+    if kind == "widget/prepare":
+        require(type(data) is dict and set(data) == COMMON | {"operation_id"}
+            and type(data["contract_version"]) is int and data["contract_version"] == 1
+            and data["client_type"] == "ios", "invalid_request")
+        for key in COMMON - {"contract_version"}:
+            require(type(data[key]) is str and IDENTIFIER.fullmatch(data[key]), "invalid_request")
+        from .transport_operations import operation_created_ms
+        operation_created_ms(data["operation_id"])
+        return None
     if kind in {"retained-read", "retained-authorize"}:
         fields = {"contract_version", "registration_id"}
         if kind == "retained-authorize":
@@ -84,6 +93,12 @@ async def handle(hass, kind, data, headers):
     intent = validate(kind,data)
     service = hass.data.get("djconnect",{}).get("surface_push_service")
     require(service is not None and not service.closed,"surface_unavailable",503)
+    if kind == "widget/prepare":
+        from .native_widget_preparation import NativeWidgetPreparation
+        pool = getattr(service, "_native_widget_preparation", None)
+        require(type(pool) is NativeWidgetPreparation and pool.surface is service,
+                "native_widget_preparation_unavailable", 503)
+        return await service.run(pool.prepare(data, headers)), 200
     if kind=="read":
         authorization = headers.get("Authorization","")
         require(type(authorization) is str and re.fullmatch(r"Bearer djcsurface_[A-Za-z0-9_-]{43}",authorization),
@@ -167,4 +182,5 @@ class SurfacePushView(HomeAssistantView):
 
 def surface_views(hass):
     return [SurfacePushView(hass, kind) for kind in (
-        "context", "register", "revoke", "status", "read", "retained-authorize", "retained-read")]
+        "context", "register", "revoke", "status", "read", "retained-authorize", "retained-read",
+        "widget/prepare")]

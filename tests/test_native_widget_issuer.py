@@ -67,7 +67,8 @@ class NativeWidgetIssuerTests(IsolatedAsyncioTestCase):
         self.assertEqual(origin, "https://api.djconnect.dev")
         receipt, delegation = body["first_key_receipt"], body["delegation"]
         statement = canonical([issuer._ROLE_DOMAIN, "POST", path, receipt, delegation]).encode()
-        original = self.f.service.pending[self.f.runtime.pairing_device_id][1]
+        original = next(original for _, original in self.f.service.pending.values()
+            if original is not None and original.challenge["operation_id"] == receipt["operation_id"])
         public = load_der_public_key(original.spki)
         raw = base64.urlsafe_b64decode(body["signature"] + "==")
         public.verify(utils.encode_dss_signature(int.from_bytes(raw[:32]), int.from_bytes(raw[32:])),

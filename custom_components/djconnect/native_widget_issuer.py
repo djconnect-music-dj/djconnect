@@ -257,6 +257,12 @@ class CoreWidgetIssuerOwner(WidgetIssuerOwner):
         role.captures[operation_id] = capture
         return capture
 
+    def fence_live(self):
+        """Synchronous withdrawal; historical signed management remains distinct."""
+        role = _OWNERS.get(self)
+        if role is not None:
+            role.closed = True
+
     def _capture(self, capture, *, live):
         role = self._live() if live else self._historical()
         require(type(capture) is IssuerOwnerCapture

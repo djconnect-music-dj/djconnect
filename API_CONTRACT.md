@@ -2571,3 +2571,15 @@ The additive `live_impression` Moment/history schema1 and explicit original-phot
 Paired Hybrid adds pure reads ask_dj/moments and ask_dj/moments/status via existing djconnect/read or POST /api/djconnect/v1/transport/read, and journaled actions ask_dj/moments/request and ask_dj/moments/cancel via the existing operation route. Global/Hybrid context advertises ask_dj_moments version1. Exact closed payloads,10-family inventory, original subject/operation fences, terminal states, media/speech/history fields and limitations are defined in docs/technical/ASK_DJ_MOMENTS_AVATAR_CONTRACT_V1.md. No caller Profile authority or provider work on reads.
 
 See [versioned Moments contract](docs/technical/ASK_DJ_MOMENTS_AVATAR_CONTRACT_V1.md).
+# Native Widget purpose preparation (24 November 2026)
+
+`POST /api/djconnect/v1/push/surface/widget/prepare` uses ordinary current paired
+iOS authentication and a closed JSON body: `contract_version:1`, original UUIDv7
+`operation_id`, `device_id`, `client_type:"ios"`, `session_id`. It may prepare
+only an already genuinely enrolled original Widget role through the existing
+issuer/adoption lifecycle. Exact successful response: `contract_version:1`,
+`state:"prepared"`, original `operation_id` and `session_id`. It grants no native
+clock, target, field or restore permission. The caller begins its separate
+context operation only afterward, with its own new original C0. No mutating GET,
+status/JSON role import or latest-role fallback. Full original source, pairing,
+withdrawal and replay rules: `docs/product/NATIVE_INSTALLATION_PUBLISHER_V1.md`.

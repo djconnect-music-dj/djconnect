@@ -8159,3 +8159,13 @@ Only an actual current own-principal API winner may supply a role acknowledgemen
 its original role expiry is distinct from the initial first-key request window.
 Root owns the private once-only first-key→WidgetRoleKeyCustody transition. No
 status/replay, raw signer export, operator alias or invented native clock qualifies.
+# Native Widget purpose prepare before context (24 November 2026)
+
+Implement the explicit paired POST `/push/surface/widget/prepare` selected in
+`NATIVE_INSTALLATION_PUBLISHER_V1.md` and `API_CONTRACT.md`. The actual original
+register winner supplies a per-pair enrolled role. One shared original issuer
+journal and exact per-role lifecycles route immutable captures to the existing
+Widget adoption owner; arbitrary owners retain the existing single-lifecycle rule.
+Preparation precedes the separate native context operation and its own C0;
+neither the receipt nor a local preference supplies native clock/target/restore
+permission. No enrollment effects in GET state or awaited context-root repair.

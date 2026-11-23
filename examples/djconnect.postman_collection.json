@@ -204,6 +204,11 @@
     {
       "key": "moment_request_operation_id",
       "value": ""
+    },
+    {
+      "key": "widget_prepare_operation_id",
+      "value": "",
+      "description": "Fresh original UUIDv7 for Widget preparation only; retain for exact replay. Separate from the later context operation ID."
     }
   ],
   "auth": {
@@ -2093,6 +2098,50 @@
     {
       "name": "Widget original-clock context v3 (closed by default)",
       "item": [
+        {
+          "name": "Prepare original native Widget purpose",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{device_token}}"
+              },
+              {
+                "key": "X-DJConnect-Device-ID",
+                "value": "{{device_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-DJConnect-Client-Type",
+                "value": "ios"
+              }
+            ],
+            "url": {
+              "raw": "{{ha_base_url}}/api/djconnect/v1/push/surface/widget/prepare",
+              "host": [
+                "{{ha_base_url}}"
+              ],
+              "path": [
+                "api",
+                "djconnect",
+                "v1",
+                "push",
+                "surface",
+                "widget",
+                "prepare"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contract_version\": 1,\n  \"operation_id\": \"{{widget_prepare_operation_id}}\",\n  \"device_id\": \"{{device_id}}\",\n  \"client_type\": \"ios\",\n  \"session_id\": \"{{session_id}}\"\n}"
+            },
+            "description": "Explicit paired iOS preparation from an already genuine native enrolled Widget role. The prepared receipt supplies no native clock, SDK target, field or restore permission. Retain this original UUIDv7 for exact replay only; unknown/closed preparation does not permit a replacement intent. Only afterward begin the separate context operation with its own fresh UUIDv7 and original client C0. No installation bearer, issuer key or capability is accepted from this request."
+          }
+        },
         {
           "name": "Original-clock v3 context",
           "request": {

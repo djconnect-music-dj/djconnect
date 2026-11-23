@@ -209,3 +209,44 @@ This backend transition does not qualify native clock-rate, cold extension
 restoration or target permission. Those actual producers must still be present
 before native registration or OS push delivery. Re-enabling after withdrawal
 requires the separately specified fresh native assertion/role challenge.
+
+## Paired Widget purpose preparation before native context acquisition
+
+The selected explicit preparation port is
+`POST /api/djconnect/v1/push/surface/widget/prepare`, authenticated by the normal
+current iOS device pair. Its closed request contains exactly `contract_version:1`,
+`operation_id` (original UUIDv7), `device_id`, `client_type:"ios"`, and
+`session_id`. It resolves the actual current bound Profile, Session and provider;
+guests and other push roles are ineligible. This is a write/intention, not a
+mutating GET or an installation-token/issuer-key import endpoint.
+
+One original RAM coordinator and shared IssuerStageJournal per actual
+SurfacePushService route each pre-await paired preparation capture to its exact
+enrolled per-pair role owner and explicitly admitted per-role lifecycle/transport.
+The shared journal avoids independent cached SQLite adapters. The existing
+single-lifecycle rule remains unchanged for arbitrary/abstract owners; only the
+server-private genuine native role admission adds exact extra lifecycle objects.
+No latest-role fallback, hash-only role selection, status adoption or substitution
+is allowed. Only the genuine native registration winner may add a role owner.
+Its initial role enrolment is attempted once; unknown/replay/status cannot retry
+that winning transition or manufacture an owner.
+
+One original enrolled delegation supplies one original purpose. A new Session,
+withdrawal, exhausted/closed purpose or replacement requires a genuine new role
+ACK through the separately selected native assertion protocol. It cannot reuse
+the old role ACK as a new delegation or silently allocate another operation.
+
+Preparation reuses WidgetPurposeAdoptions and its actual SQLite issuer stages.
+Only after the exact original purpose has been adopted into that same service
+does it return exactly `{contract_version:1,state:"prepared",operation_id,
+session_id}`. This receipt contains no native clock, field/read grant, capability
+or provider token. An exact replay retains the same original captured owner and
+purpose, remaining expiry and budgets; it performs no RPC or renewal. A closed,
+expired or replaced capture stays unavailable. The ordinary GET registration
+state remains free of enrollment effects.
+
+The native caller obtains this preparation first and then starts its existing
+separate context operation with a fresh original C0. Thus context original roots
+exist before its first await. Preparation is never inserted as an awaited repair
+inside context acquisition, and its receipt never supplies native clock-rate,
+SDK-target, restoration or push admission. All independent native gates remain.

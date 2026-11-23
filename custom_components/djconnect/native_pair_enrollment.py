@@ -329,6 +329,10 @@ class NativePairEnrollment:
         self.consent_writes.add(binding)
         self.consent_fences.pop(binding, None)
         self._registered_handoffs.withdraw_pair(pair.registration)
+        surface = self.hass.data.get("djconnect", {}).get("surface_push_service")
+        pool = getattr(surface, "_native_widget_preparation", None)
+        if pool is not None:
+            pool.fence_pair(pair.registration)
         try:
             result = await write_widget_consent(
                 pair, enabled=enabled, operation_id=operation_id, expected_revision=expected_revision)
@@ -498,6 +502,14 @@ class NativePairEnrollment:
                 self._registered_handoffs.publish(attempt, receipt)
                 original.recoverable = True
                 self.pending[device_id] = (deadline, original)
+                if self._installation is not None:
+                    from .native_widget_preparation import accept_registered_winner
+                    try:
+                        await accept_registered_winner(self, operation_id, headers)
+                    except SurfacePushError:
+                        # The actual first key is registered. A missing/unknown
+                        # separate role never converts status into a new winner.
+                        pass
                 return receipt
             except (asyncio.CancelledError, SurfacePushError) as error:
                 if isinstance(error, asyncio.CancelledError) or error.status == 502:
