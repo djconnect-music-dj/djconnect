@@ -297,6 +297,7 @@ def _conversation_agent_options_actions(hass: Any, defaults: dict[str, Any]) -> 
     actions = {
         OPTIONS_ACTION_SAVE: names[OPTIONS_ACTION_SAVE],
         OPTIONS_ACTION_PROFILE_PLATFORM: names[OPTIONS_ACTION_PROFILE_PLATFORM],
+        "native_voice_access": flow_label(hass, "native_voice_access"),
         OPTIONS_ACTION_CHANGE_MUSIC_BACKEND: names[OPTIONS_ACTION_CHANGE_MUSIC_BACKEND],
     }
     if defaults.get(CONF_MUSIC_BACKEND, DEFAULT_MUSIC_BACKEND) != MUSIC_BACKEND_MUSIC_ASSISTANT:
@@ -2905,6 +2906,8 @@ class DJConnectOptionsFlow(config_entries.OptionsFlow):
                 return await self.async_step_music_backend()
             if action == OPTIONS_ACTION_PROFILE_PLATFORM:
                 return await self.async_step_profile_platform()
+            if action == "native_voice_access" and current.get(CONF_CLIENT_TYPE) == CLIENT_TYPE_CONVERSATION_AGENT:
+                return await self.async_step_native_voice_access()
             if action == OPTIONS_ACTION_CENTRAL_API:
                 return await self.async_step_central_api()
             if action == OPTIONS_ACTION_RETRY_PAIRING:
@@ -2955,6 +2958,31 @@ class DJConnectOptionsFlow(config_entries.OptionsFlow):
     ) -> FlowResult:
         """Manage compact options for Assist conversation agent entries."""
         return await self.async_step_init(user_input)
+
+    async def async_step_native_voice_access(self, user_input=None):
+        """HA-admin installation consent, independent of synthetic agent device binding."""
+        if self._config_entry.data.get(CONF_CLIENT_TYPE) != CLIENT_TYPE_CONVERSATION_AGENT:
+            return self.async_abort(reason="not_supported")
+        from homeassistant.helpers import device_registry as dr
+        manager = _profile_storage(self.hass)
+        household = await manager.async_load()
+        registry = dr.async_get(self.hass)
+        devices = {key: item.name_by_user or item.name or key for key, item in registry.devices.items()}
+        profiles = {key: value.display_name for key, value in household.profiles.items()
+                    if value.profile_type == ProfileType.PERSONAL}
+        if user_input is not None:
+            device_id = user_input.get("ha_device_id")
+            profile_id = user_input.get("profile_id")
+            if device_id not in devices or profile_id not in profiles:
+                return self.async_abort(reason="profile_unavailable")
+            await manager.async_set_profile_mapping("personal_voice_endpoint", device_id,
+                profile_id if user_input.get("allow_personal_access") is True else "")
+            return await self.async_step_init()
+        return self.async_show_form(step_id="native_voice_access", data_schema=vol.Schema({
+            vol.Required("ha_device_id"): vol.In(devices),
+            vol.Required("profile_id"): vol.In(profiles),
+            vol.Required("allow_personal_access", default=False): bool,
+        }))
 
     async def async_step_profile_platform(
         self,

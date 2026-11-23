@@ -155,9 +155,9 @@ class OriginalDnaHTTPContractTests(IsolatedAsyncioTestCase):
         import json
         from pathlib import Path
         root = Path(__file__).resolve().parents[1]
-        wire = json.loads((root / 'examples/client_contracts/for_you_original_dna_v1/music-canvas-recovery-20261122-music-canvas-20261122-ac-21fc6b6c.json').read_text())
+        wire = json.loads((root / 'examples/client_contracts/for_you_original_dna_v1/ha-native-voice-20261122-music-canvas-recovery-20-f5f2e7bc.json').read_text())
         self.assertTrue(wire['source_before_after_equal'])
-        self.assertEqual(len(wire['source_pins']), 328)
+        self.assertEqual(len(wire['source_pins']), 331)
         for name, expected in {**wire['source_pins'], **wire['harness_pins']}.items():
             self.assertEqual(hashlib.sha256((root / name).read_bytes()).hexdigest(), expected, name)
         receipt = wire['receipt']

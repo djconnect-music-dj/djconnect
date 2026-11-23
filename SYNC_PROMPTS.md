@@ -1,3 +1,15 @@
+## HA-native DJ conversation — selected 22 November 2026
+
+Core #1532 owns the thin native ingress to the same Ask DJ application service,
+explicit installation-owned personal endpoint admission and separated
+endpoint/agent/pipeline/thread/Session identity. See
+`docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md`. Apple consumes existing
+Voor jou completion, permitted Flow and speech state; no second voice engine,
+Watch start/card or automatic private transcript sharing. Shared guest effects
+and VibeCast focus require their actual existing producer authority, not an
+owner impersonation. Source, actual HA integration and physical satellite/
+provider/display acceptance remain separate. No install/deployment authorized.
+
 ## Music Canvas v1 — active cross-repository contract
 
 Core owns `docs/product/MUSIC_CANVAS_V1.md` and `docs/technical/MUSIC_CANVAS_V1_CONTRACT.md`. Apple consumes only version-1 capability and paired routes. Profile preferences, image generation, scheduler, device secrets and adapters are Core-owned; no Apple timer/provider or Cast route. Source implementation and physical/provider acceptance are reported separately.

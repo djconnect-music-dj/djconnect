@@ -179,6 +179,12 @@ class _AskDjRequestAttempt:
         return await self._selected_result_response()
 
     async def _direct_request_response(self):
+        from .conversation_recall import stop_requested, stop_reply
+        if self.action_request is None and self.turn is not None and stop_requested(self.text):
+            return await stop_reply(self.turn)
+        from .conversation_recall import requested as recall_requested, reply as recall_reply
+        if self.action_request is None and self.turn is not None and recall_requested(self.text):
+            return await recall_reply(self.turn)
         if (
             self.action_request is None
             and negated_music_command(self.text)
@@ -1841,6 +1847,15 @@ def classify_ask_dj(text: str) -> AskDjIntent:
     """Classify Ask DJ text into informational, action or hybrid buckets."""
     normalized = _normalize(text)
     nonexecuting = _nonexecuting_speech_act(normalized)
+    from .conversation_recall import stop_requested
+    if stop_requested(text):
+        return AskDjIntent("action", "conversation_stop", "none")
+    from .conversation_recall import requested as recall_requested
+    if recall_requested(text):
+        return AskDjIntent("informational", "conversation_recall", "none")
+    from .lifecycle import requested as lifecycle_requested
+    if not nonexecuting and (lifecycle := lifecycle_requested(text)):
+        return AskDjIntent("action", "session_lifecycle", lifecycle)
     from ..music_origin import is_origin_question
     if not nonexecuting and is_origin_question(text):
         return AskDjIntent("informational", "music_origin_story", "none")

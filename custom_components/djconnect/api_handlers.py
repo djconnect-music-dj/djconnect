@@ -116,6 +116,23 @@ async def _session_profile_context(
         if any(data.get(key) and data[key] != value for key, value in server_identity.items()):
             return None, None, _error_payload("profile_device_mismatch"), 403
         data.update(server_identity)
+        from .native_voice import active_for
+        native = active_for(hass, runtime)
+        if native is not None:
+            try:
+                profile = native.validate()
+                if any(data.get(key) and data[key] != profile.profile_id
+                       for key in ("profile_id", "explicit_profile_id")):
+                    return None, None, _error_payload("profile_device_mismatch"), 403
+                data["profile_id"] = profile.profile_id
+                data["ha_device_id"] = native.device_id
+                from .profile_context import async_apply_profile_context
+                context = await async_apply_profile_context(
+                    hass, native.bound_runtime, data, request_source="native_voice")
+                native.validate()
+                return native.bound_runtime, context, None, None
+            except SessionConversationError as exc:
+                return None, None, _error_payload(exc.code), exc.status
     else:
         runtime = resolve_runtime(hass, data.get("device_id") or headers.get("X-DJConnect-Device-ID"), headers)
         if runtime is None:
@@ -290,11 +307,13 @@ async def async_handle_session_history_payload(
         if playback_locale_token is not None:
             offer_locale.reset(playback_locale_token)
 async def async_handle_session_start_payload(
-    hass: Any, data: dict[str, Any], *, headers: Any | None = None, user_id: str | None = None
+    hass: Any, data: dict[str, Any], *, headers: Any | None = None, user_id: str | None = None,
+    _ha_service_runtime=None,
 ) -> tuple[dict[str, Any], int]:
     """Create the one active server-owned Runtime for a resolved Profile."""
     runtime, context, error, status = await _session_profile_context(
-        hass, data, headers=headers, user_id=user_id, source="session_start"
+        hass, data, headers=headers, user_id=user_id, source="session_start",
+        _ha_service_runtime=_ha_service_runtime,
     )
     if error is not None:
         return error, int(status or 400)
@@ -356,13 +375,14 @@ async def async_handle_session_start_payload(
             ),
         )
     def delivery_guard():
-        _conversation_profile_fence(hass, runtime, identity_payload(data), headers or {}, context)
+        _conversation_profile_fence(hass, runtime, identity_payload(data), headers or {}, context,
+                                    _ha_service_runtime=_ha_service_runtime)
         current = session_runtime_manager(hass).current_active(context.profile_id)
         if current is None or current.session_id != session.session_id:
             raise PermissionError("session_result_withdrawn")
     from .transport_delivery import register_delivery_admission
     register_delivery_admission(delivery_guard)
-    if context.client_type in {"ios", "macos"}:
+    if context.client_type in {"ios", "macos"} or _ha_service_runtime is not None:
         from .mood_music_steering import prepare_for_you_once
         await prepare_for_you_once(hass, runtime, context, active or session,
                                   _history_manager(hass, runtime), delivery_guard)
@@ -472,11 +492,13 @@ async def _discover_context_for_session(
 
 
 async def async_handle_session_end_payload(
-    hass: Any, data: dict[str, Any], *, headers: Any | None = None, user_id: str | None = None
+    hass: Any, data: dict[str, Any], *, headers: Any | None = None, user_id: str | None = None,
+    _ha_service_runtime=None,
 ) -> tuple[dict[str, Any], int]:
     """End and dispose of the active Runtime for a resolved Profile."""
     runtime, context, error, status = await _session_profile_context(
-        hass, data, headers=headers, user_id=user_id, source="session_end"
+        hass, data, headers=headers, user_id=user_id, source="session_end",
+        _ha_service_runtime=_ha_service_runtime,
     )
     if error is not None:
         return error, int(status or 400)
@@ -490,7 +512,8 @@ async def async_handle_session_end_payload(
     )
     from .transport_delivery import register_delivery_admission
     register_delivery_admission(lambda: _conversation_profile_fence(
-        hass, runtime, identity_payload(data), headers or {}, context))
+        hass, runtime, identity_payload(data), headers or {}, context,
+        _ha_service_runtime=_ha_service_runtime))
     return {"success": True, "session": session.as_dict()}, 200
 
 
@@ -1574,9 +1597,12 @@ def _conversation_profile_fence(hass, runtime, identity, headers, context, *, _h
     """A synchronous owner fence after the final Store/source/Profile await."""
     from .session_conversation import SessionConversationError
     if _ha_service_runtime is not None:
-        if _ha_service_runtime is not runtime:
+        from .native_voice import active_for
+        native = active_for(hass, runtime)
+        if _ha_service_runtime is not runtime and not (
+                native is not None and native.runtime is _ha_service_runtime and native.bound_runtime is runtime):
             raise SessionConversationError("unauthorized", 401)
-        device_id = _ha_native_service_identity(hass, runtime)["device_id"]
+        device_id = _ha_native_service_identity(hass, _ha_service_runtime)["device_id"]
     else:
         device_id = identity.get("device_id") or headers.get("X-DJConnect-Device-ID")
         if resolve_runtime(hass, device_id, headers) is not runtime or not authorize_runtime_device_request(
@@ -1589,11 +1615,14 @@ def _conversation_profile_fence(hass, runtime, identity, headers, context, *, _h
         if (entries is None or entries.async_get_entry(entry.entry_id) is not entry
             or entry.disabled_by is not None
             or getattr(entry.state, "value", entry.state) != "loaded"
-            or hass.data.get("djconnect", {}).get(entry.entry_id) is not runtime
+            or hass.data.get("djconnect", {}).get(entry.entry_id) is not (_ha_service_runtime or runtime)
             or entry.data.get("device_token") != getattr(runtime, "device_token", None)):
             raise SessionConversationError("session_context_changed")
     try:
-        current_profile = profile_storage(hass).resolver().resolve_bound_device(device_id)
+        from .native_voice import active_for
+        native = active_for(hass, runtime) if _ha_service_runtime is not None else None
+        current_profile = (native.validate() if native is not None else
+                           profile_storage(hass).resolver().resolve_bound_device(device_id))
     except Exception as exc:
         raise SessionConversationError("profile_device_mismatch", 403) from exc
     if current_profile.profile_id != context.profile_id or not resolve_profile_privacy_policy(current_profile, {}).allow_personal_read:
@@ -1652,6 +1681,10 @@ def _ask_dj_exchange_callbacks(
 ):
 
     async def delegate(confirmed_payload, scope_key, selected_entry, playback_result):
+        from .ask_dj.lifecycle import requested as lifecycle_requested, reply as lifecycle_reply
+        if lifecycle_requested(confirmed_payload.get("text")):
+            return await lifecycle_reply(hass, bound_runtime, confirmed_payload, context,
+                                         headers, _ha_service_runtime)
         if _mood_transition is not None:
             from .mood_music_steering import response
 
@@ -1907,9 +1940,12 @@ class _AskDjMessageRequest:
                     or supplied_session == active_offer_session.session_id
                 )
             ):
+                from .native_voice import active_for
+                native = active_for(self.hass, self.runtime)
                 self.payload["conversation_context"] = {
                     "session_id": active_offer_session.session_id,
-                    "thread_id": "for-you-" + active_offer_session.session_id,
+                    "thread_id": (supplied_context or {}).get("thread_id") if native is not None
+                        else "for-you-" + active_offer_session.session_id,
                 }
 
     def _bind_callbacks(self):
@@ -3916,7 +3952,8 @@ def _for_you_request_locale(data, headers, active):
 
 def _session_offer_fields(hass, runtime, context, active, *, locale=None):
     from .mood_music_steering import first_play_catalogue, session_start_catalogue, for_you_projection
-    allowed = context.client_type in {"ios", "macos"}
+    from .native_voice import active_for
+    allowed = context.client_type in {"ios", "macos"} or active_for(hass, runtime) is not None
     projected = for_you_projection(hass, runtime, context.profile_id, active,
         client_device_id=context.device_id, locale=locale) if allowed else None
     start = session_start_catalogue(hass, runtime, context.profile_id, active if allowed else None,

@@ -151,6 +151,9 @@ class ForecastArtwork:
 
 def artist_authority(hass, runtime, *, owner_profile_id: str, expected_source=None):
     """Capture source/account/pairing authority without storing credentials."""
+    from .native_voice import NativeRuntimeView, source_authority
+    if isinstance(runtime, NativeRuntimeView):
+        return source_authority(hass, runtime, owner_profile_id, expected_source)
     from .const import DOMAIN
     from .profile_context import profile_storage
     from .profile_backend import profile_backend_runtime

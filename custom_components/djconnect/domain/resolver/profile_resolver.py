@@ -103,6 +103,7 @@ class ProfileResolverIndex:
 
     device_profile_ids: dict[str, str] = field(default_factory=dict)
     voice_endpoint_profile_ids: dict[str, str] = field(default_factory=dict)
+    personal_voice_endpoint_profile_ids: dict[str, str] = field(default_factory=dict)
     ha_device_profile_ids: dict[str, str] = field(default_factory=dict)
     ha_user_profile_ids: dict[str, str] = field(default_factory=dict)
     area_profile_ids: dict[str, str] = field(default_factory=dict)
@@ -122,6 +123,7 @@ class ProfileResolverIndex:
         return cls(
             device_profile_ids=device_profile_ids,
             voice_endpoint_profile_ids=dict(household.shared.voice_endpoint_profile_ids),
+            personal_voice_endpoint_profile_ids=dict(household.shared.personal_voice_endpoint_profile_ids),
             ha_device_profile_ids=dict(household.shared.ha_device_profile_ids),
             ha_user_profile_ids=dict(household.shared.ha_user_profile_ids),
             area_profile_ids=dict(household.shared.area_profile_ids),
@@ -173,6 +175,16 @@ class ProfileResolver:
         if not profile_id:
             raise DeviceNotMapped(device_id)
         return self._require_profile(profile_id)
+
+    def resolve_personal_voice_endpoint(self, ha_device_id: str) -> Profile:
+        """Require explicit personal trust; ordinary room/user/fallback never grants it."""
+        profile_id = self._index.personal_voice_endpoint_profile_ids.get(clean_identifier(ha_device_id))
+        if not profile_id:
+            raise DeviceNotMapped(ha_device_id)
+        profile = self._require_profile(profile_id)
+        if profile.profile_type.value != "personal":
+            raise DeviceNotMapped(ha_device_id)
+        return profile
 
     def resolve_with_result(self, context: ProfileResolutionContext) -> ProfileResolutionResult:
         """Resolve a Profile and return safe resolution diagnostics."""

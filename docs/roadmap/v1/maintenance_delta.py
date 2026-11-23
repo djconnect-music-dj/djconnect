@@ -84,6 +84,9 @@ def validate_delta(plan: dict[str, Any]) -> list[str]:
             errors.append("maintenance: " + reason)
 
     version = d.get("schema_version")
+    if version == "djconnect-federated-planning-delta/25":
+        from ha_native_voice_delta import validate as validate_native_voice
+        return validate_native_voice(plan, validate_delta)
     if version == "djconnect-federated-planning-delta/24":
         from music_canvas_finalization_delta import validate as validate_canvas_finalization
         return validate_canvas_finalization(plan, validate_delta)
@@ -1056,7 +1059,10 @@ def render_delta(p):
                  else 'implemented local contract3 (runtime checkpoint3, unpublished until protected delivery)')
         intro += f"Selected shared Profile/Session settings consolidation: {r['assignment_id']}; six shared Persona/voice/gender/Mood/Presence/announcement_output, {state}, last explicit accepted choice becomes default, atomic active+default acceptance. Source {r['source_delivery']}; Core producer and migration work only; Apple/other consumers/joint separately open, no automatic dispatch or whole-family completion. Delivered v13 preserved.\n\n"
     if d.get("music_canvas_receipt"):
-        intro += "Music Canvas v1 owner-selected implementation is LOCAL / NOT_MERGED. Core contracts, persistent preferences, lifecycle, composition and Samsung/SwitchBot adapters feed the native Apple panel. Joint real-provider/native/hardware acceptance stays Planned/OPEN; no Cast route, deployment or automatic dispatch.\n\n"
+        state = "SOURCE_DELIVERED / PROTECTED_MERGED" if d.get("music_canvas_finalization_receipt") else "LOCAL / NOT_MERGED"
+        intro += f"Music Canvas v1 owner-selected implementation is {state}. Core contracts, persistent preferences, lifecycle, composition and Samsung/SwitchBot adapters feed the native Apple panel. Joint real-provider/native/hardware acceptance stays Planned/OPEN; no Cast route, deployment or automatic dispatch.\n\n"
+    if d.get("ha_native_voice_receipt"):
+        intro += "HA-native DJ conversation is owner-selected IN_PROGRESS: personal ingress, explicit endpoint/Profile admission and the existing lifecycle/Voor jou service are implemented locally. Shared guest/request/display owners remain dependencies; no whole-assignment completion, physical satellite/provider acceptance, installation or deployment is claimed.\n\n"
     if d.get("music_origin_finalization_receipt"):
         intro += "Music Origin SOURCE_DELIVERED: Core #1669 and Apple #405 protected merged with their own exact-main software/publication evidence. Avatar-menu/native/history source is delivered; MO01–MO18 real-provider, editorial and physical-device/accessibility acceptance remains OPEN. No installation, deployment, new writer or automatic dispatch.\n\n"
     if d.get("moments_avatar_receipt"):

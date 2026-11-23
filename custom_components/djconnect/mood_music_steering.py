@@ -662,7 +662,34 @@ def _cached_for_you_dna_current(hass, runtime, profile_id, active):
 
 def first_play_requested(text):
     return str(text or "").strip().casefold().rstrip(".!?") in {
-        value[1].casefold() for value in FIRST_PLAY_COPY.values()}
+        *(value[1].casefold() for value in FIRST_PLAY_COPY.values()),
+        "voor jou", "for you", "für dich", "pour vous", "para ti",
+    }
+
+
+def reuse_for_you_offer(hass, runtime, turn):
+    """Adopt the actual published offer into an admitted conversation without producing another."""
+    from .session_runtime import session_runtime_manager
+    active = session_runtime_manager(hass).current_active(turn.scope.removeprefix("profile:"))
+    offer = active.broadcast.first_play_offer if active is not None else None
+    if not isinstance(offer, dict) or offer.get("state") != "available":
+        return None
+    if active.broadcast.first_play_dismissed_offer_id:
+        return None
+    original_thread = offer.get("conversation_context", {}).get("thread_id")
+    original_frame = turn.history.dialogue.owners.get(turn.scope, {}).get(original_thread)
+    original = original_frame.result_set if original_frame is not None else None
+    admission = offer.get("_admission")
+    if (type(admission) is not FirstPlayAdmission or not isinstance(original, dict)
+            or original.get("result_set_id") != offer.get("offer_id")):
+        return None
+    admission.bind(turn)
+    turn.reused_result_set = original
+    intro = str(offer.get("intro") or FOR_YOU_INTRO[admission.locale])
+    choices = " ".join(f"{index + 1}. {item['label']}." for index, item in enumerate(offer['options']))
+    return {"success": True, "text": intro + " " + choices,
+            "first_play": {"state": "genres", "expires_in": max(0, admission.deadline-admission.clock())},
+            "text_source": "runtime_acknowledgement", "is_generated_text": False}
 
 
 def _first_play_empty(active):
@@ -885,6 +912,11 @@ async def first_play_response(hass, runtime):
     turn = current_turn.get()
     if turn is None:
         raise DialogueError("conversation_authority_required", 403)
+    from .native_voice import active_for
+    if active_for(hass, runtime) is not None:
+        retained = reuse_for_you_offer(hass, runtime, turn)
+        if retained is not None:
+            return retained
     turn.first_play_request = True
     profile_id = turn.scope.removeprefix("profile:")
     manager = session_runtime_manager(hass)

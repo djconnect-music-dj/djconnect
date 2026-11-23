@@ -82,6 +82,9 @@ def command_family(command, value=None):
 
 
 def request_effect_grants(text, intent):
+    from .lifecycle import requested
+    if intent.action in {"session_start", "session_end"} and requested(text) == intent.action:
+        return (EffectGrant(frozenset({intent.action}), "explicit_session_lifecycle"),)
     from . import _execution_request
     if not _execution_request(text):
         return ()
@@ -140,6 +143,7 @@ class DialogueFrame:
     touched: float
     generation: str
     for_you_session_id: str = ""
+    native_voice_session_id: str = ""
     messages: list[dict] = field(default_factory=list)
     local_turns: list[dict] = field(default_factory=list)
     speech_references: dict[str, dict] = field(default_factory=dict)
@@ -220,6 +224,8 @@ class DialogueTurn:
     delivery_validators: list[Any] = field(default_factory=list)
     speech_deadline: float | None = None
     fast_control: bool = False
+    accepted_lifecycle: tuple[str, str] | None = None
+    reused_result_set: dict | None = None  # Original Core offer; no new actions or leases.
     pending: dict | None = None
     reset_topic: bool = False
     archiveable: bool = True
@@ -660,6 +666,21 @@ class DialogueState:
                     frame.subjects = [{"name": named_subject, "role": "user_named_subject", "basis": "user_explicit_name"}]
             frame.dependencies = deepcopy(turn.dependencies)[:20]
         album_tracks = result.pop('_album_track_choices', False) is True
+        if turn.reused_result_set is not None:
+            original = turn.reused_result_set
+            remaining = max(0, original["deadline"] - self.clock())
+            if remaining <= 0:
+                raise DialogueError("choice_expired")
+            # Isolate per-thread pending/output continuation while retaining the
+            # exact offer/actions and shared once-only FirstPlayAdmission owner.
+            frame.result_set = {**original, "items": deepcopy(original["items"])}
+            frame.chosen_action_id = ""
+            result["result_set"] = {"schema_version": 1,
+                "result_set_id": original["result_set_id"], "expires_in": remaining,
+                "items": deepcopy(original["items"])}
+            result["playback_actions"] = deepcopy(original["items"])
+            turn.completion_accepted = True
+            return
         item_limit = MAX_ALBUM_TRACK_ITEMS if album_tracks else MAX_ITEMS
         byte_limit = MAX_ALBUM_TRACK_BYTES if album_tracks else MAX_RESULT_BYTES
         actions = [

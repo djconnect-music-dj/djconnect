@@ -291,6 +291,8 @@ async def _reserve_qualified_model_call(hass, data, model_guard):
 
 async def call_conversation_process_with_agent_retry(hass, data, *, debug=None, model_guard=None):
     """Existing transport with bounded, rights-qualified Ask DJ execution context."""
+    from .native_voice import guard_model
+    guard_model(hass, data)
     from .ask_dj.dialogue import current_turn, DialogueError, qualify_agent
     if current_turn.get() is None and model_guard is None:
         return await _call_conversation_process_transport(hass, data, debug=debug)

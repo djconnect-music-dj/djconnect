@@ -90,6 +90,18 @@
     "music_origin_story": {
       "file": "tests/test_requested_moments.py",
       "method": "test_music_origin_equivalent_freeform_uses_same_producer_without_playback"
+    },
+    "conversation_recall": {
+      "file": "tests/test_native_voice.py",
+      "method": "test_repeat_original_answer_is_not_music_repeat_or_new_model_work"
+    },
+    "conversation_stop": {
+      "file": "tests/test_native_voice.py",
+      "method": "test_stop_talking_ends_pending_input_without_pausing_music_or_model_call"
+    },
+    "session_lifecycle": {
+      "file": "tests/test_native_voice.py",
+      "method": "test_explicit_lifecycle_uses_existing_owner_without_music_effect"
     }
   },
   "families": [

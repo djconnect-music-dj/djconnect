@@ -8,9 +8,9 @@ import unittest
 class ProfileSpotifyReconnectQualificationTests(unittest.TestCase):
     def test_current_source_has_profile_owned_callback_and_shared_caller_proof(self):
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root / 'examples/client_contracts/profile_spotify_reconnect_v1/music-canvas-recovery-20261122-music-canvas-20261122-ac-72d7a403.json').read_text())
+        proof = json.loads((root / 'examples/client_contracts/profile_spotify_reconnect_v1/ha-native-voice-20261122-music-canvas-recovery-20-8853764b.json').read_text())
         self.assertTrue(proof['source_before_after_equal'])
-        self.assertEqual(len(proof['source_pins']), 328)
+        self.assertEqual(len(proof['source_pins']), 331)
         for name, expected in {**proof['source_pins'], **proof['harness_pins']}.items():
             self.assertEqual(hashlib.sha256((root / name).read_bytes()).hexdigest(), expected, name)
         receipt = proof['receipt']

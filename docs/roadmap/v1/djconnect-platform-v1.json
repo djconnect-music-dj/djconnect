@@ -37594,7 +37594,7 @@
     }
   ],
   "planning_maintenance": {
-    "schema_version": "djconnect-federated-planning-delta/24",
+    "schema_version": "djconnect-federated-planning-delta/25",
     "decision_id": "DJC-DJ-PRESENCE-ROADMAP-DESIGN-V1-20261011",
     "decision_url": "https://github.com/pcvantol/djconnect/issues/1101#issuecomment-6110375785",
     "design_date": "2026-10-11",
@@ -40257,6 +40257,94 @@
             ]
           }
         ]
+      },
+      {
+        "id": "HA-NATIVE-VOICE::ADOPTION",
+        "title": "Native HA adoption of the one Core Ask DJ application service",
+        "lane": "DJC-CORE",
+        "repository": "djconnect-music-dj/djconnect",
+        "status": "In progress",
+        "assignment_status": "SELECTED_IN_PROGRESS",
+        "scope": "Core #1532: one shared service; stage1 conversation, stage2 common lifecycle/Voor jou, stage3 existing shared guest/request/display owners",
+        "acceptance_boundary": "Source, CI, protected merge, installation, real provider, physical satellite/audio/display and native consumer outcomes remain separate",
+        "contract_binding": "docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md",
+        "source_ids": [
+          "OWNER-HA-NATIVE-VOICE-20261107"
+        ],
+        "parent_reference": "CONVERSATION::CORE::SHARED-DIALOGUE",
+        "prerequisite_groups": [
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "HA-NATIVE-VOICE-1"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "HA-NATIVE-VOICE::ACCEPTANCE",
+        "title": "Personal, shared, native satellite and physical audio/display qualification",
+        "lane": "DJC-CORE",
+        "repository": "djconnect-music-dj/djconnect",
+        "status": "Planned",
+        "assignment_status": "OPEN_ACCEPTANCE",
+        "scope": "Core #1532: one shared service; stage1 conversation, stage2 common lifecycle/Voor jou, stage3 existing shared guest/request/display owners",
+        "acceptance_boundary": "Source, CI, protected merge, installation, real provider, physical satellite/audio/display and native consumer outcomes remain separate",
+        "contract_binding": "docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md",
+        "source_ids": [
+          "OWNER-HA-NATIVE-VOICE-20261107"
+        ],
+        "parent_reference": "CONVERSATION::CORE::SHARED-DIALOGUE",
+        "prerequisite_groups": [
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "HA-NATIVE-VOICE-2"
+            ]
+          },
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "HA-NATIVE-VOICE-3"
+            ]
+          },
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "HA-NATIVE-VOICE-4"
+            ]
+          },
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "HA-NATIVE-VOICE-5"
+            ]
+          },
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "HA-NATIVE-VOICE-6"
+            ]
+          },
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "HA-NATIVE-VOICE-7"
+            ]
+          },
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "HA-NATIVE-VOICE-8"
+            ]
+          },
+          {
+            "mode": "AND",
+            "edge_ids": [
+              "HA-NATIVE-VOICE-9"
+            ]
+          }
+        ]
       }
     ],
     "edges": [
@@ -42648,6 +42736,150 @@
         "required_subset": "Versioned Canvas contract and actual producer/consumer subset",
         "contract_or_evidence": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
         "reason": "Adapters may be prepared independently; joint acceptance requires both outputs and native adoption"
+      },
+      {
+        "id": "HA-NATIVE-VOICE-1",
+        "producer": "CONVERSATION::CORE::SHARED-DIALOGUE",
+        "consumer": "HA-NATIVE-VOICE::ADOPTION",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-HA-NATIVE-VOICE-20261107"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Exact owning producer/consumer subset; no all-platform gate on the independently useful personal foundation",
+        "contract_or_evidence": "docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md",
+        "reason": "Reuse existing Core owners; shared guest effects and physical acceptance never follow from personal endpoint consent"
+      },
+      {
+        "id": "HA-NATIVE-VOICE-2",
+        "producer": "HA-NATIVE-VOICE::ADOPTION",
+        "consumer": "HA-NATIVE-VOICE::ACCEPTANCE",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-HA-NATIVE-VOICE-20261107"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Exact owning producer/consumer subset; no all-platform gate on the independently useful personal foundation",
+        "contract_or_evidence": "docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md",
+        "reason": "Reuse existing Core owners; shared guest effects and physical acceptance never follow from personal endpoint consent"
+      },
+      {
+        "id": "HA-NATIVE-VOICE-3",
+        "producer": "ENTRY::CORE::LIFECYCLE",
+        "consumer": "HA-NATIVE-VOICE::ACCEPTANCE",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-HA-NATIVE-VOICE-20261107"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Exact owning producer/consumer subset; no all-platform gate on the independently useful personal foundation",
+        "contract_or_evidence": "docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md",
+        "reason": "Reuse existing Core owners; shared guest effects and physical acceptance never follow from personal endpoint consent"
+      },
+      {
+        "id": "HA-NATIVE-VOICE-4",
+        "producer": "ENTRY::CORE::ASK-LIFECYCLE",
+        "consumer": "HA-NATIVE-VOICE::ACCEPTANCE",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-HA-NATIVE-VOICE-20261107"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Exact owning producer/consumer subset; no all-platform gate on the independently useful personal foundation",
+        "contract_or_evidence": "docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md",
+        "reason": "Reuse existing Core owners; shared guest effects and physical acceptance never follow from personal endpoint consent"
+      },
+      {
+        "id": "HA-NATIVE-VOICE-5",
+        "producer": "WEB::CHAT",
+        "consumer": "HA-NATIVE-VOICE::ACCEPTANCE",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-HA-NATIVE-VOICE-20261107"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Exact owning producer/consumer subset; no all-platform gate on the independently useful personal foundation",
+        "contract_or_evidence": "docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md",
+        "reason": "Reuse existing Core owners; shared guest effects and physical acceptance never follow from personal endpoint consent"
+      },
+      {
+        "id": "HA-NATIVE-VOICE-6",
+        "producer": "WEB::REQUEST",
+        "consumer": "HA-NATIVE-VOICE::ACCEPTANCE",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-HA-NATIVE-VOICE-20261107"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Exact owning producer/consumer subset; no all-platform gate on the independently useful personal foundation",
+        "contract_or_evidence": "docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md",
+        "reason": "Reuse existing Core owners; shared guest effects and physical acceptance never follow from personal endpoint consent"
+      },
+      {
+        "id": "HA-NATIVE-VOICE-7",
+        "producer": "WEB::EFFECT-POLICY",
+        "consumer": "HA-NATIVE-VOICE::ACCEPTANCE",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-HA-NATIVE-VOICE-20261107"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Exact owning producer/consumer subset; no all-platform gate on the independently useful personal foundation",
+        "contract_or_evidence": "docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md",
+        "reason": "Reuse existing Core owners; shared guest effects and physical acceptance never follow from personal endpoint consent"
+      },
+      {
+        "id": "HA-NATIVE-VOICE-8",
+        "producer": "WEB::ENQUEUE",
+        "consumer": "HA-NATIVE-VOICE::ACCEPTANCE",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-HA-NATIVE-VOICE-20261107"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Exact owning producer/consumer subset; no all-platform gate on the independently useful personal foundation",
+        "contract_or_evidence": "docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md",
+        "reason": "Reuse existing Core owners; shared guest effects and physical acceptance never follow from personal endpoint consent"
+      },
+      {
+        "id": "HA-NATIVE-VOICE-9",
+        "producer": "WEB::SHARED",
+        "consumer": "HA-NATIVE-VOICE::ACCEPTANCE",
+        "hard_precedence": true,
+        "logical_mode": "AND",
+        "source_ids": [
+          "OWNER-HA-NATIVE-VOICE-20261107"
+        ],
+        "kind": "implementation_contract",
+        "phase": "integration_acceptance",
+        "prerequisite_stage": "completion",
+        "required_subset": "Exact owning producer/consumer subset; no all-platform gate on the independently useful personal foundation",
+        "contract_or_evidence": "docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md",
+        "reason": "Reuse existing Core owners; shared guest effects and physical acceptance never follow from personal endpoint consent"
       }
     ],
     "document_references": [
@@ -42793,11 +43025,11 @@
       },
       {
         "path": "docs/product/ASK_DJ_CONVERSATIONAL_EXPERIENCE_V1.md",
-        "sha256": "690b79372d12b41306b54fc21eb4434dbcc4a22b6b9894bd9aa64c8985c030c9"
+        "sha256": "cf56c06b16b2f6af0733f432b41bc8077a43f487a437132ed8fe300ee2ccf74f"
       },
       {
         "path": "docs/product/ASK_DJ_CONTEXTUAL_DIALOGUE_CONTRACT_V1.md",
-        "sha256": "756b0ecce1f1320b81d8a0a3aabfb9776c055f01ecbe8565ed4d5a3fbcf9523b"
+        "sha256": "f1cde20ed447e58761ee6822e3a1b33958330b61498530413a7a2a99f54315c8"
       },
       {
         "path": "docs/product/MOMENT_TRACK_INSIGHT_DRILLDOWN_V1.md",
@@ -42813,7 +43045,7 @@
       },
       {
         "path": "docs/technical/VOICE_TRANSPORT.md",
-        "sha256": "65065f48e8e8a069a43ac3efde885e5ef2636622269725a008a478cf71197cd5"
+        "sha256": "fd7fc4bf74fc84646899d62a46cb8ae710723d977b166e022b450bef11c815fb"
       },
       {
         "path": "docs/product/EXPRESSIVE_DJ_PERSONA_CONTRACT.md",
@@ -43118,6 +43350,30 @@
       {
         "path": "docs/history/prompts/2026-11-20-ask-dj-moments-finalization.md",
         "sha256": "1c14b90e27b34b64bc37fa533779f310450e6ad0d9e84eeefa3dd9fb08ea212d"
+      },
+      {
+        "path": "docs/technical/AUDIO_RENDERER_HOST_ARCHITECTURE.md",
+        "sha256": "d2cd87afe0c6d95f09840e916ac647072b1a9c0f4d389514842ec76b4a7b4f00"
+      },
+      {
+        "path": "docs/technical/ROOM_PRESENTATION_ROUTING_ARCHITECTURE.md",
+        "sha256": "4ef1672710d821898517308e0a3573253812960e582d86987527b0759bb7f127"
+      },
+      {
+        "path": "CLIENT_CAPABILITY_MATRIX.md",
+        "sha256": "87bdef492c6193cb643a25f7efb56b5b97bea6d7ec267a1a5f8b884d898d1474"
+      },
+      {
+        "path": "DJCONNECT_CAPABILITY_MODEL.md",
+        "sha256": "5870301180d5f8ef95a43a04972107363975db813cb1ea23065409727a6d1df6"
+      },
+      {
+        "path": "docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md",
+        "sha256": "9be208409d92e43cdcf79b29e06c1b460da588808b651b7acab6c97006bb7a86"
+      },
+      {
+        "path": "SYNC_PROMPTS.md",
+        "sha256": "2312eed6db047fe8d1e9c5c1597f3d6c1b869b1e2d98a7bf51646cb867c6f95a"
       }
     ],
     "implementation_receipt": {
@@ -44145,6 +44401,100 @@
       ],
       "native": "SOURCE_SOFTWARE_ONLY_PHYSICAL_OPEN",
       "deployment": "NOT_RUN"
+    },
+    "ha_native_voice_receipt": {
+      "assignment_id": "DJC-HA-VOICE-CORE-CONVERGENCE-V1-20261107",
+      "predecessor_path": "history/20261122/ha-native-voice-predecessor-maintenance-v24.json",
+      "predecessor_sha256": "d3e13077388ab998cd423e04e765689e1d5e4ee192d50660b770043f6347de0e",
+      "base_sha": "d987f79f8c281dab3cbcc1dc4bc5981d129f5d23",
+      "source_delivery": "LOCAL_IMPLEMENTATION_NOT_MERGED",
+      "stage1": "LOCAL_IMPLEMENTED_VALIDATING",
+      "stage2": "LOCAL_IMPLEMENTED_VALIDATING",
+      "stage3": "DEPENDENT_SHARED_CONTRACTS_NOT_IMPLEMENTED",
+      "overall_acceptance": "OPEN",
+      "installed": "NOT_RUN",
+      "deployment": "NOT_RUN",
+      "real_provider": "NOT_RUN",
+      "physical_satellite": "NOT_RUN",
+      "automatic_dispatch": false,
+      "consumer_writes": false,
+      "predecessor_documents": [
+        {
+          "path": "docs/product/ASK_DJ_CONVERSATIONAL_EXPERIENCE_V1.md",
+          "snapshot": "docs/roadmap/v1/history/20261122/ha-native-voice-predecessor-documents/docs/product/ASK_DJ_CONVERSATIONAL_EXPERIENCE_V1.md",
+          "sha256": "690b79372d12b41306b54fc21eb4434dbcc4a22b6b9894bd9aa64c8985c030c9"
+        },
+        {
+          "path": "docs/product/ASK_DJ_CONTEXTUAL_DIALOGUE_CONTRACT_V1.md",
+          "snapshot": "docs/roadmap/v1/history/20261122/ha-native-voice-predecessor-documents/docs/product/ASK_DJ_CONTEXTUAL_DIALOGUE_CONTRACT_V1.md",
+          "sha256": "756b0ecce1f1320b81d8a0a3aabfb9776c055f01ecbe8565ed4d5a3fbcf9523b"
+        },
+        {
+          "path": "docs/technical/VOICE_TRANSPORT.md",
+          "snapshot": "docs/roadmap/v1/history/20261122/ha-native-voice-predecessor-documents/docs/technical/VOICE_TRANSPORT.md",
+          "sha256": "65065f48e8e8a069a43ac3efde885e5ef2636622269725a008a478cf71197cd5"
+        },
+        {
+          "path": "docs/technical/AUDIO_RENDERER_HOST_ARCHITECTURE.md",
+          "snapshot": "docs/roadmap/v1/history/20261122/ha-native-voice-predecessor-documents/docs/technical/AUDIO_RENDERER_HOST_ARCHITECTURE.md",
+          "sha256": "e6d8bc04c124283f7f08435190cab41fa999c89328528b3377ec28f9f17b8839"
+        },
+        {
+          "path": "docs/technical/ROOM_PRESENTATION_ROUTING_ARCHITECTURE.md",
+          "snapshot": "docs/roadmap/v1/history/20261122/ha-native-voice-predecessor-documents/docs/technical/ROOM_PRESENTATION_ROUTING_ARCHITECTURE.md",
+          "sha256": "6d3f732c58cb9584c66cf0eab634deec7d14bae40a34e08a55d08f466b749860"
+        },
+        {
+          "path": "CLIENT_CAPABILITY_MATRIX.md",
+          "snapshot": "docs/roadmap/v1/history/20261122/ha-native-voice-predecessor-documents/CLIENT_CAPABILITY_MATRIX.md",
+          "sha256": "fd0f0cbc0fe1fdd3610f59231b968143375580d6f581abf1fc2be6337c4b98c6"
+        },
+        {
+          "path": "DJCONNECT_CAPABILITY_MODEL.md",
+          "snapshot": "docs/roadmap/v1/history/20261122/ha-native-voice-predecessor-documents/DJCONNECT_CAPABILITY_MODEL.md",
+          "sha256": "46222d2f128ef251c19f81c74e08b6766b4da696ba6e0bad34036cc3ef20001b"
+        }
+      ],
+      "documents": [
+        {
+          "path": "docs/product/ASK_DJ_CONVERSATIONAL_EXPERIENCE_V1.md",
+          "sha256": "cf56c06b16b2f6af0733f432b41bc8077a43f487a437132ed8fe300ee2ccf74f"
+        },
+        {
+          "path": "docs/product/ASK_DJ_CONTEXTUAL_DIALOGUE_CONTRACT_V1.md",
+          "sha256": "f1cde20ed447e58761ee6822e3a1b33958330b61498530413a7a2a99f54315c8"
+        },
+        {
+          "path": "docs/technical/VOICE_TRANSPORT.md",
+          "sha256": "fd7fc4bf74fc84646899d62a46cb8ae710723d977b166e022b450bef11c815fb"
+        },
+        {
+          "path": "docs/technical/AUDIO_RENDERER_HOST_ARCHITECTURE.md",
+          "sha256": "d2cd87afe0c6d95f09840e916ac647072b1a9c0f4d389514842ec76b4a7b4f00"
+        },
+        {
+          "path": "docs/technical/ROOM_PRESENTATION_ROUTING_ARCHITECTURE.md",
+          "sha256": "4ef1672710d821898517308e0a3573253812960e582d86987527b0759bb7f127"
+        },
+        {
+          "path": "CLIENT_CAPABILITY_MATRIX.md",
+          "sha256": "87bdef492c6193cb643a25f7efb56b5b97bea6d7ec267a1a5f8b884d898d1474"
+        },
+        {
+          "path": "DJCONNECT_CAPABILITY_MODEL.md",
+          "sha256": "5870301180d5f8ef95a43a04972107363975db813cb1ea23065409727a6d1df6"
+        },
+        {
+          "path": "docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md",
+          "sha256": "9be208409d92e43cdcf79b29e06c1b460da588808b651b7acab6c97006bb7a86"
+        },
+        {
+          "path": "SYNC_PROMPTS.md",
+          "sha256": "2312eed6db047fe8d1e9c5c1597f3d6c1b869b1e2d98a7bf51646cb867c6f95a"
+        }
+      ],
+      "product_manifest_path": "docs/verification/ha-native-voice-product-manifest.json",
+      "product_manifest_sha256": "687e79a5c49618f8dcd849726e8cba0323f490bd96fa36f30388423d9c8e0545"
     }
   }
 }
