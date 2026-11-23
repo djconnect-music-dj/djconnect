@@ -92,9 +92,11 @@ class _InstallationPublisher:
             require(record is not None and body.get("install_credential_id") == record.credential_id, _ERROR, 403)
             await self.custody.current(record)
             token = record.original[1]
+            await self.custody.retain(record, body, guard=guard)
         else:
             token = await self.custody.negative(body, guard=guard)
         guard()
+        require(canonical(body) == original_body, _ERROR, 403)
         reply = await self.transport._post(self.origin, _PREFIX + "publisher/" + action, body,
             {"Authorization": "Bearer " + token}, guard=guard, deadline=deadline)
         require(reply.status == 200 and canonical(reply.body) == '{"ok":true}'
@@ -102,9 +104,6 @@ class _InstallationPublisher:
         if action == "operation":
             await self.custody.current(record)
             guard()
-            # Persist/read back negative-only original custody before any key
-            # challenge can be returned to the native client.
-            await self.custody.retain(record, body, guard=guard)
         guard()
 
 
@@ -164,24 +163,47 @@ class InstallationCredentialCustody:
 
     def store(self):
         from homeassistant.helpers.storage import Store
-        return Store(self.service.hass, 1, "djconnect_native_installation_negative", private=True, atomic_writes=True)
+        return Store(self.service.hass, 2, "djconnect_native_installation_negative", private=True, atomic_writes=True)
+
+    @staticmethod
+    def pair_context(publication):
+        return {name: publication[name] for name in
+                ("pairing_generation", "pair_binding", "owner_binding", "device_binding", "core_key_thumbprint")}
+
+    @classmethod
+    def record_key(cls, record):
+        return hashlib.sha256(canonical([record["origin"], record["ha_install_id"], record["credential_id"],
+            record["local_binding"], cls.pair_context(record["publication"])]).encode()).hexdigest()
+
+    @staticmethod
+    def original_event(publication):
+        event = {**publication, "api_audience": "djc-native-push/1", "event_id": publication["operation_id"]}
+        event.pop("consent_revision")
+        return event
+
+    @classmethod
+    def operation_digest(cls, publication):
+        return hashlib.sha256(canonical([cls.original_event(publication), publication["consent_revision"]]).encode()).hexdigest()
 
     async def records(self, store):
         document = await self.service.hass.async_add_executor_job(_private_read, store.path, 131072)
         if document is None:
             return {}
-        require(type(document) is dict and type(document.get("version")) is int and document["version"] == 1
+        require(type(document) is dict and type(document.get("version")) is int and document["version"] == 2
                 and document.get("key") == store.key
                 and type(document.get("data")) is dict and len(document["data"]) <= 64, _ERROR, 503)
         records = document["data"]
         fields = {"contract_version", "install_credential_id", "operation_id", "pairing_generation", "pair_binding",
                   "owner_binding", "device_binding", "core_key_thumbprint", "request_expires_at_ms", "consent_revision"}
         for key, record in records.items():
-            require(type(record) is dict and set(record) == {"credential_id", "origin", "install_token", "publication"}, _ERROR, 503)
+            require(type(record) is dict and set(record) == {"credential_id", "origin", "ha_install_id", "local_binding",
+                    "install_token", "publication", "operations"}, _ERROR, 503)
             publication = record["publication"]
             require(type(publication) is dict and set(publication) == fields
                     and type(publication["contract_version"]) is int and publication["contract_version"] == 1
                     and record["origin"] == DEFAULT_API_BASE_URL
+                    and type(record["ha_install_id"]) is str and re.fullmatch(r"[A-Za-z0-9_-]{1,128}", record["ha_install_id"])
+                    and type(record["local_binding"]) is str and re.fullmatch(r"[a-f0-9]{64}", record["local_binding"])
                     and type(record["install_token"]) is str and re.fullmatch(r"djci_[A-Za-z0-9_-]{43}", record["install_token"])
                     and record["credential_id"] == publication["install_credential_id"]
                     and all(type(publication[name]) is str and re.fullmatch(r"[A-Za-z0-9_-]{1,128}", publication[name])
@@ -190,52 +212,78 @@ class InstallationCredentialCustody:
                             for name in ("pair_binding", "owner_binding", "device_binding", "core_key_thumbprint"))
                     and all(type(publication[name]) is int and 0 < publication[name] < 2**53
                             for name in ("request_expires_at_ms", "consent_revision"))
-                    and key == hashlib.sha256(canonical([record["credential_id"], publication["operation_id"]]).encode()).hexdigest(),
-                    _ERROR, 503)
+                    and type(record["operations"]) is dict and 0 < len(record["operations"]) <= 1024
+                    and all(type(op) is str and re.fullmatch(r"[A-Za-z0-9_-]{1,128}", op)
+                            and type(digest) is str and re.fullmatch(r"[a-f0-9]{64}", digest)
+                            for op, digest in record["operations"].items())
+                    and record["operations"].get(publication["operation_id"]) == self.operation_digest(publication)
+                    and key == self.record_key(record), _ERROR, 503)
         return records
 
-
-    @staticmethod
-    def original_event(publication):
-        event = {**publication, "api_audience": "djc-native-push/1", "event_id": publication["operation_id"]}
-        event.pop("consent_revision")
-        return event
-
-    async def journal_state(self, publication, *, guard):
-        """Actual original SQLite lifecycle; private JSON is never its witness."""
+    async def journal_originals(self, record, *, guard):
+        """Only real staged SQL originals of this original pair/context qualify."""
         persistence = self.service.hass.data.get("djconnect", {}).get(PERSISTENCE_SERVICE_KEY)
         require(isinstance(persistence, PersistenceService) and persistence.readiness.ready, _ERROR, 503)
         guard()
         self.selected()
-        original = canonical(self.original_event(publication))
+        context = self.pair_context(record["publication"])
         def read(tx):
-            return tx.fetchone(
-                "SELECT event.delivered,event.withdrawn,pair.state,EXISTS ("
+            return [tuple(row) for row in tx.fetchall(
+                "SELECT event.original,event.consent_revision,event.delivered,event.withdrawn,pair.state,EXISTS ("
                 "SELECT 1 FROM djconnect_native_widget_consent choice "
                 "WHERE choice.local_binding=event.local_binding AND choice.enabled=0 "
                 "AND choice.revision>event.consent_revision) "
                 "FROM djconnect_native_pair_retirements event "
                 "JOIN djconnect_surface_pairs pair ON pair.binding=event.local_binding "
-                "WHERE event.event_id=? AND event.origin=? AND event.publisher_origin=? "
-                "AND event.original=? AND event.consent_revision=?",
-                (publication["operation_id"], DEFAULT_API_BASE_URL, DEFAULT_API_BASE_URL,
-                 original, publication["consent_revision"]))
-        row = await persistence.async_in_transaction(read)
+                "WHERE event.local_binding=? AND event.origin=? AND event.publisher_origin=? "
+                "AND json_extract(event.original,'$.api_audience')='djc-native-push/1' "
+                "AND json_extract(event.original,'$.install_credential_id')=? "
+                "AND json_extract(event.original,'$.pairing_generation')=? "
+                "AND json_extract(event.original,'$.pair_binding')=? "
+                "AND json_extract(event.original,'$.owner_binding')=? "
+                "AND json_extract(event.original,'$.device_binding')=? "
+                "AND json_extract(event.original,'$.core_key_thumbprint')=?",
+                (record["local_binding"], DEFAULT_API_BASE_URL, DEFAULT_API_BASE_URL, record["credential_id"],
+                 *context.values()))]
+        rows = await persistence.async_in_transaction(read)
         guard()
         self.selected()
         require(self.service.hass.data.get("djconnect", {}).get(PERSISTENCE_SERVICE_KEY) is persistence
                 and persistence.readiness.ready, _ERROR, 503)
-        return row
+        result = []
+        for row in rows:
+            event = json.loads(row[0])
+            require(type(event) is dict and event.get("event_id") == event.get("operation_id")
+                    and canonical(event) == row[0], _ERROR, 503)
+            publication = {key: value for key, value in event.items() if key not in ("api_audience", "event_id")}
+            publication["consent_revision"] = row[1]
+            digest = self.operation_digest(publication)
+            known = record["operations"].get(event["operation_id"])
+            require(known is None or known == digest, _ERROR, 503)
+            result.append((event, row[1], row[2], row[3], row[4], row[5], digest))
+        return result
 
     async def closed_records(self, records, *, guard):
         retained = {}
         for key, record in records.items():
-            row = await self.journal_state(record["publication"], guard=guard)
-            # Both markers were written only by the existing authenticated exact
-            # journal ACK continuations. No age/TTL/status/capacity substitution.
-            if not row or tuple(row[:3]) != (1, 1, "retired"):
+            rows = await self.journal_originals(record, guard=guard)
+            actual = {row[0]["operation_id"]: row[6] for row in rows}
+            complete = (bool(rows) and all(actual.get(op) == digest for op, digest in record["operations"].items())
+                        and all(row[2:5] == (1, 1, "retired") for row in rows))
+            if not complete:
                 retained[key] = record
         return retained
+
+    async def save_records(self, store, records, *, guard):
+        # Check the real HA private Store envelope bound before writing; never
+        # turn our own capacity limit into an unreadable, oversized credential file.
+        envelope = {"version": 2, "minor_version": 1, "key": store.key, "data": records}
+        require(len(json.dumps(envelope, indent=2, ensure_ascii=False).encode()) <= 131072, _ERROR, 503)
+        guard()
+        await store.async_save(records)
+        actual = await self.records(store)
+        guard()
+        require(actual == records, _ERROR, 503)
 
     async def prune(self, *, guard):
         task = asyncio.create_task(self._prune(guard=guard))
@@ -248,11 +296,7 @@ class InstallationCredentialCustody:
             records = await self.records(store)
             retained = await self.closed_records(records, guard=guard)
             if retained != records:
-                guard()
-                await store.async_save(retained)
-                actual = await self.records(store)
-                guard()
-                require(actual == retained, _ERROR, 503)
+                await self.save_records(store, retained, guard=guard)
 
     async def retain(self, record, publication, *, guard):
         # The worker owns the lock until the atomic file operation has actually
@@ -268,45 +312,52 @@ class InstallationCredentialCustody:
             records = await self.closed_records(records, guard=guard)
             await self.current(record)
             guard()
-            operation = publication["operation_id"]
-            key = hashlib.sha256(canonical([record.credential_id, operation]).encode()).hexdigest()
             retained = {"credential_id": record.credential_id, "origin": record.original[0],
-                        "install_token": record.original[1], "publication": dict(publication)}
-            require((key in records and records[key] == retained) or (key not in records and len(records) < 64), _ERROR, 503)
-            records[key] = retained
-            await store.async_save(records)
-            actual = await self.records(store)
+                        "ha_install_id": record.original[2], "local_binding": record.pair.registration.binding,
+                        "install_token": record.original[1], "publication": dict(publication),
+                        "operations": {publication["operation_id"]: self.operation_digest(publication)}}
+            staged = await self.journal_originals(retained, guard=guard)
+            expected = canonical(self.original_event(publication))
+            require(any(canonical(row[0]) == expected and row[1] == publication["consent_revision"]
+                        for row in staged), _ERROR, 403)
+            key = self.record_key(retained)
+            if key in records:
+                existing = records[key]
+                require(existing["install_token"] == retained["install_token"]
+                        and self.pair_context(existing["publication"]) == self.pair_context(publication), _ERROR, 503)
+                op = publication["operation_id"]
+                digest = self.operation_digest(publication)
+                require(op not in existing["operations"] or existing["operations"][op] == digest, _ERROR, 503)
+                existing["operations"][op] = digest
+                require(len(existing["operations"]) <= 1024, _ERROR, 503)
+            else:
+                require(len(records) < 64, _ERROR, 503)
+                records[key] = retained
+            await self.save_records(store, records, guard=guard)
             await self.current(record)
             guard()
-            require(actual == records, _ERROR, 503)
 
     async def negative(self, event, *, guard):
-        """Only a genuine pending journal event calls this private negative port."""
+        """Private records supply only credentials; actual SQL supplies the original."""
         guard()
         records = await self.records(self.store())
         guard()
         candidates = []
+        retirement = "install_credential_id" in event
+        if not retirement:
+            require(set(event) == {"contract_version", "pair_binding", "consent_revision"}
+                    and type(event["contract_version"]) is int and event["contract_version"] == 1
+                    and type(event["consent_revision"]) is int, _ERROR, 403)
         for record in records.values():
-            require(type(record) is dict and set(record) == {"credential_id", "origin", "install_token", "publication"}, _ERROR, 503)
-            publication = record["publication"]
-            require(type(publication) is dict and record["origin"] == DEFAULT_API_BASE_URL
-                    and type(record["install_token"]) is str
-                    and re.fullmatch(r"djci_[A-Za-z0-9_-]{43}", record["install_token"]), _ERROR, 503)
-            if event.get("pair_binding") != publication.get("pair_binding"):
+            if event.get("pair_binding") != record["publication"]["pair_binding"]:
                 continue
-            if "install_credential_id" in event:
-                expected = self.original_event(publication)
-                if event != expected or record["credential_id"] != event["install_credential_id"]:
+            for row in await self.journal_originals(record, guard=guard):
+                if retirement:
+                    if canonical(event) != canonical(row[0]) or row[4] != "retired":
+                        continue
+                elif event["consent_revision"] != row[1] or not (row[4] == "retired" or row[5]):
                     continue
-            else:
-                require(set(event) == {"contract_version", "pair_binding", "consent_revision"}
-                        and type(event["consent_revision"]) is int, _ERROR, 403)
-                if event["consent_revision"] != publication["consent_revision"]:
-                    continue
-            row = await self.journal_state(publication, guard=guard)
-            if not row or (row[2] != "retired" if "install_credential_id" in event else not (row[2] == "retired" or row[3])):
-                continue
-            candidates.append(record["install_token"])
+                candidates.append(record["install_token"])
         require(len(set(candidates)) == 1, _ERROR, 403)
         return candidates[0]
 

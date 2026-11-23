@@ -38,7 +38,7 @@ class NativeInstallationRuntimeTests(fixture.NativeInstallationCustodyTests):
         await self.prepare_custodian()
         self.service = create_installation_service(self.hass)
         self.domain[KEY] = self.service
-        self.negative_store = fixture.PrivateStore(Path(self.temp.name) / "negative", "synthetic-negative")
+        self.negative_store = fixture.PrivateStore(Path(self.temp.name) / "negative", "synthetic-negative", 2)
         self.service._installation.store = lambda: self.negative_store
         self.production_calls = []
         self.resolve_override = None
@@ -157,13 +157,13 @@ class NativeInstallationRuntimeTests(fixture.NativeInstallationCustodyTests):
         self.assertFalse(Path(self.key_store.path + ".claim").exists())
         self.assertTrue(all(path.endswith("/resolve") for path, _ in self.production_calls))
 
-    async def test_failed_negative_custody_prevents_native_challenge_after_publication_ack(self):
+    async def test_failed_negative_custody_prevents_publication_and_native_challenge(self):
         await self.production()
         async def failed(_records):
             raise OSError("synthetic private store unavailable")
         self.negative_store.async_save = failed
         self.assertEqual((await self.post("challenge"))[0], 503)
-        self.assertTrue(any(path.endswith("/publisher/operation") for path, _ in self.production_calls))
+        self.assertFalse(any(path.endswith("/publisher/operation") for path, _ in self.production_calls))
         self.assertFalse(any(path.endswith("/key/challenge") for path, _ in self.production_calls))
 
     async def test_withdrawal_during_publication_ack_never_returns_native_challenge(self):
@@ -286,3 +286,54 @@ class NativeInstallationRuntimeTests(fixture.NativeInstallationCustodyTests):
         row = await self.persistence.async_in_transaction(lambda tx: tx.fetchone(
             "SELECT delivered,withdrawn FROM djconnect_native_pair_retirements"))
         self.assertEqual(tuple(row), (0, 1))
+
+    async def test_lost_publication_ack_retains_only_negative_credential_before_rpc(self):
+        await self.production()
+        original = self.service.transport._post
+        async def lost(origin, path, body, headers, **kwargs):
+            reply = await original(origin, path, body, headers, **kwargs)
+            if path.endswith("/publisher/operation"):
+                raise SurfacePushError("surface_issuer_outcome_unknown", 502)
+            return reply
+        self.service.transport._post = lost
+        self.assertEqual((await self.post("challenge"))[0], 502)
+        self.assertFalse(any(path.endswith("/key/challenge") for path, _ in self.production_calls))
+        records = await self.service._installation.records(self.negative_store)
+        self.assertEqual(len(records), 1)
+        self.assertEqual(len(next(iter(records.values()))["operations"]), 1)
+        self.registration.retire()
+        await self.settle()
+        journal = NativePairRetirementJournal(self.persistence)
+        await journal.deliver_withdrawals(self.service.publisher, self.service.transport.origin,
+            guard=lambda: None, deadline=self.service.monotonic() + 10)
+        await journal.deliver(self.service.transport, guard=lambda: None, deadline=self.service.monotonic() + 10)
+        await self.service._installation.prune(guard=lambda: None)
+        self.assertEqual(await self.service._installation.records(self.negative_store), {})
+
+    async def test_65_expired_preparations_share_one_original_pair_credential(self):
+        await self.production()
+        clock = [self.service.monotonic()]
+        self.service.monotonic = lambda: clock[0]  # Declared unit monotonic expiry, no native-clock claim.
+        for _ in range(65):
+            status, challenge = await self.post("challenge")
+            self.assertEqual(status, 200, challenge)
+            clock[0] += 121  # The original pending lease expires; never manually cleared/renewed.
+        records = await self.service._installation.records(self.negative_store)
+        self.assertEqual(len(records), 1)
+        self.assertEqual(len(next(iter(records.values()))["operations"]), 65)
+        await self.service._installation.prune(guard=lambda: None)
+        self.assertEqual(len(await self.service._installation.records(self.negative_store)), 1)
+        self.assertFalse(any(path.endswith("/key/register") for path, _ in self.production_calls))
+
+    async def test_missing_sql_original_preserves_pending_credential_and_denies_negative_use(self):
+        await self.production()
+        await self.registered_winner()
+        records = await self.service._installation.records(self.negative_store)
+        publication = next(iter(records.values()))["publication"]
+        event = self.service._installation.original_event(publication)
+        await self.persistence.async_in_transaction(lambda tx: tx.execute(
+            "DELETE FROM djconnect_native_pair_retirements"))  # Explicit missing-original corruption fixture.
+        await self.service._installation.prune(guard=lambda: None)
+        self.assertEqual(await self.service._installation.records(self.negative_store), records)
+        with self.assertRaises(SurfacePushError):
+            await self.service._installation.negative(event, guard=lambda: None)
