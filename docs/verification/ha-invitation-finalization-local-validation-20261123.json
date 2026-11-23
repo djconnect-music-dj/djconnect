@@ -1,0 +1,37 @@
+{
+  "scope": "GOVERNANCE_ONLY_INVITATION_FINALIZATION",
+  "source_pr": 1679,
+  "source_main": "9b91dfd7fe81f35e38768f98984788bde5ad331b",
+  "product_file_count": 343,
+  "product_bytes_changed": false,
+  "unit_summary": {
+    "success": true,
+    "tests_success": true,
+    "coverage_requested": false,
+    "discovered": 4951,
+    "tests_run": 4951,
+    "accounted": 4951,
+    "workers": 4,
+    "exit_codes": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "skipped": 11,
+    "elapsed_seconds": 81.9818105000013
+  },
+  "unit_summary_sha256": "d9dfe77c1e17ed280f239cd88221507af84c747dc1ad604b76696ddbaff4b7af",
+  "lifecycle_tests": 7,
+  "lifecycle": "PASS",
+  "four_handoffs": "IDENTICAL_AFTER_HEADING_NORMALIZATION",
+  "ruff": "PASS",
+  "bootstrap": "PASS",
+  "roadmap": "PASS",
+  "host": "MATCH",
+  "retained_source_branch": "codex/ha-native-shared-participation-20261123",
+  "retention": "OWNER_OPTION_2_UNCHANGED",
+  "installed": "NOT_RUN",
+  "deployment": "NOT_RUN",
+  "broader_acceptance": "OPEN"
+}

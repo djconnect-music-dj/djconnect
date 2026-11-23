@@ -37594,7 +37594,7 @@
     }
   ],
   "planning_maintenance": {
-    "schema_version": "djconnect-federated-planning-delta/29",
+    "schema_version": "djconnect-federated-planning-delta/30",
     "decision_id": "DJC-DJ-PRESENCE-ROADMAP-DESIGN-V1-20261011",
     "decision_url": "https://github.com/pcvantol/djconnect/issues/1101#issuecomment-6110375785",
     "design_date": "2026-10-11",
@@ -44730,6 +44730,34 @@
       "qualification_sha256": "ba2b6ac4b73e8d583fd82aa007cf5f424ea7fc3adff5dd71346c9407822176e3",
       "browser_receipt_path": "docs/verification/ha-guest-invitation-browser-receipt-20261123.json",
       "browser_receipt_sha256": "86a8546dd21a247c289769a3f81b83ec686ddee13ab8dfa11e5ca4b36a08daf0"
+    },
+    "ha_invitation_finalization_receipt": {
+      "assignment_id": "DJC-HA-VOICE-CORE-CONVERGENCE-V1-20261107",
+      "scope": "SAME_DOCUMENT_GUEST_INVITATION_REPAIR",
+      "source_delivery": "PROTECTED_MERGED",
+      "repair_delivery": "SOURCE_DELIVERED",
+      "broader_browser_receiver_acceptance": "OPEN",
+      "overall_acceptance": "OPEN",
+      "installed": "NOT_RUN",
+      "deployment": "NOT_RUN",
+      "real_provider": "NOT_RUN",
+      "physical_satellite": "NOT_RUN",
+      "automatic_dispatch": false,
+      "consumer_writes": false,
+      "predecessor_path": "history/20261123/ha-invitation-source-freeze-maintenance-v29.json",
+      "predecessor_sha256": "08070ea0b0346aeb406d8e5a928e4091961c3c2de80919f0eda2f0b6b76de561",
+      "source_readback_path": "docs/verification/ha-invitation-source-publication-readback-20261123.json",
+      "source_readback_sha256": "e71eee951d55e5dacff8b3c84e57ac9e61d4ffc34e979eb44007d87be8558cc5",
+      "documents": [
+        {
+          "path": "docs/technical/HA_INVITATION_SOURCE_FINALIZATION_20261123.md",
+          "sha256": "efa798450816f246a07858859664188addae9dc118cab945777a98b2eaf08638"
+        },
+        {
+          "path": "docs/history/prompts/2026-11-23-ha-invitation-source-finalization.md",
+          "sha256": "5fa7fbc26b525d802fcc403794749f55964461b2b739fe43ccef92d3db19e3e1"
+        }
+      ]
     }
   }
 }
