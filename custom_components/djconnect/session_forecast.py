@@ -162,6 +162,7 @@ class ForecastProjection:
         }, locale, persona)
         return {"valid_until": valid_until, "sections": [
             {"title": section["title"], "text": section["text"]} for section in sections
+            if section.get("claim_type") != "current"
         ]}
 
     def invalidate_imagery(self, allowed_urls: set[str]) -> bool:

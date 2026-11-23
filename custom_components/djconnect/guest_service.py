@@ -1,6 +1,8 @@
 """Closed participation boundary over genuine paired host and guest principals."""
 from __future__ import annotations
 
+import math
+
 from .display_admission import DisplayAdmissionError
 from .display_service import DisplayAdmissionService
 from .guest_admission import ParticipationPolicy
@@ -10,6 +12,7 @@ _OWNER = {'identity', 'session_id', 'share_id'}
 _GUEST = {'issuer_epoch', 'guest_id'}
 SHAPES = {
     'owner/context': (_OWNER, set()),
+    'owner/presentation': (_OWNER | {'mode'}, {'dynamics'}),
     'owner/configure': (_OWNER | {'policy'}, set()),
     'owner/invite': (_OWNER, set()),
     'owner/remove': (_OWNER | {'guest_id'}, set()),
@@ -21,13 +24,15 @@ SHAPES = {
     'renew': (_GUEST | {'renew_sequence'}, set()),
     'leave': (_GUEST, set()),
     'context': (_GUEST, set()),
+    'artwork': (_GUEST | {'reference'}, set()),
+    'emotion': (_GUEST | {'client_message_id', 'playback_item_id', 'emotion'}, set()),
     'focus': (_GUEST | {'moment_id'}, set()),
     'return': (_GUEST, set()),
     'display/invitation': ({'issuer_epoch','display_id'}, set()),
     'display/focus': ({'issuer_epoch','display_id'}, set()),
     'display/return': ({'issuer_epoch','display_id'}, set()),
     'display/focus-photo': ({'issuer_epoch','display_id','focus_revision'}, set()),
-    'ask': (_GUEST | {'text', 'client_message_id'}, {'language', 'thread_id', 'moment_id'}),
+    'ask': (_GUEST | {'text', 'client_message_id'}, {'language', 'thread_id', 'moment_id', 'playback_item_id'}),
     'request': (_GUEST | {'text', 'client_message_id'}, {'language', 'thread_id', 'choice_action'}),
     'request/status': (_GUEST | {'request_id'}, set()),
 }
@@ -54,6 +59,9 @@ def shape(action, payload):
         elif key == 'identity':
             if not isinstance(value, dict):
                 raise DisplayAdmissionError('guest_request_invalid', 400)
+        elif key == 'dynamics':
+            if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1:
+                raise DisplayAdmissionError('guest_request_invalid', 400)
         elif key in {'contract_version', 'renew_sequence'}:
             if type(value) is not int or value < 1:
                 raise DisplayAdmissionError('guest_request_invalid', 400)
@@ -76,13 +84,23 @@ class GuestParticipationService:
     def _owner_action(self, action, payload, owner, state, guests):
         share_id = payload['share_id']
         guests._owner(owner, share_id)
+        if action == 'owner/presentation':
+            if payload['mode'] not in {'flow', 'vibescape'}:
+                raise DisplayAdmissionError('guest_request_invalid', 400)
+            share = state._shares[share_id]
+            share.view_mode = payload['mode']
+            if 'dynamics' in payload:
+                share.dynamics = payload['dynamics']
+            return {'view': {'mode': share.view_mode, 'dynamics': share.dynamics}}
         if action == 'owner/requests':
             return {'requests':[r.public() for r in guests.requests.records.values()
                 if r.actor.share is state._shares.get(share_id)]}
         if action == 'owner/context':
             record = guests._policies.get(share_id)
             policy = record.policy if record else ParticipationPolicy()
-            return {'policy': {'information': policy.information, 'requests': policy.requests,
+            return {'view': {'mode': state._shares[share_id].view_mode,
+                             'dynamics': state._shares[share_id].dynamics},
+                    'policy': {'information': policy.information, 'requests': policy.requests,
                               'max_pending': policy.max_pending, 'screen_focus':policy.screen_focus},
                     'guests': [{'guest_id': g.principal_id, 'kind': g.kind}
                                for g in guests._guests.values() if g.share_id == share_id]}
@@ -141,12 +159,16 @@ class GuestParticipationService:
                 result = self._owner_action(action, payload, owner, state, guests)
                 share = state._shares.get(payload['share_id'])
                 participation = guests._policies.get(payload['share_id'])
+                view_mode = share.view_mode if share is not None else None
+                dynamics = share.dynamics if share is not None else None
                 issued = guests._invitations.get(result.get('invitation_id')) if action == 'owner/invite' else None
 
                 def guard():
                     return (owner.valid() and state._shares.get(payload['share_id']) is share
                             and share is not None and share.owner.valid() and share.deadline > state._clock()
                             and guests._policies.get(payload['share_id']) is participation
+                            and share.view_mode == view_mode
+                            and share.dynamics == dynamics
                             and (issued is None or (guests._invitations.get(issued.invitation_id) is issued
                                  and issued.deadline > state._clock())))
             else:
@@ -169,7 +191,14 @@ class GuestParticipationService:
                         from .guest_presentation import public_context, focus
                         try:
                             actor = capture_actor(self.hass, self.manager, grant)
-                            if action in {'focus','return'}:
+                            if action == 'artwork':
+                                from .guest_artwork import read
+                                return read(self, actor, payload['reference'], selected)
+                            elif action == 'emotion':
+                                from .guest_live import react
+                                result = react(actor, **{key: payload[key] for key in
+                                    ('client_message_id', 'playback_item_id', 'emotion')})
+                            elif action in {'focus','return'}:
                                 result = focus(actor, payload.get('moment_id'))
                             else:
                                 context_snapshot = public_context(actor)
@@ -188,6 +217,9 @@ class GuestParticipationService:
                             return False
                     try:
                         guests.validate(grant)
+                        if action == 'emotion':
+                            actor.validate()
+                            return actor.active.broadcast.state.playback.item_id == payload['playback_item_id']
                         if context_snapshot is not None:
                             # Re-read the same public source immediately before
                             # releasing bytes after awaited response headers.
@@ -209,6 +241,19 @@ class GuestParticipationService:
                 actor = capture_actor(self.hass, self.manager, grant)
             except SessionConversationError as exc:
                 raise DisplayAdmissionError(exc.code, exc.status) from exc
+            from .guest_live import EMOJI_CODES, react
+            if request is None and payload['text'].strip() in EMOJI_CODES:
+                result = react(actor, client_message_id=payload['client_message_id'],
+                    playback_item_id=payload.get('playback_item_id', ''), emotion=payload['text'].strip())
+                result.update(text=payload['text'].strip(), dj_text=payload['text'].strip())
+
+                def reaction_current():
+                    try:
+                        actor.validate()
+                        return actor.active.broadcast.state.playback.item_id == payload.get('playback_item_id')
+                    except SessionConversationError:
+                        return False
+                return self.display._release_result(result, reaction_current, lambda: None, None, state, selected)
         data = {key:payload[key] for key in ('text', 'client_message_id', 'language', 'choice_action') if key in payload}
         data['conversation_context'] = {'thread_id':payload.get('thread_id') or 'guest-chat'}
         if payload.get('moment_id') is not None:
@@ -297,8 +342,8 @@ class GuestParticipationService:
                 import base64
                 from io import BytesIO
                 import segno
-                url = selected + '/djconnect/vibecast/guest#' + urlencode({
-                    key:result[key] for key in ('issuer_epoch','invitation_id','invitation_secret')})
+                url = 'https://vibecast.tv/join#' + urlencode({'v': '1', 'ha_url': selected,
+                    **{key:result[key] for key in ('issuer_epoch','invitation_id','invitation_secret')}})
                 buffer = BytesIO()
                 segno.make(url, error='m').save(buffer, kind='svg', scale=4, border=4)
                 result = {'invitation_id':invitation.invitation_id, 'expires_in':result['expires_in'],
@@ -307,6 +352,11 @@ class GuestParticipationService:
                 if action == 'display/return':
                     guests._focus.pop(display.share_id, None)
                 result = display_focus(self.hass, self.manager, display)
+                from .guest_live import display_status, view
+                result.update(display_status(guests, display.share_id))
+                active = self.manager.current_active(display.owner.profile_id)
+                if active is not None:
+                    result['view'] = view(state._shares[display.share_id], active)
                 if result.get('focus_revision'):
                     from .guest_focus_media import public_photo
                     photo = public_photo(self.manager, display, result['focus_revision'])
@@ -325,8 +375,14 @@ class GuestParticipationService:
                         return (guests._invitations.get(invitation.invitation_id) is invitation
                                 and invitation.deadline > state._clock())
                     current = display_focus(self.hass, self.manager, display)
+                    status = display_status(guests, display.share_id)
+                    active_now = self.manager.current_active(display.owner.profile_id)
+                    share_now = state._shares.get(display.share_id)
                     return (current['focused_moment_id'] == result['focused_moment_id']
-                            and current.get('focus_revision') == result.get('focus_revision'))
+                            and current.get('focus_revision') == result.get('focus_revision')
+                            and all(result.get(key) == value for key, value in status.items())
+                            and active_now is not None and share_now is not None
+                            and result.get('view') == view(share_now, active_now))
                 except DisplayAdmissionError:
                     return False
             return self.display._release_result(result, guard, lambda:None, None, state, selected)

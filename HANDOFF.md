@@ -1,3 +1,38 @@
+## 2026-11-23 — VibeCast Live and UI repair, local implementation checkpoint
+
+Current work is isolated on `codex/vibecast-ui-improvements-20261123` from
+`20b9caa92dbcaec9faf3deda8166022f684ba4f4`. This is `LOCAL_IN_PROGRESS`,
+not a frozen release candidate or a merged/installed result.
+
+Implemented source covers 4h share defaults and language/Live selection,
+owner Flow/Vibescape/dynamics, public guest context and prepared-art read,
+current-track emotions and actual guest count, RAM-only observed playback,
+Horizon text/artwork stability, readable flow and Spotify logos, breathing art,
+persistent DJ avatar and a temporary settings-change avatar, plus generic
+requested-Moment temporary-source classification. Native guest text-only
+scope and the selected independent Watch channels are documented in
+`docs/product/VIBECAST_NATIVE_GUEST_UI_V1.md` and
+`docs/product/NATIVE_SURFACE_PUSH_V1.md`.
+
+Focused 56 Core boundary tests and 14 renderer/legacy/Cast lifecycle unit tests
+pass. Maintained actual Chromium and WebKit flow regressions pass on this work,
+including stable image references, Canvas fallback/dynamics, reactions/clear
+and stable playback layout. Independent earlier 20 browser cases passed before
+later avatar/observed-playback additions; that result is not promoted to the
+later snapshot. The first broad unit run executed4976 tests with58 failures and
+11 skips; renderer regressions were then repaired, while original exact-source
+receipts and roadmap references require fresh coherent HA evidence. Historical
+receipts are retained, not relabeled as new-source proof. These checks establish
+no physical Watch, APNs, Spotify-provider or installed HA acceptance.
+
+Open work includes the original Up-next Horizon preview producer, native Google
+Cast route/adoption, generic age clarification repair (separate isolated writer),
+actual issuer/native-clock enrollment for widgets/Live Activities/Watch channels,
+full current-source golden/HA qualification and protected delivery. Apple/API/
+receiver work remains separately qualified and separately authorized. Dependency
+upgrades are deferred during this bounded product repair to preserve the existing
+qualified toolchain and avoid unrelated lock/runtime changes.
+
 ## 2026-11-20 — Finalize Ask DJ: Moments source delivery
 
 #### Repository Status

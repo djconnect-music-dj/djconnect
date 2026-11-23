@@ -965,6 +965,8 @@ class SessionFactsResolver:
                 authorize()
             if not wikidata and not await musicbrainz_rate.admit(
                     rate_guard if authorize is not None else None):
+                from .ask_dj.public_research import note_temporary_source_failure
+                note_temporary_source_failure()
                 return {}
             if authorize is not None:
                 authorize()

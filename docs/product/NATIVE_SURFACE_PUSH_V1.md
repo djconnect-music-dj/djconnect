@@ -1,5 +1,30 @@
 # Native surface push V1 — source preparation
 
+## Selected Watch consumers — 23 November 2026
+
+The current user scope explicitly includes both Watch Moments notifications and
+Watch Smart Stack refreshes. These are independent consumers. Smart Stack uses
+the existing `watch_smart_stack` enrollment channel, surface token role `widget`,
+platform `watchos`, extension `dev.djconnect.ios.watch.complications`, and widget
+kind `DJConnectComplication`. Migration aliases do not enlarge the enrolled
+target. It receives only the existing content-free `widget_reload` signal;
+authorized content is read by the extension through the existing v4 background
+read contract and original v3 native clock mapping. No iPhone Activity token or
+iPhone cache supplies Watch authority or a replacement clock. An explicit Watch
+task-owner adapter may support this existing platform, but requires the same
+original Watch pairing, per-channel consent, issuer purpose, target digest,
+read grant and original native clock qualification before becoming available.
+
+Watch Moments retains its existing `watch.moment.notifications.v1` preference
+and `djc-watch-moment/1` transport. A current original Moment locator opens that
+exact Moment full screen; dismissing returns to the Watch main screen. It is
+not permission for a Smart Stack registration, and Smart Stack consent is not
+permission for alerts. Disabling either consumer fences its own pending work
+before remote withdrawal and leaves independently selected channels eligible.
+Unknown, revoked, expired or wrong-session locators never open a latest-Moment
+substitute. Neither this selection nor source tests establishes APNs acceptance
+or physical Watch rendering.
+
 ## Automatic enrollment for Apple push
 
 Validate the same enrollment flow on HA-dev that a new production installation

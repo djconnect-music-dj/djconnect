@@ -2,7 +2,7 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const {webkit} = require(process.env.DJC_PLAYWRIGHT);
+const {chromium,webkit} = require(process.env.DJC_PLAYWRIGHT);
 const root = path.resolve(__dirname, "../..");
 const html = fs.readFileSync(path.join(root,"custom_components/djconnect/vibecast_display.html"),"utf8");
 const origin = "https://ha.example.test";
@@ -10,23 +10,29 @@ const cover = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAANUlEQ
 const grant = "djcd_" + "A".repeat(43);
 const binding = {issuer_epoch:"epoch",display_id:"display",share_id:"share",share_generation:1,session_id:"session"};
 
-async function main() {
-  const browser = await webkit.launch({timeout:12000});
+async function main(engine) {
+  const browser = await engine.launch({timeout:12000,...(engine===chromium ? {channel:"chromium"} : {})});
+  let page;
   try {
-    const page = await browser.newPage({viewport:{width:1280,height:720},reducedMotion:"reduce",locale:"en-US",timezoneId:"Europe/Amsterdam"});
+    page = await browser.newPage({viewport:{width:1280,height:720},reducedMotion:"reduce",locale:"en-US",timezoneId:"Europe/Amsterdam"});
+    page.on("pageerror",error=>console.error("Renderer page error:",error.message));
     page.setDefaultTimeout(5000);
     let socket;
+    const artworkReads=[];
     await page.route(origin+"/**",route=>{
       const endpoint = new URL(route.request().url()).pathname.split("/").pop();
       if(endpoint==="display") return route.fulfill({body:html,contentType:"text/html"});
       if(endpoint==="claim") return route.fulfill({json:{success:true,contract_version:1,code:"123456",
         expires_in:120,issuer_epoch:"epoch",claim_id:"claim",claim_secret:"secret",browser_generation:"generation"}});
       if(endpoint==="artwork") {
+        artworkReads.push(route.request().postDataJSON().reference);
         assert.equal(route.request().headers().authorization,"Bearer "+grant);
         assert.ok(["a".repeat(64),"b".repeat(64)].includes(route.request().postDataJSON().reference));
         return route.fulfill({body:cover,contentType:"image/png",
           headers:{"Content-Length":String(cover.length)}});
       }
+      if(endpoint==="focus")return route.fulfill({json:{success:true,focused_moment_id:null,expires_in:0}});
+      if(endpoint==="invitation")return route.fulfill({status:403,json:{success:false,error:"guest_share_unavailable"}});
       assert.equal(endpoint,"collect");
       return route.fulfill({json:{success:true,state:"admitted",...binding,grant_token:grant,lease_expires_in:60,
         capabilities:{owner_controls:false,session_end:false}}});
@@ -62,6 +68,7 @@ async function main() {
         shared_flow:cards.slice(0,count),dj_moments:[{content:"Legacy card must stay out of the Flow"}],...spotlight}}));
     }
     await page.goto(origin+"/djconnect/vibecast/display");
+    await page.evaluate(()=>document.fonts.ready);
     await page.waitForFunction(()=>document.querySelector("#handoff")?.textContent.includes("Reconnecting") ||
       document.querySelector("#handoff")?.textContent.includes("Connecting")).catch(()=>{});
     for(let i=0;!socket && i<50;i++) await new Promise(resolve=>setTimeout(resolve,50));
@@ -88,6 +95,25 @@ async function main() {
     assert.match(previousUrl,/^blob:/);
     assert.notEqual(previousUrl,coverUrl);
     assert.equal(await rows.nth(1).locator(".flow-artwork-link").getAttribute("href"),previousTrack);
+    const initialReads=artworkReads.length;
+    await albumCover.evaluate(image=>{
+      window.artworkRefreshChanges=[];
+      new MutationObserver(records=>window.artworkRefreshChanges.push(...records.map(r=>r.attributeName)))
+        .observe(image,{attributes:true,attributeFilter:["src","hidden"]});
+    });
+    // Each fresh snapshot can renew the qualified reference's deadline. It
+    // must not revoke and fetch the exact same artwork again.
+    for(let refresh=1;refresh<=3;refresh++){
+      snapshot(8,"current","playing",{output_label:"Refresh "+refresh,volume_percent:37},{
+        artwork:{item_id:"current",reference:"a".repeat(64),
+          expires_at:new Date(Date.now()+45000+refresh*1000).toISOString()}});
+      await page.waitForFunction(label=>document.querySelector("#display-speaker-label").textContent===label,"Refresh "+refresh);
+      assert.equal(await albumCover.getAttribute("src"),coverUrl);
+      assert.equal(artworkReads.length,initialReads);
+    }
+    assert.deepEqual(await page.evaluate(()=>window.artworkRefreshChanges.filter(name=>name==="src")),[]);
+    snapshot(8);
+    await page.waitForFunction(()=>document.querySelector("#display-speaker-label").textContent==="Living room");
     assert.equal(await rows.count(),8);
     assert.equal(await atEdge(),true);
     assert.equal(await page.locator(".now-playing").evaluate(node=>getComputedStyle(node).backgroundColor),"rgba(0, 0, 0, 0)");
@@ -112,7 +138,7 @@ async function main() {
       return {font:parseFloat(style.fontSize),radius:style.borderTopLeftRadius,border:style.borderTopColor};
     }));
     assert.deepEqual(styles.map(item=>item.radius),["32px","18px","18px","18px"]);
-    assert.ok(styles.every((item,index)=>index===0 || styles[index-1].font>item.font));
+    assert.ok(styles.every(item=>item.font===styles[0].font && item.font>=24));
     assert.match(styles[0].border,/255, 255, 255, 0.32/);
     const coverBounds=await albumCover.boundingBox();
     const viewportBounds=await viewport.boundingBox();
@@ -207,8 +233,13 @@ async function main() {
     snapshot(11,"next-recording","playing",undefined,{session,horizon});
     const horizonCard=page.locator("#horizon-card");
     await horizonCard.waitFor({state:"visible"});
-    assert.equal(await horizonCard.locator("h2").textContent(),"Los próximos minutos");
+    assert.equal(await horizonCard.locator("h2,h3,#horizon-notice").count(),0);
     assert.equal(await horizonCard.locator("#horizon-sections p").textContent(),horizon.sections[0].text);
+    const horizonText=await horizonCard.locator("#horizon-sections p").elementHandle();
+    snapshot(11,"next-recording","playing",{output_label:"Stable horizon",volume_percent:37},
+      {session,horizon:{...horizon,valid_until:new Date(Date.now()+12000).toISOString()}});
+    await page.waitForFunction(()=>document.querySelector("#display-speaker-label").textContent==="Stable horizon");
+    assert.equal(await horizonText.evaluate(node=>node===document.querySelector("#horizon-sections p")),true);
     assert.equal(await page.locator("#renderer-build-label").textContent(),"Versión de VibeCast");
     assert.equal(await rows.first().locator(".flow-kind").textContent(),"Álbum");
     assert.equal(await rows.first().locator("p").textContent(),cards[10].content);
@@ -216,14 +247,63 @@ async function main() {
       horizon:{...horizon,valid_until:new Date(Date.now()-1000).toISOString()}});
     await horizonCard.waitFor({state:"hidden"});
     assert.equal(await horizonCard.locator("#horizon-sections").textContent(),"");
+    // These declared status events test rendering, independently of the
+    // authenticated guest-count/lease producer tests. They grant no authority.
+    const liveStatus=detail=>page.evaluate(detail=>window.dispatchEvent(new CustomEvent(
+      "djconnect-live-status",{detail:{live_enabled:true,guest_count:3,...detail}})),detail);
+    const view=dynamics=>({mode:"vibescape",mood:"groove",persona:"radio_dj",dynamics});
+    await liveStatus({view:view(0)});
+    assert.equal(await page.locator(".session-panels").evaluate(node=>getComputedStyle(node).display),"none");
+    const firstScene=await page.locator("#vibescape-scene").evaluate(node=>node.toDataURL());
+    await liveStatus({view:view(1)});
+    const secondScene=await page.locator("#vibescape-scene").evaluate(node=>node.toDataURL());
+    assert.notEqual(firstScene,secondScene,"Confirmed dynamics must affect the scene even with reduced motion");
+    await liveStatus({view:{...view(.5),mode:"flow"}});
+    await viewport.waitFor({state:"visible"});
+    assert.equal(await page.locator("#time").textContent(),"1:00 / 4:00");
+    await page.evaluate(()=>{
+      window.originalCanvasContext=HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext=function(){return null;};
+    });
+    await liveStatus({view:view(.5)});
+    await viewport.waitFor({state:"visible"});
+    assert.equal(await page.locator("#vibescape-scene").isHidden(),true);
+    await page.evaluate(()=>{HTMLCanvasElement.prototype.getContext=window.originalCanvasContext;});
+    await liveStatus({view:{...view(.5),mode:"flow"}});
+    const reaction={event_id:"declared-reaction",playback_item_id:"next-recording",emotion:"heart",
+      expires_at:new Date(Date.now()+5000).toISOString()};
+    await liveStatus({reactions:[reaction]});
+    assert.equal(await page.locator(".live-reaction").count(),1);
+    await liveStatus({reactions:[reaction]});
+    assert.equal(await page.locator(".live-reaction").count(),1);
+    await liveStatus({live_enabled:false,reactions:[]});
+    assert.equal(await page.locator(".live-reaction").count(),0);
+    assert.equal(await page.locator("#live-guest-count").isHidden(),true);
+    await viewport.waitFor({state:"visible"});
+    await liveStatus({reactions:[reaction]});
+    assert.equal(await page.locator(".live-reaction").count(),1);
+    await page.evaluate(()=>window.dispatchEvent(new Event("djconnect-display-clear")));
+    assert.equal(await page.locator("#live-guest-count").textContent(),"");
+    assert.equal(await page.locator("#live-guest-count").isHidden(),true);
+    assert.equal(await page.locator(".live-reaction").count(),0);
     socket.close({code:1008});
     await viewport.waitFor({state:"hidden"});
     assert.equal(await rows.count(),0);
     await albumCover.waitFor({state:"hidden"});
     assert.equal(await albumCover.getAttribute("src"),null);
-    console.log("Browser: Flow cards, fixed track bar, scrolling, timed DJ spotlight, silence, matching artwork and withdrawal PASS");
+    console.log(engine.name()+": Flow, artwork stability, Horizon, Vibescape fallback/dynamics, reactions and withdrawal PASS");
+  } catch(error) {
+    console.error("Original browser failure:",error.message);
+    if(page && process.env.DJC_FLOW_FAILURE) {
+      await page.screenshot({path:process.env.DJC_FLOW_FAILURE+"-"+engine.name()+".png",timeout:1000}).catch(()=>{});
+      console.error(await page.evaluate(()=>({state:document.querySelector("#state")?.textContent,
+        rows:document.querySelectorAll("#flow-cards > .flow-card").length,
+        bodyClass:document.body.className,flowHidden:document.querySelector("#shared-flow")?.hidden})));
+    }
+    throw error;
   } finally {
     await browser.close();
   }
 }
-main().catch(error=>{console.error(error);process.exitCode=1;});
+(async()=>{for(const engine of [chromium,webkit].filter(e=>!process.env.DJC_BROWSER || e.name()===process.env.DJC_BROWSER))await main(engine);})()
+  .catch(error=>{console.error(error);process.exitCode=1;});

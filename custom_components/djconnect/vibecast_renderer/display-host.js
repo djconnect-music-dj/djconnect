@@ -157,18 +157,21 @@
       const focus=await participationPost("focus");
       if(g!==generation || expired())return;
       window.dispatchEvent(new CustomEvent("djconnect-shared-focus",{detail:focus}));
+      window.dispatchEvent(new CustomEvent("djconnect-live-status",{detail:focus}));
       void updateSharedPhoto(focus,g,started);
       const invitation=await participationPost("invitation");
       if(g!==generation || expired() || !(invitation.expires_in>0))return;
       if(!/^data:image\/svg\+xml;base64,[A-Za-z0-9+/=]+$/.test(invitation.qr_data_uri))return;
       if(!guestPanel){
         guestPanel=document.createElement("aside");guestPanel.className="guest-participation";
-        guestQR=document.createElement("img");guestQR.width=176;guestQR.height=176;
+        guestQR=document.createElement("img");guestQR.width=128;guestQR.height=128;
         guestCaption=document.createElement("p");guestPanel.append(guestQR,guestCaption);document.body.append(guestPanel);
         const style=document.createElement("style");style.textContent=".guest-participation{position:fixed;right:1.5rem;bottom:2.5rem;z-index:40;max-width:13rem;padding:.75rem;border-radius:1rem;background:#17172de8;color:white;text-align:center}.guest-participation img{max-width:100%;height:auto;background:white}.guest-participation p{font:500 .85rem/1.3 system-ui;margin:.5rem 0 0}.guest-participation[hidden]{display:none}";document.head.append(style);
       }
       const labels=participationLabels[effectiveLocale]||participationLabels.en;
-      guestCaption.textContent=labels[0];guestQR.alt=labels[1];guestQR.src=invitation.qr_data_uri;
+      guestPanel.style.top="5.5rem";guestPanel.style.bottom="auto";guestPanel.style.maxWidth="9rem";
+      guestCaption.textContent=labels[0];guestQR.alt=labels[1];
+      if(guestQR.getAttribute("src")!==invitation.qr_data_uri)guestQR.src=invitation.qr_data_uri;
       guestQRDeadline=started+invitation.expires_in*1000;guestPanel.hidden=now()>=guestQRDeadline;
       later(()=>{if(guestPanel && now()>=guestQRDeadline){guestPanel.hidden=true;guestQR.removeAttribute("src");}},Math.max(1,guestQRDeadline-now()));
     }catch(_){if(g===generation && guestPanel){guestPanel.hidden=true;guestQR.removeAttribute("src");}}
@@ -189,16 +192,34 @@
         if(item)add(item.artwork,item.playback_item_id,Date.parse(item.flow_expires_at));
       }
     }
+    if(Array.isArray(snapshot.observed_playback)){
+      for(const item of snapshot.observed_playback.slice(-12).reverse()){
+        if(item)add(item.artwork,item.playback_item_id,Date.parse(item.expires_at));
+      }
+    }
     wantedArtwork=wanted;
     let changed=false;
     for(const [reference,cover] of artwork){
-      if(!wanted.has(reference) || wanted.get(reference).until!==cover.until){
+      if(!wanted.has(reference) || wanted.get(reference).item_id!==cover.item_id){
         removeArtwork(reference);
         changed=true;
+      }else if(wanted.get(reference).until!==cover.until){
+        // A fresh qualified deadline for the same image is not a pixel change.
+        // Keep both the in-flight read and the decoded blob; only re-arm expiry.
+        cover.until=wanted.get(reference).until;
+        scheduleArtworkExpiry(cover);
       }
     }
     if(changed)publishArtwork();
     void fetchArtwork();
+  }
+  function scheduleArtworkExpiry(cover){
+    clearTimeout(cover.timer);
+    cover.timer=setTimeout(()=>{
+      if(artwork.get(cover.reference)!==cover)return;
+      removeArtwork(cover.reference);
+      publishArtwork();
+    },Math.max(0,cover.until-Date.now()));
   }
   async function fetchArtwork(){
     if(artworkBusy)return;
@@ -215,11 +236,7 @@
         const controller=new AbortController();
         const pending={...cover,controller,url:null};
         artwork.set(cover.reference,pending);
-        pending.timer=setTimeout(()=>{
-          if(artwork.get(cover.reference)!==pending)return;
-          removeArtwork(cover.reference);
-          publishArtwork();
-        },cover.until-Date.now());
+        scheduleArtworkExpiry(pending);
         const timeout=setTimeout(()=>controller.abort(),10000);
         try{
           const response=await fetch("/api/djconnect/v1/display/artwork",{method:"POST",credentials:"omit",cache:"no-store",redirect:"error",
@@ -228,7 +245,7 @@
           const size=Number(response.headers.get("Content-Length")),mime=response.headers.get("Content-Type");
           if(!response.ok || !(size>0 && size<=256000) || !["image/jpeg","image/png"].includes(mime))throw new Error("artwork");
           const blob=await response.blob();
-          if(artwork.get(cover.reference)!==pending || expired() || cover.until<=Date.now())continue;
+          if(artwork.get(cover.reference)!==pending || expired() || pending.until<=Date.now())continue;
           if(blob.size!==size)throw new Error("artwork");
           pending.url=URL.createObjectURL(blob);
           publishArtwork();

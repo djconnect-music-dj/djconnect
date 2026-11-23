@@ -1,3 +1,11 @@
+## 2026-11-23 — Generic disclaimer moves to Help
+
+Owner explicitly removes the permanent “Je DJ kan zich vergissen” line from ordinary Apple Ask DJ/Session surfaces and places that generic explanation in Help instead. This overrides prior composer placement only; specific source/uncertainty claims remain unchanged. See native guest/UI product refinement.
+
+## 2026-11-23 — Native guest and VibeCast UI improvements
+
+Owner selects the collected Apple/VibeCast refinements and native-only text guest v1, including guest model usage, golden/E2E expansion, anonymous public requests and own-request feedback. Canonical producer/consumer delta: [native guest UI v1](docs/product/VIBECAST_NATIVE_GUEST_UI_V1.md). Core is sole producer/shared-renderer writer; Apple consumes native UI; receiver adopts qualified bundles and owns a content-free native-open/install landing. Central API remains content-free and is changed only for a proven owning-contract need. Source/CI/merge/Finalization/install/physical/runtime claims remain separate; this record does not claim delivery.
+
 ## 2026-11-23 — selected shared HA/VibeCast participation continuation
 
 Owner continues Core #1532 stage3 after protected source #1675 / Finalization #1676. Explicit owner exception removed only the old fully merged local source branch; clean synchronized main bbf56161 is WORKSPACE_READY. Sole Core writer: codex/ha-native-shared-participation-20261123. This is implementation selection for the existing WEB::CHAT/REQUEST/EFFECT-POLICY/ENQUEUE/SHARED contracts, not a second guest engine or consumer writer.
@@ -8051,3 +8059,18 @@ Canonical design: docs/product/LIVE_IMPRESSION_EXPERIENCE_V1.md. Additive consum
 ## Ask DJ: Moments avatar v1 — current integral Core/Apple increment
 
 Authority: Core1101 comment6849511889; current20November2026 user authorizes integral source implementation. Canonical [product](docs/product/ASK_DJ_MOMENTS_V1.md) and [version1 inventory/request/status/result contract](docs/technical/ASK_DJ_MOMENTS_AVATAR_CONTRACT_V1.md) control native ios/iPadOS/macOS reuse of the existing avatarcard. Implement only after those documents; source/runtime qualification, native adoption and AM01–AM12 actual acceptance stay separate. No installation/deployment, new provider, VibeCast/API/Watch writer or unrelated producer. Stable inventory has10source-owned rows, paired Hybrid operation/UUIDv7 and opaque frozen-original-subject capture; pending copy does not call a model. Same canonical Moment/history immediately committed, original source/media3/speech rights retained. Typed fixtures follow actual serializer implementation; no guessed client wire.
+# Watch push consumer selection — 23 November 2026
+
+Watch Smart Stack is explicitly in scope, independently of Watch Moments.
+Consume the existing `watch_smart_stack` → widget/watchos target
+`dev.djconnect.ios.watch.complications` / `DJConnectComplication`, with original
+per-Watch pairing, consent, issuer purpose, v4 read and v3 clock qualification.
+Do not reuse phone clocks/grants or Watch Moment alert consent. See
+`docs/product/NATIVE_SURFACE_PUSH_V1.md`, selected Watch consumers.
+
+# Native guest artwork selection
+
+Apple may consume the optional guest-scoped prepared artwork descriptors and
+closed `participation/artwork` binary read documented in
+`docs/product/VIBECAST_NATIVE_GUEST_UI_V1.md`. This is a separate guest purpose,
+not a display grant, provider-image URL or permission to acquire new media.

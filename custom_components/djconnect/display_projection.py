@@ -42,9 +42,9 @@ def _flow_deadline(boundary, expires_at):
     ).total_seconds()
 
 
-def _shared_horizon(broadcast):
+def _shared_horizon(broadcast, *, locale=None):
     current = broadcast.state
-    return broadcast.forecast.shared_text(current.playback, locale=current.locale,
+    return broadcast.forecast.shared_text(current.playback, locale=locale or current.locale,
                                           persona=_label(current.dj_persona),
                                           mood=_label(current.selected_mood))
 
@@ -100,7 +100,7 @@ def _release_artwork_current(active, authority, state, snapshot, flow, artwork_d
             return False
     if any(item.get("artwork") != artwork_descriptor(
             active, authority, state, flow_item_id=item["playback_item_id"])
-           for item in flow.values() if item.get("artwork") is not None):
+           for item in [*flow.values(), *snapshot.get('observed_playback', [])] if item.get("artwork") is not None):
         return False
     return True
 
@@ -130,7 +130,16 @@ def projection_release_guard(active, authority, state, snapshot):
             return False
         if not _release_artwork_current(active, authority, state, snapshot, flow, artwork_descriptor):
             return False
-        if "horizon" in snapshot and _shared_horizon(broadcast) != snapshot["horizon"]:
+        if "horizon" in snapshot and _shared_horizon(broadcast, locale=snapshot["session"]["locale"]) != snapshot["horizon"]:
+            return False
+        from .guest_live import view
+        share = state._shares.get(authority.share_id)
+        if "view" in snapshot and (share is None or view(share, active) != snapshot["view"]):
+            return False
+        from .display_observed import public as public_observations
+        if share is None or public_observations(share, state) != [
+                {key:value for key,value in row.items() if key != 'artwork'}
+                for row in snapshot.get('observed_playback', [])]:
             return False
         from .bulletin_runtime import admitted as bulletin_admitted
         if any(moment.bulletin is not None and not bulletin_admitted(moment)
@@ -261,7 +270,7 @@ def _authorize_shared_snapshot(active, authority, state, current):
     if (share is None or not share.owner.valid() or share.deadline <= state._clock()
             or authority.lease_deadline <= state._clock()):
         raise DisplayAdmissionError("display_grant_invalid", 401)
-    locale = current.locale
+    locale = share.locale or current.locale
     if locale not in {"en", "nl", "de", "fr", "es"}:
         raise DisplayAdmissionError("display_context_changed", 409)
     return share, locale
@@ -274,11 +283,15 @@ def _decorate_shared_snapshot(result, active, authority, state, broadcast, curre
         "persona": {"home_dj", "radio_dj", "club_dj", "festival_dj"}, "presence": set(POLICIES)}
     result["session_presentation"] = {key: _label(value) for key, value in labels.items()
                                       if _label(value) in allowed[key]}
-    horizon = _shared_horizon(broadcast)
+    from .guest_live import view
+    result["view"] = view(state._shares[authority.share_id], active)
+    from .display_observed import public as public_observations
+    result['observed_playback'] = public_observations(state._shares[authority.share_id], state)
+    horizon = _shared_horizon(broadcast, locale=result["session"]["locale"])
     if horizon is not None:
         result["horizon"] = horizon
     from .display_delivery import artwork_descriptor
-    for item in result["shared_flow"]:
+    for item in [*result["shared_flow"], *result['observed_playback']]:
         flow_artwork = artwork_descriptor(active, authority, state, flow_item_id=item["playback_item_id"] or "")
         if flow_artwork is not None:
             item["artwork"] = flow_artwork

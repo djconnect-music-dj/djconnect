@@ -69,6 +69,11 @@ class _Share:
     owner: DisplayOwnerBinding
     deadline: float
     generation: int = 1
+    locale: str | None = None
+    view_mode: str = "flow"
+    dynamics: float = 0.5
+    observed_playback: tuple = ()
+    observed_key: str = ""
 
 
 @dataclass(slots=True, repr=False)
@@ -125,7 +130,10 @@ class DisplayAdmissionState:
                 pass
 
     def _drop_share(self, share_id: str) -> None:
-        self._shares.pop(share_id, None)
+        share = self._shares.pop(share_id, None)
+        if share is not None:
+            share.observed_playback = ()
+            share.observed_key = ""
         if self._participation is not None:
             self._participation.revoke_share(share_id)
         for claim_id, claim in tuple(self._claims.items()):
@@ -272,18 +280,23 @@ class DisplayAdmissionState:
         if not isinstance(share, dict):
             raise DisplayAdmissionError("display_code_invalid", 400)
         mode = share.get("mode")
-        lifetime = share.get("lifetime_seconds", 7200)
+        lifetime = share.get("lifetime_seconds", 14400)
+        language = share.get("language")
+        live = share.get("live", False)
         if not isinstance(mode, str) or mode not in {"create", "existing"} or (mode == "create" and
                 (share.get("consent") is not True or type(lifetime) is not int or not 120 <= lifetime <= 28800)):
             raise DisplayAdmissionError("display_code_invalid", 400)
-        allowed = {"mode", "consent", "lifetime_seconds"} if mode == "create" else {"mode", "share_id", "share_generation"}
+        if (type(live) is not bool or (language is not None and
+                (not isinstance(language, str) or language not in {"en", "nl", "de", "fr", "es"}))):
+            raise DisplayAdmissionError("display_code_invalid", 400)
+        allowed = {"mode", "consent", "lifetime_seconds", "language", "live"} if mode == "create" else {"mode", "share_id", "share_generation"}
         include_output_status = share.get("include_output_status", False)
         if type(include_output_status) is not bool or set(share) - (allowed | {"include_output_status"}) or (mode == "existing" and
                 (not isinstance(share.get("share_id"), str) or type(share.get("share_generation")) is not int)):
             raise DisplayAdmissionError("display_code_invalid", 400)
         key = (owner.profile_id, owner.session_id, owner.entry_id, owner.stamp, issuer_epoch,
                claim_id, browser_generation, code, mode, share.get("share_id"), share.get("share_generation"),
-               lifetime if mode == "create" else None, include_output_status)
+               lifetime if mode == "create" else None, include_output_status, language, live)
         claim = self._claims.get(claim_id)
         if claim is None:
             for display in self._displays.values():
@@ -311,7 +324,7 @@ class DisplayAdmissionState:
             if len(self._shares) >= MAX_SHARES:
                 raise DisplayAdmissionError("display_capacity", 429)
             # No writes have happened yet: checks precede this atomic transition.
-            selected = _Share(secrets.token_urlsafe(32), owner, self._clock() + lifetime)
+            selected = _Share(secrets.token_urlsafe(32), owner, self._clock() + lifetime, locale=language)
         else:
             selected = self._shares.get(share.get("share_id"))
             if selected is None or selected.owner.profile_id != owner.profile_id or selected.owner.session_id != owner.session_id:
@@ -320,6 +333,10 @@ class DisplayAdmissionState:
                 raise DisplayAdmissionError("display_context_changed", 409)
         display_id = secrets.token_urlsafe(32)
         self._shares[selected.share_id] = selected
+        if mode == "create" and live:
+            from .guest_admission import ParticipationPolicy
+            self.participation.configure(owner=owner, share_id=selected.share_id,
+                policy=ParticipationPolicy(information=True, requests="review"))
         claim.owner, claim.share_id = owner, selected.share_id
         claim.display_id, claim.approval_key = display_id, key
         claim.include_output_status = include_output_status

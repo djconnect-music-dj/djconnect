@@ -173,7 +173,7 @@ def artwork_descriptor(active, display, state, *, flow_item_id=None):
     return result
 
 
-def schedule_artwork(hass, manager, observed, result, source_sample):
+def schedule_artwork(hass, manager, observed, result, source_sample, *, occurrence=None):
     """Start bounded preparation from a normal observation, never a display read."""
     state = manager._display_admission
     active = manager.current_active(observed.owner_profile_id)
@@ -191,6 +191,8 @@ def schedule_artwork(hass, manager, observed, result, source_sample):
 
     if active is None or active.session_id != observed.session_id:
         return
+    from .display_observed import capture
+    capture(state, active, source_sample, getattr(result, 'media_identity', ''), occurrence=occurrence)
     shares = admitted_shares()
     if not shares:
         active.broadcast.display_artwork = None
@@ -267,8 +269,16 @@ async def _prepare_artwork(hass, state, broadcast, item_id, source_url, url, cur
             now = state._clock()
             if witness is not None and current() and shares and now < deadline:
                 wall = datetime.now(timezone.utc)
+                previous = getattr(broadcast, "display_artwork", None)
+                # Refreshing a genuinely re-read, identical qualified cover is
+                # not a new image. Preserve its reference without reusing an
+                # old observation, owner/source grant or deadline.
+                unchanged = (previous is not None and previous.item_id == item_id
+                    and previous.source_url == source_url and previous.source_current()
+                    and previous.mime == witness.mime and previous.body == witness.body)
                 asset = DisplayArtwork(
-                    secrets.token_hex(16), item_id, source_url, witness.body, witness.mime, deadline,
+                    previous.nonce if unchanged else secrets.token_hex(16),
+                    item_id, source_url, witness.body, witness.mime, deadline,
                     (wall + timedelta(seconds=deadline-now)).isoformat(), flow_deadline,
                     (wall + timedelta(seconds=flow_deadline-now)).isoformat(),
                     source_current, frozenset(shares), current)
