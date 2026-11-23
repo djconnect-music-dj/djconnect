@@ -8126,3 +8126,11 @@ consume the former once to mint the latter. This does not extend any issued
 choice or alter the public for_you/expires_in wire. Polling, reconnect, rendering,
 expiry, old DTOs and a second seal never issue a new admission or provider/model
 work. Original identity and withdrawal guards remain mandatory.
+
+## Original For-you withdrawal — 24 November 2026
+
+The exact original offer ID is terminal after an accepted Core unavailable
+projection for source/DNA/settings withdrawal; old available DTOs and A-to-B-to-A
+source recovery never revive it. Preserve scope-bound native tombstones and the
+server private original admission latch. Ordinary transport/history failures or
+preparing placeholders are not withdrawal. See SESSION_FOR_YOU_V1.md.

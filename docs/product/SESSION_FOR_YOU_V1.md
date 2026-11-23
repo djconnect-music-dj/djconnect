@@ -245,3 +245,29 @@ Read/cached projection never extends the original60-second dual-clock choice,
 creates another offer, warms data, grants playback or retries an attempted or
 uncertain operation. Other clients need the same loaded Profile memory owner;
 a missing/different manager cannot borrow the original cached admission.
+
+### Original offer withdrawal cannot be reversed by a later DTO
+
+A genuinely accepted Core projection with state unavailable and reason
+session_or_source_unavailable or music_dna_unavailable withdraws that original
+offer in its unchanged owner/session context. The
+original private admission latches that withdrawal; a source/DNA/configuration
+that later happens to resemble the old values cannot revive it. Native clients
+retain the withdrawn offer ID as a context-scoped tombstone and reject an older
+available DTO for it. Only a genuinely different offer from an authorized new
+preparation can be adopted. Display deadlines still never increase.
+
+A transport timeout, history conflict, ordinary refresh-in-flight state or an
+initial not-prepared placeholder is not this authoritative withdrawal signal.
+Such failures may retain only an already valid observation to its original
+expiry, without making it current or extending a choice. Withdrawal performs
+no provider/model lookup, preference write, persistent shared-flow mutation or
+new selection. The explicit existing refresh remains available to request a
+new offer; polling and source recovery alone cannot perform it.
+
+An explicit session_settings_changed projection also permanently disables that
+original selection, while preserving the existing inert genre/visual preview
+when owner/source/DNA display rights remain. It need not turn that preview's
+state into unavailable or erase its metadata. A later source/DNA withdrawal
+still clears it and takes precedence over that settings-only reason. An older
+available/actions-enabled DTO never re-enables the selection.

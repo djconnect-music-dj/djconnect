@@ -758,6 +758,7 @@ class FirstPlayAdmission:
     selected_media: tuple = ()
     chosen_action: object = None
     withdrawn: bool = False
+    source_withdrawal_reason: str | None = None
     captured_source: tuple = field(init=False, repr=False)
 
     def __post_init__(self):
@@ -781,7 +782,8 @@ class FirstPlayAdmission:
             if task is not None and task.cancelling():
                 raise asyncio.CancelledError
             now = self.manager.current_active(self.profile_id)
-            if (self.withdrawn or self.clock() >= self.deadline or time.time() >= self.wall_deadline
+            if (self.withdrawn or self.source_withdrawal_reason is not None
+                    or self.clock() >= self.deadline or time.time() >= self.wall_deadline
                     or session_runtime_manager(self.hass) is not self.manager or now is None
                     or session_scope(now) != self.scope or not self.authority()
                     or not callable(self.dna_guard) or not self.dna_guard()
@@ -1198,7 +1200,8 @@ async def _record_for_you_confirmation(runtime, admission):
         profile = storage.household.profiles.get(admission.profile_id) if storage else None
         from .session_conversation import history_grant_revision
         current = admission.manager.current_active(admission.profile_id)
-        return bool(profile is not None and admission.dna_guard() and admission.authority()
+        return bool(profile is not None and admission.source_withdrawal_reason is None
+                    and admission.dna_guard() and admission.authority()
                     and current is not None and current.session_id == admission.active.session_id
                     and current.broadcast is admission.active.broadcast
                     and history_grant_revision(admission.hass, admission.profile_id) == admission.grant
@@ -1234,6 +1237,18 @@ def unprepared_for_you_offer_id(active):
     return f'{active.session_id}-mood-{active.mood_revision}'
 
 
+def _withdraw_for_you_source(offer, reason):
+    """Latch original authority loss; a projection never reissues that offer."""
+    admission = offer.get('_admission') if isinstance(offer, dict) else None
+    if type(admission) is FirstPlayAdmission:
+        if (admission.source_withdrawal_reason is None
+                or (admission.source_withdrawal_reason == "session_settings_changed"
+                    and reason != "session_settings_changed")):
+            admission.source_withdrawal_reason = reason
+        if reason != 'session_settings_changed':
+            admission.withdrawn = True
+
+
 def for_you_projection(hass, runtime, profile_id, active, *, client_device_id="", locale=None):
     """Read an already-prepared offer; polling never performs generation or effects."""
     if active is None or active.broadcast.first_play_state == 'unknown':
@@ -1258,6 +1273,7 @@ def for_you_projection(hass, runtime, profile_id, active, *, client_device_id=""
             result['result_set']['expires_in'] = remaining
         from .current_track_insight import session_scope
         if offer.get('_session_scope') is not None and offer['_session_scope'] != session_scope(active):
+            _withdraw_for_you_source(offer, 'session_settings_changed')
             result.update(actions_available=False, reason='session_settings_changed')
         pending = active.broadcast.first_play_pending
         if (type(pending) is FirstPlayAdmission and pending.chosen_action is not None
@@ -1269,6 +1285,7 @@ def for_you_projection(hass, runtime, profile_id, active, *, client_device_id=""
         source, authority = source_admission(hass, runtime, profile_id)
         if (not source or not callable(authority) or not authority()
                 or session_runtime_manager(hass)._history_source_contexts.get(active.session_id) != source):
+            _withdraw_for_you_source(offer, 'session_or_source_unavailable')
             result.update(state='unavailable', reason='session_or_source_unavailable', options=[], actions_available=False)
             result.pop('result_set', None)
             result['intro'] = ''
@@ -1318,9 +1335,17 @@ def for_you_projection(hass, runtime, profile_id, active, *, client_device_id=""
     admission = offer.get('_admission') if isinstance(offer, dict) else None
     if result['visible'] and (not _cached_for_you_dna_current(hass, runtime, profile_id, active)
             or (type(admission) is FirstPlayAdmission and (not admission.dna_guard() or not admission.authority()))):
+        _withdraw_for_you_source(offer, 'music_dna_unavailable')
         result.update(state='unavailable', reason='music_dna_unavailable', options=[], actions_available=False)
         result.pop('result_set', None)
         result['intro'] = ''
+    if (result['visible'] and type(admission) is FirstPlayAdmission
+            and admission.source_withdrawal_reason is not None):
+        result.update(reason=admission.source_withdrawal_reason, actions_available=False)
+        if admission.source_withdrawal_reason != 'session_settings_changed':
+            result.update(state='unavailable', options=[])
+            result.pop('result_set', None)
+            result['intro'] = ''
     if result.get('state') == 'unavailable' or not result['visible']:
         result.pop('continuation', None)
     if not result['visible']:

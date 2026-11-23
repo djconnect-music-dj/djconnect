@@ -109,6 +109,32 @@ class VisibleAdmissionTests(IsolatedAsyncioTestCase):
         self.assertEqual(self.effects, [])
         self.assertEqual(self.reservations, [])
 
+    async def test_settings_aba_keeps_preview_but_never_reenables_original_selection(self):
+        initial = await self.prepared()
+        original = self.active.broadcast.first_play_offer["_admission"]
+        changed = replace(self.active, selected_mood="party")
+        projected = self.steering.for_you_projection(
+            self.hass, self.runtime, "synthetic-owner", changed
+        )
+        self.assertEqual(projected["options"], initial["options"])
+        self.assertFalse(projected["actions_available"])
+        restored = self.project()
+        self.assertEqual(restored["offer_id"], initial["offer_id"])
+        self.assertEqual(restored["options"], initial["options"])
+        self.assertFalse(restored["actions_available"])
+        self.assertEqual(restored["reason"], "session_settings_changed")
+        self.assertFalse(original.withdrawn)
+        self.allowed = False
+        withdrawn = self.project()
+        self.assertEqual(withdrawn["state"], "unavailable")
+        self.assertEqual(withdrawn["options"], [])
+        self.allowed = True
+        self.assertEqual(self.project()["options"], [])
+        with self.assertRaises(self.dialogue.DialogueError):
+            original.guard()
+        self.assertEqual(self.effects, [])
+        self.assertEqual(self.reservations, [])
+
     async def test_distinct_private_actor_one_seal_and_no_old_dto_or_read_mint(self):
         initial = await self.prepared()
         admission = self.active.broadcast.first_play_offer["_admission"]
@@ -260,3 +286,24 @@ class VisibleAdmissionTests(IsolatedAsyncioTestCase):
             self.dialogue.current_turn.reset(token)
         self.assertEqual(admission.deadline, 1105)
         self.assertFalse(self.project()["actions_available"])
+
+    async def test_original_source_withdrawal_cannot_revive_the_same_offer(self):
+        initial = await self.prepared()
+        original = self.active.broadcast.first_play_offer["_admission"]
+        original_deadlines = (original.deadline, original.wall_deadline)
+        self.advance(14)
+        self.allowed = False
+        denied = self.project()
+        self.assertEqual(denied["state"], "unavailable")
+        self.assertIn(denied["reason"], {"session_or_source_unavailable", "music_dna_unavailable"})
+        self.allowed = True
+        restored_values = self.project()
+        self.assertEqual(restored_values["offer_id"], initial["offer_id"])
+        self.assertEqual(restored_values["state"], "unavailable")
+        self.assertEqual(restored_values["options"], [])
+        self.assertFalse(restored_values["actions_available"])
+        self.assertTrue(original.withdrawn)
+        self.assertEqual((original.deadline, original.wall_deadline), original_deadlines)
+        self.assertEqual(len([r for r in self.reads if r.startswith("/search")]), 3)
+        self.assertEqual(self.effects, [])
+        self.assertEqual(self.reservations, [])
