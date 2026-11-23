@@ -124,6 +124,12 @@ class VisibleAdmissionTests(IsolatedAsyncioTestCase):
         self.assertFalse(restored["actions_available"])
         self.assertEqual(restored["reason"], "session_settings_changed")
         self.assertFalse(original.withdrawn)
+        with self.assertRaises(self.dialogue.DialogueError):
+            original.guard()
+        self.assertTrue(original.withdrawn)
+        self.assertTrue(original.dna_guard())
+        self.assertEqual(self.project()["options"], initial["options"])
+        self.assertEqual(self.project()["reason"], "session_settings_changed")
         self.allowed = False
         withdrawn = self.project()
         self.assertEqual(withdrawn["state"], "unavailable")

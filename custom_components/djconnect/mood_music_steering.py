@@ -651,7 +651,9 @@ def _cached_for_you_dna_current(hass, runtime, profile_id, active):
     offer = active.broadcast.first_play_offer if active is not None else None
     admission = offer.get('_admission') if isinstance(offer, dict) else None
     if type(admission) is FirstPlayAdmission:
-        return (not admission.withdrawn and admission.hass is hass
+        # Selection cancellation/expiry is not a withdrawal of the original
+        # display source. Check actual DNA ownership independently.
+        return (admission.hass is hass
                 and admission.active.session_id == active.session_id
                 and admission.active.broadcast is active.broadcast and admission.profile_id == profile_id
                 and getattr(admission.dna_seeds, 'owner', None) == profile_id
