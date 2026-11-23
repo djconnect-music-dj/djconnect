@@ -1,3 +1,26 @@
+## Visible native Help refresh selection — 23 November 2026
+
+The existing original15-second native Help observation deadline remains intact.
+While the Help/suggestions panel is actually visible in an active native scene,
+the same current device/Profile/session/track/catalogue context may perform a
+new pure paired `help-context` GET before that observation expires. There is at
+most one in-flight read. Automatic refresh dispatches wait at least ten seconds
+after any previous read dispatch. Explicit opening, item selection and Retry
+retain their existing separate immediate fresh validation; the automatic
+frequency limit must not delay those user actions. This adds
+no model/provider call, catalogue execution, history write or source warming.
+
+Only a genuinely completed, independently validated new response can establish
+its own original read observation. Re-rendering, an old DTO, a timer tick or an
+expired response cannot renew the previous permission. Context/epoch/owner or
+scene changes cancel/fence pending work; hiding the panel stops refresh. An
+explicit denial/withdrawal clears immediately. A transient read error can retain
+only the already valid prior observation until its unchanged original deadline.
+After that the panel is unavailable until another genuine allowed read wins.
+Permanent protocol/authentication failures require their ordinary recovery or
+explicit retry, not a timer loop. Sending a selected help item still performs
+its existing separate fresh validation; a visible suggestion grants no effect.
+
 # Ask DJ live Help context — wire version 1
 
 The two-owner R5 design review names this protocol revision; the actual wire

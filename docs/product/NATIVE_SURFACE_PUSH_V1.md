@@ -25,6 +25,37 @@ Unknown, revoked, expired or wrong-session locators never open a latest-Moment
 substitute. Neither this selection nor source tests establishes APNs acceptance
 or physical Watch rendering.
 
+## Automatic Core key custody selection — 23 November 2026
+
+The requested production-equivalent enrollment must not depend on an operator
+secret file or a hand-created positive witness. A concrete installation-owned
+custodian may load the original private Core signing/binding keys from HA's
+private atomic store, or create them once for a genuinely new installation
+following an authenticated paired-device channel opt-in. Creating actual key
+material is distinct from inventing an enrolled identity: an absent/unknown API
+registration or delegation remains unavailable until its genuine verified ACK.
+No key/reference from a test, old receipt or another installation is admitted.
+
+Select the custodian only from the actual loaded installation credential/origin,
+original durable pair, device/Profile/consent generations and current source.
+Startup may wire a dormant service but performs no key or SDK operation merely
+because a client is paired. Key creation records its original once-only durable
+claim before generation/publication and never regenerates after an ambiguous
+outcome. Preserve the same original key on retry/status; malformed custody,
+installation/credential mismatch or missing original operation requires normal
+recovery, not a replacement identity or an operator-file fallback. Private keys
+stay in the owning HA service/store, never wire, logs or evidence.
+
+The actual first-key/role/challenge/verification/registration chain remains
+mandatory. A sealed winning registration ACK can carry its original custody
+into the existing issuer lifecycle, but a separately current widget delegation,
+channel target and field policy are still required by `WidgetIssuerOwner`.
+Binding dialects are recomputed from their own original contract and real owner
+objects; matching or copied hashes do not establish equivalence. Until the real
+native and API decisions succeed, registration and provider dispatch stay closed.
+This selects implementation of genuine missing production custody, not a waiver
+of any gate or an assertion that positive enrollment already exists.
+
 ## Automatic enrollment for Apple push
 
 Validate the same enrollment flow on HA-dev that a new production installation

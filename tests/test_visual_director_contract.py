@@ -37,9 +37,9 @@ class VisualDirectorContractTests(unittest.TestCase):
 
     def test_actual_registered_wire_pins_current_producer_and_declares_boundary(self):
         data = self.fixture()
-        current = json.loads((ROOT / 'examples/client_contracts/vibescape_visual_director_v1/ha-guest-invitation-20261123-ha-shared-guest-20261123-bd7d57c0.json').read_text())
+        current = json.loads((ROOT / 'examples/client_contracts/vibescape_visual_director_v1/vibecast-ui-20261123-ha-guest-invitation-2026-1d00960f.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
-        self.assertEqual(len(current['source_pins']), 343)
+        self.assertEqual(len(current['source_pins']), 347)
         self.assertEqual(hashlib.sha256((ROOT / current['harness']).read_bytes()).hexdigest(), current['harness_sha256'])
         extension = current['receipt']['extension']
         self.assertEqual(extension['model_provider_calls'], 0)

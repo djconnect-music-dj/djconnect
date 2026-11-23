@@ -13,10 +13,10 @@ def sha(path):
 
 class SharedGuestActualHAEvidenceTests(unittest.TestCase):
     def test_full_current_manifest_and_all_executed_adapters_are_bound(self):
-        proof = json.loads((ROOT/'docs/verification/ha-guest-invitation-qualification-20261123.json').read_text())
+        proof = json.loads((ROOT/'docs/verification/vibecast-ui-qualification-20261123.json').read_text())
         actual = {str(p.relative_to(ROOT)):sha(p) for p in (ROOT/'custom_components/djconnect').rglob('*')
                   if p.is_file() and '__pycache__' not in p.parts and p.suffix != '.pyc'}
-        self.assertEqual(len(actual), 343)
+        self.assertEqual(len(actual), 347)
         self.assertEqual(proof['source_pins'], actual)
         self.assertIs(proof['source_before_after_equal'], True)
         matrix_path = ROOT/proof['matrix_path']

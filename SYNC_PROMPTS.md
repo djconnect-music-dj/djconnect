@@ -8081,3 +8081,19 @@ Owner-only nullable `horizon_moment` is specified in
 of the already qualified first queue entry during the final45seconds, with
 original source expiry and existing owner image-proxy purpose. It supplements
 announcements and grants no TTS, persistence, shared-image or Watch alert right.
+
+# Visible native Help read refresh
+
+The original15s Help observation remains bounded. A visible active native panel
+may issue a fresh pure GET, at most one in flight and automatically once per10s, under exactly
+the same current owned context. Only its validated actual response may establish
+a new observation. See `docs/product/ASK_DJ_HELP_CONTEXT_V1.md`; timers/old DTOs
+never extend permission and hidden/withdrawn contexts cancel immediately.
+
+# Automatic original Core custody selection
+
+Implement genuine per-installation private key custody behind authenticated
+original pair/channel choice, per `NATIVE_SURFACE_PUSH_V1.md`. No operator-file
+shipping default or fabricated positive enrollment. Real once-only generation,
+durable original custody and genuine API/native ACKs remain distinct, and actual
+widget delegation/target/field policy is still required before dispatch.

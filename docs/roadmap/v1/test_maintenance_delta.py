@@ -40,7 +40,7 @@ class SharedSettingsMaintenanceTests(unittest.TestCase):
     def test_six_parameter_scope_preserves_frozen_predecessor(self):
         self.assertEqual(validate(self.p), [])
         d = self.p['planning_maintenance']
-        self.assertEqual(d['schema_version'], 'djconnect-federated-planning-delta/30')
+        self.assertEqual(d['schema_version'], 'djconnect-federated-planning-delta/31')
         self.assertEqual(d['settings_consolidation_receipt']['parameters'],
                          ['persona', 'voice', 'gender', 'mood', 'presence', 'announcement_output'])
         self.assertIn('six shared Persona/voice/gender/Mood/Presence/announcement_output', render(self.p)['README.md'])
@@ -122,7 +122,7 @@ def delivered_settings_plan():
 def delivered_passive_plan():
     import json
     plan = load(ROOT / 'djconnect-platform-v1.json')
-    if plan['planning_maintenance']['schema_version'] in {'djconnect-federated-planning-delta/15','djconnect-federated-planning-delta/16','djconnect-federated-planning-delta/17','djconnect-federated-planning-delta/18','djconnect-federated-planning-delta/19','djconnect-federated-planning-delta/20', 'djconnect-federated-planning-delta/21', 'djconnect-federated-planning-delta/22', 'djconnect-federated-planning-delta/23', 'djconnect-federated-planning-delta/24', 'djconnect-federated-planning-delta/25', 'djconnect-federated-planning-delta/26', 'djconnect-federated-planning-delta/27', 'djconnect-federated-planning-delta/28', 'djconnect-federated-planning-delta/29', 'djconnect-federated-planning-delta/30'}:
+    if plan['planning_maintenance']['schema_version'] in {'djconnect-federated-planning-delta/15','djconnect-federated-planning-delta/16','djconnect-federated-planning-delta/17','djconnect-federated-planning-delta/18','djconnect-federated-planning-delta/19','djconnect-federated-planning-delta/20', 'djconnect-federated-planning-delta/21', 'djconnect-federated-planning-delta/22', 'djconnect-federated-planning-delta/23', 'djconnect-federated-planning-delta/24', 'djconnect-federated-planning-delta/25', 'djconnect-federated-planning-delta/26', 'djconnect-federated-planning-delta/27', 'djconnect-federated-planning-delta/28', 'djconnect-federated-planning-delta/29', 'djconnect-federated-planning-delta/30', 'djconnect-federated-planning-delta/31'}:
         refs = plan['planning_maintenance']['document_references']
         plan['planning_maintenance'] = json.loads((ROOT / 'history/20261017/settings-finalization-maintenance-v14.json').read_text())
         plan['planning_maintenance']['document_references'] = refs
@@ -1112,3 +1112,50 @@ class MomentsAvatarMaintenanceTests(unittest.TestCase):
                     suffix = 'ACCEPTANCE' if mode == 'joint' else 'PRODUCER'
                     next(n for n in d['nodes'] if n['id'] == 'ASK-DJ-MOMENTS::'+suffix)['status'] = 'Completed'
                 self.assertTrue(validate(p), mode)
+
+
+class VibeCastUICurrentProofTests(unittest.TestCase):
+    def setUp(self):
+        self.p = load(ROOT/'djconnect-platform-v1.json')
+
+    def test_current_full_source_proof_preserves_exact_delivered_predecessor(self):
+        self.assertEqual(validate(self.p), [])
+        import json
+        prior = json.loads((ROOT/'history/20261123/vibecast-ui-predecessor-maintenance-v30.json').read_text())
+        restored = copy.deepcopy(self.p['planning_maintenance'])
+        restored.pop('vibecast_ui_receipt')
+        restored['schema_version'] = prior['schema_version']
+        restored['document_references'] = prior['document_references']
+        self.assertEqual(restored, prior)
+
+    def test_false_delivery_and_provider_claims_rejected(self):
+        for key, value in (('source_delivery','PROTECTED_MERGED'),('overall_acceptance','PASS'),
+                           ('installed','PASS'),('deployment','PASS'),('real_provider','PASS'),
+                           ('editorial_acceptance','PASS'),('physical_satellite','PASS'),
+                           ('automatic_dispatch',True),('consumer_writes',True)):
+            with self.subTest(key=key):
+                changed = copy.deepcopy(self.p)
+                changed['planning_maintenance']['vibecast_ui_receipt'][key] = value
+                self.assertTrue(validate(changed))
+
+    def test_no_prior_manifest_or_receipt_can_qualify_new_source(self):
+        for key in ('product_manifest','qualification','browser','live_ui','base_publication'):
+            with self.subTest(key=key):
+                changed = copy.deepcopy(self.p)
+                changed['planning_maintenance']['vibecast_ui_receipt'][key+'_sha256'] = '0'*64
+                self.assertTrue(validate(changed))
+
+    def test_history_and_current_document_bindings_are_independent(self):
+        for key in ('sha256','predecessor_sha256','snapshot'):
+            with self.subTest(key=key):
+                changed = copy.deepcopy(self.p)
+                changed['planning_maintenance']['vibecast_ui_receipt']['evolved_documents'][0][key] = '0'*64
+                self.assertTrue(validate(changed))
+
+    def test_prior_node_change_and_missing_receipt_rejected(self):
+        changed = copy.deepcopy(self.p)
+        changed['planning_maintenance']['nodes'][0]['title'] += ' altered'
+        self.assertTrue(validate(changed))
+        changed = copy.deepcopy(self.p)
+        changed['planning_maintenance'].pop('vibecast_ui_receipt')
+        self.assertTrue(validate(changed))

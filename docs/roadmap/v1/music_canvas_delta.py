@@ -18,6 +18,7 @@ def sha(raw):
 def validate(plan, previous_validator, *, historical_product=False):
     from music_origin_finalization_delta import validate as validate_previous
     from experience_reconciliation_delta import HISTORICAL_DOCUMENT_SOURCES
+    sources = HISTORICAL_DOCUMENT_SOURCES.get()
     d = plan["planning_maintenance"]
     receipt = d.get("music_canvas_receipt", {})
     raw = (Path(__file__).parent/FREEZE).read_bytes()
@@ -34,7 +35,7 @@ def validate(plan, previous_validator, *, historical_product=False):
     old_references = {r["path"]: r["sha256"] for r in prior["document_references"]}
     for ref in restored["document_references"]:
         if ref["path"] in {"API_CONTRACT.md", "PRODUCT_BACKLOG.md"}:
-            check(ref["sha256"] == sha((ROOT/ref["path"]).read_bytes()), "current canonical document reference")
+            check(ref["sha256"] == sha(Path(sources.get(ref["path"], ROOT/ref["path"])).read_bytes()), "current canonical document reference")
             ref["sha256"] = old_references[ref["path"]]
     check(restored == prior and receipt.get("predecessor_sha256") == sha(raw), "predecessor changed")
     check(receipt.get("assignment_id") == "DJC-MUSIC-CANVAS-V1-20261115"
@@ -56,7 +57,7 @@ def validate(plan, previous_validator, *, historical_product=False):
     check({x.get("path") for x in documents} == {
         "docs/product/MUSIC_CANVAS_V1.md", "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
         "API_CONTRACT.md", "PRODUCT_BACKLOG.md"}
-        and all(sha((ROOT/x["path"]).read_bytes()) == x.get("sha256") for x in documents),
+        and all(sha(Path(sources.get(x["path"], ROOT/x["path"])).read_bytes()) == x.get("sha256") for x in documents),
         "canonical design/contract")
     manifest_path = ROOT/"docs/verification/music-canvas-product-manifest.json"
     manifest = json.loads(manifest_path.read_bytes())

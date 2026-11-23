@@ -84,6 +84,9 @@ def validate_delta(plan: dict[str, Any]) -> list[str]:
             errors.append("maintenance: " + reason)
 
     version = d.get("schema_version")
+    if version == "djconnect-federated-planning-delta/31":
+        from vibecast_ui_delta import validate as validate_ui
+        return validate_ui(plan, validate_delta)
     if version == "djconnect-federated-planning-delta/30":
         from ha_invitation_finalization_delta import validate as validate_invitation_finalization
         return validate_invitation_finalization(plan, validate_delta)
@@ -1076,6 +1079,8 @@ def render_delta(p):
     if d.get("music_canvas_receipt"):
         state = "SOURCE_DELIVERED / PROTECTED_MERGED" if d.get("music_canvas_finalization_receipt") else "LOCAL / NOT_MERGED"
         intro += f"Music Canvas v1 owner-selected implementation is {state}. Core contracts, persistent preferences, lifecycle, composition and Samsung/SwitchBot adapters feed the native Apple panel. Joint real-provider/native/hardware acceptance stays Planned/OPEN; no Cast route, deployment or automatic dispatch.\n\n"
+    if d.get("vibecast_ui_receipt"):
+        intro += "Current VibeCast Live and Apple-presentation Core checkpoint is LOCAL / UNPUBLISHED: complete347 product files, fresh54 HA probes,11 additional actual HA/TLS Live cases and Chromium/WebKit renderer tests. Installed/native/provider/APNs/editorial acceptance and the remaining cross-lane work stay OPEN. Delivered maintenance30 and all original publications below are preserved history.\n\n"
     if d.get("ha_invitation_finalization_receipt"):
         intro += "Same-tab invitation repair #1679 is protected source delivered with its own qualified main/package and original12-check evidence. Historical local source proof is retained below; broader physical/provider/receiver/installed acceptance remains OPEN and no product bytes or owning nodes change in this Finalization.\n\n"
     if d.get("ha_guest_invitation_receipt"):
