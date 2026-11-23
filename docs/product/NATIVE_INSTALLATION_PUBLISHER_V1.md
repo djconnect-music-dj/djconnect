@@ -250,3 +250,28 @@ separate context operation with a fresh original C0. Thus context original roots
 exist before its first await. Preparation is never inserted as an awaited repair
 inside context acquisition, and its receipt never supplies native clock-rate,
 SDK-target, restoration or push admission. All independent native gates remain.
+## Negative-only unknown-outcome hardening
+
+The selected private negative credential record is one per original committed
+PairJournal registration binding plus actual credential, origin/installation
+and exact native pair context. It is retained only after a genuine resolver
+result and an exact durably staged SQLite original, **before** publication RPC.
+It covers only matching actual SQL originals; it is never positive restoration,
+a replacement credential, a fabricated publication ACK or a signing grant.
+Operation digests are comparison metadata and cannot substitute for SQL rows.
+The private format is version 2; older or malformed state is unavailable, never
+silently migrated, reset or interpreted as a new positive installation.
+
+For a negative unknown publication, the active authenticated original API
+principal may set its own covering pair tombstone when that operation has no
+publication row. If a row exists, all original fields must match. A permanent
+retired pair remains closed to later positive publication, first trust and
+roles. Negative closure is independent of positive signed-app-policy expiry.
+The active-publication budget excludes history only after both authenticated
+withdrawal and retirement decisions; original history is retained unchanged.
+
+Private custody is pruned only when **all** matching actual SQL originals and
+all retained operation references have their exact genuine withdrawal and
+retirement ACKs, with the original pair retired. Missing, mismatched, pending
+or unknown rows remain. Grouping removes duplicate private tokens for repeated
+operations without discarding their original proofs or minting any authority.

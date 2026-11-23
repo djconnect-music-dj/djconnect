@@ -8169,3 +8169,11 @@ Widget adoption owner; arbitrary owners retain the existing single-lifecycle rul
 Preparation precedes the separate native context operation and its own C0;
 neither the receipt nor a local preference supplies native clock/target/restore
 permission. No enrollment effects in GET state or awaited context-root repair.
+
+Native unknown-outcome recovery is negative-only: actual resolver + durably
+staged exact PairJournal original precede private per-pair credential retention
+and publication RPC. Existing exact SQL originals remain mandatory. An own
+missing publication may be covered by an authenticated negative tombstone;
+existing rows require exact original matching. No positive restore, fake ACK,
+TTL deletion or reset of retired pairs is admitted. Version-2 negative custody
+prunes only after every original/reference has both genuine closure ACKs.
