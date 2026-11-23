@@ -8134,3 +8134,13 @@ projection for source/DNA/settings withdrawal; old available DTOs and A-to-B-to-
 source recovery never revive it. Preserve scope-bound native tombstones and the
 server private original admission latch. Ordinary transport/history failures or
 preparing placeholders are not withdrawal. See SESSION_FOR_YOU_V1.md.
+# Automatic installation-owned native publisher
+
+The selected production auth boundary is specified in
+`docs/product/NATIVE_INSTALLATION_PUBLISHER_V1.md`. API authenticates the exact
+existing active credential ID/token hash as an isolated publisher; caller HA ID
+never selects another principal. Core retains the actual original pair,
+committed device/Profile/source, SQLite consent and signer before publication.
+Resolve/publication are not native enrollment. Production audience and tables
+are separate from existing HA-dev CF-machine qualification. Original App Attest,
+first-key proof/ACK and independent widget target/policy/native gates remain.
