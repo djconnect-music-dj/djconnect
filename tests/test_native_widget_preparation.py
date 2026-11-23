@@ -210,3 +210,17 @@ class NativeWidgetPreparationTests(IsolatedAsyncioTestCase):
         self.assertTrue(self.record.handle.closed)
         self.assertTrue(second.handle.purpose.is_current())
         self.assertFalse(second.handle.closed)
+
+    async def test_optional_role_owner_failure_preserves_actual_registered_key_reply(self):
+        from custom_components.djconnect.transport_operations import OperationError
+        f = self.unit.f
+        identity = {"device_id": self.second_runtime.pairing_device_id, "client_type": "ios"}
+        challenge = await f.service.challenge(self.second_headers, **identity)
+        with patch("custom_components.djconnect.hybrid_service.PairedAuthority.resolve",
+                side_effect=OperationError("operation_context_changed", 403)):
+            receipt = await f.service.register(self.second_headers, **identity,
+                operation_id=challenge["operation_id"], apple_proof=f.proof())
+        self.assertEqual(receipt["state"], "registered")
+        self.assertTrue(f.service.pending[identity["device_id"]][1].recoverable)
+        self.assertEqual(len(self.pool.roles), 1)
+        self.assertEqual(len(self.unit.role_calls), 1)

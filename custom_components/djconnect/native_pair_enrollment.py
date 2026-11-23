@@ -504,9 +504,10 @@ class NativePairEnrollment:
                 self.pending[device_id] = (deadline, original)
                 if self._installation is not None:
                     from .native_widget_preparation import accept_registered_winner
+                    from .transport_operations import OperationError
                     try:
                         await accept_registered_winner(self, operation_id, headers)
-                    except SurfacePushError:
+                    except (SurfacePushError, OperationError):
                         # The actual first key is registered. A missing/unknown
                         # separate role never converts status into a new winner.
                         pass
