@@ -838,6 +838,8 @@ class SpotifyBackend:
             upcoming = _normalize_queue_item(first) if first.get('type') == 'track' else None
             up_next = ({'title':str(upcoming.get('title') or '')[:256],
                         'artist':str(upcoming.get('artist') or '')[:256],
+                        'source_url': ('https://open.spotify.com/track/' + first['uri'].rsplit(':', 1)[-1]
+                            if re.fullmatch(r'spotify:track:[A-Za-z0-9]{22}', str(first.get('uri', ''))) else ''),
                         'artwork_url':str(upcoming.get('image_url') or '')}
                        if upcoming and upcoming.get('title') and upcoming.get('artist') else {})
             items = []

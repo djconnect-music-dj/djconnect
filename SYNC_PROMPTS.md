@@ -8074,3 +8074,10 @@ Apple may consume the optional guest-scoped prepared artwork descriptors and
 closed `participation/artwork` binary read documented in
 `docs/product/VIBECAST_NATIVE_GUEST_UI_V1.md`. This is a separate guest purpose,
 not a display grant, provider-image URL or permission to acquire new media.
+# Up-next Horizon DJ Moment preview
+
+Owner-only nullable `horizon_moment` is specified in
+`docs/product/UP_NEXT_HORIZON_MOMENT_PREVIEW_V1.md`. It is a transient preview
+of the already qualified first queue entry during the final45seconds, with
+original source expiry and existing owner image-proxy purpose. It supplements
+announcements and grants no TTS, persistence, shared-image or Watch alert right.
