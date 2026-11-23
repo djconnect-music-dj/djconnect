@@ -14,6 +14,8 @@ Selected shared Profile/Session settings consolidation: DJC-PROFILE-SESSION-SETT
 
 Music Canvas v1 owner-selected implementation is SOURCE_DELIVERED / PROTECTED_MERGED. Core contracts, persistent preferences, lifecycle, composition and Samsung/SwitchBot adapters feed the native Apple panel. Joint real-provider/native/hardware acceptance stays Planned/OPEN; no Cast route, deployment or automatic dispatch.
 
+Bounded same-tab guest invitation correction is implemented locally, not merged. Fresh real-browser/declared HTTP proof and all54 HA probes bind the current343 product files. Existing nodes, historical publication proofs and physical/provider/installed acceptance remain unchanged; the retained source branch has an owner-approved admission exception only for this repair.
+
 Shared HA guest Core source #1677 is protected merged and exact-main qualified. Broader WEB owners remain In progress; browser/receiver, provider/editorial, installed and physical acceptance are OPEN. The following local source receipt is preserved history.
 
 HA shared guest stage3 is implemented locally and remains unmerged: admitted browser/native guests use the same Core service and bounded host-reviewed enqueue. Existing WEB owners are In progress; maintained browser/media source is partial, receiver consumption and physical/provider/editorial acceptance remain open. No automatic dispatch, installation or deployment.

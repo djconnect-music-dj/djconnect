@@ -42,4 +42,4 @@ class GuestBuildTests(unittest.TestCase):
         receipt = json.loads(result.stdout)
         self.assertEqual(receipt['status'],'PASS')
         self.assertEqual(receipt['scope'],'SOURCE_DOM_AND_HTTP_FIXTURES_NOT_REAL_BROWSER')
-        self.assertEqual(len(receipt['checks']),5)
+        self.assertEqual(len(receipt['checks']),7)

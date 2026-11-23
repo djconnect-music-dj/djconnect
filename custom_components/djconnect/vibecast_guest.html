@@ -103,6 +103,9 @@
   }
   $('return').onclick=()=>{if(live())void post('return',binding()).catch(failure);};
   $('leave').onclick=()=>{if(grant)void fetch('/api/djconnect/v1/participation/leave',{method:'POST',keepalive:true,credentials:'omit',redirect:'error',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:'Bearer '+grant.guest_token},body:JSON.stringify({contract_version:1,...binding()})}).catch(()=>{});close();};
+  // A scanned invitation may reuse this document: discard its scope and let
+  // the normal bootstrap consume/erase the new fragment after a full reload.
+  window.addEventListener('hashchange',()=>{close();location.reload();});
   window.addEventListener('pagehide',close);
   setInterval(()=>{if(grant && now()>=lease)close();},1000);
   if(invitation){$('join').hidden=false;}else close();

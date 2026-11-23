@@ -8,7 +8,7 @@ import unittest
 class PassiveRetainedQualificationTests(unittest.TestCase):
     def test_current_receipt_binds_original_purpose_and_all_product_bytes(self):
         root=Path(__file__).resolve().parents[1]
-        proof=json.loads((root/'examples/client_contracts/passive_retained_v1/ha-shared-guest-20261123-music-canvas-recovery-20-6a95475a.json').read_text())
+        proof=json.loads((root/'examples/client_contracts/passive_retained_v1/ha-guest-invitation-20261123-ha-shared-guest-20261123-dafa6c37.json').read_text())
         receipt=proof['receipt']
         self.assertTrue(proof['source_before_after_equal'])
         self.assertTrue(receipt['source_unchanged'])

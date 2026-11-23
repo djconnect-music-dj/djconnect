@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class PassiveFieldExpiryContractTests(unittest.TestCase):
     def test_actual_original_frame_survives_only_shorter_field_expiry(self):
-        wire = json.loads((ROOT / 'examples/client_contracts/passive_field_expiry_v1/ha-shared-guest-20261123-music-canvas-recovery-20-53d842aa.json').read_text())
+        wire = json.loads((ROOT / 'examples/client_contracts/passive_field_expiry_v1/ha-guest-invitation-20261123-ha-shared-guest-20261123-f09f584d.json').read_text())
         self.assertTrue(wire['source_before_after_equal'])
         self.assertEqual(len(wire['source_pins']), 343)
         for name, digest in {**wire['source_pins'], **wire['harness_pins']}.items():

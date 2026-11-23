@@ -30,7 +30,7 @@ class RecentDisplayHistoryTests(unittest.IsolatedAsyncioTestCase):
         root = Path(__file__).resolve().parents[1]
         fixture = json.loads((root/'examples/client_contracts/ask_dj_recent_list_presentation_v1/actual-ha-wire-live-impression-20261119-requested-moments-20261120.json').read_bytes())
         self.assertEqual(fixture['classification'], 'ACTUAL_ISOLATED_HA_SOURCE_ONLY_NOT_INSTALLED_OR_NATIVE')
-        current = json.loads((root / 'examples/client_contracts/ask_dj_recent_list_presentation_v1/ha-shared-guest-20261123-music-canvas-recovery-20-b8737ab6.json').read_text())
+        current = json.loads((root / 'examples/client_contracts/ask_dj_recent_list_presentation_v1/ha-guest-invitation-20261123-ha-shared-guest-20261123-b64d65a4.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
         self.assertEqual(current['harness'], fixture['harness'])
         self.assertEqual(current['harness_sha256'], fixture['harness_sha256'])
