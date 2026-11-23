@@ -43373,7 +43373,7 @@
       },
       {
         "path": "SYNC_PROMPTS.md",
-        "sha256": "71da0173c000088344dda5256a167400339589611b187194d02a9567ee49e3b7"
+        "sha256": "3802b4a060f2a50f27573f224d59cda40a3723c71842afcc2a9f80d5ad5ee111"
       },
       {
         "path": "docs/technical/VIBECAST_GUEST_PARTICIPATION_V1.md",
@@ -44793,7 +44793,7 @@
         },
         {
           "path": "SYNC_PROMPTS.md",
-          "sha256": "71da0173c000088344dda5256a167400339589611b187194d02a9567ee49e3b7",
+          "sha256": "3802b4a060f2a50f27573f224d59cda40a3723c71842afcc2a9f80d5ad5ee111",
           "predecessor_sha256": "877e633734af30b3c21475a2dde47f155c38cf5174b573baea551738f140bf8e",
           "snapshot": "docs/roadmap/v1/history/20261123/vibecast-ui-predecessor-documents/SYNC_PROMPTS.md"
         }

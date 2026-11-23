@@ -8097,3 +8097,12 @@ original pair/channel choice, per `NATIVE_SURFACE_PUSH_V1.md`. No operator-file
 shipping default or fabricated positive enrollment. Real once-only generation,
 durable original custody and genuine API/native ACKs remain distinct, and actual
 widget delegation/target/field policy is still required before dispatch.
+
+## Apple Widget consent entry selection — 23 November 2026
+
+Use the ordinary per-device Widgets settings flow to call the existing Core
+consent read/revision-bound write/independent-readback operation and then genuine
+production-audience first-key enrollment. The exact selection is in
+`docs/product/NATIVE_SURFACE_PUSH_V1.md`; no debug trial flag or local preference
+can substitute for authoritative consent, an original issuer or a native clock
+qualification. Other push channels remain independently admitted.

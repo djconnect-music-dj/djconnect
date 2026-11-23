@@ -291,3 +291,36 @@ normalizes conflicting fields into readiness or triggers another send.
 `examples/client_contracts/surface_push_v1/actual-ha-wire.json` retains actual HA2026.10.0 HTTP request JSON and response bodies from the disposable producer harness, with exact product/harness and original RAW hashes. It covers unavailable/no-purpose context, registration winner and replay, generation-preserving revision+1 rotation, separate background reads, status, revoke and unknown-outcome replay. HEAD is status/header-only. Synthetic issuer/API boundaries are explicit. Fixture credentials and captured original timestamps are test data, never enrollment, a fresh lease or native delivery evidence. Do not replace original timestamps or mint a grant from this fixture.
 
 Rotation retains the registration ID, generation and original expiry; only revision increments by exactly one. The `djcsurface_` read credential is separate from paired app authentication and issuer `djcs_` mutation authority. Unknown outcomes do not return a read credential or authorize a new operation retry.
+
+## Ordinary device Widget consent and first-key entry — 23 November 2026
+
+The ordinary Widgets settings entry is selected to use the existing paired Core
+widget-consent operation, rather than retaining the debug trial as its only
+writer. An explicit per-device Widgets choice supplies user intent only. The
+client must read the current authoritative consent revision, submit one original
+operation ID against that revision, and independently read back the matching
+committed consent before attempting ordinary first-key enrollment. A local
+UserDefaults flag or historical local-only choice is not SQLite consent, an
+issuer purpose, a native clock permission or a push grant.
+
+The ordinary enrollment helper consumes the actual authenticated production
+challenge's strict audience and original context; it must not substitute the old
+HA-dev audience, operator credential file or a trial argument. Only the genuine
+App Attest/key proof and matching original Core/API registration acknowledgement
+can complete enrollment. Failed or ambiguous consent/registration remains closed;
+replay uses its original operation and deadline. Withdrawal uses the same actual
+paired consent owner and its own confirmed operation, immediately closes the
+local channel, and preserves required remote cleanup until independently
+confirmed. Reenabling is a new explicit consent transition, not restored authority
+from the previous local preference.
+
+This selection promotes only the already existing Widget consent/first-key
+entry. Live Activities, Moments alerts and Watch Smart Stack retain separate
+per-device/channel consent, original issuer and native-platform qualification.
+Widget consent or first-key acknowledgement grants none of those rights. The
+original sealed purpose, pre-I/O clock capture, independently qualified clock
+mapping, source expiry, per-target policy and original read lifetime still need
+real producers; ordinary UI enrollment does not manufacture them. The owning
+Apple implementation must test conflict, lost reply, withdrawal during each await,
+context/pair/Profile changes and independent-readback mismatch, without extra
+provider effects or positive restoration from a persisted local boolean.
