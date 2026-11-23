@@ -84,6 +84,9 @@ def validate_delta(plan: dict[str, Any]) -> list[str]:
             errors.append("maintenance: " + reason)
 
     version = d.get("schema_version")
+    if version == "djconnect-federated-planning-delta/30":
+        from ha_invitation_finalization_delta import validate as validate_invitation_finalization
+        return validate_invitation_finalization(plan, validate_delta)
     if version == "djconnect-federated-planning-delta/29":
         from ha_guest_invitation_delta import validate as validate_guest_invitation
         return validate_guest_invitation(plan, validate_delta)
@@ -1073,6 +1076,8 @@ def render_delta(p):
     if d.get("music_canvas_receipt"):
         state = "SOURCE_DELIVERED / PROTECTED_MERGED" if d.get("music_canvas_finalization_receipt") else "LOCAL / NOT_MERGED"
         intro += f"Music Canvas v1 owner-selected implementation is {state}. Core contracts, persistent preferences, lifecycle, composition and Samsung/SwitchBot adapters feed the native Apple panel. Joint real-provider/native/hardware acceptance stays Planned/OPEN; no Cast route, deployment or automatic dispatch.\n\n"
+    if d.get("ha_invitation_finalization_receipt"):
+        intro += "Same-tab invitation repair #1679 is protected source delivered with its own qualified main/package and original12-check evidence. Historical local source proof is retained below; broader physical/provider/receiver/installed acceptance remains OPEN and no product bytes or owning nodes change in this Finalization.\n\n"
     if d.get("ha_guest_invitation_receipt"):
         intro += "Bounded same-tab guest invitation correction is implemented locally, not merged. Fresh real-browser/declared HTTP proof and all54 HA probes bind the current343 product files. Existing nodes, historical publication proofs and physical/provider/installed acceptance remain unchanged; the retained source branch has an owner-approved admission exception only for this repair.\n\n"
     if d.get("ha_shared_guest_finalization_receipt"):
