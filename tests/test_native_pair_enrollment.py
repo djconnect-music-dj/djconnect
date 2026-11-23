@@ -761,3 +761,20 @@ class NativePairEnrollmentTests(unittest.IsolatedAsyncioTestCase):
         self.registration.retire()
         with self.assertRaises(SurfacePushError):
             await witness.sign(b"retired original pair cannot sign")
+
+    async def test_reentrant_signer_swap_never_invokes_replacement_custodian(self):
+        operation, _ = await self.registered_winner()
+        witness = await self.service.take_registered_enrollment(operation)
+        original = self.service.pending[self.runtime.pairing_device_id][1]
+        current = original.authority.current
+        called = []
+        def replacement(statement):
+            called.append(statement)
+            return bytes(64)
+        def swap():
+            original.authority.sign = replacement
+            return current()
+        original.authority.current = swap
+        with self.assertRaises(SurfacePushError):
+            await witness.sign(b"only the original captured signer may be invoked")
+        self.assertEqual(called, [])

@@ -11,6 +11,7 @@ The producer remains its existing iOS/widgetkit path; this grants no other chann
 from __future__ import annotations
 
 import asyncio
+import base64
 from dataclasses import dataclass
 from types import MappingProxyType
 from weakref import WeakKeyDictionary, WeakSet
@@ -70,9 +71,10 @@ class RegisteredEnrollmentWitness:
         await self.validate()
         state = _current(self)
         try:
-            signed = state.original.sign(statement)
+            signature = state.signer(statement)
+            require(type(signature) is bytes and len(signature) == 64, _ERROR, 503)
             _current(self)
-            return signed
+            return base64.urlsafe_b64encode(signature).decode("ascii").rstrip("=")
         except BaseException:
             state.broker.discard(self)
             raise
@@ -142,6 +144,9 @@ def _current(witness):
                 and state.last_monotonic <= mono < state.deadline, _ERROR, 403)
         state.last_wall_ms, state.last_monotonic = wall_ms, mono
         original.receipt(dict(state.receipt))
+        require(original.pair is state.pair and original.authority is state.authority
+                and original.consent_current is state.consent_current
+                and state.authority.sign is state.signer, _ERROR, 403)
         require(_STATES.get(witness) is state and not task.cancelling()
                 and not state.task.cancelling(), _ERROR, 403)
         return state
