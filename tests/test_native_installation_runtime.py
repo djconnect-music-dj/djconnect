@@ -230,3 +230,59 @@ class NativeInstallationRuntimeTests(fixture.NativeInstallationCustodyTests):
         self.assertNotEqual(self.pair.registration.binding, second.registration.binding)
         self.assertNotEqual(first_authority.public_key_spki, second_authority.public_key_spki)
         self.assertEqual(len(list(Path(self.temp.name).glob("partition-*.claim"))),2)
+
+    async def test_actual_sqlite_optout_uses_original_wire_revision_and_real_withdraw_ack(self):
+        await self.production()
+        await self.registered_winner()
+        await self.widget_consent(enabled=False, expected_revision=1)
+        journal = NativePairRetirementJournal(self.persistence)
+        await journal.deliver_withdrawals(self.service.publisher, self.service.transport.origin,
+            guard=lambda: None, deadline=self.service.monotonic() + 10)
+        sent = [body for path, body in self.production_calls if path.endswith("/publisher/withdraw")]
+        self.assertEqual(len(sent), 1)
+        self.assertEqual(sent[0]["consent_revision"], 1)  # Existing original publication wire.
+        row = await self.persistence.async_in_transaction(lambda tx: tx.fetchone(
+            "SELECT delivered,withdrawn FROM djconnect_native_pair_retirements"))
+        self.assertEqual(tuple(row), (0, 1))
+        await self.service._installation.prune(guard=lambda: None)
+        self.assertEqual(len(await self.service._installation.records(self.negative_store)), 1)
+
+    async def test_real_unpair_withdraw_and_retire_acks_prune_only_original_private_record(self):
+        await self.production()
+        await self.registered_winner()
+        self.registration.retire()
+        await self.settle()
+        journal = NativePairRetirementJournal(self.persistence)
+        await journal.deliver_withdrawals(self.service.publisher, self.service.transport.origin,
+            guard=lambda: None, deadline=self.service.monotonic() + 10)
+        await self.service._installation.prune(guard=lambda: None)
+        self.assertEqual(len(await self.service._installation.records(self.negative_store)), 1)
+        await journal.deliver(self.service.transport, guard=lambda: None, deadline=self.service.monotonic() + 10)
+        await self.service._installation.prune(guard=lambda: None)
+        self.assertEqual(await self.service._installation.records(self.negative_store), {})
+        row = await self.persistence.async_in_transaction(lambda tx: tx.fetchone(
+            "SELECT delivered,withdrawn FROM djconnect_native_pair_retirements"))
+        self.assertEqual(tuple(row), (1, 1))
+
+    async def test_wrong_retirement_ack_never_releases_pending_private_credential(self):
+        await self.production()
+        await self.registered_winner()
+        self.registration.retire()
+        await self.settle()
+        journal = NativePairRetirementJournal(self.persistence)
+        await journal.deliver_withdrawals(self.service.publisher, self.service.transport.origin,
+            guard=lambda: None, deadline=self.service.monotonic() + 10)
+        original = self.service.transport._post
+        async def wrong_ack(origin, path, body, headers, **kwargs):
+            reply = await original(origin, path, body, headers, **kwargs)
+            if path.endswith("/retire"):
+                reply.body["event_sha256"] = "0" * 64
+            return reply
+        self.service.transport._post = wrong_ack
+        with self.assertRaises(SurfacePushError):
+            await journal.deliver(self.service.transport, guard=lambda: None, deadline=self.service.monotonic() + 10)
+        await self.service._installation.prune(guard=lambda: None)
+        self.assertEqual(len(await self.service._installation.records(self.negative_store)), 1)
+        row = await self.persistence.async_in_transaction(lambda tx: tx.fetchone(
+            "SELECT delivered,withdrawn FROM djconnect_native_pair_retirements"))
+        self.assertEqual(tuple(row), (0, 1))

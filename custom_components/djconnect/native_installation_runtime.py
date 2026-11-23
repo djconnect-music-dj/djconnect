@@ -19,6 +19,7 @@ from .const import CONF_API_BASE_URL, CONF_DJCONNECT_INSTALL_TOKEN, CONF_HA_INST
 from .native_pair_enrollment import KEY, NativePairEnrollment, _durable_pair
 from .native_installation_key_custody import _private_read
 from .surface_issuer_transport import IssuerHTTPS
+from .persistence import PERSISTENCE_SERVICE_KEY, PersistenceService
 from .surface_push_contract import require
 from .surface_push_wire import canonical
 
@@ -193,6 +194,66 @@ class InstallationCredentialCustody:
                     _ERROR, 503)
         return records
 
+
+    @staticmethod
+    def original_event(publication):
+        event = {**publication, "api_audience": "djc-native-push/1", "event_id": publication["operation_id"]}
+        event.pop("consent_revision")
+        return event
+
+    async def journal_state(self, publication, *, guard):
+        """Actual original SQLite lifecycle; private JSON is never its witness."""
+        persistence = self.service.hass.data.get("djconnect", {}).get(PERSISTENCE_SERVICE_KEY)
+        require(isinstance(persistence, PersistenceService) and persistence.readiness.ready, _ERROR, 503)
+        guard()
+        self.selected()
+        original = canonical(self.original_event(publication))
+        def read(tx):
+            return tx.fetchone(
+                "SELECT event.delivered,event.withdrawn,pair.state,EXISTS ("
+                "SELECT 1 FROM djconnect_native_widget_consent choice "
+                "WHERE choice.local_binding=event.local_binding AND choice.enabled=0 "
+                "AND choice.revision>event.consent_revision) "
+                "FROM djconnect_native_pair_retirements event "
+                "JOIN djconnect_surface_pairs pair ON pair.binding=event.local_binding "
+                "WHERE event.event_id=? AND event.origin=? AND event.publisher_origin=? "
+                "AND event.original=? AND event.consent_revision=?",
+                (publication["operation_id"], DEFAULT_API_BASE_URL, DEFAULT_API_BASE_URL,
+                 original, publication["consent_revision"]))
+        row = await persistence.async_in_transaction(read)
+        guard()
+        self.selected()
+        require(self.service.hass.data.get("djconnect", {}).get(PERSISTENCE_SERVICE_KEY) is persistence
+                and persistence.readiness.ready, _ERROR, 503)
+        return row
+
+    async def closed_records(self, records, *, guard):
+        retained = {}
+        for key, record in records.items():
+            row = await self.journal_state(record["publication"], guard=guard)
+            # Both markers were written only by the existing authenticated exact
+            # journal ACK continuations. No age/TTL/status/capacity substitution.
+            if not row or tuple(row[:3]) != (1, 1, "retired"):
+                retained[key] = record
+        return retained
+
+    async def prune(self, *, guard):
+        task = asyncio.create_task(self._prune(guard=guard))
+        task.add_done_callback(lambda completed: completed.exception() if not completed.cancelled() else None)
+        await asyncio.shield(task)
+
+    async def _prune(self, *, guard):
+        async with self.lock:
+            store = self.store()
+            records = await self.records(store)
+            retained = await self.closed_records(records, guard=guard)
+            if retained != records:
+                guard()
+                await store.async_save(retained)
+                actual = await self.records(store)
+                guard()
+                require(actual == retained, _ERROR, 503)
+
     async def retain(self, record, publication, *, guard):
         # The worker owns the lock until the atomic file operation has actually
         # finished, even if the requesting HTTP task is cancelled mid-write.
@@ -204,6 +265,7 @@ class InstallationCredentialCustody:
         async with self.lock:
             store = self.store()
             records = await self.records(store)
+            records = await self.closed_records(records, guard=guard)
             await self.current(record)
             guard()
             operation = publication["operation_id"]
@@ -233,15 +295,17 @@ class InstallationCredentialCustody:
             if event.get("pair_binding") != publication.get("pair_binding"):
                 continue
             if "install_credential_id" in event:
-                expected = {**publication, "api_audience": "djc-native-push/1", "event_id": publication.get("operation_id")}
-                expected.pop("consent_revision", None)
+                expected = self.original_event(publication)
                 if event != expected or record["credential_id"] != event["install_credential_id"]:
                     continue
             else:
                 require(set(event) == {"contract_version", "pair_binding", "consent_revision"}
                         and type(event["consent_revision"]) is int, _ERROR, 403)
-                if event["consent_revision"] <= publication.get("consent_revision", -1):
+                if event["consent_revision"] != publication["consent_revision"]:
                     continue
+            row = await self.journal_state(publication, guard=guard)
+            if not row or (row[2] != "retired" if "install_credential_id" in event else not (row[2] == "retired" or row[3])):
+                continue
             candidates.append(record["install_token"])
         require(len(set(candidates)) == 1, _ERROR, 403)
         return candidates[0]

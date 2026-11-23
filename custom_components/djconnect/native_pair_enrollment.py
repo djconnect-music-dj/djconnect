@@ -211,6 +211,8 @@ class NativePairEnrollment:
                 except (SurfacePushError, PersistenceError):
                     pass
             await journal.deliver(transport, guard=guard, deadline=deadline)
+            if self._installation is not None:
+                await self._installation.prune(guard=guard)
         except (SurfacePushError, PersistenceError):
             # The exact event remains on disk for the next scheduled attempt.
             pass

@@ -80,9 +80,12 @@ class NativePairRetirementJournal:
             return tx.fetchall(
                 "SELECT event_id,original,consent_revision FROM djconnect_native_pair_retirements AS event "
                 "WHERE origin=? AND publisher_origin=? AND withdrawn=0 "
-                "AND EXISTS (SELECT 1 FROM djconnect_native_widget_consent AS choice "
+                "AND (EXISTS (SELECT 1 FROM djconnect_native_widget_consent AS choice "
                 "WHERE choice.local_binding=event.local_binding AND choice.enabled=0 "
-                "AND choice.revision>event.consent_revision) ORDER BY event.rowid LIMIT ?",
+                "AND choice.revision>event.consent_revision) "
+                "OR EXISTS (SELECT 1 FROM djconnect_surface_pairs AS pair "
+                "WHERE pair.binding=event.local_binding AND pair.state='retired')) "
+                "ORDER BY event.rowid LIMIT ?",
                 (origin, publisher_origin, _MAX_BATCH),
             )
 
