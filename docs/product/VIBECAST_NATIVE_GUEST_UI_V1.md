@@ -181,4 +181,3 @@ value is returned as `view.dynamics` and projected to the TV and joined guests.
 Omitting the field preserves the previous acknowledged value, initially 0.5.
 This is temporary share presentation state, not a Profile or musical preference.
 Guest-local dynamics changes remain local and never call this owner route.
-
