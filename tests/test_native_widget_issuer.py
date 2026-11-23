@@ -3,6 +3,7 @@
 These seams do not prove native enrollment, clock or provider/device delivery.
 """
 import base64
+import asyncio
 import hashlib
 import time
 from types import SimpleNamespace
@@ -220,3 +221,52 @@ class NativeWidgetIssuerTests(IsolatedAsyncioTestCase):
         self.assertEqual(calls, [("https://api.djconnect.dev", PREFIX + "challenge", {})])
         with self.assertRaises(SurfacePushError):
             transport.validate_origin("https://operator.example.com")
+
+    async def test_original_role_validates_in_real_ha_style_synchronous_callback(self):
+        owner, _, _ = await self.enrol()
+        capture = self.capture(owner)
+        loop = asyncio.get_running_loop()
+        completed = loop.create_future()
+        def callback():
+            self.assertIsNone(asyncio.current_task())
+            try:
+                owner.validate_live(capture)
+                completed.set_result(True)
+            except BaseException as error:
+                completed.set_exception(error)
+        loop.call_soon(callback)
+        self.assertTrue(await completed)
+
+    async def test_same_value_consent_callback_replacement_cannot_replace_original_custody(self):
+        owner, _, _ = await self.enrol()
+        capture = self.capture(owner)
+        first = self.f.service.pending[self.f.runtime.pairing_device_id][1]
+        original = first.consent_current
+        first.consent_current = lambda: original()
+        with self.assertRaises(SurfacePushError):
+            owner.validate_live(capture)
+        first.consent_current = original
+        with self.assertRaises(SurfacePushError):
+            owner.validate_live(capture)
+
+    async def test_actual_sqlite_off_cannot_be_overridden_by_new_callback(self):
+        owner, _, _ = await self.enrol()
+        capture = self.capture(owner)
+        first = self.f.service.pending[self.f.runtime.pairing_device_id][1]
+        original = first.consent_current
+        first.consent_current = lambda: True
+        await self.f.widget_consent(enabled=False, expected_revision=1)
+        self.assertFalse(original())
+        self.assertTrue(first.consent_current())
+        with self.assertRaises(SurfacePushError):
+            owner.validate_live(capture)
+
+    async def test_cancelled_caller_cannot_sign_or_destroy_independent_role_custody(self):
+        owner, _, _ = await self.enrol()
+        capture = self.capture(owner)
+        async def cancelled():
+            asyncio.current_task().cancel()
+            owner.validate_live(capture)
+        with self.assertRaises(asyncio.CancelledError):
+            await asyncio.create_task(cancelled())
+        owner.validate_live(capture)

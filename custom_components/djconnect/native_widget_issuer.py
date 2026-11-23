@@ -54,6 +54,7 @@ def _jwk(spki):
 class _Role:
     service: object
     first: object
+    first_original: tuple = field(repr=False)
     authority: object
     source: dict = field(repr=False)
     source_current: object = field(repr=False)
@@ -178,7 +179,10 @@ class CoreWidgetIssuerOwner(WidgetIssuerOwner):
             require(reply.status == 200 and canonical(reply.body) == canonical(ack), _ERROR, 502)
             # This new role is born only from this actual winning HTTP continuation.
             owner_handle = object.__new__(cls)
-            _OWNERS[owner_handle] = _Role(service, first, authority, dict(source), source_current,
+            original_basis = (first.pair, first.authority, first.consent_current,
+                bytes(first.spki), first.credential, bytes(first.statement), first.digest,
+                canonical(first.challenge), canonical(first.bindings))
+            _OWNERS[owner_handle] = _Role(service, first, original_basis, authority, dict(source), source_current,
                 first_state.broker, first_state.broker._generation, service._installation,
                 service.transport, service.publisher, service.selection, first_state.signer,
                 bytes(first_state.spki), capture, service.wall, service.monotonic,
@@ -189,10 +193,15 @@ class CoreWidgetIssuerOwner(WidgetIssuerOwner):
             first_state.broker.discard(witness)
 
     def _historical(self):
+        task = asyncio.current_task()
+        if task is not None and task.cancelling():
+            raise asyncio.CancelledError
         role = _OWNERS.get(self)
         require(role is not None and not role.quarantined, _ERROR, 403)
         try:
             return self._historical_check(role)
+        except asyncio.CancelledError:
+            raise
         except BaseException:
             role.quarantined = True
             raise
@@ -200,9 +209,8 @@ class CoreWidgetIssuerOwner(WidgetIssuerOwner):
     def _historical_check(self, role):
         from .native_pair_enrollment import KEY
         service = role.service
-        task = asyncio.current_task()
-        require(task is not None and not task.cancelling()
-                and not service.hass.is_stopping
+        original, basis = role.first, role.first_original
+        require(not service.hass.is_stopping
                 and service.hass.data.get("djconnect", {}).get(KEY) is service
                 and service._registered_handoffs is role.broker
                 and role.broker._generation is role.service_generation
@@ -211,7 +219,11 @@ class CoreWidgetIssuerOwner(WidgetIssuerOwner):
                 and service.selection is role.selection and service.wall is role.wall
                 and service.monotonic is role.monotonic
                 and role.first.authority.sign is role.signer
-                and role.first.spki == role.spki, _ERROR, 403)
+                and original.pair is basis[0] and original.authority is basis[1]
+                and original.consent_current is basis[2]
+                and (original.spki, original.credential, original.statement, original.digest,
+                     canonical(original.challenge), canonical(original.bindings)) == basis[3:]
+                and original.spki == role.spki, _ERROR, 403)
         role.installation.selected()
         now, mono = int(role.wall() * 1000), role.monotonic()
         require(now >= role.last_wall and mono >= role.last_mono, _ERROR, 403)
@@ -222,13 +234,15 @@ class CoreWidgetIssuerOwner(WidgetIssuerOwner):
         role = self._historical()
         try:
             require(not role.closed, _ERROR, 403)
-            role.service.guard(role.first.pair, role.first.authority, role.deadline,
-                               role.first.consent_current)
+            role.service.guard(role.first_original[0], role.first_original[1], role.deadline,
+                               role.first_original[2])
             role.authority.validate_now()
             require(role.source_current(), _ERROR, 403)
             role.base.expected.live(int(role.wall() * 1000), role.monotonic())
             self._historical()  # Reentrant owner/source callbacks cannot swap custody.
             return role
+        except asyncio.CancelledError:
+            raise
         except BaseException:
             role.closed = True
             raise
