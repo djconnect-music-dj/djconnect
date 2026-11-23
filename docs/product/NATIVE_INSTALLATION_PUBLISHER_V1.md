@@ -172,3 +172,15 @@ records linked to genuine native-installation delegation provenance. Negative
 status/withdraw/revoke retain their original scoped semantics after retirement;
 they cannot mint a fresh role or provider effect. The generic surface compiled
 closed gate, existing operator paths and activity-profile gates are unchanged.
+
+The existing withdrawal wire retains the **original publication consent
+revision**. Its negative authority is the separately committed SQLite off
+revision greater than that publication, or the same original PairJournal row
+already retired. It is never a fabricated higher wire revision. Genuine unpair
+also queues an authenticated publisher withdrawal so both the original
+withdrawal and retirement acknowledgements can be obtained. The bounded private
+negative ledger may prune only after BOTH exact original journal ACK markers
+are committed, with original event/body/origin/publisher/pair binding intact.
+Pruning uses the same private writer lock and atomic readback. Time, status,
+missing rows, a single ACK, malformed state or capacity pressure cannot discard
+pending credentials or create a positive restore path.
