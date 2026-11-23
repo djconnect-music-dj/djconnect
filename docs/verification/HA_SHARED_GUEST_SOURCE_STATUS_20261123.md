@@ -56,7 +56,10 @@ is used for a Live-impressie. No receiver, API or Apple repository was changed.
   generated projection bootstrap and `git diff --check` pass. Bandit at medium
   severity reports zero medium/high findings. Optional broader lint of changed
   roadmap files retains 12 findings identical to predecessor main in the old
-  maintenance test; no lint rule, skip or quality threshold was relaxed.
+  maintenance test; no lint rule, skip or product-quality threshold was relaxed.
+  A single immutable historical Markdown snapshot retains four original hard
+  breaks under a path-specific Git whitespace attribute; its exact bytes remain
+  protected by the delivered predecessor SHA-256.
 - Maintenance27 preserves the delivered predecessor byte-for-byte, advances
   only the eight selected existing WEB owners to In progress and leaves browser/
   media as partial Core source. Current document, source, matrix and historical

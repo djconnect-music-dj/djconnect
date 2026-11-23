@@ -1,0 +1,4 @@
+# This immutable source snapshot preserves four existing Markdown hard breaks.
+# Its exact bytes are checked against the delivered predecessor SHA-256; current
+# source files retain the default whitespace checks.
+docs/roadmap/v1/history/20261123/ha-shared-guest-predecessor-documents/docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md whitespace=-blank-at-eol
