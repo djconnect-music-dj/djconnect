@@ -847,6 +847,63 @@ class FirstPlayAdmission:
 
 
 
+@dataclass(eq=False)
+class FirstPlayPreparationAdmission(FirstPlayAdmission):
+    """Private automatic producer read role, consumed once before publication.
+
+    This is not an issued choice. It retains the original preparation deadline
+    and cannot dispatch; sealing creates a different selection actor instead of
+    renewing this actor or any result/DTO already issued to a client.
+    """
+    prepared: bool = False
+    sealed: bool = False
+    preparation_turn: object = field(default=None, init=False, repr=False)
+    preparation_frame: object = field(default=None, init=False, repr=False)
+    preparation_frame_state: tuple = field(default=(), init=False, repr=False)
+    preparation_effect_guard: object = field(default=None, init=False, repr=False)
+    preparation_delivery_guard: object = field(default=None, init=False, repr=False)
+
+    def bind(self, turn):
+        if self.preparation_turn is not None or not turn.startup_preparation:
+            raise DialogueError("first_play_context_changed", 409)
+        super().bind(turn)
+        self.preparation_turn, self.preparation_frame = turn, turn.frame
+        self.preparation_frame_state = (turn.frame.generation, turn.frame.read_context_revision,
+                                        turn.frame.pending_revision, turn.frame.result_set)
+        self.preparation_effect_guard = turn.effect_validators[-1]
+        self.preparation_delivery_guard = turn.delivery_validators[-1]
+
+    def before_dispatch(self, family, media, output_id):
+        raise DialogueError("playback_effect_not_authorized", 403)
+
+    def seal(self):
+        """Called synchronously after the producer's last genuine turn guard."""
+        self.guard()
+        turn, frame = self.preparation_turn, self.preparation_frame
+        captured = self.preparation_frame_state
+        if (self.sealed or not self.prepared or turn is None or current_turn.get() is not turn
+                or not turn.startup_preparation or turn.first_play_admission is not self
+                or turn.frame is not frame or frame.generation != captured[0]
+                or frame.read_context_revision != captured[1] or frame.pending_revision != captured[2]
+                or frame.result_set is not captured[3] or self.phase != "genres"
+                or turn.effect_started or self.output_attempted or self.output_dispatched
+                or self.selection_pending or self.play_attempted or self.play_dispatched
+                or not any(v is self.preparation_effect_guard for v in turn.effect_validators)
+                or not any(v is self.preparation_delivery_guard for v in turn.delivery_validators)):
+            raise DialogueError("first_play_context_changed", 409)
+        self.sealed = True
+        selection = FirstPlayAdmission(self.hass, self.manager, self.profile_id, self.active,
+            self.source, self.authority, self.scope, self.grant, self.locale, self.clock,
+            self.clock() + 60, time.time() + 60, self.dna_seeds, self.dna_guard, phase="genres")
+        # Remove only the exact private preparation validators. Keep every
+        # independent owner/history/source/delivery fence on the producer turn.
+        turn.effect_validators = [v for v in turn.effect_validators if v is not self.preparation_effect_guard]
+        turn.delivery_validators = [v for v in turn.delivery_validators if v is not self.preparation_delivery_guard]
+        self.withdrawn = True
+        selection.bind(turn)
+        return selection
+
+
 def _first_play_reply(admission, text, actions=(), *, state, reason=None):
     result = {"success": state != "unavailable", "text": text, "dj_text": text,
         "action": "none", "origin": "session_first_play", "playback_actions": list(actions),
@@ -898,6 +955,8 @@ async def _first_play_genres(hass, runtime, admission, backend):
     admission.phase = "genres"
     intro, generated = await _for_you_intro(hass, runtime, admission, directions)
     admission.guard()
+    if type(admission) is FirstPlayPreparationAdmission:
+        admission.prepared = True
     reply = _first_play_reply(admission, intro, actions, state="genres")
     reply.update(is_generated_text=generated,
                  text_source="generated" if generated else "runtime_acknowledgement")
@@ -931,7 +990,8 @@ async def first_play_response(hass, runtime):
     dna = _first_play_dna(hass, runtime, profile_id)
     if dna is None:
         return _first_play_reply(None, FIRST_PLAY_DNA_UNAVAILABLE[locale], state="unavailable", reason="music_dna_unavailable")
-    admission = FirstPlayAdmission(hass, manager, profile_id, active, source, authority,
+    actor = FirstPlayPreparationAdmission if turn.startup_preparation else FirstPlayAdmission
+    admission = actor(hass, manager, profile_id, active, source, authority,
         session_scope(active), history_grant_revision(hass, profile_id), locale,
         turn.history.dialogue.clock, turn.history.dialogue.clock()+60, time.time()+60, dna[0], dna[1])
     admission.bind(turn)

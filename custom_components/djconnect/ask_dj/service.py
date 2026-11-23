@@ -859,6 +859,14 @@ async def async_prepare_session_for_you(hass, runtime, context, active, history_
         await guard()
         response = await first_play_response(hass, runtime)
         await turn.guard()
+        if response.get('first_play', {}).get('state') == 'genres':
+            from ..mood_music_steering import FirstPlayPreparationAdmission
+            preparation = turn.first_play_admission
+            if type(preparation) is not FirstPlayPreparationAdmission:
+                raise DialogueError('first_play_context_changed', 409)
+            selection = preparation.seal()
+            response['first_play']['expires_in'] = max(0, min(
+                selection.deadline-selection.clock(), selection.wall_deadline-time.time()))
         history_manager.dialogue.complete(turn, response)
         return _for_you_offer_projection(active, thread, response)
     finally:
@@ -891,5 +899,7 @@ def _for_you_offer_projection(active, thread, response):
             'reason': response.get('first_play', {}).get('reason'),
             '_session_scope': session_scope(active),
             '_admission': turn.first_play_admission if turn is not None else None,
-            '_action_wall_deadline': time.time() + expires,
-            '_action_monotonic_deadline': time.monotonic() + expires}
+            '_action_wall_deadline': (turn.first_play_admission.wall_deadline if turn is not None
+                                      and turn.first_play_admission is not None else time.time() + expires),
+            '_action_monotonic_deadline': (turn.first_play_admission.deadline if turn is not None
+                                           and turn.first_play_admission is not None else time.monotonic() + expires)}

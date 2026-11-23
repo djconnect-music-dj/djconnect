@@ -8114,3 +8114,15 @@ artist + album request stays a track request. Preserve all original constraints
 through the existing Core intent and provider dispatch; verify bounded provider
 candidates before any playback write. No first-result substitution, new public
 wire or client authority. Inline speaker selection remains its existing owner.
+
+
+## For-you preparation and visible choice admission (2026-11-23)
+
+`SESSION_FOR_YOU_V1.md` distinguishes private FirstPlayPreparationAdmission
+(read/generation, original60s, no effects) from the existing FirstPlayAdmission
+(explicit selection, one newly issued original60s). Only successful preparation
+and the last real unchanged owner/source/settings/DNA/history validation may
+consume the former once to mint the latter. This does not extend any issued
+choice or alter the public for_you/expires_in wire. Polling, reconnect, rendering,
+expiry, old DTOs and a second seal never issue a new admission or provider/model
+work. Original identity and withdrawal guards remain mandatory.

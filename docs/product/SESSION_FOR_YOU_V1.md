@@ -64,9 +64,30 @@ approve its short first-person question. Unavailable or rejected narration uses
 a localized authored fallback, never a false generated-text claim. No provider
 keys, action grants or track URIs enter that narration prompt.
 
-The exact original owner/source/Session/Broadcast/settings/DNA/history grant and
-both wall/monotonic60-second deadline fence every awaited continuation and final
-dispatch. A cached card survives lease expiry, with disabled actions and an explicit
+Automatic Session-start and confirmed-Mood preparation use the private
+**FirstPlayPreparationAdmission**, a read/generation role with its
+own original wall/monotonic60-second preparation deadline. It grants no output or
+playback dispatch. The exact original owner/source/Session/Broadcast/settings/
+DNA/history grant fences every awaited continuation and the final publication.
+After all three mixes and bounded narration/fallback have successfully prepared,
+and after the last genuine owner/source/settings/DNA/history currentness check,
+this same producer may consume that preparation actor exactly once and mint a
+**distinct FirstPlayAdmission** for selection with its own original60-second
+wall/monotonic decision period. No visible choice grant existed before this seal.
+The legacy explicit launcher keeps its existing original selection lease; it
+does not become a second seal path. The new selection actor retains every
+original identity/source/currentness guard;
+only the preparation role's exact validators are replaced. A failed/expired/
+withdrawn preparation, changed frame or second seal cannot issue choices.
+
+An already issued selection actor/action/DTO is never extended or resealed.
+Reads, rendering, reconnect, expiry, old DTOs and manual choice continuations
+cannot mint this role transition. It spends no extra provider/model calls or
+retries, and no output/playback effect occurs before explicit selection. The
+existing public `for_you` / `expires_in` wire is unchanged. Its deadlines project
+the original private selection admission; they are not recreated from read time.
+The selection actor's original owner/source/Session/Broadcast/settings/DNA/
+history guards and both wall/monotonic deadlines fence final dispatch. A cached card survives lease expiry, with disabled actions and an explicit
 refresh_request (automatic:false); polling never renews it. That compatibility
 request remains manual. The additive server-owned refresh policy below is not a
 client request to synthesize or replay an Ask DJ prompt.
