@@ -1,5 +1,6 @@
 """Owner-selected For-you behavior reuses the original dialogue/effect owner."""
 from copy import deepcopy
+from time import monotonic
 from types import SimpleNamespace
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch
@@ -148,6 +149,7 @@ class ForYouTests(IsolatedAsyncioTestCase):
     async def test_cached_offer_uses_original_committed_dna_during_unrelated_save(self):
         import asyncio
         _, before = await self.prepared()
+        self.assertTrue(before['actions_available'], "The original prepared offer must have a live deadline")
         memory = self.runtime.memory
         entered, release = asyncio.Event(), asyncio.Event()
         save = memory._store.async_save
@@ -194,6 +196,9 @@ class ForYouTests(IsolatedAsyncioTestCase):
         from custom_components.djconnect.ask_dj_history import AskDJHistoryManager
         from custom_components.djconnect.domain.storage import STORE_KEY
         history = AskDJHistoryManager(store=FakeStore())
+        # Use the same real clock as the offer reader when an earlier test
+        # imported DialogueState with a synthetic clock patched.
+        history.dialogue.clock = monotonic
         storage = self.hass.data['djconnect'][STORE_KEY]
         context = SimpleNamespace(profile_id='synthetic-owner', profile=storage.household.profiles['synthetic-owner'])
         source = patch('custom_components.djconnect.reply_artwork.source_admission', return_value=(self.source, lambda: self.allowed))
