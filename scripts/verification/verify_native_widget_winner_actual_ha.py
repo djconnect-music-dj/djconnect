@@ -84,10 +84,17 @@ async def qualify(hass, manager, history, request, client):
             'music_account_id': 'source-account'})
     # The only ConfigEntry fixture setup occurs before the ordinary pair captures.
     # A real HTTP pair (rather than a forged PairJournal ACK) creates device2.
-    response = await client.post('/api/djconnect/v1/pair', json={
-        'device_id': SECOND, 'client_type': 'ios', 'pair_code': '654321'})
-    paired = await response.json()
-    assert response.status == 200 and paired['success']
+    # Ordinary pair selects the configured active runtime (unlike authenticated
+    # reads, it has no existing device token to select the second entry).
+    active_runtime = hass.data['djconnect']['runtime']
+    hass.data['djconnect']['runtime'] = second_runtime
+    try:
+        response = await client.post('/api/djconnect/v1/pair', json={
+            'device_id': SECOND, 'client_type': 'ios', 'pair_code': '654321'})
+        paired = await response.json()
+        assert response.status == 200 and paired['success'], (response.status, paired.get('error'))
+    finally:
+        hass.data['djconnect']['runtime'] = active_runtime
     second_headers = {'Authorization': 'Bearer ' + paired['device_token'],
         'X-DJConnect-Device-ID': SECOND, 'X-DJConnect-Client-Type': 'ios'}
     identities = (first_identity, {'device_id': SECOND, 'client_type': 'ios'})
