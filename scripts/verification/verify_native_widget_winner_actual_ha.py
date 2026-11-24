@@ -57,7 +57,9 @@ async def qualify(hass, manager, history, request, client):
     first_identity = dict(captured['identity'])
     first_headers = {**captured['headers'], 'X-DJConnect-Client-Type': 'ios'}
     storage = profile_storage(hass)
+    source_account = storage.household.music_accounts['source-account']
     await storage.async_upsert_music_account('source-account', 'source-spotify',
+        kind=source_account.kind, display_name=source_account.display_name,
         provider_account_id='synthetic-provider-account', linked_profile_ids=frozenset({'profile-a'}))
     await storage.async_update_profile('profile-a', preferences=replace(
         storage.household.profiles['profile-a'].preferences,
