@@ -68,7 +68,18 @@ async def qualify(hass, manager, history, request, client):
     second_runtime = DJConnectRuntime(second_entry)
     hass.data['djconnect']['second-entry'] = second_runtime
     source_entry = hass.config_entries.async_get_entry('source-entry')
+    hass.config_entries.async_update_entry(source_entry, data={**source_entry.data,
+        'music_backend': 'source-spotify', 'profile_id': 'profile-a',
+        'spotify_client_id': 'synthetic-source-client'})
     hass.data['djconnect']['source-entry'] = DJConnectRuntime(source_entry)
+    # The owning harness first establishes its ordinary manual-mode pair.
+    # Switch to the real synthetic provider only after its profile/account
+    # rows exist, before the second ordinary pair and native enrollment.
+    for entry_id in ('owner-entry', 'second-entry'):
+        paired_entry = hass.config_entries.async_get_entry(entry_id)
+        hass.config_entries.async_update_entry(paired_entry, data={**paired_entry.data,
+            'music_backend': 'source-spotify', 'profile_backend_entry_id': 'source-entry',
+            'music_account_id': 'source-account'})
     # The only ConfigEntry fixture setup occurs before the ordinary pair captures.
     # A real HTTP pair (rather than a forged PairJournal ACK) creates device2.
     response = await client.post('/api/djconnect/v1/pair', json={
@@ -325,12 +336,7 @@ async def main():
     original_save = ConfigEntryStore.async_save
     def configured_entry(identifier, data):
         if identifier in {'owner-entry', 'second-entry'}:
-            data = {**data, 'ha_install_id': 'synthetic-actual-ha', 'djconnect_install_token': TOKEN,
-                'music_backend': 'source-spotify', 'profile_backend_entry_id': 'source-entry',
-                'music_account_id': 'source-account'}
-        elif identifier == 'source-entry':
-            data = {**data, 'music_backend': 'source-spotify', 'profile_id': 'profile-a',
-                'spotify_client_id': 'synthetic-source-client'}
+            data = {**data, 'ha_install_id': 'synthetic-actual-ha', 'djconnect_install_token': TOKEN}
         return original_entry(identifier, data)
     async def initial_entries(store, data, *args, **kwargs):
         entries = data.get('entries') if isinstance(data, dict) else None
