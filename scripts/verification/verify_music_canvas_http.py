@@ -394,7 +394,8 @@ async def qualify(hass, manager, history, request, client):
         fixture_entry = SimpleNamespace(entry_id="synthetic-ha-tv", domain="samsungtv", title="TV fixture",
             data={"host": "192.0.2.55", "token": "separate-ha-remote-token"}, unique_id=str(uuid.uuid4()),
             state=SimpleNamespace(value="loaded"))
-        fixture_device = SimpleNamespace(config_entries={fixture_entry.entry_id})
+        fixture_device = SimpleNamespace(id="tv-fixture", name_by_user=None,
+                                         config_entries={fixture_entry.entry_id})
         setup_target = adapters.samsung_entry_target(fixture_entry)
         await runtime.repository.mutate(lambda s: s["devices"].update({setup_target["id"]: setup_target}), lambda: True)
         setup_calls = []
@@ -415,10 +416,14 @@ async def qualify(hass, manager, history, request, client):
             return SimpleNamespace(art=RegistryArt)
         setup_data = {"device_id": "tv-fixture", "width": 3840, "height": 2160, "orientation": "landscape"}
         entry_lookup = hass.config_entries.async_get_entry
+        entry_list = hass.config_entries.async_entries
         with patch.object(dr, "async_get", return_value=SimpleNamespace(
                    async_get=lambda key: fixture_device if key == "tv-fixture" else None)), \
              patch.object(type(hass.config_entries), "async_get_entry", lambda self, key:
                    fixture_entry if key == fixture_entry.entry_id else entry_lookup(key)), \
+             patch.object(type(hass.config_entries), "async_entries", lambda self, domain=None, **kw:
+                   [fixture_entry] if domain == "samsungtv" else entry_list(domain, **kw)), \
+             patch.object(dr, "async_entries_for_config_entry", return_value=[fixture_device]), \
              patch.object(adapters, "samsung_action", real_samsung_action), \
              patch("samsungtvws.SamsungTVWS", registry_remote):
             for fields, context, expected in (
@@ -432,8 +437,34 @@ async def qualify(hass, manager, history, request, client):
                 except ServiceValidationError as exc:
                     assert exc.translation_domain == "djconnect" and exc.translation_key == expected
             assert not setup_calls
-            await hass.services.async_call("djconnect", "music_canvas_samsung_setup", setup_data,
-                blocking=True, context=Context(user_id=owner.id))
+            from custom_components.djconnect.config_flow import DJConnectOptionsFlow
+            from homeassistant.auth.const import GROUP_ID_USER
+            from homeassistant.components.http import KEY_HASS_USER
+            from homeassistant.helpers.http import current_request
+
+            flow = DJConnectOptionsFlow(fixture_entry)
+            flow.hass, flow.handler, flow.flow_id = hass, "djconnect", "canvas-samsung-fixture-flow"
+            non_admin = await hass.auth.async_create_user("Synthetic non-admin", group_ids=[GROUP_ID_USER])
+            for requester in (None, non_admin):
+                request_token = current_request.set({KEY_HASS_USER: requester})
+                try:
+                    denied = await flow.async_step_music_canvas_samsung(setup_data)
+                    assert denied["reason"] == "canvas_samsung_admin_required"
+                finally:
+                    current_request.reset(request_token)
+
+            request_token = current_request.set({KEY_HASS_USER: owner})
+            try:
+                shown = await flow.async_step_music_canvas_samsung()
+                assert shown["type"] == "form"
+                assert shown["step_id"] == "music_canvas_samsung"
+                assert shown["data_schema"](setup_data) == setup_data
+                rejected = await flow.async_step_music_canvas_samsung({**setup_data, "device_id": "unknown"})
+                assert rejected["errors"]["base"] == "canvas_samsung_setup_failed" and not setup_calls
+                result = await flow.async_step_music_canvas_samsung(setup_data)
+                assert result["reason"] == "canvas_samsung_setup_complete"
+            finally:
+                current_request.reset(request_token)
         assert setup_calls == ["pair"] and owner.id not in storage.household.shared.ha_user_profile_ids
         paired = (await runtime.repository.read())["devices"][setup_target["id"]]
         assert paired["state"] == "ready" and "token" not in paired
@@ -582,6 +613,7 @@ async def qualify(hass, manager, history, request, client):
             "asset_configuration_uses_localized_ha_errors": True,
             "ha_admin_pairs_exact_registered_samsung_without_profile_authority_change": True,
             "tokenless_art_registration_pins_tls_and_requires_loaded_entry": True,
+            "ha_options_flow_pairs_registered_samsung_with_live_admin": True,
             "late_private_preview_after_forget_is_denied": True,
             "cancelled_private_save_drains_and_releases_all_references": True,
             "session_end_preserves_enabled_and_targets": True,

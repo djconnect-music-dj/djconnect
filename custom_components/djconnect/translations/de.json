@@ -338,6 +338,16 @@
   },
   "options": {
     "step": {
+      "music_canvas_samsung": {
+        "title": "Samsung mit Music Canvas koppeln",
+        "description": "Wähle den Samsung-Fernseher, der bereits in Home Assistant eingerichtet ist, und aktiviere den Kunstmodus. Gib bei Bedarf die Bildschirmgröße und Ausrichtung ein.",
+        "data": {
+          "device_id": "Samsung-Fernseher",
+          "width": "Breite in Pixeln",
+          "height": "Höhe in Pixeln",
+          "orientation": "Ausrichtung"
+        }
+      },
       "init": {
         "title": "DJConnect-Optionen",
         "description": "Verwalte DJConnect-Aktionen wie Musik-Backend ändern, Spotify erneut autorisieren oder erneut koppeln. Spotify is a trademark of Spotify AB. DJConnect is not affiliated with, endorsed by, or sponsored by Spotify AB.",
@@ -475,6 +485,7 @@
       }
     },
     "error": {
+      "canvas_samsung_setup_failed": "Die Kopplung konnte nicht bestätigt werden. Prüfe den Kunstmodus und die Bildschirmangaben des ausgewählten Fernsehers.",
       "repair_pairing_failed": "Erneutes Koppeln ist fehlgeschlagen. Prüfe, ob das DJConnect-Gerät erreichbar ist und einen Kopplungscode anzeigt.",
       "central_api_url_invalid": "Gib eine vollständige HTTPS-DJConnect-API-URL ein.",
       "install_token_invalid": "Gib ein DJConnect-Install-Token ein, das mit djci_ beginnt.",
@@ -499,6 +510,9 @@
       "guest_participation_unavailable": "Die Live-Freigabe, der Wunsch oder die Berechtigung hat sich geändert. Öffne die Einstellungen erneut."
     },
     "abort": {
+      "canvas_samsung_admin_required": "Melde dich als Administrator in Home Assistant an, um einen Bildschirm mit Music Canvas zu koppeln.",
+      "canvas_samsung_no_devices": "Füge den Fernseher über die Samsung Smart TV-Integration hinzu und kehre zurück, sobald er verfügbar ist.",
+      "canvas_samsung_setup_complete": "Der Samsung-Fernseher kann nun in Music Canvas ausgewählt werden.",
       "client_retired": "Dieser Client wird nicht mehr unterstützt. Wähle einen unterstützten Client.",
       "guest_participation_updated": "Teilnahme aktualisiert.",
       "guest_no_live_share": "Starte zuerst eine Live-VibeCast-Freigabe."
