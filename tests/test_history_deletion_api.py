@@ -233,7 +233,7 @@ class PairedHistoryDeleteTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(hashlib.sha256(historical.read_bytes()).hexdigest(),
                          '79fac1e077a157df0851797c84de2f1f61bc14be08f3048c703ba9acec9f2a67')
         fixture = json.loads((root / 'examples/client_contracts/session_conversation_history/archive-deletion-v1-core-consolidation-20261022-live-impression-20261119-requested-moments-20261120.json').read_text())
-        current = json.loads((root / 'examples/client_contracts/session_conversation_history/canvas-samsung-options-20261124-0261124-61124-cast-ui--a450341f.json').read_text())
+        current = json.loads((root / 'examples/client_contracts/session_conversation_history/vibecast-live-tv-layout-20261124-20261124-0261124-61124-ab35e3d9.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
         self.assertEqual(len(current['source_pins']), 359)
         self.assertEqual(hashlib.sha256((root / current['harness']).read_bytes()).hexdigest(), current['harness_sha256'])
