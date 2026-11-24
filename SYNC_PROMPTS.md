@@ -8177,3 +8177,12 @@ missing publication may be covered by an authenticated negative tombstone;
 existing rows require exact original matching. No positive restore, fake ACK,
 TTL deletion or reset of retired pairs is admitted. Version-2 negative custody
 prunes only after every original/reference has both genuine closure ACKs.
+
+
+### 24 November — native Widget reauthorization contract
+
+NATIVE_INSTALLATION_PUBLISHER_V1.md selects original actual App Attest metadata
+retention at genuine first-key ACK and the bounded own-principal Widget
+reauthorize/challenge + register paths. Reuse actual assertion crypto with
+independent native SQL once/counter/consent authority; no HostWake alias, old
+ACK restore, first-key reversal or new-build assertion claim.
