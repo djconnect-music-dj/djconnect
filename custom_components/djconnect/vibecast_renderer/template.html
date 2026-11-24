@@ -8,7 +8,13 @@
   <rect x="33" y="47" width="4" height="12" rx="2"/><rect x="40.5" y="41" width="4" height="24" rx="2"/>
   <rect x="48" y="36" width="4" height="34" rx="2"/><rect x="55.5" y="41" width="4" height="24" rx="2"/>
   <rect x="63" y="47" width="4" height="12" rx="2"/>
-</svg><span class="receiver-brand-label">DJConnect VibeCast</span></span><div class="header-clock">
+</svg><span class="receiver-brand-label">DJConnect VibeCast</span><span id="live-indicator" hidden>LIVE
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path id="sharing-hand" d="M2 2.5h9c.7 0 1.1.2 1.6.5l6.2 3.6a1.5 1.5 0 0 1-1.5 2.6l-3.5-2M2 2.5v5.8a5 5 0 0 0 6.7 0h3.7a1.4 1.4 0 0 0 0-2.8H8.3"/>
+    <use href="#sharing-hand" transform="rotate(180 12 12)"/>
+    <path d="M12 14.6l-2.2-2.2a1.55 1.55 0 0 1 2.2-2.2 1.55 1.55 0 0 1 2.2 2.2z"/>
+  </svg>
+</span></span><div class="header-clock">
   <button type="button" id="display-view-flow" class="display-view-button" aria-pressed="true" hidden>Flow</button>
   <div><time id="clock" aria-label=""></time><time id="clock-date"></time></div>
   <button type="button" id="display-view-vibescape" class="display-view-button" aria-pressed="false" hidden>VibeScape</button>

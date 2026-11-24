@@ -201,7 +201,7 @@ class SettingsConfirmationTests(unittest.IsolatedAsyncioTestCase):
         for key in ('installed','native','audible'):
             self.assertEqual(d[key],'NOT_RUN')
         self.assertEqual(hashlib.sha256((root/'scripts/verification/verify_settings_confirmation_http.py').read_bytes()).hexdigest(),d['harness_sha256'])
-        current = json.loads((root / 'examples/client_contracts/settings_confirmation_v1/canvas-recover-upload-20261124-20261124-0261124-61124-7f1efc86.json').read_text())
+        current = json.loads((root / 'examples/client_contracts/settings_confirmation_v1/vibecast-live-tv-layout-20261124-0261124-20261124-02611-7d4d59e9.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
         self.assertEqual(len(current['source_pins']), 359)
         self.assertEqual(hashlib.sha256((root / current['harness']).read_bytes()).hexdigest(), current['harness_sha256'])

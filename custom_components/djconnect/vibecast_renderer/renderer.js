@@ -169,6 +169,7 @@
   const reactionTimers=new Map();
   let guestCounter=null;
   function clearLiveStatus(){
+    e("live-indicator").hidden=true;
     if(guestCounter){guestCounter.hidden=true;guestCounter.textContent="";guestCounter.removeAttribute("aria-label");}
     for(const [node,timer] of reactionTimers){window.clearTimeout(timer);node.remove();}
     reactionTimers.clear();seenReactions.clear();
@@ -213,6 +214,7 @@
     if(!displayHost || !detail)return;
     const enabled=detail.live_enabled===true;
     if(!enabled)clearLiveStatus();
+    e("live-indicator").hidden=!enabled;
     if(!guestCounter){
       guestCounter=document.createElement("span");guestCounter.id="live-guest-count";
       document.querySelector(".session-status").appendChild(guestCounter);
@@ -841,6 +843,7 @@
   }
   function render(animate=false) {
     const languageChanged=useLanguage(); updateClock();
+    e("state").hidden=displayHost && snapshotAccepted && !ended;
     if (snapshotAccepted && !ended) e("state").textContent=text.live;
     renderSessionIcons();
     renderSessionChange();

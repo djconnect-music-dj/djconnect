@@ -16,7 +16,7 @@ async def run(**kw):
                 for p in sorted((root / 'custom_components/djconnect').rglob('*'))
                 if p.is_file() and '__pycache__' not in p.parts and p.suffix != '.pyc'}
     before_source = pins()
-    expected_source = json.loads((root / 'docs/verification/music-canvas-recover-upload-product-manifest-20261124.json').read_text())
+    expected_source = json.loads((root / 'docs/verification/vibecast-live-tv-layout-product-manifest-20261124.json').read_text())
     assert len(expected_source) == 359 and before_source == expected_source, 'exact current product inventory'
     hass, manager, sid = kw['hass'], kw['manager'], kw['sid']
     client, identity, headers = kw['client'], kw['second_identity'], kw['second_headers']

@@ -234,7 +234,7 @@ class OriginalClockActualHAProofTests(unittest.TestCase):
         proof = json.loads((root / 'examples/client_contracts/surface_push_v3/actual-ha-original-clock-context-live-impression-20261119-requested-moments-20261120.json').read_text())
         self.assertEqual(proof['contract_version'], 3)
         self.assertEqual(proof['ha_sdk_version'], '2026.10.0')
-        current = json.loads((root / 'examples/client_contracts/surface_push_v1/canvas-recover-upload-20261124-20261124-0261124-61124-3d2f33e5.json').read_text())
+        current = json.loads((root / 'examples/client_contracts/surface_push_v1/vibecast-live-tv-layout-20261124-0261124-20261124-02611-516d7284.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
         self.assertEqual(len(current['source_pins']), 359)
         self.assertEqual(current['harness'], proof['harness'])
