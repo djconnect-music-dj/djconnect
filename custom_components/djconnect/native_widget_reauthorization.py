@@ -64,6 +64,8 @@ class _Record:
     source_current: object
     deadline: float
     signer: object
+    wall: object
+    monotonic: object
     guard: object = None
     winner: object = None
     owner: object = None
@@ -128,7 +130,9 @@ class NativeWidgetReauthorization:
             record.guard()
             return self._public_challenge(record)
         service = self.service
-        now, mono = int(service.wall() * 1000), service.monotonic()
+        wall, monotonic = service.wall, service.monotonic
+        now, mono = int(wall() * 1000), monotonic()
+        require(service.wall is wall and service.monotonic is monotonic, _ERROR, 403)
         # Keep successful current owners, never promote historical status. Failed
         # and superseded operations release only RAM capacity after their window.
         for previous, expiry_mono in tuple(self.deadlines.items()):
@@ -209,10 +213,12 @@ class NativeWidgetReauthorization:
             credential = (hashlib.sha256(token.encode("ascii")).digest(), credential_id)
             record = _Record(self, operation, request, pair, authority, consent_current, spki, credential,
                 b"", "", {}, bindings, receipt, delegation, capture, paired, dict(source), source_current,
-                deadline, signer)
+                deadline, signer, wall, monotonic)
             last_clock = [now, mono]
             def check_current():
-                actual_wall, actual_mono = int(service.wall() * 1000), service.monotonic()
+                require(service.wall is wall and service.monotonic is monotonic, _ERROR, 403)
+                actual_wall, actual_mono = int(wall() * 1000), monotonic()
+                require(service.wall is wall and service.monotonic is monotonic, _ERROR, 403)
                 require(last_clock[0] <= actual_wall < min(now + 120_000, expiry)
                     and last_clock[1] <= actual_mono, _ERROR, 403)
                 last_clock[:] = [actual_wall, actual_mono]
@@ -227,6 +233,7 @@ class NativeWidgetReauthorization:
                 self._selected()
                 require(service.transport is transport and service.publisher is publisher
                     and service.selection is selection and authority.sign is signer
+                    and service.wall is wall and service.monotonic is monotonic
                     and pair.current(), _ERROR, 403)
             def guard():
                 try:
@@ -281,11 +288,11 @@ class NativeWidgetReauthorization:
                 and type(challenge["challenge_nonce"]) is str
                 and re.fullmatch(r"[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]", challenge["challenge_nonce"])
                 and type(challenge["expires_at_ms"]) is int
-                and int(service.wall() * 1000) < challenge["expires_at_ms"] <= min(now + 120_000, expiry),
+                and int(wall() * 1000) < challenge["expires_at_ms"] <= min(now + 120_000, expiry),
                 _ERROR, 502)
             record.challenge = dict(challenge)
-            record.deadline = min(record.deadline, service.monotonic() +
-                (challenge["expires_at_ms"] - int(service.wall() * 1000)) / 1000)
+            record.deadline = min(record.deadline, monotonic() +
+                (challenge["expires_at_ms"] - int(wall() * 1000)) / 1000)
             guard()
             return self._public_challenge(record)
         except BaseException:

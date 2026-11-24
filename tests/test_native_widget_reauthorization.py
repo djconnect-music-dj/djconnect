@@ -261,3 +261,26 @@ class NativeWidgetReauthorizationTests(IsolatedAsyncioTestCase):
         self.f.unit.clock[1] += 14_400
         with self.assertRaises(SurfacePushError):
             await self.controller.status(self.payload, self.headers)
+
+    async def test_original_clock_expiry_cannot_be_hidden_by_replacement_producers(self):
+        await self.controller.challenge(self.payload, self.headers)
+        original_wall, original_mono = self.native.wall(), self.native.monotonic()
+        self.f.unit.clock[0] += 121
+        self.f.unit.clock[1] += 121
+        self.native.wall = lambda: original_wall
+        self.native.monotonic = lambda: original_mono
+        with self.assertRaises(SurfacePushError):
+            await self.controller.register(self.register_body(), self.headers)
+        self.assertEqual(len(self.calls), 1)
+        self.assertIsNone(self.controller.operations[self.payload["operation_id"]].owner)
+
+    async def test_clock_replacement_during_ack_await_cannot_be_adopted_by_role(self):
+        await self.controller.challenge(self.payload, self.headers)
+        original_wall, original_mono = self.native.wall(), self.native.monotonic()
+        async def replace():
+            self.native.wall = lambda: original_wall
+            self.native.monotonic = lambda: original_mono
+        self.hook = replace
+        with self.assertRaises(SurfacePushError):
+            await self.controller.register(self.register_body(), self.headers)
+        self.assertIsNone(self.controller.operations[self.payload["operation_id"]].owner)

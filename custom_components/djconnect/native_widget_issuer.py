@@ -202,7 +202,7 @@ class CoreWidgetIssuerOwner(WidgetIssuerOwner):
         first = take_winner(winner)
         service = first.controller.service
         capture = first.capture
-        now, mono = int(service.wall() * 1000), service.monotonic()
+        now, mono = int(first.wall() * 1000), first.monotonic()
         capture.expected.live(now, mono)
         owner = object.__new__(cls)
         basis = (first.pair, first.authority, first.consent_current,
@@ -212,7 +212,7 @@ class CoreWidgetIssuerOwner(WidgetIssuerOwner):
         _OWNERS[owner] = _Role(service, first, basis, first.paired, dict(first.source),
             first.source_current, broker, broker._generation, service._installation,
             service.transport, service.publisher, service.selection, first.signer,
-            bytes(first.spki), capture, service.wall, service.monotonic,
+            bytes(first.spki), capture, first.wall, first.monotonic,
             now, mono, capture.expected.original_grant_monotonic +
                 (capture.expected.original_grant_expires_ms -
                  capture.expected.original_grant_wall_ms) / 1000)
