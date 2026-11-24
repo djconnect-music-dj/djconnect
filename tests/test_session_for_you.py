@@ -1,6 +1,6 @@
 """Owner-selected For-you behavior reuses the original dialogue/effect owner."""
 from copy import deepcopy
-from time import monotonic
+from time import monotonic, time
 from types import SimpleNamespace
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch
@@ -149,7 +149,16 @@ class ForYouTests(IsolatedAsyncioTestCase):
     async def test_cached_offer_uses_original_committed_dna_during_unrelated_save(self):
         import asyncio
         _, before = await self.prepared()
-        self.assertTrue(before['actions_available'], "The original prepared offer must have a live deadline")
+        cached = self.active.broadcast.first_play_offer
+        admission = cached.get('_admission')
+        self.assertTrue(before['actions_available'], {
+            'state': before['state'],
+            'reason': before.get('reason'),
+            'broadcast_state': self.active.broadcast.first_play_state,
+            'wall_remaining': cached.get('_action_wall_deadline', 0) - time(),
+            'monotonic_remaining': cached.get('_action_monotonic_deadline', 0) - monotonic(),
+            'admission_remaining': admission.deadline - admission.clock() if admission else None,
+        })
         memory = self.runtime.memory
         entered, release = asyncio.Event(), asyncio.Event()
         save = memory._store.async_save
