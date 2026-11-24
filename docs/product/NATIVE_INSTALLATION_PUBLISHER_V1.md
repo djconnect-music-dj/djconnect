@@ -362,3 +362,44 @@ to remain current. Core does not clamp a policy after it has been signed,
 relabel an old receipt, extend first-key nonce authority or mint permission from
 a status reply. These fields expose real server bounds; actual native-clock,
 source, consent and SDK target qualification remain separate requirements.
+
+## Ordinary paired Core reauthorization proxy
+
+The public Core paths are
+`POST /api/djconnect/v1/native/widget/reauthorize/challenge`, `/register` and
+`/status`, with normal original iOS pair headers. All closed request bodies have
+`contract_version:1`, `device_id`, `client_type:"ios"` and an original UUIDv7
+`operation_id`. Challenge additionally has exactly `first_key_receipt`, the
+original production13-field receipt as comparison DATA. Register additionally
+has exactly `apple_proof:{kind:"assertion",key_id_b64,proof_b64}`. Status has no
+additional field. No request supplies Profile, source, delegation, target,
+grant expiry, consent boolean, API challenge or Core key.
+
+Core captures the actual current durable PairJournal/Profile/provider, current
+explicit SQLite opt-in revision and **existing** private key custody before
+publication/signing. Reauthorization never generates a missing replacement key.
+It stages a genuinely new original publication under that consent and retains
+negative custody before its API call. It selects the new delegation and policy
+from the actual bound source and original verified server key bounds; all signer,
+credential, scope and clock identities are retained around awaits. The old
+receipt is verified by the genuine API, never promoted locally into a grant.
+
+A genuine API challenge is returned as closed DATA:
+`{contract_version:1,api_audience:"djc-native-push/1",operation_id,challenge,
+first_key_receipt,delegation,client_data_hash_b64}`. The last field is standard
+base64 of the exact SHA-256 clientDataHash defined by the API register contract.
+The client uses only its original genuine saved App Attest key to assert that
+hash. Core retains the actual challenge/delegation/receipt; caller register data
+cannot replace any of them. Same-intent replay uses only the exact original
+in-process capture and remaining deadlines, never a newly signed declaration.
+
+Only the real winning register continuation may consume the exact new API role
+ACK into a new sealed server-private role owner. It fences an older live role
+for the same original pair before admitting that distinct genuine new owner.
+Old operation replay keeps its original owner/handle and cannot switch to the
+replacement. Successful public register/status returns only
+`{contract_version:1,operation_id,state:"ready"}` from that retained actual RAM
+owner. Unknown/absent/restarted captures stay content-free and unavailable;
+status never creates or restores a role, key, challenge or native permission.
+No first-key nonce, policy, key-bound deadline or existing role is renewed.
+Native clock, target, field and cold-extension restoration remain separate.

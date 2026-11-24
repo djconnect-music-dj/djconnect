@@ -8206,3 +8206,12 @@ pair/Profile/Session and exact SDK-session/channel identity. Background detaches
 observation without Cast-stop or authority/status renewal. New handoff requires
 fresh original owner validation and explicit intent; real withdrawal/Stop targets
 only the owned original. No Live-share/QR/4h privilege follows from legacy token.
+# Ordinary Core Widget reauthorization proxy — 24 November 2026
+
+The exact paired challenge/register/status bodies and DATA response are selected
+in `NATIVE_INSTALLATION_PUBLISHER_V1.md`. Core alone captures actual pair/source,
+SQLite opt-in, existing key, publication and signed delegation. App supplies only
+its original receipt DATA and a fresh genuine assertion from the same saved key.
+Only actual winning API ACK yields a new opaque role; old operation/status/cold
+JSON never switches owners or regenerates keys. Native clock/target gates remain
+independent. Existing first-key and HA-dev contracts are unchanged.
