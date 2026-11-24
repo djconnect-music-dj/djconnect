@@ -153,7 +153,19 @@ class CanvasRuntime:
                 updates = {}
                 try:
                     need(authorize(), "unauthorized", 401)
-                    if kind == "setup":
+                    if kind == "setup" and data.get("recover_pending_upload") is True:
+                        need(device["state"] == "ready" and device.get("upload_pending")
+                             and not device.get("manual_takeover"), "canvas_ha_samsung_setup_incomplete", 409)
+                        pairing = {**device, "art_registry_entry_id": data["art_registry_entry_id"]}
+                        need(self.registry_art_current(pairing), "canvas_target_unavailable", 404)
+                        import functools
+                        async with asyncio.timeout(20):
+                            observation = await self.protocol(
+                                functools.partial(adapters.samsung_action, pairing, "observe"))
+                        need(isinstance(observation["current"], dict), "canvas_ha_samsung_setup_incomplete", 409)
+                        updates["upload_pending"] = False
+                        outcome["previous_upload_unverified"] = True
+                    elif kind == "setup":
                         screen = data["screen"]
                         # The setup only supplies unknown fields, never overwrites observed hardware.
                         need(not (set(screen) & set(device["screen"])), "canvas_screen_already_known", 409)

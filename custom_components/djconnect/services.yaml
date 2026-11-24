@@ -1847,6 +1847,11 @@ music_canvas_samsung_setup:
       selector:
         device:
           integration: samsungtv
+    recover_pending_upload:
+      name: Resume after an unconfirmed upload
+      description: Use only after a stalled upload. Existing TV artwork is kept. Leave the dimensions and orientation blank.
+      selector:
+        boolean:
     width:
       name: Width in pixels
       selector:

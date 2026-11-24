@@ -247,10 +247,13 @@ def register_samsung_setup(hass):
                  and registered["host"] == target["host"], "canvas_ha_samsung_target_unavailable", 404)
             screen = {key: call.data[key] for key in ("width", "height", "orientation") if key in call.data}
             validate_screen(screen)
+            recover_pending_upload = call.data.get("recover_pending_upload", False)
+            need(not recover_pending_upload or not screen, "canvas_ha_samsung_setup_incomplete", 409)
             owner = digest(["canvas_ha_admin", user.id])
             result = await runtime.manage("setup", owner, digest([owner, entry.entry_id]), {
                 "operation_id": str(uuid4()), "target_id": target["id"], "screen": screen,
                 "art_registry_entry_id": entry.entry_id,
+                "recover_pending_upload": recover_pending_upload,
             }, authorize)
             need(result["state"] == "confirmed", "canvas_ha_samsung_setup_incomplete", 409)
         except CanvasError as error:
@@ -263,4 +266,5 @@ def register_samsung_setup(hass):
             vol.Optional("width"): vol.All(int, vol.Range(min=256, max=8192)),
             vol.Optional("height"): vol.All(int, vol.Range(min=256, max=8192)),
             vol.Optional("orientation"): vol.In(("landscape", "portrait")),
+            vol.Optional("recover_pending_upload"): bool,
         }))

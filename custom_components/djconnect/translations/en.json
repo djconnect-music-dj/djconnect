@@ -345,7 +345,11 @@
           "device_id": "Samsung TV",
           "width": "Width in pixels",
           "height": "Height in pixels",
-          "orientation": "Orientation"
+          "orientation": "Orientation",
+          "recover_pending_upload": "Resume after an unconfirmed upload"
+        },
+        "data_description": {
+          "recover_pending_upload": "Use only after a stalled upload. Existing TV artwork is kept. Leave dimensions and orientation blank."
         }
       },
       "init": {
@@ -1851,6 +1855,10 @@
         "orientation": {
           "name": "Screen orientation",
           "description": "Choose the screen orientation if Music Canvas does not know it yet."
+        },
+        "recover_pending_upload": {
+          "name": "Resume after an unconfirmed upload",
+          "description": "Use only after a stalled upload. Existing TV artwork is kept. Leave dimensions and orientation blank."
         }
       }
     },

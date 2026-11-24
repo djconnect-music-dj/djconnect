@@ -345,7 +345,11 @@
           "device_id": "Televisor Samsung",
           "width": "Anchura en píxeles",
           "height": "Altura en píxeles",
-          "orientation": "Orientación"
+          "orientation": "Orientación",
+          "recover_pending_upload": "Reanudar tras una carga sin confirmar"
+        },
+        "data_description": {
+          "recover_pending_upload": "Úsalo tras una carga bloqueada. Las obras existentes se conservan en el televisor. Deja en blanco las dimensiones y la orientación."
         }
       },
       "init": {
@@ -1851,6 +1855,10 @@
         "orientation": {
           "name": "Orientación de la pantalla",
           "description": "Elige la orientación de la pantalla si Music Canvas aún no la conoce."
+        },
+        "recover_pending_upload": {
+          "name": "Reanudar tras una carga sin confirmar",
+          "description": "Úsalo tras una carga bloqueada. Las obras existentes se conservan en el televisor. Deja en blanco las dimensiones y la orientación."
         }
       }
     },

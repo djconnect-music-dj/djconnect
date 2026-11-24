@@ -3017,6 +3017,7 @@ class DJConnectOptionsFlow(config_entries.OptionsFlow):
                 vol.Optional("width"): vol.All(int, vol.Range(min=256, max=8192)),
                 vol.Optional("height"): vol.All(int, vol.Range(min=256, max=8192)),
                 vol.Optional("orientation"): vol.In(sides),
+                vol.Optional("recover_pending_upload"): bool,
             }),
             errors=errors,
         )
