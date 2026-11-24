@@ -1823,16 +1823,20 @@
       "description": "Koppel een gevonden Samsung-tv via de lokale Art Mode-API aan Music Canvas.",
       "fields": {
         "device_id": {
-          "name": "Samsung-tv"
+          "name": "Samsung-tv",
+          "description": "Kies de tv die al aan Home Assistant is toegevoegd."
         },
         "width": {
-          "name": "Breedte in pixels"
+          "name": "Breedte in pixels",
+          "description": "Vul de schermbreedte in als Music Canvas die nog niet kent."
         },
         "height": {
-          "name": "Hoogte in pixels"
+          "name": "Hoogte in pixels",
+          "description": "Vul de schermhoogte in als Music Canvas die nog niet kent."
         },
         "orientation": {
-          "name": "Schermoriëntatie"
+          "name": "Schermoriëntatie",
+          "description": "Kies de schermoriëntatie als Music Canvas die nog niet kent."
         }
       }
     },

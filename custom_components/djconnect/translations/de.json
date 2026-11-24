@@ -1823,16 +1823,20 @@
       "description": "Verbinde einen erkannten Samsung-Fernseher über seine lokale Art-Mode-API mit Music Canvas.",
       "fields": {
         "device_id": {
-          "name": "Samsung-Fernseher"
+          "name": "Samsung-Fernseher",
+          "description": "Wähle den Fernseher, der bereits zu Home Assistant hinzugefügt wurde."
         },
         "width": {
-          "name": "Breite in Pixeln"
+          "name": "Breite in Pixeln",
+          "description": "Gib die Bildschirmbreite ein, wenn Music Canvas sie noch nicht kennt."
         },
         "height": {
-          "name": "Höhe in Pixeln"
+          "name": "Höhe in Pixeln",
+          "description": "Gib die Bildschirmhöhe ein, wenn Music Canvas sie noch nicht kennt."
         },
         "orientation": {
-          "name": "Bildschirmausrichtung"
+          "name": "Bildschirmausrichtung",
+          "description": "Wähle die Bildschirmausrichtung, wenn Music Canvas sie noch nicht kennt."
         }
       }
     },

@@ -1823,16 +1823,20 @@
       "description": "Pair a discovered Samsung TV with Music Canvas using its local Art Mode API.",
       "fields": {
         "device_id": {
-          "name": "Samsung TV"
+          "name": "Samsung TV",
+          "description": "Select the TV already added to Home Assistant."
         },
         "width": {
-          "name": "Width in pixels"
+          "name": "Width in pixels",
+          "description": "Enter the screen width if Music Canvas does not know it yet."
         },
         "height": {
-          "name": "Height in pixels"
+          "name": "Height in pixels",
+          "description": "Enter the screen height if Music Canvas does not know it yet."
         },
         "orientation": {
-          "name": "Screen orientation"
+          "name": "Screen orientation",
+          "description": "Choose the screen orientation if Music Canvas does not know it yet."
         }
       }
     },

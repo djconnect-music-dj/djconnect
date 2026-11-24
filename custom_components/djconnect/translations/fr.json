@@ -1823,16 +1823,20 @@
       "description": "Associez un téléviseur Samsung détecté à Music Canvas via son API Art Mode locale.",
       "fields": {
         "device_id": {
-          "name": "Téléviseur Samsung"
+          "name": "Téléviseur Samsung",
+          "description": "Sélectionnez le téléviseur déjà ajouté à Home Assistant."
         },
         "width": {
-          "name": "Largeur en pixels"
+          "name": "Largeur en pixels",
+          "description": "Indiquez la largeur de l’écran si Music Canvas ne la connaît pas encore."
         },
         "height": {
-          "name": "Hauteur en pixels"
+          "name": "Hauteur en pixels",
+          "description": "Indiquez la hauteur de l’écran si Music Canvas ne la connaît pas encore."
         },
         "orientation": {
-          "name": "Orientation de l’écran"
+          "name": "Orientation de l’écran",
+          "description": "Choisissez l’orientation de l’écran si Music Canvas ne la connaît pas encore."
         }
       }
     },
