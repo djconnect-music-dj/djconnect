@@ -334,7 +334,12 @@ async def main():
         return original_entry(identifier, data)
     async def initial_entries(store, data, *args, **kwargs):
         entries = data.get('entries') if isinstance(data, dict) else None
-        if entries and not any(entry['entry_id'] == 'second-entry' for entry in entries):
+        # Actual ConfigEntryStore uses orjson.Fragment as its serialized entry
+        # optimization. Decode only for comparison; preserve original fragments
+        # for the real Store write instead of treating them as dictionaries.
+        import orjson
+        rows = orjson.loads(orjson.dumps(entries)) if entries else []
+        if entries and not any(entry['entry_id'] == 'second-entry' for entry in rows):
             second = configured_entry('second-entry', {'device_id': SECOND, 'client_type': 'ios',
                 'profile_id': 'profile-a', 'pair_code': '654321'})
             data = {**data, 'entries': [*entries, second.as_storage_fragment]}
