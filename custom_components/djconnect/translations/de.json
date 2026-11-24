@@ -345,7 +345,11 @@
           "device_id": "Samsung-Fernseher",
           "width": "Breite in Pixeln",
           "height": "Höhe in Pixeln",
-          "orientation": "Ausrichtung"
+          "orientation": "Ausrichtung",
+          "recover_pending_upload": "Nach einem unbestätigten Upload fortfahren"
+        },
+        "data_description": {
+          "recover_pending_upload": "Nur nach einem unterbrochenen Upload verwenden. Vorhandene Kunst bleibt auf dem Fernseher. Breite, Höhe und Ausrichtung leer lassen."
         }
       },
       "init": {
@@ -1851,6 +1855,10 @@
         "orientation": {
           "name": "Bildschirmausrichtung",
           "description": "Wähle die Bildschirmausrichtung, wenn Music Canvas sie noch nicht kennt."
+        },
+        "recover_pending_upload": {
+          "name": "Nach einem unbestätigten Upload fortfahren",
+          "description": "Nur nach einem unterbrochenen Upload verwenden. Vorhandene Kunst bleibt auf dem Fernseher. Breite, Höhe und Ausrichtung leer lassen."
         }
       }
     },

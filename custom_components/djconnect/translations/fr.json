@@ -345,7 +345,11 @@
           "device_id": "Téléviseur Samsung",
           "width": "Largeur en pixels",
           "height": "Hauteur en pixels",
-          "orientation": "Orientation"
+          "orientation": "Orientation",
+          "recover_pending_upload": "Reprendre après un envoi non confirmé"
+        },
+        "data_description": {
+          "recover_pending_upload": "Utilisez cette option après un envoi bloqué. Les œuvres existantes restent sur le téléviseur. Laissez les dimensions et l’orientation vides."
         }
       },
       "init": {
@@ -1851,6 +1855,10 @@
         "orientation": {
           "name": "Orientation de l’écran",
           "description": "Choisissez l’orientation de l’écran si Music Canvas ne la connaît pas encore."
+        },
+        "recover_pending_upload": {
+          "name": "Reprendre après un envoi non confirmé",
+          "description": "Utilisez cette option après un envoi bloqué. Les œuvres existantes restent sur le téléviseur. Laissez les dimensions et l’orientation vides."
         }
       }
     },
