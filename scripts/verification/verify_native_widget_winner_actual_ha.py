@@ -321,7 +321,15 @@ async def qualify(hass, manager, history, request, client):
         case('real_Core_context_after_prepare_is_server_metadata_not_native_clock_or_target_permission')
         pause_issue_for[0] = first_identity['device_id']
         first_prepare = {'contract_version': 1, **first_identity, 'operation_id': _operation(int(time.time() * 1000)), 'session_id': sid}
-        await raw('push/surface/widget/prepare', first_prepare, expected=403)
+        from aiohttp import ServerDisconnectedError
+        try:
+            await raw('push/surface/widget/prepare', first_prepare, expected=403)
+        except ServerDisconnectedError:
+            # Real synchronous withdrawal cancels the owned in-flight issue
+            # task. HA may close its HTTP response; that is an unknown delivery
+            # outcome, not a successful issue or an invented HTTP 403 receipt.
+            http_evidence.append({'path': 'push/surface/widget/prepare',
+                'status': None, 'transport': 'server_disconnected_during_actual_consent_off'})
         assert records[0].handle.closed and records[0].handle.purpose is None
         assert records[1].handle.purpose is purpose and purpose.is_current()
         case('actual_HTTP_consent_off_during_issue_fences_late_adoption_and_preserves_other_pair')
