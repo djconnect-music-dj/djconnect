@@ -41,6 +41,13 @@ identity through the physical effect and commit. It changes no Profile mapping
 or selection. The administrator must approve the independent Music Canvas
 connection on the TV when its firmware presents a prompt.
 
+Some Samsung Art endpoints do not issue an Art token. The explicit HA action
+can register that endpoint after the TV confirms Art Mode and returns current
+art over TLS. Core records the exact loaded Samsung entry and TLS peer digest.
+Later device effects require that entry, stable TV identity, address and peer
+certificate to match. A replaced endpoint requires another explicit setup.
+This route uses only the Art channel and does not request remote-control access.
+
 ## Native wire
 
 All native routes are POST under `/api/djconnect/v1/music_canvas/`, use the

@@ -1,5 +1,6 @@
 """Two explicit output families. No playback, Cast or SwitchBot credential copy."""
 from __future__ import annotations
+from hashlib import sha256
 from html import unescape
 from ipaddress import ip_address
 from urllib.parse import urlsplit
@@ -88,6 +89,14 @@ async def discover(hass):
     return targets
 
 
+def _art_peer_sha256(art):
+    connection = getattr(art, "connection", None)
+    socket = getattr(connection, "sock", None)
+    certificate = socket.getpeercert(binary_form=True) if socket is not None else None
+    need(bool(certificate), "canvas_pairing_denied", 409)
+    return sha256(certificate).hexdigest()
+
+
 def samsung_action(device, action, *, content=None, content_id=None):
     """Blocking protocol library is confined to an executor and one connection."""
     from samsungtvws import SamsungTVWS
@@ -99,9 +108,22 @@ def samsung_action(device, action, *, content=None, content_id=None):
             version = art.get_api_version()
             need(type(version) is str and bool(version), "canvas_samsung_unsupported", 409)
             token = art.token
-            need(type(token) is str and bool(token), "canvas_pairing_denied", 409)
-            return {"token": token, "api_version": version}
-        need(device.get("token"), "canvas_pairing_required", 409)
+            if type(token) is str and token:
+                return {"token": token, "api_version": version,
+                        "art_registry_entry_id": None, "art_tls_peer_sha256": None}
+            # Some Frames intentionally expose Art over TLS without an Art token.
+            # Only the explicit HA-admin setup can nominate the loaded registry entry.
+            entry_id = device.get("art_registry_entry_id")
+            need(entry_id, "canvas_pairing_denied", 409)
+            need(art.get_artmode() == "on", "canvas_manual_takeover", 409)
+            need(isinstance(art.get_current(), dict), "canvas_pairing_denied", 409)
+            return {"api_version": version, "art_registry_entry_id": entry_id,
+                    "art_tls_peer_sha256": _art_peer_sha256(art)}
+        if not device.get("token"):
+            pin = device.get("art_tls_peer_sha256")
+            need(device.get("art_registry_entry_id") and pin, "canvas_pairing_required", 409)
+            art.open()
+            need(_art_peer_sha256(art) == pin, "canvas_pairing_denied", 409)
         # Never call set_artmode, power, remote keys, HDMI, volume or sound APIs.
         need(art.get_artmode() == "on", "canvas_manual_takeover", 409)
         if action == "upload":
