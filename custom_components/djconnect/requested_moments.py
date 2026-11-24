@@ -23,6 +23,8 @@ from .requested_moment_inventory import (
     candidate_facts,
     feedback,
     loaded_facts,
+    BULLETIN_REASONS,
+    subject_context,
 )
 from .requested_moment_proof import RequestedMomentProof, display_admission
 from .transport_operations import OperationError, operation_created_ms
@@ -145,6 +147,7 @@ async def inventory(hass, authority, payload):
         "session_id": active.session_id,
         "language": language(active),
         "title": "Ask DJ: Moments",
+        "subject_context": subject_context(existing),
         "types": descriptors(existing, manager),
     }, 200
 
@@ -214,7 +217,7 @@ def domain_response(request, *, initial=False):
         "language": language(captured.original_active),
         "state": state,
         "pending_text": request.pending_text,
-        "message": feedback(captured.original_active, state),
+        "message": feedback(captured.original_active, state, reason=request.error),
         "result": result,
         "entry_id": request.proof.entry_id if request.proof and request.proof.committed else None,
         "moment_id": request.moment.moment_id
@@ -359,11 +362,20 @@ async def _fact(hass, request, manager, authority):
         if f.key in TYPE_KEYS[request.type_id]
     ]
     if not candidates and captured.catalog:
-        facts = await session_facts_resolver(hass).resolve(
-            captured.catalog,
-            authorize=lambda: _guard(request, manager, authority),
-            credits_only=request.type_id in {"recording_story", "work_composers"},
-        )
+        resolver = session_facts_resolver(hass)
+        if request.type_id == "artist_story":
+            from .ask_dj.public_research import operation_source_outcome
+            outcome = operation_source_outcome.get()
+            resolved = await resolver.resolve_artist_story(
+                captured.catalog, authorize=lambda: _guard(request, manager, authority),
+                source_temporary=lambda: outcome is not None and outcome.get("temporary"))
+            facts = tuple((*captured.facts, *resolved))
+        else:
+            facts = await resolver.resolve(
+                captured.catalog,
+                authorize=lambda: _guard(request, manager, authority),
+                credits_only=request.type_id in {"recording_story", "work_composers"},
+            )
         captured.facts = facts
         candidates = [
             f
@@ -459,6 +471,7 @@ async def _bulletin(hass, request, manager, authority):
 
     service = manager._bulletin_service
     if service is None:
+        request.error = "bulletin_sources_temporarily_unavailable"
         return None, None
     ready = await service.requested(
         request.captured.profile,
@@ -466,6 +479,9 @@ async def _bulletin(hass, request, manager, authority):
         provider=request.captured.bulletin_provider,
     )
     if ready is None:
+        _, reason = service.availability(
+            request.captured.profile, provider=request.captured.bulletin_provider)
+        request.error = reason if reason in BULLETIN_REASONS else "bulletin_sources_temporarily_unavailable"
         return None, None
     candidate, work = ready
 
@@ -520,6 +536,15 @@ async def request(hass, authority, payload):
         x for x in descriptors(captured, manager) if x["type_id"] == payload["type_id"]
     )
     if not descriptor["available"]:
+        reason = descriptor["reason"]
+        if payload["type_id"] == "dj_bulletin" and reason in BULLETIN_REASONS:
+            row = Request(identifier, captured, payload["type_id"], descriptor["pending_text"])
+            row.state = ("temporarily_unavailable" if reason in {
+                "bulletin_sources_pending", "bulletin_sources_temporarily_unavailable"
+            } else "not_found")
+            row.error = reason
+            b.requests[identifier] = row
+            return domain_response(row), 200
         raise OperationError(descriptor["reason"], 409)
     row = Request(identifier, captured, payload["type_id"], descriptor["pending_text"])
     b.requests[identifier] = row
@@ -550,9 +575,11 @@ async def request(hass, authority, payload):
             _guard(row, manager, authority)
             if moment is None:
                 row.state = (
-                    "temporarily_unavailable" if source_outcome.get("temporary") else "not_found"
+                    "temporarily_unavailable" if source_outcome.get("temporary")
+                    or row.error in {"bulletin_sources_pending", "bulletin_sources_temporarily_unavailable"}
+                    else "not_found"
                 )
-                row.error = "moment_request_" + row.state
+                row.error = row.error or "moment_request_" + row.state
                 return domain_response(row), 200
             deadline = min(
                 captured.captured_at + CAPTURE_SECONDS,

@@ -3,13 +3,15 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import suppress
+from dataclasses import replace
 from datetime import timedelta
 import logging
 import time
 
-from .bulletin_builder import BulletinBuilder
+from .bulletin_builder import BulletinBuilder, select_news_pair
 from .bulletin_intake import FeedCollector, POLL_SECONDS, PRIVATE_SOURCES, SOURCES
 from .bulletin_runtime import capture_work
+from .bulletin_source_policy import private_headlines
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -62,6 +64,24 @@ class BulletinService:
         async with self._build_lock:
             await self._poll()
 
+    def _prepared_for_request(self, work):
+        candidate, original = self.builder._candidate, self._work
+        if candidate is None or original is None or original.owner != work.owner:
+            return None
+        expected = replace(work.session, explicit_request=original.session.explicit_request)
+        # The paired explicit endpoint captures a fresh provider tuple. Private
+        # headlines came from the feeds directly and did not use that provider.
+        if private_headlines(candidate.items) is not None:
+            expected = replace(expected, source_generation=original.session.source_generation)
+        if original.session != expected or not candidate.eligible(
+                session=original.session, now=self.wall(), monotonic=self.monotonic()):
+            return None
+        try:
+            original.guard()
+        except PermissionError:
+            return None
+        return candidate, original
+
     async def requested(self, owner, guard, *, provider=None):
         """Explicit priority uses the same private collector, builder and once limits."""
         async with self._build_lock:
@@ -71,22 +91,34 @@ class BulletinService:
             work = capture_work(self.manager, owner, explicit=True,provider_override=provider)
             if work is None:
                 return None
+            prepared = self._prepared_for_request(work)
+            if prepared is not None:
+                candidate, original = prepared
+                requesting = work
+
+                def both_current():
+                    original.guard()
+                    requesting.guard()
+
+                def take_current():
+                    guard()
+                    both_current()
+                    if self.closed or self._work is not original:
+                        raise PermissionError("bulletin_requested_withdrawn")
+
+                taken = await self.builder.take(candidate, session=original.session, guard=take_current)
+                if taken is None:
+                    return None
+                return replace(taken, session=work.session), replace(work, guard=both_current)
             self._work = work
             def current():
                 guard()
                 work.guard()
                 if self.closed or self._work is not work:
                     raise PermissionError('bulletin_requested_withdrawn')
-            from dataclasses import replace
-            existing = self.builder._candidate
-            if (existing is not None and existing.session == replace(work.session,explicit_request=False)
-                    and existing.eligible(session=existing.session,now=self.wall(),monotonic=self.monotonic())):
-                candidate = replace(existing,session=work.session)
-                self.builder._candidate = candidate
-            else:
-                items = await self.collector.collect(now=self.wall())
-                current()
-                candidate = await self.builder.prepare(items,session=work.session,guard=current)
+            items = await self.collector.collect(now=self.wall())
+            current()
+            candidate = await self.builder.prepare(items,session=work.session,guard=current)
             current()
             if candidate is None and any(s['failures'] for s in self.collector._state.values()):
                 from .ask_dj.public_research import note_temporary_source_failure
@@ -94,6 +126,32 @@ class BulletinService:
             if candidate is None or await self.builder.take(candidate,session=work.session,guard=current) is None:
                 return None
             return candidate, work
+
+    def availability(self, owner, *, provider=None):
+        """Original loaded evidence only: no feed IO, task, model or reservation."""
+        if self.closed or self.builder._failed:
+            return False, "producer_unavailable"
+        work = capture_work(self.manager, owner, explicit=True, provider_override=provider)
+        if work is None:
+            return False, "producer_unavailable"
+        now = self.wall()
+        if self._prepared_for_request(work) is not None:
+            work.guard()
+            return True, None
+        if self.builder._state is None or self._build_lock.locked():
+            return False, "bulletin_sources_pending"
+        states = self.collector._state
+        if any(source.source_id not in states for source in self.collector.sources):
+            return False, "bulletin_sources_pending"
+        items = tuple(item for state in states.values() for item in state["items"])
+        selected, reason = select_news_pair(items, now=now, monotonic=self.monotonic,
+                                            reservations=self.builder._state["reservations"])
+        work.guard()
+        if selected is not None:
+            return True, None
+        if any(state["failures"] for state in states.values()):
+            return False, "bulletin_sources_temporarily_unavailable"
+        return False, reason
 
     async def _poll(self):
         """Collect public metadata; prepare for an original owner, NEVER publish."""

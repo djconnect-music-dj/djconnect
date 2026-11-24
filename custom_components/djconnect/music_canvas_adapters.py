@@ -1,8 +1,26 @@
 """Two explicit output families. No playback, Cast or SwitchBot credential copy."""
 from __future__ import annotations
+from ipaddress import ip_address
 from urllib.parse import urlsplit
+from uuid import UUID
 
-from .music_canvas import CanvasError, need
+from .music_canvas import CanvasError, digest, need
+
+
+# Prefer the original target to preserve existing Canvas IDs whenever advertised.
+SAMSUNG_SSDP_TARGETS = (
+    "urn:schemas-upnp-org:device:MediaRenderer:1",
+    "urn:samsung.com:device:RemoteControlReceiver:1",
+    "urn:samsung.com:service:MainTVAgent2:1",
+    "urn:schemas-upnp-org:service:RenderingControl:1",
+)
+
+
+def _samsung_target(udn, host, name):
+    key = "samsung:" + digest(udn)[:32]
+    return dict(id=key, name=str(name or "Samsung")[:128], adapter="samsung",
+                host=host, stable_identity=udn, state="discovered", screen={},
+                epoch=0, owned_content=[])
 
 
 async def discover(hass):
@@ -24,20 +42,44 @@ async def discover(hass):
             targets[key] = dict(id=key, name=device.name_by_user or device.name or "SwitchBot",
                                 adapter="switchbot", ha_device_id=device.id,
                                 state="needs_setup", screen={}, epoch=0, owned_content=[])
-    for info in await async_get_discovery_info_by_st(hass, "urn:schemas-upnp-org:device:MediaRenderer:1"):
-        description = info.upnp or {}
-        manufacturer = str(description.get("manufacturer") or "").lower()
-        udn = description.get("UDN") or info.ssdp_usn
-        if "samsung" not in manufacturer or not udn:
+    samsung_hosts = set()
+    for search_target in SAMSUNG_SSDP_TARGETS:
+        for info in await async_get_discovery_info_by_st(hass, search_target):
+            description = info.upnp or {}
+            manufacturer = str(description.get("manufacturer") or "").lower()
+            udn = description.get("UDN") or info.ssdp_usn
+            if "samsung" not in manufacturer or not isinstance(udn, str) or not udn:
+                continue
+            try:
+                host = urlsplit(info.ssdp_location or "").hostname
+            except ValueError:
+                continue
+            if not host or host in samsung_hosts:
+                continue
+            if search_target != SAMSUNG_SSDP_TARGETS[0]:
+                udn = udn.partition("::")[0]
+                if not udn:
+                    continue
+            target = _samsung_target(udn, host, description.get("friendlyName"))
+            targets[target["id"]] = target
+            samsung_hosts.add(host)
+    for entry in hass.config_entries.async_entries("samsungtv"):
+        host, identifier = entry.data.get("host"), entry.unique_id
+        if entry.state.value != "loaded" or not isinstance(host, str) or not isinstance(identifier, str):
             continue
-        host = urlsplit(info.ssdp_location).hostname
-        if not host:
+        try:
+            address = ip_address(host)
+            uid = UUID(identifier.removeprefix("uuid:"))
+        except ValueError:
             continue
-        from .music_canvas import digest
-        key = "samsung:" + digest(str(udn))[:32]
-        targets[key] = dict(id=key, name=str(description.get("friendlyName") or "Samsung")[:128],
-                            adapter="samsung", host=host, stable_identity=str(udn),
-                            state="discovered", screen={}, epoch=0, owned_content=[])
+        if address.is_loopback or address.is_multicast or address.is_unspecified:
+            continue
+        host = str(address)
+        if host in samsung_hosts:
+            continue
+        target = _samsung_target("uuid:" + str(uid), host, entry.title)
+        targets.setdefault(target["id"], target)
+        samsung_hosts.add(host)
     return targets
 
 

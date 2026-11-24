@@ -14,6 +14,7 @@ class VibeCastUIFinalizationTests(unittest.TestCase):
     def test_actual_publication_preserves_complete_source_predecessor(self):
         self.assertEqual(validate(self.plan), [])
         restored = copy.deepcopy(self.plan['planning_maintenance'])
+        restored.pop('vibecast_baseline_receipt')
         restored.pop('vibecast_ui_finalization_receipt')
         restored['schema_version'] = 'djconnect-federated-planning-delta/31'
         self.assertEqual(restored, load(ROOT/'history/20261124/vibecast-ui-source-freeze-maintenance-v31.json'))

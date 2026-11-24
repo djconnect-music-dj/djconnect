@@ -17,7 +17,7 @@ class DisplayAdmissionMaintenanceTests(unittest.TestCase):
         self.assertEqual(validate(self.plan), [])
         self.assertEqual(
             self.plan["planning_maintenance"]["schema_version"],
-            "djconnect-federated-planning-delta/32",
+            "djconnect-federated-planning-delta/33",
         )
         self.assertIn("wire NOT_FROZEN, runtime B_SOFTWARE_QUALIFIED_NOT_INSTALLED", render(self.plan)["README.md"])
 
@@ -36,7 +36,7 @@ class DisplayAdmissionMaintenanceTests(unittest.TestCase):
         # original scope rather than rewriting it through later source Finalizations.
         if p["planning_maintenance"]["schema_version"] in {
             "djconnect-federated-planning-delta/18", "djconnect-federated-planning-delta/19",
-            "djconnect-federated-planning-delta/20", "djconnect-federated-planning-delta/21", 'djconnect-federated-planning-delta/22', 'djconnect-federated-planning-delta/23', 'djconnect-federated-planning-delta/24', 'djconnect-federated-planning-delta/25', 'djconnect-federated-planning-delta/26', 'djconnect-federated-planning-delta/27', 'djconnect-federated-planning-delta/28', 'djconnect-federated-planning-delta/29', 'djconnect-federated-planning-delta/30', 'djconnect-federated-planning-delta/31', 'djconnect-federated-planning-delta/32',
+            "djconnect-federated-planning-delta/20", "djconnect-federated-planning-delta/21", 'djconnect-federated-planning-delta/22', 'djconnect-federated-planning-delta/23', 'djconnect-federated-planning-delta/24', 'djconnect-federated-planning-delta/25', 'djconnect-federated-planning-delta/26', 'djconnect-federated-planning-delta/27', 'djconnect-federated-planning-delta/28', 'djconnect-federated-planning-delta/29', 'djconnect-federated-planning-delta/30', 'djconnect-federated-planning-delta/31', 'djconnect-federated-planning-delta/32', 'djconnect-federated-planning-delta/33',
         }:
             references = p["planning_maintenance"]["document_references"]
             p["planning_maintenance"] = load(ROOT / "history/20261120/live-impression-freeze-maintenance-v17.json")
@@ -44,8 +44,11 @@ class DisplayAdmissionMaintenanceTests(unittest.TestCase):
         receipt = p["planning_maintenance"]["display_admission_receipt"]
         receipt.update(phase="CONTRACT_REVIEW", runtime="NOT_IMPLEMENTED",
                        source_delivery="UNPUBLISHED")
-        self.assertEqual(validate(p), [])
-        self.assertIn("source UNPUBLISHED", render(p)["README.md"])
+        from vibecast_baseline_delta import predecessor_files
+
+        with predecessor_files():
+            self.assertEqual(validate(p), [])
+            self.assertIn("source UNPUBLISHED", render(p)["README.md"])
 
     def test_b_implementation_cannot_promote_a_or_replace_its_exact_design_review(self):
         for key, value in [("reviewed_sha", "0" * 40), ("scope", "A_AND_B"),

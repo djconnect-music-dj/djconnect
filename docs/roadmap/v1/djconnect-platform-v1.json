@@ -37594,7 +37594,7 @@
     }
   ],
   "planning_maintenance": {
-    "schema_version": "djconnect-federated-planning-delta/32",
+    "schema_version": "djconnect-federated-planning-delta/33",
     "decision_id": "DJC-DJ-PRESENCE-ROADMAP-DESIGN-V1-20261011",
     "decision_url": "https://github.com/pcvantol/djconnect/issues/1101#issuecomment-6110375785",
     "design_date": "2026-10-11",
@@ -44826,6 +44826,72 @@
       ],
       "source_readback_path": "docs/verification/vibecast-ui-source-publication-readback-20261124.json",
       "source_readback_sha256": "163956476d3dde74d77bd4dbc82b098d8d30cc098a30b445bb4e5ea94242fc78"
+    },
+    "vibecast_baseline_receipt": {
+      "predecessor_sha256": "f371f0317b7b266001616c8ba60d419314ee81f5943c281f6d4282d7da5659b4",
+      "assignment_id": "DJC-VIBECAST-UI-IMPROVEMENTS-20261123",
+      "source_delivery": "LOCAL_IMPLEMENTATION_NOT_MERGED",
+      "overall_acceptance": "OPEN",
+      "installed": "NOT_RUN",
+      "deployment": "NOT_RUN",
+      "real_provider": "NOT_RUN",
+      "physical_satellite": "NOT_RUN",
+      "automatic_dispatch": false,
+      "consumer_writes": false,
+      "retained_files": [
+        {
+          "path": "API_CONTRACT.md",
+          "previous_sha256": "365f0331ac84c4369c242af10af089b9c33b83693f89fc3f68b258ea039f31ca",
+          "current_sha256": "6499e603685efb2f1e5baa06e1526814b13970e9e2dfa192ad0ce75c62e07521"
+        },
+        {
+          "path": "ARCHITECTURE_PRINCIPLES.md",
+          "previous_sha256": "0486e39e3eabc4eb506fa849a8f990bb575a1940515758d0a9a954a1bb5e1637",
+          "current_sha256": "f91168f2fdb78934e4650432e0713b1f33162649fc43d779c9c423961ae7c2e6"
+        },
+        {
+          "path": "SYNC_PROMPTS.md",
+          "previous_sha256": "1b2c9f88149aa60d99b76d9cbf6a82f4da03dbb9637e6a87e73532fd1764dcc1",
+          "current_sha256": "cb5dd6f20b5bbe1a1aae7a7ef45be55e7fa6e604708e38c0b7b4231b9fe761a2"
+        },
+        {
+          "path": "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+          "previous_sha256": "142e8d77c93be69a689ed45ba8c2ef275029b55c3f31b8d923434084313703f5",
+          "current_sha256": "d737d5e4041400879430bac8f464333a4b11d98969acd5a5defb0c1fcb86ba8d"
+        },
+        {
+          "path": "docs/technical/VIBECAST_GUEST_PARTICIPATION_V1.md",
+          "previous_sha256": "cc83bdabe475acc9125fd0023434553299645744427906f683df8fa8399aecbb",
+          "current_sha256": "e8223f327175c2baff9e1c82e59343cb83f5e42d2a235bc301389c8a52b5ab32"
+        },
+        {
+          "path": "tests/browser/vibecast_display_flow.cjs",
+          "previous_sha256": "477bd70f52ae1acc620ecba2911438b72aa385f8b5bd098d680d27c2612cceab",
+          "current_sha256": "76958fe9a6be6219aad278c62fd8d38881f1ff5b773c6d60b3f0b0edaeb91dff"
+        }
+      ],
+      "evidence": {
+        "product_manifest": {
+          "path": "docs/verification/vibecast-baseline-product-manifest-20261124.json",
+          "sha256": "31d280ec594d6f7aba61660cfd60427e3cfecd2a893678e5d9f6a90f6670117a"
+        },
+        "qualification": {
+          "path": "docs/verification/vibecast-baseline-qualification-20261124.json",
+          "sha256": "863447314a1fe4213bdd2bae76cb4ef9e4d3677309159e660030b3e702608434"
+        },
+        "live_ui": {
+          "path": "docs/verification/vibecast-baseline-live-actual-ha-20261124.json",
+          "sha256": "a342a9f297edbce7978250e9dff8bdba61a542efed5a89e4733ecc425a67f400"
+        },
+        "browser": {
+          "path": "docs/verification/vibecast-baseline-browser-20261124.json",
+          "sha256": "8f7b694e8b2d0f85b4f1943ba98ca99f095232d21bf85f8b7852628927b642bf"
+        },
+        "derivation": {
+          "path": "docs/verification/vibecast-baseline-receipt-derivation-20261124.json",
+          "sha256": "08b43e275e50f5f6b48e394c73647225a11801e31880066cecb125b202338b58"
+        }
+      }
     }
   }
 }

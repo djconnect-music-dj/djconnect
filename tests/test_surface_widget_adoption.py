@@ -381,9 +381,9 @@ class WidgetActualHAContractTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         wire = json.loads((root / 'examples/client_contracts/surface_push_v1/widget-adoption-actual-ha-live-impression-20261119-requested-moments-20261120.json').read_text())
         self.assertEqual(wire['ha_sdk_version'], '2026.10.0')
-        current = json.loads((root / 'examples/client_contracts/surface_push_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--10405809.json').read_text())
+        current = json.loads((root / 'examples/client_contracts/surface_push_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--ae0a6590.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
-        self.assertEqual(len(current['source_pins']), 356)
+        self.assertEqual(len(current['source_pins']), 359)
         self.assertEqual(current['harness'], wire['harness'])
         self.assertEqual(current['harness_sha256'], wire['harness_sha256'])
         extension = current['receipt']['extension']

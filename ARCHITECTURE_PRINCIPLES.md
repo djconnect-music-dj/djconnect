@@ -332,3 +332,13 @@ execution and semantic/effect/audio acceptance are separate gates. The contract
 is docs/verification/NATIVE_CLIENT_GOLDEN_CONTRACT_V1.md. No developer overlay or
 catalogue ID becomes execution authority; expensive native runs remain explicitly
 manual/release-relevant and provider-free protocol regressions may run per PR.
+
+## Native Cast display transport
+
+The [Cast B bridge](docs/product/VIBECAST_NATIVE_CAST_B_BRIDGE_V1.md) is a
+separate bounded transport into the existing paired owner and B claim/display
+factories. SDK device metadata conveys no authority. A one-use RAM bootstrap
+authorizes only claim creation; ordinary owner admission remains mandatory.
+Existing B same-origin/framing policy and legacy broadcast-view grants stay
+separate. Receiver rendering consumes the one Core renderer through a pinned
+export; no durable receiver intelligence or second display principal is created.

@@ -1,0 +1,669 @@
+{
+  "mode": "write",
+  "source_before_after_equal": true,
+  "product_files": 359,
+  "all54_executions_success": true,
+  "bindings": [
+    {
+      "test": "test_artist_collections_qualification.ArtistCollectionsQualificationTests.test_original_paired_http_offer_proof_matches_current_source",
+      "predecessor": "examples/client_contracts/artist_collections_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--c106f24f.json",
+      "predecessor_sha256": "ce808b9cd22fa42f811d1050415c9141316e2ca0df215c5ba051e821408e2623",
+      "current": "examples/client_contracts/artist_collections_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--edd3acd7.json",
+      "current_sha256": "4d6c48640c6ec7d3feb090342ec99afa77bd788e553178eee8d74dc5b9cd682f",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_ask_dj_recording_production.RecordingProductionTests.test_current_actual_ha_receipt_binds_all_products_without_quality_or_native_claim",
+      "predecessor": "examples/client_contracts/ask_dj_recording_production_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--1079da5d.json",
+      "predecessor_sha256": "0e93783cb46ba4cdd5f9b1a1faeeb918cc9386e83a683bc5d37a88a1f33b99a4",
+      "current": "examples/client_contracts/ask_dj_recording_production_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--f0bc61fb.json",
+      "current_sha256": "0a4877df2225ac9ce253caa8ec9315cbc1eb89d00c9909014f9a71a586f215f9",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_bulletin_manual_speech_contract.BulletinManualSpeechContractTests.test_actual_paired_manual_use_denial_and_withdrawal_join_current_source",
+      "predecessor": "examples/client_contracts/bulletin_manual_speech_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--72b7e8a1.json",
+      "predecessor_sha256": "2013fcfab01b2c7eee00b6c41a0cd97a5ccd94ed6f279279e675fdf7ade43343",
+      "current": "examples/client_contracts/bulletin_manual_speech_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--3d5fa976.json",
+      "current_sha256": "657fc4714789be16c88ee98bf6aaf01b39752889c6e5791bf486c6b645e04a34",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_for_you_late_confirmation_contract.ForYouLateConfirmationContractTests.test_original_source_sample_confirms_same_mix_without_second_dispatch",
+      "predecessor": "examples/client_contracts/for_you_late_confirmation_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--a29c5519.json",
+      "predecessor_sha256": "ef31dd42e76221a4da4902d43edbf65a1fe2203e0bfc74d53fc462ba6a1042ae",
+      "current": "examples/client_contracts/for_you_late_confirmation_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--119b4536.json",
+      "current_sha256": "b297f7f9fceab002dc5888df0f7fd65a278408aa8fd64ebe6b39791efc3086ad",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_installation_management.ManagementGrammarTests.test_original_actual_HA_receipt_binds_current_source_and_boundaries",
+      "predecessor": "examples/client_contracts/installation_management_preparation_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--26d7659d.json",
+      "predecessor_sha256": "609e09aeba71361665857db98798b2134190b351493b20b333d56e5fd881f381",
+      "current": "examples/client_contracts/installation_management_preparation_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--49b54be0.json",
+      "current_sha256": "59312a306fa7f7ad445a1e4812449160a149ade0dd147cc8c8a8c08fd3956518",
+      "field_provenance": {
+        "actual_HA_auth_users_tokens_middleware": "actual raw field",
+        "cases": "actual raw field",
+        "classification": "actual raw field",
+        "native_or_push_acceptance": "actual raw field",
+        "provider_or_device_effect": "actual raw field",
+        "real_service_key_or_custody_effect": "actual raw field",
+        "source_sha256": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_live_impression.LiveImpressionTest.test_tracked_actual_ha_http_receipt_binds_final_source_and_declared_fixture_scope",
+      "predecessor": "examples/client_contracts/live_impression_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--ccfd9f08.json",
+      "predecessor_sha256": "e2fb298e5bef97c08bdb17425f657840fed652407e07717d571ef61cb8c9d632",
+      "current": "examples/client_contracts/live_impression_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--9c2464db.json",
+      "current_sha256": "5b2ce005fdc2edaceca1f91207d1dfdc47dd4b21a350e57d3792bfd4cc41edfe",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "raw_selected_file_count": "actual raw selected-file count",
+        "raw_selected_product_count": "actual raw selected-product count",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_passive_field_expiry_contract.PassiveFieldExpiryContractTests.test_actual_original_frame_survives_only_shorter_field_expiry",
+      "predecessor": "examples/client_contracts/passive_field_expiry_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--e134530a.json",
+      "predecessor_sha256": "5f5cf4cb903ef6746010b2b433ff5a3c345cf80fc36b67fdd5a9466fa742af0a",
+      "current": "examples/client_contracts/passive_field_expiry_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--23d2a053.json",
+      "current_sha256": "ebaacdad5416565a43cd7860c863d82e65d67a5e925965d5a33d23b06e46cc65",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_profile_spotify_reconnect_qualification.ProfileSpotifyReconnectQualificationTests.test_current_source_has_profile_owned_callback_and_shared_caller_proof",
+      "predecessor": "examples/client_contracts/profile_spotify_reconnect_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--48e33bb3.json",
+      "predecessor_sha256": "e48a88f6b8626557e7ef8722ec81125e2ae946004fd098c8bacc410465c1d6dd",
+      "current": "examples/client_contracts/profile_spotify_reconnect_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--622eabf4.json",
+      "current_sha256": "df5a9786401a218f3de8e5e0c4625052d9ae0f7a20a53d01a15209c277359dd3",
+      "field_provenance": {
+        "canonical_view_probe": "actual independent authority-view probe",
+        "harness_pins": "actual executed current harness/helper map",
+        "native_installed_acceptance": "explicit unexecuted provider/device boundary",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_session_first_play.FirstPlayWireEvidenceTests.test_current_for_you_source_and_frozen_legacy_first_play_evidence_are_distinct",
+      "predecessor": "examples/client_contracts/session_for_you_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--0f1d0fe6.json",
+      "predecessor_sha256": "46dfacfe215fdf9963080c202d7ea5ba2eaa16e515f03ac7747f74e026654a3f",
+      "current": "examples/client_contracts/session_for_you_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--6e8af982.json",
+      "current_sha256": "f6b837a12fa9fe82b62624b87318726b87a9b04ebff0b7346008af2a9b39bdae",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_spotify_volume_action_errors.SpotifyVolumeActionErrorTests.test_actual_paired_ha_volume_receipt_binds_the_current_product_and_verifier",
+      "predecessor": "examples/client_contracts/spotify_volume_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--393cf9b3.json",
+      "predecessor_sha256": "16471bffc491645e5476d0d2025b057d22020e91b3c2a7f24c0d616537463afc",
+      "current": "examples/client_contracts/spotify_volume_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--83128df2.json",
+      "current_sha256": "14a3cc09c377ff48fa0aa1b5b249b8e3d39aa3907ee6f150070279bfb0fa7517",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_ask_dj_band_story.BandStoryActualHAEvidenceTests.test_current_source_and_original_ha_receipt_are_exact_and_not_editorial_acceptance",
+      "predecessor": "examples/client_contracts/band_members_story_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--f3e2df18.json",
+      "predecessor_sha256": "540434ee9989185409ca7d38ce9de577175747e3cf09959cc7bef136b9a12a73",
+      "current": "examples/client_contracts/band_members_story_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--dba77734.json",
+      "current_sha256": "f23d7197031c60e9a6a1eff4abe5cf6bca7f0c635754914b9682a89f9721e5bf",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_ask_dj_question_continuity.QuestionContinuityTests.test_current_actual_ha_proof_keeps_all_dates_choices_and_conflicts_bound",
+      "predecessor": "examples/client_contracts/ask_dj_question_continuity_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--3cc55610.json",
+      "predecessor_sha256": "6b6c9721db307e9a12d8e162ec7703835906bf73974c3a437cc452afa925b810",
+      "current": "examples/client_contracts/ask_dj_question_continuity_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--fa63b5c1.json",
+      "current_sha256": "a289143736e2c9e27e4d6e81a576804aa13712fd387ffb5052aec161fa8e820c",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_history_deletion_api.PairedHistoryDeleteTests.test_actual_ha_wire_fixture_binds_current_source_without_claiming_installation",
+      "predecessor": "examples/client_contracts/session_conversation_history/vibecast-ui-20261124-vibecast-ui-20261123-ha--2825c98f.json",
+      "predecessor_sha256": "bf8149e34eaf4ddf12259b72894822eb3b194e87b1f269dfab5ae372788143e6",
+      "current": "examples/client_contracts/session_conversation_history/vibecast-baseline-20261124-vibecast-ui-20261123-ha--5381f5b0.json",
+      "current_sha256": "388ee07015f3b86e8a32c28d26803c7d87a8f6f6db13b4d2751bfcb739861fad",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_installation_once_journal.OriginalActualOnceProofTests.test_current_HA_originals_and_parent_missing_journal_remain_exact",
+      "predecessor": "examples/client_contracts/installation_once_metadata_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--5f0aa714.json",
+      "predecessor_sha256": "4bdfb3cc578c10ac4701c2bf42e6a1b354976607681a1a8fc41ca15e6578b658",
+      "current": "examples/client_contracts/installation_once_metadata_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--b602bb6a.json",
+      "current_sha256": "b8f418c3ccc5471288ed9aabd626cf29ab55cdf8a7606413bd06e0aa1abd1c98",
+      "field_provenance": {
+        "actual_key_or_sign_effect": "actual raw field",
+        "cases": "actual raw field",
+        "current_harness_sha256": "executed harness bytes",
+        "preceding_installation_codec_cases": "actual raw field",
+        "preceding_source_origin_cases": "actual raw field",
+        "source_sha256": "entire359 candidate product manifest verified before and after actual executions",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_installation_principal_data.InstallationPrincipalDataTests.test_actual_HA_original_codec_and_same_final_harness_parent_RED_remain_exact",
+      "predecessor": "examples/client_contracts/installation_principal_data_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--924bebbe.json",
+      "predecessor_sha256": "5bc7f7a2a66c5c6371a7b2fffdbc9bf5f360aca5afee1f8bf947cf6f40b6b005",
+      "current": "examples/client_contracts/installation_principal_data_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--1844db41.json",
+      "current_sha256": "171fc620108e3924cbdbdfa4f418b58229d2e3fb26fb14ec5730d77cbd54a80d",
+      "field_provenance": {
+        "cases": "actual raw field",
+        "preceding_source_origin_cases": "actual raw field",
+        "registry_CAS_or_once_or_signer_qualification": "actual raw field",
+        "source_sha256": "entire359 candidate product manifest verified before and after actual executions",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_passive_observation_contract.PassiveObservationContractTests.test_original_grant_frames_and_nonrenewing_reads_match_current_source",
+      "predecessor": "examples/client_contracts/passive_observation_sequence_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--7e973f9d.json",
+      "predecessor_sha256": "4ba7695385a5f650f46f0675e4e13c5f97924358929a377b98f41c8d35c0e5be",
+      "current": "examples/client_contracts/passive_observation_sequence_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--b0fe5ba3.json",
+      "current_sha256": "deebab8f9fc543d3a3415fbcf3b00849e60c55bec93e18036aa8165b4a3f7e9f",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_persona_story_actual_ha.PersonaStoryActualHATest.test_current_source_and_verifiers_are_bound_to_the_original_actual_ha_trace",
+      "predecessor": "examples/client_contracts/personal_dj_artist_story_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--f8bbc2eb.json",
+      "predecessor_sha256": "c9f48f23c6e0052411b84096636a68468807902db03afa81055078f1fedc98c0",
+      "current": "examples/client_contracts/personal_dj_artist_story_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--8b77cd9b.json",
+      "current_sha256": "49b171d41f3c6351c877a59da0dfacc75b564213b8163f16fc03500d8fb34e11",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_settings_confirmation.SettingsConfirmationTests.test_actual_ha_fixture_pins_source_and_declares_native_install_boundary",
+      "predecessor": "examples/client_contracts/settings_confirmation_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--e5c50766.json",
+      "predecessor_sha256": "410eca2ee27de79532635752abd9347a8bdb952bcd592952e3979f79aaba0bb2",
+      "current": "examples/client_contracts/settings_confirmation_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--b2b3f70b.json",
+      "current_sha256": "bb7e01edfd78747033f1e713c6a59536d710f7dcab12cdf77fbb7ffcea2ecf91",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_surface_push_context_v3.OriginalClockActualHAProofTests.test_new_v3_actual_fixture_matches_current_product_and_harness",
+      "predecessor": "examples/client_contracts/surface_push_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--10405809.json",
+      "predecessor_sha256": "c47b618fe11aa65a1e776f90f75d46ace07d31d37e320c768531bc5a634abef9",
+      "current": "examples/client_contracts/surface_push_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--ae0a6590.json",
+      "current_sha256": "e3dac2399a90990e52fe17bf2824b3f19511f90ab68369c94a58b64ea712264c",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_surface_source_origin.SourceOriginActualProofTests.test_current_source_joins_original_actual_HA_and_same_harness_parent_failure",
+      "predecessor": "examples/client_contracts/source_origin_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--fbb8d993.json",
+      "predecessor_sha256": "c13d054c3ab1a15d3134f9b6e6fb922b3ae2c0da454e73e123c254e6500b3155",
+      "current": "examples/client_contracts/source_origin_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--825d8c3f.json",
+      "current_sha256": "be5d405c9b1da64971a329b6531dda3735c4135db8af1c7f9d15f7124385ffd8",
+      "field_provenance": {
+        "af201_native_mapping": "actual raw field",
+        "cases": "actual raw field",
+        "installed_native_provider": "actual raw field",
+        "source_origin_DATA_only": "actual raw field",
+        "source_sha256": "entire359 candidate product manifest verified before and after actual executions",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_ask_dj_help_live_observation.HelpObservationTests.test_original_actual_ha_wire_binds_all_current_products_without_native_claim",
+      "predecessor": "examples/client_contracts/ask_dj_help_context_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--ddc12995.json",
+      "predecessor_sha256": "2e7f9d3a30b5ebeaef79c8ad823e90c01ce6b5ae6976af9812a40794c2b64861",
+      "current": "examples/client_contracts/ask_dj_help_context_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--e23bdb4b.json",
+      "current_sha256": "6f4d15e82cce04c9605ba120c7f339d1f7b5e4a8c47fac2b0d5c14ce621dd879",
+      "field_provenance": {
+        "cases": "actual raw field",
+        "external_provider_calls": "actual raw field",
+        "installed_native_audio_or_physical_acceptance": "actual raw field",
+        "model_calls": "actual raw field",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_hashes": "entire359 candidate product manifest verified before and after actual executions",
+        "status": "actual raw field"
+      }
+    },
+    {
+      "test": "test_current_metadata_history_qualification.CurrentMetadataHistoryQualificationTests.test_current_source_has_real_paired_cross_device_store_proof",
+      "predecessor": "examples/client_contracts/current_metadata_history_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--2fe501c7.json",
+      "predecessor_sha256": "190d977b9aea2118f15d04b54a9698a6f725866df1220372d40abc1b0e5a56f5",
+      "current": "examples/client_contracts/current_metadata_history_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--54c5ddef.json",
+      "current_sha256": "c04c06e8961cb30c1f38251bb2d13753d9af982437ea0828f1f5ddd4167ecef6",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_for_you_refresh_contract.ForYouRefreshContractTests.test_original_ha_fixture_matches_the_current_producer_and_harness",
+      "predecessor": "examples/client_contracts/session_for_you_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--8e07c308.json",
+      "predecessor_sha256": "16227574b7b8171a8c6550a3546e020e358adfa6dc0f48a14e1d0428e6bbcf11",
+      "current": "examples/client_contracts/session_for_you_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--11ec3481.json",
+      "current_sha256": "9e0785be66c620e3f63ccf139981549097d1b0c9d44a2626f981730ff2a41a11",
+      "field_provenance": {
+        "cases": "same named actual case subset",
+        "examples": "actual extension.refresh_examples",
+        "fixture_only": "declared network-none synthetic fixture inputs",
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "installed_native_audible_apns": "actual extension.native_installed_acceptance",
+        "real_model_calls": "actual extension.model_provider_calls",
+        "real_provider_calls": "actual extension.real_provider_calls",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions",
+        "source_unchanged": "actual raw field"
+      }
+    },
+    {
+      "test": "test_for_you_refresh_contract.ForYouRefreshContractTests.test_output_readback_proof_is_exact_and_keeps_unconfirmed_effects_closed",
+      "predecessor": "examples/client_contracts/session_for_you_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--62fb48ae.json",
+      "predecessor_sha256": "09a2467ffbb2251f9ffb93c6ac9be5f718f4204c5ba01bc53e277c78f0e4f3d1",
+      "current": "examples/client_contracts/session_for_you_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--0416c245.json",
+      "current_sha256": "095bf3b083c1c39a943c748ffb18a9c2e484546ad14902d87db0f4f61720d1f7",
+      "field_provenance": {
+        "cases": "same named actual case subset",
+        "examples": "actual extension.output_readback_examples",
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "installed_native_audible_apns": "actual extension.native_installed_acceptance",
+        "real_model_calls": "actual extension.model_provider_calls",
+        "real_provider_calls": "actual extension.real_provider_calls",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions",
+        "source_unchanged": "actual raw field"
+      }
+    },
+    {
+      "test": "test_passive_progress_qualification.PassiveProgressQualificationTests.test_actual_http_receipt_is_bound_to_current_source_and_harnesses",
+      "predecessor": "examples/client_contracts/passive_progress_v3/vibecast-ui-20261124-vibecast-ui-20261123-ha--a9b8559c.json",
+      "predecessor_sha256": "a31dbdf2ce7569bb8b35c625399fc55ec18a41840681f8ca8b866b92874132a0",
+      "current": "examples/client_contracts/passive_progress_v3/vibecast-baseline-20261124-vibecast-ui-20261123-ha--73b1aae7.json",
+      "current_sha256": "37519fee813e930ff145ce6b80ecc092c50991c301da3c024c884eb195ca584b",
+      "field_provenance": {
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_queue_forecast.QueueProjectionTests.test_actual_ha_receipt_pins_current_source_and_declares_visible_acceptance_open",
+      "predecessor": "examples/client_contracts/session_forecast_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--11158985.json",
+      "predecessor_sha256": "44dec0e62a44601d6413d137e7806c2894638a7a16cc44f1a171f15b34dfbf7e",
+      "current": "examples/client_contracts/session_forecast_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--d5b4f0ff.json",
+      "current_sha256": "5bea9b93c0ee68d182e5ffffab0c38413910f3a2898f20295ccfd9a5e8e684f4",
+      "field_provenance": {
+        "HA_dev_writes": "actual raw field",
+        "cases": "actual raw field",
+        "native_acceptance": "actual raw field",
+        "source_sha256": "entire359 candidate product manifest verified before and after actual executions",
+        "stale_results": "actual raw field",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_session_private_catalogue_qualification.SessionPrivateCatalogueQualificationTests.test_actual_original_session_wire_omits_partial_history_objects",
+      "predecessor": "examples/client_contracts/session_private_catalogue_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--4fd0570d.json",
+      "predecessor_sha256": "12aa4952c7d0db124d70f168c4c30588143e3897da2c2b2b052fab3c11f27daa",
+      "current": "examples/client_contracts/session_private_catalogue_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--f8aac1b5.json",
+      "current_sha256": "4f7c856763257b7718d0e733a88aeccf878ac31bab60336f00aec246d437e776",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_surface_widget_adoption.WidgetActualHAContractTests.test_original_actual_ha_widget_source_join_preserves_closed_acceptance_boundary",
+      "predecessor": "examples/client_contracts/surface_push_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--10405809.json",
+      "predecessor_sha256": "c47b618fe11aa65a1e776f90f75d46ace07d31d37e320c768531bc5a634abef9",
+      "current": "examples/client_contracts/surface_push_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--ae0a6590.json",
+      "current_sha256": "e3dac2399a90990e52fe17bf2824b3f19511f90ab68369c94a58b64ea712264c",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_visual_director_contract.VisualDirectorContractTests.test_actual_registered_wire_pins_current_producer_and_declares_boundary",
+      "predecessor": "examples/client_contracts/vibescape_visual_director_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--810b260f.json",
+      "predecessor_sha256": "f714c9899ec0090d84f2e0fea31a43e709a11aee7f3b73647a89253b28caef9b",
+      "current": "examples/client_contracts/vibescape_visual_director_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--66a3c7b1.json",
+      "current_sha256": "33c789c10f70d7df08a1c9eb5ece35a8d77494b9fb6a776a5770886cd54d0b11",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_ask_dj_recent_presentation.RecentDisplayHistoryTests.test_current_actual_ha_original_receipt_matches_display_and_all_products",
+      "predecessor": "examples/client_contracts/ask_dj_recent_list_presentation_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--e3e462b0.json",
+      "predecessor_sha256": "946ecc2da5cd082bbdf48c3610021c98db0afc4089c0ff6164f854d41e43e70b",
+      "current": "examples/client_contracts/ask_dj_recent_list_presentation_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--0612e972.json",
+      "current_sha256": "f9e7ed6bbd6f6192a9e1148286cd53379c8bb6ba73e70b840ff5d0cd620d4ac5",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_bulletin_contract.BulletinWireContractTests.test_actual_wire_pins_current_source_and_original_admissions_without_native_claim",
+      "predecessor": "examples/client_contracts/dj_bulletin_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--19615198.json",
+      "predecessor_sha256": "7a487d829896825b0b24de97c208a1e07037570bf0c0045c7e3ae263efa31b9c",
+      "current": "examples/client_contracts/dj_bulletin_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--3703c3b8.json",
+      "current_sha256": "95a348b352fb42517737a3ecef6c8792c8508db9e9e802b6cc1d1510d7b38b64",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_content_deletion_api.PairedContentDeleteTests.test_actual_wire_fixture_source_and_receipt_bindings",
+      "predecessor": "examples/client_contracts/session_conversation_history/vibecast-ui-20261124-vibecast-ui-20261123-ha--a9d50390.json",
+      "predecessor_sha256": "4386604e0b97e3fa38f798152ee0d0ead0827a9b9f4bcc361b3bb91cc382d73f",
+      "current": "examples/client_contracts/session_conversation_history/vibecast-baseline-20261124-vibecast-ui-20261123-ha--bc78f1d8.json",
+      "current_sha256": "dc48b44eb87373dedf665304955182f92646b9caa686ad6854ac2cc2a5ca0a8c",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_current_track_insight.CurrentTrackInsightTests.test_actual_ha_current_fixture_binds_current_source_without_install_or_model_claim",
+      "predecessor": "examples/client_contracts/track_insight/vibecast-ui-20261124-vibecast-ui-20261123-ha--27907b23.json",
+      "predecessor_sha256": "42e5b20f7a55920ddf98a88195f49baba587dde08d80ed9ae6accf8aeb99a542",
+      "current": "examples/client_contracts/track_insight/vibecast-baseline-20261124-vibecast-ui-20261123-ha--1718a512.json",
+      "current_sha256": "292844da1f76bc390553159e9144829f7f146221e3ececad7c49c379fb84d4a4",
+      "field_provenance": {
+        "cases": "actual raw field",
+        "harness_sha256": "executed harness bytes",
+        "installed": "actual raw field",
+        "model_provider_calls": "actual raw field",
+        "model_reply_fixture_calls": "actual raw field",
+        "native": "actual raw field",
+        "qualification": "actual raw field",
+        "source_files_sha256": "entire359 candidate product manifest verified before and after actual executions",
+        "source_unchanged": "actual raw field"
+      }
+    },
+    {
+      "test": "test_direct_rich_actual_ha.DirectRichOriginalActualHATests.test_actual_host_wake_HTTP_Broadcast_SQL_originals_bind_current_source",
+      "predecessor": "examples/client_contracts/direct_rich_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--deddd0bf.json",
+      "predecessor_sha256": "5eeee34ea19d29d12efa0bf18ab6140172eb5308e5c07b3c60f4aeb3e6842227",
+      "current": "examples/client_contracts/direct_rich_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--667d31e7.json",
+      "current_sha256": "5941bd414f12e7a6ab2a53d6a8f8cea8a278ed616ce100e8898e079c44e7f664",
+      "field_provenance": {
+        "actual_operator_enrollment_native_clock_or_APNs_GO": "actual raw field",
+        "host_wake_runtime": "actual raw field",
+        "schema_version": "actual raw field",
+        "source_sha256": "entire359 candidate product manifest verified before and after actual executions",
+        "status": "actual raw field"
+      }
+    },
+    {
+      "test": "test_direct_rich_actual_ha.DirectRichOriginalActualHATests.test_original_actual_HTTP_SQL_and_asset_proof_matches_entire_current_product",
+      "predecessor": "examples/client_contracts/direct_rich_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--f3487c66.json",
+      "predecessor_sha256": "850ca0f4d3ae5ab67f4505801ff25f255e9efdf858176ab601824390afcb7b0e",
+      "current": "examples/client_contracts/direct_rich_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--bc9ba8eb.json",
+      "current_sha256": "8b73c21397a1c1819e97908e66abba3e4d7eac7565c200a77867a439beebec08",
+      "field_provenance": {
+        "actual_operator_enrollment_native_clock_or_APNs_GO": "actual raw field",
+        "cases": "actual raw field",
+        "classification": "actual raw field",
+        "current_harness_sha256": "executed harness bytes",
+        "ha_credentials_issued": "actual raw field",
+        "host_wake_management": "actual raw field",
+        "model_calls": "actual raw field",
+        "ordinary_pairing": "actual raw field",
+        "original_prepared_covers": "actual raw field",
+        "read_reissues": "actual raw field",
+        "schema_version": "actual raw field",
+        "source_sha256": "entire359 candidate product manifest verified before and after actual executions",
+        "status": "actual raw field"
+      }
+    },
+    {
+      "test": "test_discovery_context_qualification.DiscoveryContextQualificationTests.test_current_source_has_actual_original_card_transport_and_diagnosis_evidence",
+      "predecessor": "examples/client_contracts/discovery_context_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--9f5b5319.json",
+      "predecessor_sha256": "626a1b220ca279412828c795dd45d97d3f12dbda5464311d0567f30890e8bd20",
+      "current": "examples/client_contracts/discovery_context_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--e51e2e31.json",
+      "current_sha256": "091d883717667eeef64d1c0a83f33dd2cb68b25443c2fa7fdc3fa8def81e1570",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "native_installed_acceptance": "explicit unexecuted provider/device boundary",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_installation_custody_once.CustodyOriginalHaProofTests.test_actual_HA_original_source_and_harness_remain_exact_metadata_only",
+      "predecessor": "examples/client_contracts/installation_custody_once_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--67f5d219.json",
+      "predecessor_sha256": "bd6395e6da1426d781d7e2d23dfa0f0592bda84477c430dc93b25717886767fb",
+      "current": "examples/client_contracts/installation_custody_once_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--98cbe671.json",
+      "current_sha256": "9411784d6560ba1c9b52876fdceaf00620e2c09ef452ae0c6d06e9a092f1c2c9",
+      "field_provenance": {
+        "actual_key_generation_signing_registry_provider_or_native_effect": "actual raw field",
+        "cases": "actual raw field",
+        "preceding_installation_once_cases": "actual raw field",
+        "source_sha256": "entire359 candidate product manifest verified before and after actual executions",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_music_announcement_contract.AnnouncementContractTests.test_current_producer_and_manual_replay_match_original_actual_ha",
+      "predecessor": "examples/client_contracts/music_announcement_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--c71891d8.json",
+      "predecessor_sha256": "18b20dd66a5ad5f19333329a9043cc8dca84923cd8195daf9041d88bc2e41402",
+      "current": "examples/client_contracts/music_announcement_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--ad4cbe7b.json",
+      "current_sha256": "3546a21256ef23c1b3c13e2acb9fa2f5390cb216d643bc9e9d9e9b5d89ca83bf",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_music_dna_artwork.MusicDNAArtworkTest.test_actual_ha_fixture_binds_current_producer_and_original_clocks",
+      "predecessor": "examples/client_contracts/music_dna_artwork_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--6f09fb91.json",
+      "predecessor_sha256": "f1cd45ca6d321a2f806c348f19b5ad368ae8ebc8685218d6d40bac23a3519684",
+      "current": "examples/client_contracts/music_dna_artwork_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--54112a0b.json",
+      "current_sha256": "8bd60b8f36a5945f16b4007ca0c868bbc4083ba2560f883d477eb181d985f285",
+      "field_provenance": {
+        "cases": "actual raw field",
+        "installed": "actual raw field",
+        "integration_source_hashes": "entire359 candidate product manifest verified before and after actual executions",
+        "live_spotify": "actual raw field",
+        "music_dna_exact_album": "actual raw field",
+        "music_dna_profile": "actual raw field",
+        "native": "actual raw field"
+      }
+    },
+    {
+      "test": "test_passive_retained_qualification.PassiveRetainedQualificationTests.test_current_receipt_binds_original_purpose_and_all_product_bytes",
+      "predecessor": "examples/client_contracts/passive_retained_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--5e26b411.json",
+      "predecessor_sha256": "c0d994c431c040e12436ef72710b4edf1cfb78c60f35dee76bba7d27168aa1bf",
+      "current": "examples/client_contracts/passive_retained_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--8cbe6ab8.json",
+      "current_sha256": "0a13714bcb6651aed5ac12abbca3161ab1505659b1faf1fba4fbb6ffd86478a6",
+      "field_provenance": {
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_requested_moments.RequestedMomentsTest.test_actual_verified_https_gate_binds_exact_current_source_and_declared_scope",
+      "predecessor": "examples/client_contracts/requested_moments_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--6d26b6d8.json",
+      "predecessor_sha256": "88c8ad154d5bf74a24f2d870137198a9d1808e1c279bc88fb49edd61da9d83fe",
+      "current": "examples/client_contracts/requested_moments_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--e07ab9a5.json",
+      "current_sha256": "87d3dd73a02a80d5b1b0ec3225dcb0b1250fb6213b8eb1fa4c05127d60e8e62a",
+      "field_provenance": {
+        "editorial_acceptance": "explicit unqualified editorial boundary",
+        "harness_pins": "actual executed current harness/helper map",
+        "installed": "explicit unexecuted provider/device boundary",
+        "live_model": "explicit unexecuted provider/device boundary",
+        "native": "explicit unexecuted provider/device boundary",
+        "raw_receipt_sha256": "canonical actual raw receipt without trailing newline",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_session_start_dna.OriginalDnaHTTPContractTests.test_actual_cached_offer_keeps_original_committed_basis_and_lease",
+      "predecessor": "examples/client_contracts/for_you_original_dna_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--f518bf91.json",
+      "predecessor_sha256": "93dc42e1a3a3df0092d7fd13d79840bb05e4d872431905c813e8e8224a63059d",
+      "current": "examples/client_contracts/for_you_original_dna_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--2970d7ea.json",
+      "current_sha256": "d1ea950ad0dd4bbac2a42b2fb5e4ecc1de05042e277d3929a9c100e23e7886ac",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_spotify_scope_qualification.SpotifyScopeQualificationTests.test_actual_callback_configflow_refresh_and_store_bind_current_source",
+      "predecessor": "examples/client_contracts/spotify_scope_evidence_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--81480b4c.json",
+      "predecessor_sha256": "b11f2221c30663e055a5834570bef168214fca47e76b954d5bb635444bb12780",
+      "current": "examples/client_contracts/spotify_scope_evidence_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--e94086bc.json",
+      "current_sha256": "d6974c4cfc1cc3b53f8cb34fb91abe69102ca01353b6115850540d27d3c7a746",
+      "field_provenance": {
+        "native_installed_acceptance": "explicit unexecuted provider/device boundary",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_surface_registration.PassiveRegistrationTests.test_actual_HA_fixture_joins_exact_product_and_closed_acceptance",
+      "predecessor": "examples/client_contracts/passive_surface_registration_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--422f2e35.json",
+      "predecessor_sha256": "0d789ca4458b80d4b0cd5642901a9b08007652bb80b565af9ec2db83ecd6f669",
+      "current": "examples/client_contracts/passive_surface_registration_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--8abe7e40.json",
+      "current_sha256": "6df1fe5d6b7aade51faa4cd32e607d80b29a0f88ff39bd0cf0e6359e0cdc696d",
+      "field_provenance": {
+        "actual_temporary_entry_rotation_failed_await_ABA_stays_retired": "actual raw field",
+        "cases": "actual raw field",
+        "external_provider_calls": "actual raw field",
+        "model_calls": "actual raw field",
+        "positive_purpose_commit_native_installed_provider": "actual raw field",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_hashes": "entire359 candidate product manifest verified before and after actual executions",
+        "status": "actual raw field"
+      }
+    },
+    {
+      "test": "test_music_origin.MusicOriginActualHAProofTest.test_actual_origin_and_freeform_receipt_bind_current_source",
+      "predecessor": "examples/client_contracts/music_origin_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--c5911336.json",
+      "predecessor_sha256": "717374e1cf4daeec49510d63b1c9a14f1bf7e9ed427482e31f2b7e98add5006d",
+      "current": "examples/client_contracts/music_origin_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--1e9cc76f.json",
+      "current_sha256": "5c154039e22c8f3918fd692f2595ab47016afb60e2f3234433ca25d6ef57c3ea",
+      "field_provenance": {
+        "editorial": "explicit unqualified editorial boundary",
+        "harness_pins": "actual executed current harness/helper map",
+        "installed": "explicit unexecuted provider/device boundary",
+        "raw_receipt_sha256": "canonical actual raw receipt without trailing newline",
+        "real_provider": "explicit unexecuted provider/device boundary",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full359 manifest comparison",
+        "source_pins": "entire359 candidate product manifest verified before and after actual executions"
+      }
+    }
+  ]
+}

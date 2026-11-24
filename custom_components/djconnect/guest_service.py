@@ -31,6 +31,7 @@ SHAPES = {
     'display/invitation': ({'issuer_epoch','display_id'}, set()),
     'display/focus': ({'issuer_epoch','display_id'}, set()),
     'display/return': ({'issuer_epoch','display_id'}, set()),
+    'display/presentation': ({'issuer_epoch','display_id','mode'}, set()),
     'display/focus-photo': ({'issuer_epoch','display_id','focus_revision'}, set()),
     'ask': (_GUEST | {'text', 'client_message_id'}, {'language', 'thread_id', 'moment_id', 'playback_item_id'}),
     'request': (_GUEST | {'text', 'client_message_id'}, {'language', 'thread_id', 'choice_action'}),
@@ -89,6 +90,7 @@ class GuestParticipationService:
                 raise DisplayAdmissionError('guest_request_invalid', 400)
             share = state._shares[share_id]
             share.view_mode = payload['mode']
+            share.view_revision += 1
             if 'dynamics' in payload:
                 share.dynamics = payload['dynamics']
             return {'view': {'mode': share.view_mode, 'dynamics': share.dynamics}}
@@ -322,7 +324,7 @@ class GuestParticipationService:
                 return False
         return self.display._release_result(result, guard, lambda:None, None, state, selected)
 
-    async def _display_action(self, action, payload, headers, selected):
+    async def _display_action(self, action, payload, headers, selected, *, cast_authority=None):
         def _bearer(headers):
             token = headers.get('Authorization', '')
             if not isinstance(token, str) or not token.startswith('Bearer djcd_') or len(token) > 256:
@@ -334,7 +336,33 @@ class GuestParticipationService:
             state = self.manager._display_admission
             display = state.authorize(token=_bearer(headers), display_id=payload['display_id'],
                                       issuer_epoch=payload['issuer_epoch'])
+            if cast_authority is not None:
+                cast_authority(display)
             guests = state.participation
+            if action == 'display/presentation':
+                from .guest_live import view
+                if payload['mode'] not in {'flow', 'vibescape'}:
+                    raise DisplayAdmissionError('guest_request_invalid', 400)
+                active = self.manager.current_active(display.owner.profile_id)
+                if active is None or active.session_id != display.owner.session_id:
+                    raise DisplayAdmissionError('display_context_changed', 403)
+                share = state._shares[display.share_id]
+                share.view_mode = payload['mode']
+                share.view_revision += 1
+                confirmed = view(share, active)
+
+                def presentation_guard():
+                    try:
+                        current = state.authorize(
+                            token=_bearer(headers), display_id=display.display_id, issuer_epoch=payload['issuer_epoch'])
+                    except DisplayAdmissionError:
+                        return False
+                    return (current is display
+                            and self.manager.current_active(display.owner.profile_id) is active
+                            and share.view_revision == confirmed['revision'])
+
+                return self.display._release_result(
+                    {'view': confirmed}, presentation_guard, lambda: None, None, state, selected)
             if action == 'display/invitation':
                 result = guests.display_invitation(display.share_id)
                 invitation = guests._invitations[result['invitation_id']]

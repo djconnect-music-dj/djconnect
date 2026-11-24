@@ -1,4 +1,4 @@
-# Version: 1.3.15
+# Version: 1.3.16
 # CLI help, desired-state verification and console/report primitives.
 usage() {
   cat <<'EOF'
@@ -246,10 +246,25 @@ verify_delta_row() {
   esac
 }
 
-tailscale_pref_matches() {
-  local filter="$1"
-  command -v tailscale >/dev/null 2>&1 || return 1
-  tailscale debug prefs 2>/dev/null | jq -e "$filter" >/dev/null 2>&1
+verify_tailscale_preference() {
+  local component="$1" desired="$2" preferences="$3" filter="$4" actual
+  if actual="$(jq -er "$filter | select(type == \"boolean\") | if . then \"enabled\" else \"disabled\" end" <<<"$preferences" 2>/dev/null)"; then
+    verify_delta_row "$component" "$desired" "$actual" "$([[ "$actual" == "$desired" ]] && printf MATCH || printf DRIFT)"
+  else
+    verify_delta_row "$component" "$desired" 'preferences unavailable' UNVERIFIED
+  fi
+}
+
+verify_cron_entry() {
+  local component="$1" entry="$2" status="$3" crontab_output="$4"
+  local desired='03:00 cron installed'
+  if [[ "$status" == 0 ]] && grep -Fqx -- "$entry" <<<"$crontab_output"; then
+    verify_delta_row "$component" "$desired" installed MATCH
+  elif [[ "$status" == 0 || ( "$status" == 1 && "$crontab_output" == "crontab: no crontab for $(id -un)" ) ]]; then
+    verify_delta_row "$component" "$desired" absent DRIFT
+  else
+    verify_delta_row "$component" "$desired" 'crontab unavailable' UNVERIFIED
+  fi
 }
 
 platformio_core_installation() {
@@ -269,16 +284,33 @@ parallels_desktop_version() {
 }
 
 required_cask_installation() {
-  local cask="$1" parallels_version
-  if command -v brew >/dev/null 2>&1 && brew list --cask "$cask" >/dev/null 2>&1; then
-    printf '%s' 'Homebrew'
+  local cask="$1" brew_result brew_status=1 caskroom parallels_version
+  if [[ "$cask" == docker && -x /Applications/Docker.app/Contents/MacOS/com.docker.backend ]] &&
+      [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' /Applications/Docker.app/Contents/Info.plist 2>/dev/null)" == com.docker.docker ]]; then
+    printf '%s' 'application bundle'
     return 0
+  fi
+  if command -v brew >/dev/null 2>&1; then
+    if brew_result="$(LC_ALL=C HOMEBREW_NO_AUTO_UPDATE=1 brew list --cask "$cask" 2>&1)"; then
+      printf '%s' 'Homebrew'
+      return 0
+    fi
+    case "$brew_result" in
+      *'is not installed'*|*'is not available'*) brew_status=1 ;;
+      *) brew_status=2 ;;
+    esac
+    if caskroom="$(HOMEBREW_NO_AUTO_UPDATE=1 brew --caskroom 2>/dev/null)" &&
+        [[ -d "$caskroom/$cask/.metadata" ]] &&
+        [[ -n "$(find "$caskroom/$cask/.metadata" -name 'INSTALL_RECEIPT.json' -print -quit 2>/dev/null)" ]]; then
+      printf '%s' 'Homebrew receipt'
+      return 0
+    fi
   fi
   if [[ "$cask" == 'parallels' ]] && parallels_version="$(parallels_desktop_version)"; then
     printf 'application bundle (Parallels Desktop %s)' "$parallels_version"
     return 0
   fi
-  return 1
+  return "${brew_status:-1}"
 }
 
 verification_output_size_bytes() {
@@ -317,6 +349,8 @@ verification_artifact_cleanup_cron_line() {
 
 run_desired_state_verification() {
   local hardware_profile macos_version macos_major cpu_brand mem_bytes mem_gb cpu_count disk_probe_path disk_kb disk_gb onboarding_manifest onboarding_version formula cask profile install_dir ha_running ngrok_config ngrok_permissions ngrok_config_version ngrok_authtoken_status ngrok_authtoken_state ngrok_tunnel tailscale_installation tailscale_state
+  VERIFY_DRIFT_COUNT=0
+  VERIFY_UNVERIFIED_COUNT=0
   printf '# DJConnect macOS Development Host Desired-State Delta\n\n'
   printf '%s\n\n' "Manifest: \`$DESIRED_STATE_FILE\` (version $DESIRED_STATE_VERSION, schema $DESIRED_STATE_SCHEMA_VERSION; bootstrap $SCRIPT_VERSION, minimum tool $DESIRED_MINIMUM_TOOL_VERSION, $MANIFEST_TOOL_COMPATIBILITY_VERDICT)"
   printf '%s\n' '| Component | Desired | Actual | Delta |'
@@ -357,10 +391,11 @@ run_desired_state_verification() {
   fi
   report_repository_build_output
   local verification_cleanup="$GITHUB_ROOT/djconnect/scripts/maintenance/cleanup_verification_artifacts.sh"
-  local verification_cleanup_cron
+  local verification_cleanup_cron crontab_output crontab_status=0
+  crontab_output="$(LC_ALL=C crontab -l 2>&1)" || crontab_status=$?
   verification_cleanup_cron="$(verification_artifact_cleanup_cron_line "$GITHUB_ROOT")"
   if [[ -x "$verification_cleanup" ]] && "$verification_cleanup" --check; then verify_delta_row 'maintenance.verification_artifact_retention' 'no ignored output older than 14 days' clean MATCH; else verify_delta_row 'maintenance.verification_artifact_retention' 'no ignored output older than 14 days' expired DRIFT; fi
-  if crontab -l 2>/dev/null | grep -Fqx "$verification_cleanup_cron"; then verify_delta_row 'maintenance.verification_artifact_cleanup' '03:00 cron installed' installed MATCH; else verify_delta_row 'maintenance.verification_artifact_cleanup' '03:00 cron installed' absent DRIFT; fi
+  verify_cron_entry 'maintenance.verification_artifact_cleanup' "$verification_cleanup_cron" "$crontab_status" "$crontab_output"
 
   for formula in "${DESIRED_TOOL_FORMULAS[@]}"; do
     if command -v brew >/dev/null 2>&1 && brew list --versions "$formula" >/dev/null 2>&1; then
@@ -375,7 +410,11 @@ run_desired_state_verification() {
     if cask_installation="$(required_cask_installation "$cask")"; then
       verify_delta_row "tooling.cask.$cask" installed "installed ($cask_installation)" MATCH
     else
-      verify_delta_row "tooling.cask.$cask" installed absent DRIFT
+      if [[ "$?" == 2 ]]; then
+        verify_delta_row "tooling.cask.$cask" installed 'installation probe unavailable' UNVERIFIED
+      else
+        verify_delta_row "tooling.cask.$cask" installed absent DRIFT
+      fi
     fi
   done
   if (( ${#DESIRED_OPTIONAL_CASKS[@]} > 0 )); then
@@ -383,16 +422,20 @@ run_desired_state_verification() {
       if command -v brew >/dev/null 2>&1 && brew list --cask "$cask" >/dev/null 2>&1; then verify_delta_row "tooling.optional_cask.$cask" installed installed MATCH; else verify_delta_row "tooling.optional_cask.$cask" optional absent OPTIONAL; fi
     done
   fi
-  if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-    ha_running="$(docker inspect --format '{{.State.Running}}' "$DESIRED_HA_CONTAINER_NAME" 2>/dev/null || true)"
-    verify_delta_row 'lab.home_assistant.container' "$DESIRED_HA_CONTAINER_NAME running" "${ha_running:-absent}" "$([[ "$ha_running" == 'true' ]] && printf MATCH || printf DRIFT)"
+  if ha_running="$(docker inspect --type container --format '{{.State.Running}}' "$DESIRED_HA_CONTAINER_NAME" 2>&1)"; then
+    verify_delta_row 'lab.home_assistant.container' "$DESIRED_HA_CONTAINER_NAME running" "$ha_running" "$([[ "$ha_running" == true ]] && printf MATCH || printf DRIFT)"
+  elif [[ "$ha_running" == *"No such container: $DESIRED_HA_CONTAINER_NAME"* ||
+          "$ha_running" == *"No such object: $DESIRED_HA_CONTAINER_NAME"* ]]; then
+    verify_delta_row 'lab.home_assistant.container' "$DESIRED_HA_CONTAINER_NAME running" absent DRIFT
   else
-    verify_delta_row 'lab.home_assistant.container' "$DESIRED_HA_CONTAINER_NAME running" 'Docker unavailable' UNVERIFIED
+    verify_delta_row 'lab.home_assistant.container' "$DESIRED_HA_CONTAINER_NAME running" 'Docker probe unavailable' UNVERIFIED
   fi
   if curl -fsS --max-time 5 "$DESIRED_HA_URL" >/dev/null 2>&1; then
     verify_delta_row 'lab.home_assistant.url' "$DESIRED_HA_URL reachable" reachable MATCH
+  elif [[ "$?" == 22 ]]; then
+    verify_delta_row 'lab.home_assistant.url' "$DESIRED_HA_URL reachable" 'HTTP error from endpoint' DRIFT
   else
-    verify_delta_row 'lab.home_assistant.url' "$DESIRED_HA_URL reachable" unavailable DRIFT
+    verify_delta_row 'lab.home_assistant.url' "$DESIRED_HA_URL reachable" 'HTTP probe unavailable' UNVERIFIED
   fi
   ngrok_config="$HOME/$DESIRED_NGROK_CONFIG_RELATIVE_PATH"
   if [[ -f "$ngrok_config" ]]; then
@@ -408,18 +451,34 @@ run_desired_state_verification() {
     verify_delta_row 'network.ngrok.authtoken' "$DESIRED_NGROK_AUTHTOKEN" absent DRIFT
   fi
   if launchctl print "gui/$(id -u)/$DESIRED_NGROK_LAUNCH_AGENT_LABEL" >/dev/null 2>&1; then verify_delta_row 'network.ngrok.launch_agent' "$DESIRED_NGROK_LAUNCH_AGENT_LABEL loaded" loaded MATCH; else verify_delta_row 'network.ngrok.launch_agent' "$DESIRED_NGROK_LAUNCH_AGENT_LABEL loaded" absent DRIFT; fi
-  ngrok_tunnel="$(curl -fsS --max-time 5 "$DESIRED_NGROK_INSPECTOR_URL/api/tunnels" 2>/dev/null | jq -r --arg url "https://$DESIRED_NGROK_TUNNEL_DOMAIN" --arg target "$DESIRED_NGROK_TUNNEL_TARGET" '.tunnels[]? | select(.public_url == $url and .config.addr == $target) | .public_url' 2>/dev/null | head -n 1 || true)"
-  if [[ "$ngrok_tunnel" == "https://$DESIRED_NGROK_TUNNEL_DOMAIN" ]]; then verify_delta_row 'network.ngrok.tunnel' "https://$DESIRED_NGROK_TUNNEL_DOMAIN -> $DESIRED_NGROK_TUNNEL_TARGET" "$ngrok_tunnel" MATCH; else verify_delta_row 'network.ngrok.tunnel' "https://$DESIRED_NGROK_TUNNEL_DOMAIN -> $DESIRED_NGROK_TUNNEL_TARGET" unavailable DRIFT; fi
+  local ngrok_desired="https://$DESIRED_NGROK_TUNNEL_DOMAIN -> $DESIRED_NGROK_TUNNEL_TARGET"
+  if ngrok_tunnel="$(curl -fsS --max-time 5 "$DESIRED_NGROK_INSPECTOR_URL/api/tunnels" 2>/dev/null |
+      jq -er --arg url "https://$DESIRED_NGROK_TUNNEL_DOMAIN" --arg target "$DESIRED_NGROK_TUNNEL_TARGET" '
+        .tunnels | select(type == "array") |
+        if any(.[]; .public_url == $url and .config.addr == $target) then "configured" else "absent" end
+      ' 2>/dev/null)"; then
+    verify_delta_row 'network.ngrok.tunnel' "$ngrok_desired" "$ngrok_tunnel" "$([[ "$ngrok_tunnel" == configured ]] && printf MATCH || printf DRIFT)"
+  else
+    verify_delta_row 'network.ngrok.tunnel' "$ngrok_desired" 'inspector unavailable' UNVERIFIED
+  fi
   if command -v tailscale >/dev/null 2>&1 && [[ -d /Applications/Tailscale.app ]]; then tailscale_installation='available'; tailscale_installation_state=MATCH; else tailscale_installation='missing client or application'; tailscale_installation_state=DRIFT; fi
   verify_delta_row 'network.tailscale.installation' "$DESIRED_TAILSCALE_INSTALLATION" "$tailscale_installation" "$tailscale_installation_state"
-  tailscale_state="$(tailscale status --json 2>/dev/null | jq -r 'if .BackendState == "Running" and .Self.Online == true then "running_authenticated" else "not running or authenticated" end' 2>/dev/null || true)"
-  verify_delta_row 'network.tailscale.state' "$DESIRED_TAILSCALE_STATE" "${tailscale_state:-unavailable}" "$([[ "$tailscale_state" == "$DESIRED_TAILSCALE_STATE" ]] && printf MATCH || printf DRIFT)"
-  if tailscale_pref_matches '.CorpDNS == true'; then verify_delta_row 'network.tailscale.magic_dns' "$DESIRED_TAILSCALE_MAGIC_DNS" enabled MATCH; else verify_delta_row 'network.tailscale.magic_dns' "$DESIRED_TAILSCALE_MAGIC_DNS" not_enabled DRIFT; fi
-  if tailscale_pref_matches '.RouteAll == true'; then verify_delta_row 'network.tailscale.accept_routes' "$DESIRED_TAILSCALE_ACCEPT_ROUTES" enabled MATCH; else verify_delta_row 'network.tailscale.accept_routes' "$DESIRED_TAILSCALE_ACCEPT_ROUTES" not_enabled DRIFT; fi
-  if tailscale_pref_matches '.ExitNodeID == ""'; then verify_delta_row 'network.tailscale.exit_node' "$DESIRED_TAILSCALE_EXIT_NODE" disabled MATCH; else verify_delta_row 'network.tailscale.exit_node' "$DESIRED_TAILSCALE_EXIT_NODE" enabled DRIFT; fi
-  if tailscale_pref_matches '.RunSSH == false'; then verify_delta_row 'network.tailscale.ssh' "$DESIRED_TAILSCALE_SSH" disabled MATCH; else verify_delta_row 'network.tailscale.ssh' "$DESIRED_TAILSCALE_SSH" enabled DRIFT; fi
-  if tailscale_pref_matches '.ShieldsUp == false'; then verify_delta_row 'network.tailscale.shields_up' "$DESIRED_TAILSCALE_SHIELDS_UP" disabled MATCH; else verify_delta_row 'network.tailscale.shields_up' "$DESIRED_TAILSCALE_SHIELDS_UP" enabled DRIFT; fi
-  if tailscale_pref_matches '.AutoUpdate.Check == true and .AutoUpdate.Apply == true'; then verify_delta_row 'network.tailscale.auto_update' "$DESIRED_TAILSCALE_AUTO_UPDATE" enabled MATCH; else verify_delta_row 'network.tailscale.auto_update' "$DESIRED_TAILSCALE_AUTO_UPDATE" not_enabled DRIFT; fi
+  if tailscale_state="$(tailscale status --json 2>/dev/null | jq -er '
+      select((.BackendState | type) == "string") |
+      if .BackendState == "Running" and .Self.Online == true then "running_authenticated" else "not running or authenticated" end
+    ' 2>/dev/null)"; then
+    verify_delta_row 'network.tailscale.state' "$DESIRED_TAILSCALE_STATE" "$tailscale_state" "$([[ "$tailscale_state" == "$DESIRED_TAILSCALE_STATE" ]] && printf MATCH || printf DRIFT)"
+  else
+    verify_delta_row 'network.tailscale.state' "$DESIRED_TAILSCALE_STATE" 'status unavailable' UNVERIFIED
+  fi
+  local tailscale_preferences
+  tailscale_preferences="$(tailscale debug prefs 2>/dev/null)" || tailscale_preferences=''
+  verify_tailscale_preference 'network.tailscale.magic_dns' "$DESIRED_TAILSCALE_MAGIC_DNS" "$tailscale_preferences" '.CorpDNS'
+  verify_tailscale_preference 'network.tailscale.accept_routes' "$DESIRED_TAILSCALE_ACCEPT_ROUTES" "$tailscale_preferences" '.RouteAll'
+  verify_tailscale_preference 'network.tailscale.exit_node' "$DESIRED_TAILSCALE_EXIT_NODE" "$tailscale_preferences" '(.ExitNodeID | select(type == "string") | . != "")'
+  verify_tailscale_preference 'network.tailscale.ssh' "$DESIRED_TAILSCALE_SSH" "$tailscale_preferences" '.RunSSH'
+  verify_tailscale_preference 'network.tailscale.shields_up' "$DESIRED_TAILSCALE_SHIELDS_UP" "$tailscale_preferences" '.ShieldsUp'
+  verify_tailscale_preference 'network.tailscale.auto_update' "$DESIRED_TAILSCALE_AUTO_UPDATE" "$tailscale_preferences" '(select((.AutoUpdate.Check | type) == "boolean" and (.AutoUpdate.Apply | type) == "boolean") | .AutoUpdate.Check and .AutoUpdate.Apply)'
   for profile in "${DESIRED_PROFILES[@]}"; do
     profile_enabled "$profile" || continue
     profile_values "$profile"
@@ -430,14 +489,16 @@ run_desired_state_verification() {
       if [[ -f "$install_dir/.runner" ]]; then verify_delta_row "runner.$profile" "$PROFILE_REPOSITORY ($PROFILE_LABELS)" registered MATCH; else verify_delta_row "runner.$profile" "$PROFILE_REPOSITORY ($PROFILE_LABELS)" absent DRIFT; fi
     fi
   done
-  if [[ -x "$HOME/.local/bin/daily-tooling-maintenance" ]] && crontab -l 2>/dev/null | grep -Fqx "0 3 * * * $HOME/.local/bin/daily-tooling-maintenance >> $HOME/Library/Logs/daily-tooling-maintenance.log 2>&1"; then
-    verify_delta_row 'maintenance.daily_cron' '03:00 daily-tooling-maintenance cron installed' installed MATCH
+  if [[ -x "$HOME/.local/bin/daily-tooling-maintenance" ]]; then
+    verify_cron_entry 'maintenance.daily_cron' "0 3 * * * $HOME/.local/bin/daily-tooling-maintenance >> $HOME/Library/Logs/daily-tooling-maintenance.log 2>&1" "$crontab_status" "$crontab_output"
   else
-    verify_delta_row 'maintenance.daily_cron' '03:00 daily-tooling-maintenance cron installed' absent DRIFT
+    verify_delta_row 'maintenance.daily_cron' '03:00 daily-tooling-maintenance cron installed' 'maintenance executable absent' DRIFT
   fi
   printf '\n## Verdict\n\n'
   if (( VERIFY_DRIFT_COUNT == 0 && VERIFY_UNVERIFIED_COUNT == 0 )); then printf '%s\n' '**MATCH** — this machine matches the required desired state.'; return 0; fi
-  printf '%s\n' "**DRIFT DETECTED** — $VERIFY_DRIFT_COUNT required difference(s), $VERIFY_UNVERIFIED_COUNT unverified item(s)."
+  local verdict='DRIFT DETECTED'
+  if (( VERIFY_DRIFT_COUNT == 0 )); then verdict='VERIFICATION INCOMPLETE'; fi
+  printf '%s\n' "**$verdict** — $VERIFY_DRIFT_COUNT required difference(s), $VERIFY_UNVERIFIED_COUNT unverified item(s)."
   return 1
 }
 

@@ -109,6 +109,45 @@ class VisibleAdmissionTests(IsolatedAsyncioTestCase):
         self.assertEqual(self.effects, [])
         self.assertEqual(self.reservations, [])
 
+    async def test_normal_same_genre_publication_keeps_original_remaining_choice_budget(self):
+        shown = await self.prepared()
+        memory = self.runtime.memory
+        original = memory._loaded_genre_signature("synthetic-owner", 20)
+        self.advance(20)
+        memory.update_recent_tracks("profile:synthetic-owner", {
+            "title": "Synthetic ongoing track", "artist": "Synthetic artist",
+            "uri": "spotify:track:" + "A" * 22, "genres": list(self.owned_genres),
+        })
+        current = memory._loaded_genre_signature("synthetic-owner", 20)
+        self.assertEqual(original[-1], current[-1])
+        self.assertTrue(all(before is after for before, after in zip(original[:6], current[:6])))
+        after = self.project()
+        self.assertEqual(after["offer_id"], shown["offer_id"])
+        self.assertEqual(after["state"], "available")
+        self.assertTrue(after["actions_available"])
+        self.assertEqual(after["expires_in"], 40)
+        self.assertEqual(self.effects, [])
+
+    async def test_real_genre_publication_aba_still_retires_original_offer(self):
+        await self.prepared()
+        memory = self.runtime.memory
+        original = memory._loaded_genre_signature("synthetic-owner", 20)
+        owned = list(self.owned_genres)
+        for genres in ([owned[1], owned[0], owned[2]], owned):
+            memory.update_recent_tracks("profile:synthetic-owner", {
+                "title": "Synthetic changed track", "artist": "Synthetic artist",
+                "uri": "spotify:track:" + "B" * 22, "genres": genres,
+            })
+        restored = memory._loaded_genre_signature("synthetic-owner", 20)
+        self.assertEqual(restored[-1], original[-1])
+        self.assertEqual(restored[6:8], original[6:8])
+        self.assertIsNot(restored[3], original[3])
+        after = self.project()
+        self.assertEqual(after["state"], "unavailable")
+        self.assertFalse(after["actions_available"])
+        self.assertEqual(after["reason"], "music_dna_unavailable")
+        self.assertEqual(self.effects, [])
+
     async def test_settings_aba_keeps_preview_but_never_reenables_original_selection(self):
         initial = await self.prepared()
         original = self.active.broadcast.first_play_offer["_admission"]

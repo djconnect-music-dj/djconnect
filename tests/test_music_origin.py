@@ -175,10 +175,10 @@ class MusicOriginActualHAProofTest(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads(
             (
-                root / 'examples/client_contracts/music_origin_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--c5911336.json'
+                root / 'examples/client_contracts/music_origin_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--1e9cc76f.json'
             ).read_text()
         )
-        self.assertEqual(len(proof["source_pins"]), 356)
+        self.assertEqual(len(proof["source_pins"]), 359)
         for name, digest in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root / name).read_bytes()).hexdigest(), digest, name)
         raw = proof["receipt"]

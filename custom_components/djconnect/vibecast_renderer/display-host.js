@@ -1,6 +1,18 @@
-/* B host only. One maintained renderer; no credentials in URLs or persistence. */
-(()=>{
+/* One B host lifecycle with explicit same-origin and closed Cast transports. */
+window.DJCDisplayHost=function(transport){
   "use strict";
+  transport=transport || {};
+  const cast=transport.mode==="cast";
+  const apiOrigin=cast ? transport.apiOrigin : location.origin;
+  const displayURL=action=>apiOrigin+"/api/djconnect/v1/"+(cast?"cast/":"display/")+action;
+  const participationURL=action=>apiOrigin+"/api/djconnect/v1/"+(cast?"cast/participation/display/":"participation/display/")+action;
+  let bootstrapToken=cast ? transport.bootstrapToken : "";
+  const bootstrapDeadline=performance.now()+(cast ? Math.min(30,transport.expiresIn)*1000 : 0);
+  if(cast)delete transport.bootstrapToken;
+  const listeners=[];
+  function listen(target,type,callback){target.addEventListener(type,callback);listeners.push([target,type,callback]);}
+  function notify(type,value){if(cast && typeof transport[type]==="function")transport[type](value);}
+
   const language=(navigator.language || "en").slice(0,2);
   const words={
     en:{approve:"Choose ‘Share VibeCast Screen’ in the app and enter the code below.",retry:"Try again",expired:"This screen’s access has expired. Approve it again in DJConnect.",unavailable:"Cannot reach DJConnect. Check the external HTTPS address and connection.",denied:"Screen access was withdrawn or the session ended.",reconnect:"Reconnecting…",capacity:"Too many screens or requests. Try again shortly."},
@@ -44,7 +56,7 @@
     window.dispatchEvent(new CustomEvent("djconnect-display-locale",{detail:selected}));
     if(handoff && !panel.hidden)show(...handoff);
   }
-  selector.addEventListener("change",()=>{
+  listen(selector,"change",()=>{
     if(!validLocale(selector.value))return;
     preference=selector.value;
     try{window.localStorage.setItem(localeKey,preference);}catch(_){ /* Memory-only preference. */ }
@@ -118,7 +130,7 @@
     pending.timer=setTimeout(clearSharedPhoto,Math.max(1,until-now()));
     const timeout=setTimeout(()=>controller.abort(),20000);
     try{
-      const response=await fetch("/api/djconnect/v1/participation/display/focus-photo",{method:"POST",credentials:"omit",cache:"no-store",redirect:"error",
+      const response=await fetch(participationURL("focus-photo"),{method:"POST",credentials:"omit",cache:"no-store",redirect:"error",
         headers:{"Content-Type":"application/json",Authorization:"Bearer "+grant.grant_token},
         body:JSON.stringify({contract_version:1,...binding(),focus_revision:focus.focus_revision}),signal:controller.signal});
       const size=Number(response.headers.get("Content-Length")),mime=response.headers.get("Content-Type");
@@ -138,18 +150,26 @@
     if(guestPanel){guestPanel.hidden=true;guestQR.removeAttribute("src");}
     window.dispatchEvent(new CustomEvent("djconnect-shared-focus",{detail:{focused_moment_id:null}}));
   }
-  async function participationPost(action){
+  async function participationPost(action, fields={}){
     const controller=new AbortController();requests.add(controller);
     const timeout=setTimeout(()=>controller.abort(),10000);
     try{
-      const response=await fetch("/api/djconnect/v1/participation/display/"+action,{method:"POST",credentials:"omit",cache:"no-store",redirect:"error",
+      const response=await fetch(participationURL(action),{method:"POST",credentials:"omit",cache:"no-store",redirect:"error",
         headers:{"Content-Type":"application/json",Authorization:"Bearer "+grant.grant_token},
-        body:JSON.stringify({contract_version:1,...binding()}),signal:controller.signal});
+        body:JSON.stringify({contract_version:1,...binding(),...fields}),signal:controller.signal});
       if(!response.ok)throw new Error("participation unavailable");
       const raw=await response.text();if(raw.length>96000)throw new Error("size");return JSON.parse(raw);
     }finally{clearTimeout(timeout);requests.delete(controller);}
   }
-  window.addEventListener("djconnect-display-return",()=>{if(!expired())void participationPost("return").catch(()=>{});});
+  listen(window,"djconnect-display-return",()=>{if(!expired())void participationPost("return").catch(()=>{});});
+  listen(window,"djconnect-display-view-select",async ({detail:mode})=>{
+    const g=generation;
+    let view=null;
+    if(!expired() && (mode==="flow" || mode==="vibescape")){
+      try{view=(await participationPost("presentation",{mode})).view || null;}catch(_){}
+    }
+    if(g===generation && !expired())window.dispatchEvent(new CustomEvent("djconnect-display-view-result",{detail:view}));
+  });
   async function participationPoll(g){
     if(g!==generation || expired())return;
     const started=now();
@@ -308,17 +328,17 @@
     const body=JSON.stringify({contract_version:1,...claim});
     claim=null;
     // Let HA release the code even when a reload destroys this page.
-    void fetch("/api/djconnect/v1/display/cancel",{method:"POST",credentials:"omit",cache:"no-store",
+    void fetch(displayURL("cancel"),{method:"POST",credentials:"omit",cache:"no-store",
       redirect:"error",keepalive:true,headers:{"Content-Type":"application/json"},body}).catch(()=>{});
   }
-  function terminal(message){cancelWork();releaseClaim();grant=null;lease=0;show(message,"",true);}
+  function terminal(message){if(cast)stop();else{cancelWork();releaseClaim();grant=null;lease=0;}show(message,"",!cast);notify("onTerminal",message);}
   async function post(action,body,bearer=""){
     const controller=new AbortController(), started=now();requests.add(controller);
     // Bounds the whole browser DNS/TLS/request path, distinct from HA's fixed
     // five-second send budget. Original authority deadlines never move for it.
     const timeout=setTimeout(()=>controller.abort(),15000);
     try{
-      const response=await fetch("/api/djconnect/v1/display/"+action,{method:"POST",credentials:"omit",cache:"no-store",redirect:"error",
+      const response=await fetch(displayURL(action),{method:"POST",credentials:"omit",cache:"no-store",redirect:"error",
         headers:{"Content-Type":"application/json",...(bearer?{Authorization:"Bearer "+bearer}:{})},
         body:JSON.stringify({contract_version:1,...body}),signal:controller.signal});
       const bytes=await response.text();if(bytes.length>131072)throw new Error("oversized");
@@ -351,7 +371,7 @@
   }
   function connect(g){
     if(g!==generation || expired() || document.hidden || navigator.onLine===false)return;
-    const current=new WebSocket(location.origin.replace(/^https:/,"wss:")+"/api/djconnect/v1/display/live");socket=current;
+    const current=new WebSocket(apiOrigin.replace(/^https:/,"wss:")+"/api/djconnect/v1/"+(cast?"cast/live":"display/live"));socket=current;
     current.onopen=()=>{
       if(g!==generation || expired()){current.close();return;}
       current.send(JSON.stringify({type:"authenticate",contract_version:1,...binding(),grant_token:grant.grant_token,connection_nonce:nonce()}));
@@ -369,6 +389,9 @@
         if(snapshot.session && snapshot.session.session_id===grant.session_id
             && snapshot.session.runtime_state==="active")selectLocale(snapshot.session.locale);
         // The renderer receives only the Core's explicit shared allowlist.
+        notify("onSnapshot",{issuer_epoch:snapshot.issuer_epoch,display_id:snapshot.display_id,
+          share_id:snapshot.share_id,share_generation:snapshot.share_generation,session_id:snapshot.session_id,
+          connection_generation:frame.connection_generation});
         window.dispatchEvent(new CustomEvent("djconnect-display-snapshot",{detail:snapshot}));
         void updateArtwork(snapshot);panel.hidden=true;
         if(guestPollGeneration!==g){guestPollGeneration=g;void participationPoll(g);}
@@ -393,8 +416,11 @@
       if(value.state!=="admitted" || typeof value.grant_token!=="string" || !/^djcd_[A-Za-z0-9_-]{43}$/.test(value.grant_token)
           || !(value.lease_expires_in>0 && value.lease_expires_in<=60) || !value.capabilities || value.capabilities.owner_controls!==false
           || value.capabilities.session_end!==false)throw new Error("contract");
-      grant=value;claim=null;lease=started+value.lease_expires_in*1000;sequence=0;connectionGeneration=0;
+      grant=value;claim=null;
+      lease=started+value.lease_expires_in*1000;sequence=0;connectionGeneration=0;
       if(expired())return terminal("expired");
+      notify("onAdmitted",{issuer_epoch:value.issuer_epoch,display_id:value.display_id,
+        share_id:value.share_id,share_generation:value.share_generation,session_id:value.session_id});
       selectLocale(value.session_locale);
       show("reconnect");watchLease(g);connect(g);later(()=>renew(g,1),20000);
     }catch(error){
@@ -404,6 +430,7 @@
     }
   }
   async function begin(allowCapacityRetry=true){
+    if(cast && (!bootstrapToken || !(performance.now()<bootstrapDeadline)))return terminal("newcode");
     stopped=false;selectLocale("");cancelWork();
     // The server decides when the original window ends, even if our timer fires early.
     if(claimCanResume)claim=null;else releaseClaim();
@@ -411,35 +438,47 @@
     if(location.protocol!=="https:" || location.search || location.hash || !crypto.getRandomValues)return show("unavailable","",true);
     show("approve",null);
     try{
-      const requestId=claimRequestId();
+      const requestId=cast ? null : claimRequestId();
       claimCanResume=Boolean(requestId);
       const browser_nonce=nonce();
-      const {value,started}=await post("claim",requestId ? {browser_nonce,request_id:requestId} : {browser_nonce});
+      const bearer=bootstrapToken;bootstrapToken="";
+      const {value,started}=await post("claim",requestId ? {browser_nonce,request_id:requestId} : {browser_nonce},cast?bearer:"");
       if(g!==generation || stopped)return;
       if(value.contract_version!==1 || !/^[0-9]{6}$/.test(value.code) || !(value.expires_in>0 && value.expires_in<=120))throw new Error("contract");
       claim={issuer_epoch:value.issuer_epoch,claim_id:value.claim_id,claim_secret:value.claim_secret,
         browser_generation:value.browser_generation,browser_nonce};claimDeadline=started+value.expires_in*1000;
+      if(cast && ["issuer_epoch","claim_id","claim_secret","browser_generation"].some(key=>
+          typeof value[key]!=="string" || !/^[A-Za-z0-9_-]{43}$/.test(value[key])))throw new Error("contract");
+      notify("onClaim",{issuer_epoch:value.issuer_epoch,claim_id:value.claim_id,
+        browser_generation:value.browser_generation,code:value.code,expires_in:Math.max(0,(claimDeadline-now())/1000),expires_at:value.expires_at});
       show("approve",value.code);
       later(()=>{if(g===generation && claim)void begin();},Math.max(0,claimDeadline-now()));
       void collect(g);
     }catch(error){
       if(g!==generation)return;
       // On reload, the previous page's cancellation can arrive just after the claim.
-      if(allowCapacityRetry && error.code==="display_capacity"){
+      if(!cast && allowCapacityRetry && error.code==="display_capacity"){
         later(()=>begin(false),800);
-      }else show(failureText(error),"",true);
+      }else {show(failureText(error),"",!cast);notify("onTerminal",failureText(error));}
     }
   }
   function stop(preserveClaim=false){
+    if(cast && grant){
+      const body=JSON.stringify({contract_version:1,...binding()});
+      void fetch(displayURL("leave"),{method:"POST",credentials:"omit",cache:"no-store",redirect:"error",keepalive:true,
+        headers:{"Content-Type":"application/json",Authorization:"Bearer "+grant.grant_token},body}).catch(()=>{});
+    }
     stopped=true;selectLocale("");cancelWork();
     if(preserveClaim && claimCanResume)claim=null;else releaseClaim();
     grant=null;lease=0;panel.hidden=true;panel.textContent="";
   }
-  window.addEventListener("pagehide",()=>stop(true));
-  window.addEventListener("djconnect-host-stop",()=>stop());
-  window.addEventListener("offline",()=>{if(grant){clearContent();show("reconnect");requests.forEach(c=>c.abort());if(socket)socket.close();}});
-  window.addEventListener("online",()=>{if(grant && !expired() && !socket)connect(generation);});
-  window.addEventListener("pageshow",event=>{if(event.persisted && stopped)return begin();if(grant){clearContent();if(expired())void begin();else if(socket)socket.close();else connect(generation);}});
-  document.addEventListener("visibilitychange",()=>{if(document.hidden){clearContent();if(socket)socket.close();}else if(grant){if(expired())void begin();else if(!socket)connect(generation);}});
+  listen(window,"pagehide",()=>stop(true));
+  listen(window,"djconnect-host-stop",()=>stop());
+  listen(window,"offline",()=>{if(grant){clearContent();show("reconnect");requests.forEach(c=>c.abort());if(socket)socket.close();}});
+  listen(window,"online",()=>{if(grant && !expired() && !socket)connect(generation);});
+  listen(window,"pageshow",event=>{if(event.persisted && stopped)return begin();if(grant){clearContent();if(expired())void begin();else if(socket)socket.close();else connect(generation);}});
+  listen(document,"visibilitychange",()=>{if(document.hidden){clearContent();if(socket)socket.close();}else if(grant){if(expired())void begin();else if(!socket)connect(generation);}});
   begin();
-})();
+  return {stop(){stop();bootstrapToken="";for(const [target,type,callback] of listeners)target.removeEventListener(type,callback);}};
+};
+if(window.DJC_VIBECAST_MODE!=="cast")window.DJCDisplayHost();

@@ -38,6 +38,105 @@ class SessionFactsTest(unittest.TestCase):
             "isrc": "USABC0100001",
         }
 
+    def multi_credit_artist_fixture(self):
+        catalog = self.catalog()
+        names, ids = ("First project", "Group, With & Symbol"), ("C" * 22, "D" * 22)
+        catalog.update(title="Synthetic song (guest downtempo version)",
+                       artist=", ".join(names), artist_ids=list(ids),
+                       artist_credits=[{"id": identifier, "name": name}
+                                       for identifier, name in zip(ids, names)])
+        mbid = "00000000-0000-0000-0000-000000000009"
+        class Resolver(self.facts.SessionFactsResolver):
+            def __init__(inner):
+                super().__init__(object())
+                inner.calls = []
+
+            async def _get(inner, path, params=None, **kwargs):
+                inner.calls.append((path, params))
+                if path == "url":
+                    resource = params["resource"]
+                    relations = ([{"target-type": "artist", "artist": {"id": mbid}}]
+                                 if resource.endswith(ids[1]) else [])
+                    return {"resource": resource, "relations": relations}
+                if path == "artist/" + mbid:
+                    return {"id": mbid, "name": names[1], "type": "Group",
+                            "life-span": {"begin": "2000-01-01"}, "relations": [
+                                {"type": "wikidata", "url": {"resource": "https://www.wikidata.org/wiki/Q9"}},
+                                {"type": "free streaming", "url": {"resource": "https://open.spotify.com/artist/" + ids[1]}}]}
+                if kwargs.get("wikidata"):
+                    def claim(value):
+                        return [{"rank": "normal", "mainsnak": {"datavalue": {"value": value}}}]
+                    return {"entities": {"Q9": {"id": "Q9", "claims": {
+                        "P434": claim(mbid), "P1902": claim(ids[1])}}}}
+                return {}
+
+        return catalog, Resolver()
+
+    def test_multi_credit_artist_is_qualified_without_a_matching_remix_recording(self):
+        catalog, resolver = self.multi_credit_artist_fixture()
+        facts = asyncio.run(resolver.resolve(catalog))
+        artists = [fact for fact in facts if fact.key == "artist_begin"]
+        self.assertEqual(len(artists), 1)
+        self.assertEqual(artists[0].public_artist_qid, "Q9")
+        self.assertEqual(artists[0].display_core.subject, "Group, With & Symbol")
+        self.assertEqual(artists[0].media_identity, catalog["uri"])
+        self.assertNotIn("recording_credits", {fact.key for fact in facts})
+        looked_up = [params["resource"] for path, params in resolver.calls if path == "url"]
+        self.assertEqual(looked_up, ["https://open.spotify.com/artist/" + item["id"]
+                                    for item in catalog["artist_credits"]])
+
+    def test_explicit_artist_discovery_never_requires_recording_and_preserves_original_credit(self):
+        catalog, resolver = self.multi_credit_artist_fixture()
+        guards = []
+        facts = asyncio.run(resolver.resolve_artist_story(catalog, authorize=lambda: guards.append(True)))
+        self.assertEqual({fact.key for fact in facts}, {"artist_begin"})
+        self.assertEqual(facts[0].display_core.subject, "Group, With & Symbol")
+        self.assertEqual(facts[0].artwork_subject_uri, "spotify:artist:" + "D" * 22)
+        self.assertTrue(guards)
+        self.assertFalse(any(path.startswith(("isrc/", "recording/")) for path, _ in resolver.calls))
+
+    def test_missing_or_misaligned_multi_credit_pairs_do_not_split_display_names(self):
+        from copy import deepcopy
+        catalog, _ = self.multi_credit_artist_fixture()
+        missing = deepcopy(catalog)
+        missing.pop("artist_credits")
+        wrong = deepcopy(catalog)
+        wrong["artist_credits"][0]["id"] = "Z" * 22
+        for value in (missing, wrong):
+            with self.subTest(value=value.get("artist_credits")):
+                _, resolver = self.multi_credit_artist_fixture()
+                facts = asyncio.run(resolver.resolve_artist_story(value, authorize=lambda: None))
+                self.assertEqual(facts, ())
+                self.assertEqual(resolver.calls, [])
+
+    def test_temporary_source_failure_stops_before_a_different_artist_subject(self):
+        catalog, resolver = self.multi_credit_artist_fixture()
+        temporary = []
+        async def unavailable(path, params=None, **kwargs):
+            resolver.calls.append((path, params))
+            temporary.append(True)
+            return {}
+        resolver._get = unavailable
+        facts = asyncio.run(resolver.resolve_artist_story(
+            catalog, authorize=lambda: None, source_temporary=lambda: bool(temporary)))
+        self.assertEqual(facts, ())
+        self.assertEqual(len(resolver.calls), 1)
+
+    def test_withdrawal_during_artist_discovery_cannot_release_or_change_subject(self):
+        catalog, resolver = self.multi_credit_artist_fixture()
+        valid = [True]
+        async def withdraw(path, params=None, **kwargs):
+            resolver.calls.append((path, params))
+            valid[0] = False
+            return {}
+        resolver._get = withdraw
+        def authorize():
+            if not valid[0]:
+                raise PermissionError("synthetic-original-withdrawal")
+        with self.assertRaises(PermissionError):
+            asyncio.run(resolver.resolve_artist_story(catalog, authorize=authorize))
+        self.assertEqual(len(resolver.calls), 1)
+
     def test_genre_requires_original_source_deadline_and_never_renews_it(self):
         from custom_components.djconnect.native_moment_delivery import source_deadline
         catalog = self.catalog()

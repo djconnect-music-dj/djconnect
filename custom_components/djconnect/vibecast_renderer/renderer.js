@@ -1,7 +1,7 @@
 (() => {
   const params = new URLSearchParams(window.location.search);
   const staticHost = window.DJC_VIBECAST_MODE === "cast";
-  const displayHost = window.DJC_VIBECAST_MODE === "display";
+  let displayHost = window.DJC_VIBECAST_MODE === "display";
   let haOrigin = "", sessionId = staticHost || displayHost ? null : params.get("session_id"), broadcastToken = staticHost || displayHost ? null : params.get("broadcast_token");
   const endpoint = path => haOrigin + path;
   let displayArtwork=new Map(), displayLocale="";
@@ -37,7 +37,15 @@
     if (staticHost && statusGeneration!==null) window.dispatchEvent(new CustomEvent("djconnect-renderer-status",{detail:{generation:statusGeneration,session_id:sessionId,state,reason,presentation}}));
   }
   function reportPresentation() {
-    if (snapshotAccepted && !ended) reportStatus("presenting",null,current ? "moment" : "silence");
+    if(displayHost && snapshotAccepted && !ended){
+      const captured=projection, presentation=current ? "moment" : "silence";
+      const painted=()=>{if(displayHost && snapshotAccepted && !ended && projection===captured)
+        window.dispatchEvent(new CustomEvent("djconnect-display-rendered",{detail:{
+          issuer_epoch:captured.issuer_epoch,display_id:captured.display_id,share_id:captured.share_id,
+          share_generation:captured.share_generation,session_id:sessionId,presentation}}));};
+      if(typeof requestAnimationFrame==="function")requestAnimationFrame(painted);else setTimeout(painted,0);
+    }
+    if (!displayHost && snapshotAccepted && !ended) reportStatus("presenting",null,current ? "moment" : "silence");
   }
   let placementCount=0, lastPlacedKey="";
   let playbackItem = "", current = null, previous = null, lastShownAt = -Infinity, lastArtwork = "", lastSequence = 0, snapshotSequence = 0, fieldSequences = {};
@@ -67,6 +75,29 @@
   let sceneCanvas=null, sceneFrame=0, sceneLastFrame=0;
   const scenePalettes={chill:["#4da3ff","#7b61ff","#d184ff"],groove:["#06c7ad","#169bc8","#10b981"],
     energy:["#ddff00","#00b8ff","#39ff78"],party:["#ff287f","#aa38f5","#f43dce"]};
+  let displayViewRevision=-1, displayViewPending=false;
+  const displayViewModes=["flow","vibescape"];
+  function adoptDisplayView(view){
+    if(!view || !displayViewModes.includes(view.mode))return;
+    if(Number.isSafeInteger(view.revision)){
+      if(view.revision<displayViewRevision)return;
+      displayViewRevision=view.revision;
+    }else if(displayViewRevision>=0)return;
+    projection.view=view;
+    renderDisplayViewButtons();
+    renderScene();
+  }
+  function renderDisplayViewButtons(){
+    if(!displayHost)return;
+    const available=snapshotAccepted && !ended && displayViewRevision>=0;
+    for(const mode of displayViewModes){
+      const button=e("display-view-"+mode);
+      if(!button)continue;
+      button.hidden=!available;
+      button.disabled=displayViewPending;
+      button.setAttribute("aria-pressed",String(!!projection.view && projection.view.mode===mode));
+    }
+  }
   function sceneActive(){return snapshotAccepted && !ended && projection.view && projection.view.mode==="vibescape";}
   function hideScene(){
     document.body.classList.toggle("vibescape-mode",false);
@@ -142,7 +173,7 @@
     for(const [node,timer] of reactionTimers){window.clearTimeout(timer);node.remove();}
     reactionTimers.clear();seenReactions.clear();
   }
-  let sessionAvatar=null,sessionChange=null,sessionChangeTimer=0,lastSessionPresentation="";
+  let sessionChange=null,sessionChangeTimer=0,lastSessionPresentation="";
   function avatarCopy(identifier){
     const original=e("spotlight-avatar");
     if(!original)return null;
@@ -153,25 +184,16 @@
       if(node.getAttribute(attr)==="url(#"+oldId+")")node.setAttribute(attr,"url(#"+gradient.id+")");
     return copy;
   }
-  function clearSessionAvatar(){
+  function clearSessionChange(){
     lastSessionPresentation="";
-    if(sessionAvatar)sessionAvatar.hidden=true;
     if(sessionChange)sessionChange.hidden=true;
     if(sessionChangeTimer)window.clearTimeout(sessionChangeTimer);sessionChangeTimer=0;
   }
-  function renderSessionAvatar(){
+  function renderSessionChange(){
     if(!displayHost)return;
-    if(!snapshotAccepted || ended){clearSessionAvatar();return;}
+    if(!snapshotAccepted || ended){clearSessionChange();return;}
     const settings=projection.session_presentation || {};
     const signature=JSON.stringify([settings.mood || "",settings.persona || "",settings.presence || ""]);
-    if(!sessionAvatar){
-      sessionAvatar=document.createElement("span");sessionAvatar.id="session-dj-avatar";
-      sessionAvatar.className="mood-palette";
-      const svg=avatarCopy("persistent-dj-avatar");if(svg)sessionAvatar.appendChild(svg);
-      sessionAvatar.appendChild(e("session-icons"));
-      document.querySelector(".session-status").prepend(sessionAvatar);
-    }
-    sessionAvatar.hidden=false;sessionAvatar.dataset.mood=settings.mood || "";
     if(lastSessionPresentation && signature!==lastSessionPresentation){
       if(!sessionChange){
         sessionChange=document.createElement("div");sessionChange.id="session-change-popup";
@@ -199,7 +221,7 @@
     guestCounter.hidden=!enabled;
     const labels={en:"Connected guests",nl:"Verbonden gasten",de:"Verbundene Gäste",fr:"Invités connectés",es:"Invitados conectados"};
     guestCounter.textContent="👥 "+count;guestCounter.setAttribute("aria-label",(labels[root.lang] || labels.en)+": "+count);
-    if(detail.view && ["flow","vibescape"].includes(detail.view.mode)){projection.view=detail.view;renderScene();}
+    adoptDisplayView(detail.view);
     const now=Date.now();
     for(const [id,until] of seenReactions)if(until<=now)seenReactions.delete(id);
     if(!enabled)return;
@@ -555,7 +577,7 @@
     horizonExpiry=window.setTimeout(()=>renderHorizon(active),Math.max(0,expires-Date.now()));
   }
   const flowRows = new Map();
-  let followFlow = true, manualFlowScroll = false, flowExpiry;
+  let followFlow = true, manualFlowScroll = false, flowExpiry, flowReturnTimer;
   function atLiveEdge(viewport) {
     return viewport.scrollTop <= 4;
   }
@@ -570,6 +592,7 @@
     if (!active) {
       clearChildren(list);
       flowRows.clear();
+      clearFlowReturn();
       followFlow=true;
       manualFlowScroll=false;
       live.hidden=true;
@@ -682,9 +705,25 @@
     }
     return true;
   }
+  function clearFlowReturn() {
+    if(flowReturnTimer!==undefined)window.clearTimeout(flowReturnTimer);
+    flowReturnTimer=undefined;
+  }
   function connectFlowControls() {
     const viewport=e("flow-viewport"), live=e("flow-live");
     if (!viewport || !live) return;
+    const returnToLive=focus=>{
+      clearFlowReturn();
+      followFlow=true;
+      manualFlowScroll=false;
+      viewport.scrollTo({top:0,behavior:"auto"});
+      if(focus)viewport.focus({preventScroll:true});
+      live.hidden=true;
+    };
+    const scheduleReturn=()=>{
+      clearFlowReturn();
+      flowReturnTimer=window.setTimeout(()=>returnToLive(false),15000);
+    };
     const startManual=()=>{
       manualFlowScroll=true;
       if (followFlow && !atLiveEdge(viewport)) {
@@ -692,8 +731,10 @@
         followFlow=false;
         live.hidden=false;
       }
+      if(!followFlow)scheduleReturn();
     };
-    for (const event of ["wheel","touchstart","pointerdown"]) viewport.addEventListener(event,startManual,{passive:true});
+    for (const event of ["wheel","touchstart","touchmove","pointerdown"]) viewport.addEventListener(event,startManual,{passive:true});
+    viewport.addEventListener("pointermove",event=>{if(event.buttons)startManual();},{passive:true});
     viewport.addEventListener("keydown",event=>{
       const page = viewport.clientHeight;
       const steps = {ArrowUp:-48, ArrowDown:48, PageUp:-page, PageDown:page,
@@ -705,17 +746,15 @@
     });
     viewport.addEventListener("scroll",()=>{
       if (!manualFlowScroll) return;
+      const wasFollowing=followFlow;
       followFlow=atLiveEdge(viewport);
       live.hidden=followFlow;
-      if (followFlow) manualFlowScroll=false;
+      if (followFlow) {
+        clearFlowReturn();
+        manualFlowScroll=false;
+      } else if(wasFollowing) scheduleReturn();
     },{passive:true});
-    live.addEventListener("click",()=>{
-      followFlow=true;
-      manualFlowScroll=false;
-      viewport.scrollTo({top:0,behavior:"auto"});
-      viewport.focus({preventScroll:true});
-      live.hidden=true;
-    });
+    live.addEventListener("click",()=>returnToLive(true));
   }
   const outputLabels = {
     en:["Speaker","Playback progress"], nl:["Speaker","Voortgang"],
@@ -772,27 +811,40 @@
     let visible=false;
     sessionIconGroups.forEach(([name,key,glyphs],index)=>{
       const icon=e("session-"+name+"-icon");
-      if (!icon || !icon.firstElementChild) return;
+      const path=icon && icon.lastElementChild, tooltip=e("session-"+name+"-tooltip");
+      if (!path || !tooltip) return;
       const value=snapshotAccepted && !ended ? read(projection,["session",key]) : null;
       const glyphIndex=Object.keys(glyphs).indexOf(value);
       if (glyphIndex<0) {
         icon.setAttribute("hidden","");
-        icon.firstElementChild.removeAttribute("d");
+        path.removeAttribute("d");
+        tooltip.textContent="";
         icon.removeAttribute("aria-label");
         return;
       }
       icon.removeAttribute("hidden");
       visible=true;
-      icon.firstElementChild.setAttribute("d",glyphs[value]);
-      icon.setAttribute("aria-label",labels[index][0]+": "+labels[index][glyphIndex+1]);
+      path.setAttribute("d",glyphs[value]);
+      const label=labels[index][0]+": "+labels[index][glyphIndex+1];
+      tooltip.textContent=label;
+      icon.setAttribute("aria-label",label);
     });
     group.hidden=!visible;
+  }
+  function updateArtworkPlaceholder() {
+    const image=e("artwork"), placeholder=e("artwork-placeholder");
+    if (!placeholder) return;
+    const loaded=lastArtwork && image.complete && image.naturalWidth > 0;
+    image.hidden=!loaded;
+    placeholder.hidden=!playback().title || !!loaded;
+    placeholder.classList.toggle("playing",playback().state==="playing");
   }
   function render(animate=false) {
     const languageChanged=useLanguage(); updateClock();
     if (snapshotAccepted && !ended) e("state").textContent=text.live;
     renderSessionIcons();
-    renderSessionAvatar();
+    renderSessionChange();
+    renderDisplayViewButtons();
     renderScene();
     const p = playback(), mood = read(projection,["session","selected_mood"]);
     document.body.classList.toggle("idle",!p.title);
@@ -818,7 +870,7 @@
       : asset(p.artwork_url || "");
     e("artwork").hidden = !art;
     const artworkCard = e("artwork-card");
-    if (artworkCard) artworkCard.hidden = !art;
+    if (artworkCard) artworkCard.hidden = !p.title && !art;
     if (art !== lastArtwork) {
       browserTint=undefined;
       if (root.removeAttribute) root.removeAttribute("data-art-palette");
@@ -828,6 +880,7 @@
       else e("artwork").removeAttribute("src");
       lastArtwork = art;
     }
+    updateArtworkPlaceholder();
     setBrowserTheme(p.title ? browserTint || "#141222" : "#191b3a");
     e("artwork").alt = art ? (p.album || p.title || "") : "";
     root.style.setProperty("--art",art ? `url("${art.split('"').join('%22')}")` : "none");
@@ -874,7 +927,9 @@
     } else render(false);
   }
   window.addEventListener("resize",fitBubble);
+  e("artwork").addEventListener("error",updateArtworkPlaceholder);
   e("artwork").addEventListener("load",()=>{
+    updateArtworkPlaceholder();
     fitBubble();
     // Sample colors only; never display cropped/blurred Spotify artwork.
     const image=e("artwork"), identity=lastArtwork;
@@ -957,7 +1012,8 @@
   });
   function stopHost() {
     clearLiveStatus();
-    clearSessionAvatar();
+    clearSessionChange();
+    displayViewRevision=-1; displayViewPending=false;
     reportStatus("stopped","host_stop"); snapshotAccepted=false; statusGeneration=null;
     ended=true; broadcastToken=null;
     if (reconnectTimer) window.clearTimeout(reconnectTimer); reconnectTimer=undefined;
@@ -967,12 +1023,40 @@
   }
   window.addEventListener("djconnect-host-stop",stopHost);
   window.addEventListener("beforeunload",stopHost);
-  if (displayHost) {
+  if (displayHost || staticHost) {
+    const originalSlots=["moment-cards","progress","time","spotify-source"].map(id=>{
+      const node=e(id);return {node,parent:node.parentNode,next:node.nextSibling};});
+    let controlsConnected=false;
+    function layoutDisplay(enabled){
+      if(enabled){
+        e("shared-flow").appendChild(e("moment-cards"));
+        e("display-meter").append(e("progress"),e("time"));
+        e("display-timing").appendChild(e("spotify-source"));
+        if(!controlsConnected){connectFlowControls();controlsConnected=true;}
+      }else{
+        for(const {node,parent,next} of originalSlots.slice().reverse())parent.insertBefore(node,next);
+      }
+    }
+    if(displayHost)layoutDisplay(true);
+    if(staticHost){
+      window.addEventListener("djconnect-cast-display-mode",()=>{stopHost();displayHost=true;layoutDisplay(true);});
+      window.addEventListener("djconnect-cast-legacy-mode",()=>{const wasDisplay=displayHost;stopHost();displayHost=false;if(wasDisplay)layoutDisplay(false);});
+    }
     window.addEventListener("djconnect-live-status",({detail})=>renderLiveStatus(detail));
-    e("shared-flow").appendChild(e("moment-cards"));
-    e("display-meter").append(e("progress"),e("time"));
-    e("display-timing").appendChild(e("spotify-source"));
-    connectFlowControls();
+    window.addEventListener("djconnect-display-view-result",({detail})=>{
+      displayViewPending=false;
+      adoptDisplayView(detail);
+      renderDisplayViewButtons();
+    });
+    for(const mode of displayViewModes){
+      const button=e("display-view-"+mode);
+      if(button)button.addEventListener("click",()=>{
+        if(button.hidden || displayViewPending || !projection.view || projection.view.mode===mode)return;
+        displayViewPending=true;
+        renderDisplayViewButtons();
+        window.dispatchEvent(new CustomEvent("djconnect-display-view-select",{detail:mode}));
+      });
+    }
     window.addEventListener("djconnect-display-locale",({detail}) => {
       displayLocale=typeof detail==="string" && /^(en|nl|de|fr|es)$/.test(detail) ? detail : "";
       const state=e("state");
@@ -982,6 +1066,7 @@
     });
     window.addEventListener("djconnect-display-clear",stopHost);
     window.addEventListener("djconnect-display-artwork",({detail}) => {
+      if(!displayHost)return;
       displayArtwork=new Map((Array.isArray(detail) ? detail : []).filter(cover=>String(cover.url).startsWith("blob:"))
         .map(({reference,item_id,url})=>[reference,{item_id,url}]));
       if(focusedOverlay){
@@ -998,6 +1083,7 @@
     }
     window.addEventListener("djconnect-display-clear",clearSharedFocus);
     window.addEventListener("djconnect-shared-focus",({detail})=>{
+      if(!displayHost)return;
       if(focusedOverlay && focusedRevision===(detail && detail.focus_revision))return;
       clearSharedFocus();
       const item=(projection.shared_flow||[]).concat(projection.dj_moments||[]).find(value=>value.moment_id===(detail && detail.focused_moment_id));
@@ -1030,11 +1116,11 @@
       figure.append(img,caption);focusedOverlay.prepend(figure);
     });
     window.addEventListener("djconnect-display-snapshot",({detail}) => {
-      if (!detail || detail.contract_version !== 1 || !detail.session || detail.session.runtime_state !== "active") return;
+      if (!displayHost || !detail || detail.contract_version !== 1 || !detail.session || detail.session.runtime_state !== "active") return;
       const labels=detail.session_presentation || {};
       sessionId=detail.session.session_id; ended=false; snapshotAccepted=true;
       if(focusedOverlay && !(detail.shared_flow||[]).concat(detail.dj_moments||[]).some(item=>item.moment_id===focusedMomentId))clearSharedFocus();
-      apply({...detail,session:{...detail.session,selected_mood:labels.mood,dj_persona:labels.persona,selected_presence:labels.presence}});
+      apply({...detail,view:projection.view,session:{...detail.session,selected_mood:labels.mood,dj_persona:labels.persona,selected_presence:labels.presence}});
       e("state").textContent=text.live;
     });
   }

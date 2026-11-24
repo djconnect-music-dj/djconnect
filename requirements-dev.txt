@@ -9,3 +9,8 @@ Pillow==13.0.0
 defusedxml==0.7.1
 # Real P-256 custody/signature regressions use the existing HA-qualified library.
 cryptography==50.0.1
+
+# Real isolated TLS/WS adapter tests; HA runtime still uses its own SDK dependency.
+aiohttp==3.14.5
+# The Cast display invitation test renders the production QR response.
+segno==1.6.6

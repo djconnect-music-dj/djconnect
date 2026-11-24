@@ -8237,3 +8237,61 @@ unchanged real consent revision is permitted without an intervening OFF; after
 OFF, only the genuinely newer ON revision applies. Original saved App Attest
 key, server hash and SDK phase custody remain required; native clock/target and
 actual background delivery are independent. See NATIVE_INSTALLATION_PUBLISHER_V1.
+# Same-assignment Requested Moments reliability — 24 November 2026
+
+Follow-up59 adds optional inventory `subject_context` with required original
+`subject_ref` and optional known `track_title`, `artist`, `album` strings
+(max512, no controls). Unknown values are omitted. No action-label, name-split
+or latest-track fallback. Album comes only from that exact captured provider
+catalogue. Apple may place this original header once above premium cards.
+Follow-up34 preserves a committed favorite-genre container on exact no-op
+publication; changed values and every existing privacy/identity/epoch fence
+still withdraw the old offer. Follow-up21 uses artwork-only4.2s/scale0.97..1.0
+motion with reduced-motion1.0 and hidden pause preserved.
+
+Core follow-ups54/56/57 are specified in
+`docs/product/REQUESTED_MOMENTS_RUNTIME_RELIABILITY_V1.md` and API_CONTRACT.
+Bulletin inventory must reflect current original fresh/unreserved evidence;
+typed pending/temporary/insufficient-source/exhausted-story outcomes use all
+five languages without changing source rights, deadlines or deduplication.
+Apple's unavailable-row mask is RAM-only and joins the original inventory,
+request/type/subject/context; a fresh inventory, expiry or context change
+replaces it. It is not a substitute for repairing artist identity/research.
+Artist discovery preserves actual structured provider credit pairs and selects
+one qualified public subject before generation; no joined-name splitting,
+recording/remix prerequisite or hardcoded artist is introduced. Source,
+qualification, protected delivery and installed/native acceptance remain
+separate. Core is the sole product/contract writer for this follow-up; no new
+consumer writer or deployment is implied by these specifications.
+
+
+## VibeCast Flow and VibeScape controls — 24 November 2026
+
+The shared display renderer now needs a mode-only presentation action on an
+already admitted display. Core owns the active share state and revision. Apple
+continues using owner context and owner presentation, and refreshes owner
+context while the remote controls are visible. See
+[the participation contract](docs/technical/VIBECAST_GUEST_PARTICIPATION_V1.md).
+
+## Native Google Cast B-display bridge — 24 November2026
+
+User-requested integral iPad→TheFrame43/Live requires the separate
+[Cast B bridge wire](docs/product/VIBECAST_NATIVE_CAST_B_BRIDGE_V1.md).
+Apple owns genuine SDK session/channel selection and explicit existing share
+consent; receiver owns only bootstrap/claim/grant RAM custody and the shared Core
+renderer; Core owns real pairing/claim/owner-admit/display/Live authority.
+Do not reuse a legacy broadcast token as B authority. New wire must be adopted
+exactly by both consumers and jointly qualified; Core-only work is incomplete.
+
+## Cast B renderer parity — 24 November 2026
+
+The Cast B receiver imports the same VibeCast visuals and Flow controls as
+the same-origin display. Its display presentation endpoint uses the existing
+Cast-origin and grant association before selecting Flow or VibeScape.
+
+## macOS Cast via Home Assistant
+
+The Mac picker selects a Bonjour Cast UUID. Core adds paired
+`cast/owner/launch` per the Cast B bridge contract and returns a correlated
+claim. The Mac uses its existing paired resolve and explicit approval sequence.
+The Cast receiver keeps the existing B wire and viewport renderer.

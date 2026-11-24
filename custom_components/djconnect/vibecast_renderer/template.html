@@ -8,18 +8,23 @@
   <rect x="33" y="47" width="4" height="12" rx="2"/><rect x="40.5" y="41" width="4" height="24" rx="2"/>
   <rect x="48" y="36" width="4" height="34" rx="2"/><rect x="55.5" y="41" width="4" height="24" rx="2"/>
   <rect x="63" y="47" width="4" height="12" rx="2"/>
-</svg><span class="receiver-brand-label">DJConnect VibeCast</span></span><div class="header-clock"><time id="clock" aria-label=""></time><time id="clock-date"></time></div><div class="session-status">
-<span id="session-icons" class="session-icons" hidden>
-  <svg id="session-mood-icon" viewBox="0 0 24 24" role="img" focusable="false" hidden><path/></svg>
-  <svg id="session-persona-icon" viewBox="0 0 24 24" role="img" focusable="false" hidden><path/></svg>
-  <svg id="session-presence-icon" viewBox="0 0 24 24" role="img" focusable="false" hidden><path/></svg>
-</span><span id="state" data-testid="connection-state">Idle</span><select id="display-language" class="display-language" aria-label="Language" hidden>
+</svg><span class="receiver-brand-label">DJConnect VibeCast</span></span><div class="header-clock">
+  <button type="button" id="display-view-flow" class="display-view-button" aria-pressed="true" hidden>Flow</button>
+  <div><time id="clock" aria-label=""></time><time id="clock-date"></time></div>
+  <button type="button" id="display-view-vibescape" class="display-view-button" aria-pressed="false" hidden>VibeScape</button>
+</div><div class="session-status">
+<select id="display-language" class="display-language" aria-label="Language" hidden>
   <option value="en" lang="en">English</option>
   <option value="nl" lang="nl">Nederlands</option>
   <option value="de" lang="de">Deutsch</option>
   <option value="fr" lang="fr">Français</option>
   <option value="es" lang="es">Español</option>
-</select></div></header><section class="stage"><div class="now-playing"><div class="waiting-brand"><svg class="hero-symbol" viewBox="0 0 96 80" width="96" height="80" aria-hidden="true" focusable="false">
+</select>
+<span id="session-icons" class="session-icons" hidden>
+  <svg id="session-mood-icon" viewBox="0 0 24 24" role="img" focusable="false" hidden><title id="session-mood-tooltip"></title><path/></svg>
+  <svg id="session-persona-icon" viewBox="0 0 24 24" role="img" focusable="false" hidden><title id="session-persona-tooltip"></title><path/></svg>
+  <svg id="session-presence-icon" viewBox="0 0 24 24" role="img" focusable="false" hidden><title id="session-presence-tooltip"></title><path/></svg>
+</span><span id="state" data-testid="connection-state">Idle</span></div></header><section class="stage"><div class="now-playing"><div class="waiting-brand"><svg class="hero-symbol" viewBox="0 0 96 80" width="96" height="80" aria-hidden="true" focusable="false">
   <defs>
     <linearGradient id="receiver-symbol-gradient" x1="10" y1="8" x2="87" y2="73" gradientUnits="userSpaceOnUse">
       <stop stop-color="#62d8f2"/><stop offset=".55" stop-color="#8aa7ff"/><stop offset="1" stop-color="#c392ff"/>
@@ -73,19 +78,37 @@
       </g>
     </g>
   </g>
-</svg><span class="waiting-product"><span class="waiting-product-maker">DJConnect</span><br>VibeCast</span><div class="waiting-maker"><span id="waiting-maker-label" class="waiting-wordmark">Toon je DJ-sessie op dit scherm.</span></div></div><div id="artwork-card" class="artwork-card" hidden><img id="artwork" class="artwork" alt="" hidden></div><p id="mood" class="eyebrow">Ambient session</p><div class="waiting-status">
+</svg><span class="waiting-product"><span class="waiting-product-maker">DJConnect</span><br>VibeCast</span><div class="waiting-maker"><span id="waiting-maker-label" class="waiting-wordmark">Toon je DJ-sessie op dit scherm.</span></div></div><div id="artwork-card" class="artwork-card" hidden><img id="artwork" class="artwork" alt="" hidden><div id="artwork-placeholder" class="artwork artwork-placeholder" aria-hidden="true" hidden>
+  <svg viewBox="0 0 100 100" focusable="false">
+    <defs>
+      <linearGradient id="vinyl-disc" x2="100%" y2="100%"><stop stop-color="#1f2133"/><stop offset="1" stop-color="#060812"/></linearGradient>
+      <linearGradient id="vinyl-label" x2="100%" y2="100%"><stop stop-color="#1f73ff"/><stop offset="1" stop-color="#d638f5"/></linearGradient>
+      <linearGradient id="vinyl-arm" x1="100%" x2="0%" y2="100%"><stop stop-color="#f2f2f2"/><stop offset="1" stop-color="#7a7a7a"/></linearGradient>
+    </defs>
+    <g class="vinyl-record">
+      <circle cx="50" cy="50" r="33" fill="url(#vinyl-disc)"/>
+      <circle cx="50" cy="50" r="29.7" fill="none" stroke="#ffffff14"/>
+      <circle cx="50" cy="50" r="25.7" fill="none" stroke="#ffffff14"/>
+      <path d="M76.9 56.9A27.7 27.7 0 0 1 61.8 75.1" fill="none" stroke="#ffffff28" stroke-linecap="round"/>
+      <circle cx="50" cy="50" r="8.6" fill="url(#vinyl-label)" opacity=".85"/>
+      <circle cx="50" cy="50" r="1.5" fill="#090a17"/>
+    </g>
+    <circle cx="79" cy="25" r="3.6" fill="#222" stroke="#ffffff55" stroke-width=".3"/>
+    <rect x="77.2" y="18.1" width="4.3" height="4.6" rx=".8" fill="#888"/>
+    <path d="M79.7 19.6L79 25 75 52.3 61.9 62.2" fill="none" stroke="#303030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M79.7 19.6L79 25 75 52.3 61.9 62.2" fill="none" stroke="url(#vinyl-arm)" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="79" cy="25" r="1.45" fill="#b3b3b3"/>
+    <path d="M64.2 61.2L61.7 58.6 57.4 63.7 59.9 66.2Z" fill="#2e2940" stroke="#ffffff88" stroke-width=".3"/>
+    <path d="M58.6 64.9l-1.1 1.6" fill="none" stroke="#fff" stroke-width=".4" stroke-linecap="round"/>
+  </svg>
+</div></div><p id="mood" class="eyebrow">Ambient session</p><div class="waiting-status">
   <!-- Headset geometry from Apple DJPersonaMark (djconnect-app 9019c7af). -->
   <svg class="waiting-avatar" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
     <defs>
       <linearGradient id="waiting-avatar-gradient" x2="1" y2="1">
         <stop stop-color="#3285ff"/><stop offset=".5" stop-color="#843df5"/><stop offset="1" stop-color="#cb27f5"/>
       </linearGradient>
-      <radialGradient id="waiting-avatar-backing">
-        <stop stop-opacity=".76"/><stop offset=".6" stop-opacity=".56"/><stop offset="1" stop-opacity="0"/>
-      </radialGradient>
     </defs>
-    <circle cx="50" cy="50" r="50" fill="url(#waiting-avatar-backing)"/>
-    <circle cx="50" cy="50" r="35" fill="#000" fill-opacity=".82"/>
     <g class="waiting-avatar-mark" fill="url(#waiting-avatar-gradient)">
       <path d="M13 57C8-4 92-4 87 57" fill="none" stroke="url(#waiting-avatar-gradient)" stroke-width="5" stroke-linecap="round"/>
       <rect x="7" y="43" width="11" height="27" rx="5"/><rect x="82" y="43" width="11" height="27" rx="5"/>
@@ -107,7 +130,6 @@
   <defs><linearGradient id="spotlight-avatar-gradient" x2="100%" y2="100%">
     <stop offset="0%"/><stop offset="50%"/><stop offset="100%"/>
   </linearGradient></defs>
-  <circle cx="50" cy="52" r="46" class="spotlight-avatar-back"/>
   <g fill="none" stroke="url(#spotlight-avatar-gradient)">
     <circle cx="50" cy="53" r="28" stroke-width="4.5"/>
     <path d="M13 57C8 -4 92 -4 87 57" stroke-width="5" stroke-linecap="round"/>

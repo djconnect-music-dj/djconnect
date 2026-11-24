@@ -18,6 +18,20 @@ not change the six-axis settings3 contract, playback, VibeScape, or VibeCast.
 | Apple | ADAPT existing paired transport, session menu and shared SwiftUI controls; no local preference authority |
 | Legacy | No existing Canvas implementation to retire; AmbientView is not introduced |
 
+Samsung discovery reads the HA SSDP cache for MediaRenderer and the Samsung TV
+discovery targets used by HA's `samsungtv` integration. A Samsung manufacturer,
+device identifier and description host are required. When one host advertises
+multiple descriptions at once, MediaRenderer preserves the existing Canvas
+identifier. An advertisement establishes discovery only. Art API pairing and
+display readback remain separate, and pairing credentials are never moved
+between identifiers based on a network address.
+
+When multicast is unavailable, a loaded Home Assistant Samsung TV entry
+with a configured IP address and TV UDN also supplies discovery. Prefer the
+SSDP identity where present. The fallback reads the configured address and
+UDN only, and opens no connection during discovery. DJConnect still pairs
+independently with the Art API before the screen can become ready.
+
 ## Native wire
 
 All native routes are POST under `/api/djconnect/v1/music_canvas/`, use the

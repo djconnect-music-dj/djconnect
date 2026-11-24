@@ -7,6 +7,8 @@ import unittest
 from pathlib import Path
 from validate_snapshot import load, validate
 from render_snapshot import render
+from experience_reconciliation_delta import HISTORICAL_DOCUMENT_SOURCES
+from vibecast_baseline_delta import predecessor_files
 
 ROOT = Path(__file__).resolve().parent
 
@@ -40,7 +42,7 @@ class SharedSettingsMaintenanceTests(unittest.TestCase):
     def test_six_parameter_scope_preserves_frozen_predecessor(self):
         self.assertEqual(validate(self.p), [])
         d = self.p['planning_maintenance']
-        self.assertEqual(d['schema_version'], 'djconnect-federated-planning-delta/32')
+        self.assertEqual(d['schema_version'], 'djconnect-federated-planning-delta/33')
         self.assertEqual(d['settings_consolidation_receipt']['parameters'],
                          ['persona', 'voice', 'gender', 'mood', 'presence', 'announcement_output'])
         self.assertIn('six shared Persona/voice/gender/Mood/Presence/announcement_output', render(self.p)['README.md'])
@@ -122,7 +124,7 @@ def delivered_settings_plan():
 def delivered_passive_plan():
     import json
     plan = load(ROOT / 'djconnect-platform-v1.json')
-    if plan['planning_maintenance']['schema_version'] in {'djconnect-federated-planning-delta/15','djconnect-federated-planning-delta/16','djconnect-federated-planning-delta/17','djconnect-federated-planning-delta/18','djconnect-federated-planning-delta/19','djconnect-federated-planning-delta/20', 'djconnect-federated-planning-delta/21', 'djconnect-federated-planning-delta/22', 'djconnect-federated-planning-delta/23', 'djconnect-federated-planning-delta/24', 'djconnect-federated-planning-delta/25', 'djconnect-federated-planning-delta/26', 'djconnect-federated-planning-delta/27', 'djconnect-federated-planning-delta/28', 'djconnect-federated-planning-delta/29', 'djconnect-federated-planning-delta/30', 'djconnect-federated-planning-delta/31', 'djconnect-federated-planning-delta/32'}:
+    if plan['planning_maintenance']['schema_version'] in {'djconnect-federated-planning-delta/15','djconnect-federated-planning-delta/16','djconnect-federated-planning-delta/17','djconnect-federated-planning-delta/18','djconnect-federated-planning-delta/19','djconnect-federated-planning-delta/20', 'djconnect-federated-planning-delta/21', 'djconnect-federated-planning-delta/22', 'djconnect-federated-planning-delta/23', 'djconnect-federated-planning-delta/24', 'djconnect-federated-planning-delta/25', 'djconnect-federated-planning-delta/26', 'djconnect-federated-planning-delta/27', 'djconnect-federated-planning-delta/28', 'djconnect-federated-planning-delta/29', 'djconnect-federated-planning-delta/30', 'djconnect-federated-planning-delta/31', 'djconnect-federated-planning-delta/32', 'djconnect-federated-planning-delta/33'}:
         refs = plan['planning_maintenance']['document_references']
         plan['planning_maintenance'] = json.loads((ROOT / 'history/20261017/settings-finalization-maintenance-v14.json').read_text())
         plan['planning_maintenance']['document_references'] = refs
@@ -174,10 +176,11 @@ class MaintenanceTests(unittest.TestCase):
         self.assertEqual(
             {k: v for k, v in self.p.items() if k != "planning_maintenance"}, historical
         )
-        for r in d["document_references"]:
-            self.assertEqual(
-                hashlib.sha256((ROOT.parents[2] / r["path"]).read_bytes()).hexdigest(), r["sha256"]
-            )
+        with predecessor_files():
+            sources = HISTORICAL_DOCUMENT_SOURCES.get()
+            for r in d["document_references"]:
+                path = sources.get(r["path"], ROOT.parents[2] / r["path"])
+                self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), r["sha256"])
         for name, body in render(load(ROOT / "djconnect-platform-v1.json")).items():
             self.assertEqual((ROOT / name).read_text(), body)
 
@@ -1072,6 +1075,7 @@ class WebDecisionTests(unittest.TestCase):
 
 class MomentsAvatarMaintenanceTests(unittest.TestCase):
     def setUp(self):
+        self.enterContext(predecessor_files())
         self.plan = load(ROOT / 'djconnect-platform-v1.json')
         current_refs = {r['path']: r['sha256'] for r in self.plan['planning_maintenance']['document_references']}
         self.plan['planning_maintenance'] = load(ROOT / 'history/20261120/moments-avatar-freeze-maintenance-v19.json')
@@ -1116,6 +1120,7 @@ class MomentsAvatarMaintenanceTests(unittest.TestCase):
 
 class VibeCastUICurrentProofTests(unittest.TestCase):
     def setUp(self):
+        self.enterContext(predecessor_files())
         self.p = load(ROOT/'djconnect-platform-v1.json')
         self.p['planning_maintenance'] = load(ROOT/'history/20261124/vibecast-ui-source-freeze-maintenance-v31.json')
 

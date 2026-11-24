@@ -2583,3 +2583,37 @@ clock, target, field or restore permission. The caller begins its separate
 context operation only afterward, with its own new original C0. No mutating GET,
 status/JSON role import or latest-role fallback. Full original source, pairing,
 withdrawal and replay rules: `docs/product/NATIVE_INSTALLATION_PUBLISHER_V1.md`.
+# Requested Moments current availability follow-up — 24 November 2026
+
+Inventory version1 may additionally include optional `subject_context`:
+`{subject_ref, track_title?, artist?, album?}`. Omit unknown fields; do not use
+null or action-label fallbacks. Every text value is a known string of at most512
+characters without control characters. `subject_ref` is the existing original
+capture reference used by the item subjects. Album is only its actual original
+provider `album_name`; track/artist use that capture's catalogue/playback DATA.
+This header adds no authority, request field, lookup, deadline or retention.
+
+The existing version1 inventory/request routes retain their original owner,
+operation, subject/context and expiry binding. DJ Bulletin may report additive
+inventory reasons `bulletin_sources_pending`,
+`bulletin_sources_temporarily_unavailable`, `bulletin_not_enough_fresh_sources`
+or `bulletin_no_new_stories`, with the existing localized reason fields.
+Inventory inspects only already collected source/reservation state; no IO,
+model generation or reservation mutation is permitted. An explicit request
+rechecks those same rules and uses Bulletin-specific terminal feedback rather
+than claiming subject research failed. Existing states and original replay,
+deadline, privacy and source-rights rules remain unchanged.
+
+See `docs/product/REQUESTED_MOMENTS_RUNTIME_RELIABILITY_V1.md` for the strictly
+ephemeral matching-row presentation mask and internal provider-credit artist
+selection. No client-supplied artist identity or additional permission field
+is added. This addendum is a docs-first implementation contract, not delivery.
+
+## Native Cast B-display bridge v1 — new isolated implementation contract
+
+The closed `/api/djconnect/v1/cast/` family is specified in
+[the canonical Cast B bridge contract](docs/product/VIBECAST_NATIVE_CAST_B_BRIDGE_V1.md).
+It uses real paired-owner bootstrap, existing claim/owner-admit/collect factories
+and the existing B LiveHub. The original B same-origin routes/CSP and legacy
+view_broadcast token are unchanged. This document is no deployment/native-TV
+acceptance or capability-advertisement claim.

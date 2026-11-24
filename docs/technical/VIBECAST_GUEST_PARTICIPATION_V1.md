@@ -46,3 +46,15 @@ Limits are 64 temporary guests, 32 shared HA endpoints, 120-second invitation, 6
 `enqueue_track` is a distinct typed capability; `queue` remains a read. Spotify Direct supports this single exact recording operation; unsupported backends are not silently substituted. Dispatch uses the existing durable OperationJournal, explicit original current provider device ID, the canonical playback-identity projection, original recording and current host-policy admission. It sends at most once. Current-output changes yield uncertainty rather than claiming queue placement or targeting another speaker. A subsequent read may confirm that exact recording currently in the original queue; no new atomic global-queue proof requirement is imposed. Only the independent same-Session playback projection supports `actually_playing`. Guest requests/transcript do not write host preferences, history or DNA. Any existing genuine playback-learning policy remains its own independently consented source.
 
 The existing Live-impressie producer is owner-only. This increment does not promote its private publications. The conditional image-purpose boundary requires a separately eligible shared/public original Moment; its source/audience, licensing, hash and late-withdrawal behavior are tested with a declared public-audience source vector. Real public event-photo/physical screen acceptance is not claimed by the basic guest/request HA test.
+
+
+## Flow and VibeScape display controls
+
+The paired Apple remote and the currently admitted display can choose Flow or
+VibeScape for their active share. The browser control uses a same-origin
+display-grant action with only the display ID, issuer epoch and selected mode.
+It cannot set dynamics, change guest policy, alter playback or target a
+different share. These choices are ephemeral and available with Live guest
+participation off. The display refresh returns the authoritative mode and a
+share-local presentation revision so a late response cannot restore an older
+choice. The Apple remote reads that same mode while its controls are visible.

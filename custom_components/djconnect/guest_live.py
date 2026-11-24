@@ -17,7 +17,7 @@ def _label(value):
 
 def view(share, active):
     current = active.broadcast.state
-    return {"mode": share.view_mode, "dynamics": share.dynamics,
+    return {"mode": share.view_mode, "revision": share.view_revision, "dynamics": share.dynamics,
             "mood": _label(current.selected_mood), "persona": _label(current.dj_persona)}
 
 

@@ -224,6 +224,91 @@ class RequestedMomentsTest(unittest.IsolatedAsyncioTestCase):
             },
         )
 
+    async def test_inventory_header_uses_original_catalog_album_not_action_labels(self):
+        with self.production():
+            menu = await self.menu()
+            reference = menu["subject_context"]["subject_ref"]
+            captured = self.hass.data["djconnect"]["requested_moments"].captures[reference]
+            captured.catalog = deepcopy(self.catalog)
+            current = await self.menu()
+            header = current["subject_context"]
+            self.assertEqual(header["subject_ref"], reference)
+            self.assertEqual(header["album"], self.catalog["album_name"])
+            self.assertEqual(header["track_title"], self.catalog["title"])
+            self.assertEqual(header["artist"], self.catalog["artist"])
+            self.assertTrue(all(row["subject"]["subject_ref"] == reference for row in current["types"]))
+            self.emit("subject-context", {"inventory": current})
+            captured.catalog.pop("album_name")
+            self.assertNotIn("album", (await self.menu())["subject_context"])
+
+    async def test_explicit_artist_request_uses_artist_identity_route_without_recording_lookup(self):
+        owner = self
+        lookups = []
+        class Resolver:
+            async def resolve_artist_story(self, catalog, *, authorize, source_temporary):
+                authorize()
+                lookups.append(dict(catalog))
+                return (owner.fact,)
+
+            async def resolve(self, *args, **kwargs):
+                raise AssertionError("An artist request must not require a recording identity")
+        self.hass.data["djconnect"]["session_facts_resolver"] = Resolver()
+        with self.production():
+            menu = await self.menu()
+            captured = self.hass.data["djconnect"]["requested_moments"].captures[
+                menu["subject_context"]["subject_ref"]]
+            captured.facts = ()
+            captured.catalog = deepcopy(self.catalog)
+            result, status, _ = await self.submit(menu, "artist_story")
+        self.assertEqual((status, result["state"]), (200, "accepted"), result)
+        self.assertEqual(lookups, [self.catalog])
+        self.assertEqual(result["result"]["moment"]["type"], "artist")
+        self.assertTrue(result["result"]["moment"]["content"])
+
+    async def test_unknown_or_invalid_header_values_are_omitted_without_latest_lookup(self):
+        from custom_components.djconnect.requested_moment_inventory import subject_context
+        from types import SimpleNamespace
+        original = SimpleNamespace(reference="original-capture", catalog={"album_name": "bad\nvalue"},
+            playback=SimpleNamespace(title="Original track", artist="Band, With & Symbol"))
+        self.assertEqual(subject_context(original), {"subject_ref": "original-capture",
+            "track_title": "Original track", "artist": "Band, With & Symbol"})
+
+    async def test_bulletin_pending_is_typed_without_io_or_a_false_research_claim(self):
+        from custom_components.djconnect.bulletin_service import BulletinService
+        from custom_components.djconnect.bulletin_intake import PRIVATE_SOURCES
+        from tests.test_bulletin_builder import Store
+        from tests.test_bulletin_intake import HTTP
+        from custom_components.djconnect.requested_moment_inventory import BULLETIN_REASONS, reason_text
+        from types import SimpleNamespace
+        http = HTTP()
+        async def close():
+            pass
+        http.close = close
+        service = BulletinService(self.manager, Store(), http, create_task=asyncio.create_task,
+            subscribe=lambda callback: lambda: None, sources=PRIVATE_SOURCES)
+        await service.builder.initialize()
+        self.manager._bulletin_service = service
+        try:
+            with self.production():
+                menu = await self.menu()
+                row = next(row for row in menu["types"] if row["type_id"] == "dj_bulletin")
+                self.assertFalse(row["available"])
+                self.assertEqual(row["reason"], "bulletin_sources_pending")
+                result, status, _ = await self.submit(menu, "dj_bulletin")
+                self.assertEqual((status, result["state"]), (200, "temporarily_unavailable"))
+                self.assertEqual(result["error"], row["reason"])
+                self.assertEqual(result["message"], row["reason_text"])
+                self.emit("bulletin-pending", {"inventory": menu, "requested_response": result})
+                self.assertNotIn("goed onderbouwde", result["message"])
+                self.assertEqual(http.calls, [])
+                self.assertEqual(self.calls, [])
+                self.assertEqual(service.builder._state["reservations"], {})
+                for reason in BULLETIN_REASONS:
+                    for locale in ("en", "nl", "de", "fr", "es"):
+                        self.assertTrue(reason_text(SimpleNamespace(locale=locale), reason))
+        finally:
+            await service.close()
+
     async def cancel_request(self, envelope):
         self.last_cancel_envelope = self.envelope(
             "ask_dj/moments/cancel",
@@ -662,6 +747,10 @@ class RequestedMomentsTest(unittest.IsolatedAsyncioTestCase):
             sources=PRIVATE_SOURCES,
         )
         await service.builder.initialize()
+        # Production inventory reads already collected metadata; it cannot
+        # start its own feed IO. Populate that original fixture boundary first.
+        await service.collector.collect(now=time.time())
+        collected_calls = list(http.calls)
         self.manager._bulletin_service = service
         try:
             self.session = await self.manager.async_update_presence(
@@ -675,7 +764,7 @@ class RequestedMomentsTest(unittest.IsolatedAsyncioTestCase):
                 news_row = next(row for row in menu["types"] if row["type_id"] == "dj_bulletin")
                 self.assertEqual(news_row["subject"]["subtitle"], "")
                 self.assertNotEqual(news_row["subject"]["title"], self.session.session_id)
-                self.assertEqual(http.calls, [])
+                self.assertEqual(http.calls, collected_calls)
                 result, status, envelope = await self.submit(menu, "dj_bulletin")
                 self.assertEqual((status, result["state"]), (200, "accepted"), result)
                 self.assertEqual(result["result"]["moment"]["type"], "dj_bulletin")
@@ -696,6 +785,18 @@ class RequestedMomentsTest(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(http.calls), 2)
                 self.assertEqual(self.calls, [])
                 self.assertEqual(self.session.presence_ledger.__dict__, ledger)
+                current_menu = await self.menu()
+                current_news = next(item for item in current_menu["types"] if item["type_id"] == "dj_bulletin")
+                self.assertFalse(current_news["available"])
+                self.assertEqual(current_news["reason"], "bulletin_no_new_stories")
+                unavailable, unavailable_status, _ = await self.submit(current_menu, "dj_bulletin")
+                self.assertEqual((unavailable_status, unavailable["state"]), (200, "not_found"))
+                self.assertEqual(unavailable["error"], "bulletin_no_new_stories")
+                self.assertEqual(unavailable["message"], current_news["reason_text"])
+                self.emit("bulletin-exhausted", {"inventory": current_menu, "requested_response": unavailable})
+                self.assertNotIn("goed onderbouwde", unavailable["message"])
+                self.assertEqual(len(http.calls), 2)
+                self.assertEqual(self.calls, [])
                 rows = await self.manager._historical_projections.async_entry_records(
                     "profile-a", self.session.session_id
                 )
@@ -1479,11 +1580,11 @@ class RequestedMomentsTest(unittest.IsolatedAsyncioTestCase):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads(
             (
-                root / 'examples/client_contracts/requested_moments_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--6d26b6d8.json'
+                root / 'examples/client_contracts/requested_moments_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--e07ab9a5.json'
             ).read_text()
         )
         self.assertTrue(proof["source_before_after_equal"])
-        self.assertEqual(len(proof["source_pins"]), 356)
+        self.assertEqual(len(proof["source_pins"]), 359)
         for name, digest in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root / name).read_bytes()).hexdigest(), digest, name)
         receipt = proof["receipt"]
