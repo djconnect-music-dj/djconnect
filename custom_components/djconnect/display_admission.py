@@ -61,6 +61,7 @@ class _Claim:
     display_id: str = ""
     approval_key: tuple = ()
     include_output_status: bool = False
+    cast_owner: DisplayOwnerBinding | None = None
 
 
 @dataclass(slots=True, repr=False)
@@ -71,6 +72,7 @@ class _Share:
     generation: int = 1
     locale: str | None = None
     view_mode: str = "flow"
+    view_revision: int = 0
     dynamics: float = 0.5
     observed_playback: tuple = ()
     observed_key: str = ""
@@ -254,12 +256,20 @@ class DisplayAdmissionState:
                 "browser_generation": generation,
                 "expires_in": max(0, deadline - self._clock()) if replaces else CLAIM_TTL}
 
+    @staticmethod
+    def _claim_owner_matches(claim, owner, *, lookup=False):
+        original = claim.cast_owner
+        return (original is None or (original.valid() and original.stamp == owner.stamp
+            and original.entry_id == owner.entry_id and original.profile_id == owner.profile_id
+            and (original.session_id == owner.session_id or (lookup and not owner.session_id))))
+
     def resolve(self, *, code: str, owner: DisplayOwnerBinding) -> dict:
         self.prune()
         self._owner(owner)
         self._throttle(owner)
         for claim in self._claims.values():
-            if _same(claim.code, code) and claim.owner is None:
+            if (_same(claim.code, code) and claim.owner is None
+                    and self._claim_owner_matches(claim, owner, lookup=True)):
                 return {"claim_id": claim.claim_id, "browser_generation": claim.generation,
                         "issuer_epoch": self.issuer_epoch, "expires_in": max(0, claim.deadline - self._clock())}
         self._throttle(owner, failure=True)
@@ -302,6 +312,9 @@ class DisplayAdmissionState:
             for display in self._displays.values():
                 if display.claim_id == claim_id and display.approval_key == key:
                     return self._summary(self._shares[display.share_id], display.display_id)
+            raise DisplayAdmissionError("display_claim_unavailable", 404)
+        if not self._claim_owner_matches(claim, owner):
+            self._throttle(owner, failure=True)
             raise DisplayAdmissionError("display_claim_unavailable", 404)
         if claim.owner is not None:
             if claim.approval_key == key:

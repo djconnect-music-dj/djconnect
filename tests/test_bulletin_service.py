@@ -52,6 +52,82 @@ class BulletinServiceTests(unittest.IsolatedAsyncioTestCase):
         await self.service._task
         self.assertIsNotNone(self.service.ready(self.fixture.work.owner, self.fixture.sid))
 
+    async def test_inventory_reads_current_pair_without_io_model_or_reservation_writes(self):
+        from copy import deepcopy
+        self.service.collector.sources = SOURCES[:2]
+        await self.service.builder.initialize()
+        self.assertEqual(self.service.availability(self.fixture.work.owner),
+                         (False, "bulletin_sources_pending"))
+        await self.service.collector.collect(now=self.service.wall())
+        before = (deepcopy(self.store.data), list(self.http.calls), list(self.fixture.calls))
+        self.assertEqual(self.service.availability(self.fixture.work.owner), (True, None))
+        self.assertEqual((self.store.data, self.http.calls, self.fixture.calls), before)
+        self.assertEqual(self.tasks, [])
+
+    async def test_consumed_pair_stays_reserved_and_inventory_explains_no_new_stories(self):
+        from copy import deepcopy
+        self.service.collector.sources = SOURCES[:2]
+        await self.start_ready()
+        candidate, work = self.service.builder._candidate, self.service._work
+        self.assertEqual(self.service.availability(work.owner), (True, None))
+        await self.service.builder.take(candidate, session=work.session, guard=work.guard)
+        before = deepcopy(self.store.data)
+        self.assertEqual(self.service.availability(work.owner), (False, "bulletin_no_new_stories"))
+        self.assertEqual(self.store.data, before)
+        self.assertEqual(len(before["reservations"]), 4)
+        self.assertEqual(len(self.fixture.calls), 2)
+
+    async def test_missing_fresh_pair_is_distinct_from_actual_feed_failure(self):
+        self.service.collector.sources = SOURCES[:2]
+        await self.service.builder.initialize()
+        actual = self.http.reply
+        self.http.reply = lambda source: actual(source) if source == SOURCES[0] else Response(503)
+        await self.service.collector.collect(now=self.service.wall())
+        self.assertEqual(self.service.availability(self.fixture.work.owner),
+                         (False, "bulletin_sources_temporarily_unavailable"))
+        # A successful, empty original source has no transport failure.
+        state = self.service.collector._state[SOURCES[1].source_id]
+        state["failures"] = 0
+        self.assertEqual(self.service.availability(self.fixture.work.owner),
+                         (False, "bulletin_not_enough_fresh_sources"))
+        self.assertEqual(self.fixture.calls, [])
+
+    async def test_explicit_private_request_reuses_the_original_prepared_headlines(self):
+        from datetime import datetime, timezone
+        from email.utils import format_datetime
+
+        self.service.collector.sources = PRIVATE_SOURCES
+        stamp = format_datetime(datetime.fromtimestamp(self.fixture.items[0].published_at, timezone.utc))
+        titles = ("Tech publisher announces new processor", "Parliament discusses transport funding")
+        self.http.reply = lambda source: Response(200, rss(
+            source, date=stamp, title=titles[PRIVATE_SOURCES.index(source)]))
+        await self.start_ready()
+        original, original_work = self.service.builder._candidate, self.service._work
+        session_id, generate, authorize, _ = self.fixture.manager._bulletin_providers[original_work.owner]
+        provider = (session_id, generate, authorize, lambda: lambda: None)
+        self.assertNotEqual(str(id(provider)), original.session.source_generation)
+        before = list(self.http.calls)
+        self.assertEqual(self.service.availability(original_work.owner, provider=provider), (True, None))
+        attempt = iter((True, False))
+
+        def withdrawing_request():
+            if not next(attempt):
+                raise PermissionError("fixture_request_withdrawn")
+
+        with self.assertRaises(PermissionError):
+            await self.service.requested(original_work.owner, withdrawing_request, provider=provider)
+        self.assertIs(self.service.builder._candidate, original)
+        self.assertIs(self.service._work, original_work)
+        taken, work = await self.service.requested(original_work.owner, lambda: None, provider=provider)
+        self.assertEqual((taken.candidate_id, taken.text, taken.monotonic_deadline),
+                         (original.candidate_id, original.text, original.monotonic_deadline))
+        self.assertEqual(self.http.calls, before)
+        self.assertEqual(self.fixture.calls, [])
+        self.assertIsNone(self.service.builder._candidate)
+        self.fixture.authorized = False
+        with self.assertRaises(PermissionError):
+            work.guard()
+
     async def test_single_poll_owner_prepares_without_publishing_or_duplicate_background_work(self):
         with self.assertLogs(BulletinService.__module__, level="DEBUG") as logs:
             await self.service.start()

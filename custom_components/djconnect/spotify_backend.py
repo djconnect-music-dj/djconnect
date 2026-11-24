@@ -776,7 +776,7 @@ class SpotifyBackend:
             target_id=device.get("id") if isinstance(device.get("id"), str) else "",
             duration_ms=_int_or_none(playback.get("duration_ms")),
             position_ms=_int_or_none(playback.get("progress_ms")),
-            catalog={key: playback[key] for key in ("uri", "title", "artist", "album_name", "album_uri", "release_date", "release_date_precision", "isrc", "artist_ids") if key in playback},
+            catalog={key: playback[key] for key in ("uri", "title", "artist", "album_name", "album_uri", "release_date", "release_date_precision", "isrc", "artist_ids", "artist_credits") if key in playback},
         )
 
     async def async_observe_current_genres(self, observed: SpotifyPlaybackObservation, *, authorize) -> dict[str, Any]:
@@ -2303,6 +2303,12 @@ def _normalize_playback(data: dict[str, Any]) -> dict[str, Any]:
             str(artist.get("id") or "").strip()
             for artist in artists
             if isinstance(artist, dict) and str(artist.get("id") or "").strip()
+        ][:10],
+        "artist_credits": [
+            {"id": str(artist["id"]).strip(), "name": artist["name"].strip()}
+            for artist in artists
+            if (isinstance(artist, dict) and str(artist.get("id") or "").strip()
+                and isinstance(artist.get("name"), str) and artist["name"].strip())
         ][:10],
         "album_name": album.get("name") or "",
         "album_uri": album.get("uri") or "",

@@ -120,13 +120,19 @@ class DisplayLiveView(HomeAssistantView):
     def __init__(self, hass):
         self.hass = hass
 
+    def browser_origin_allowed(self, request, selected):
+        return tuple(request.headers.getall("Origin", [])) == (selected,)
+
+    def authorize_transport_display(self, manager, display):
+        """Original B grants need no additional transport association."""
+
     async def get(self, request):
         from .session_runtime import session_runtime_manager
         manager = session_runtime_manager(self.hass)
         hub = display_live_hub(manager)
         origin = selected_ha_origin(self.hass)
         if (request.query_string or not request.secure or origin is None
-                or tuple(request.headers.getall("Origin", [])) != (origin,)):
+                or not self.browser_origin_allowed(request, origin)):
             return web.json_response({"success": False, "error": "display_origin_denied"},
                                      status=403, headers=SECURITY_HEADERS)
         peer = request.transport.get_extra_info("peername") if request.transport else None
@@ -168,6 +174,7 @@ class DisplayLiveView(HomeAssistantView):
                         raise DisplayAdmissionError("display_context_changed", 409)
                     display = state.authorize(token=frame["grant_token"], display_id=frame["display_id"],
                                               issuer_epoch=frame["issuer_epoch"])
+                    self.authorize_transport_display(manager, display)
                     active = manager.current_active(display.owner.profile_id)
                     if active is None:
                         raise DisplayAdmissionError("display_grant_invalid", 401)

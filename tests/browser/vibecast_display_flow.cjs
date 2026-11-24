@@ -11,7 +11,10 @@ const grant = "djcd_" + "A".repeat(43);
 const binding = {issuer_epoch:"epoch",display_id:"display",share_id:"share",share_generation:1,session_id:"session"};
 
 async function main(engine) {
-  const browser = await engine.launch({timeout:12000,...(engine===chromium ? {channel:"chromium"} : {})});
+  const chromiumOptions = process.env.DJC_CHROMIUM_PATH
+    ? {executablePath:process.env.DJC_CHROMIUM_PATH}
+    : {channel:"chromium"};
+  const browser = await engine.launch({timeout:12000,...(engine===chromium ? chromiumOptions : {})});
   let page;
   try {
     page = await browser.newPage({viewport:{width:1280,height:720},reducedMotion:"reduce",locale:"en-US",timezoneId:"Europe/Amsterdam"});
@@ -32,6 +35,12 @@ async function main(engine) {
           headers:{"Content-Length":String(cover.length)}});
       }
       if(endpoint==="focus")return route.fulfill({json:{success:true,focused_moment_id:null,expires_in:0}});
+      if(endpoint==="presentation") {
+        const request=route.request().postDataJSON();
+        assert.deepEqual(request,{contract_version:1,issuer_epoch:"epoch",display_id:"display",mode:"vibescape"});
+        assert.equal(route.request().headers().authorization,"Bearer "+grant);
+        return route.fulfill({json:{success:true,view:{mode:request.mode,revision:4,dynamics:.5}}});
+      }
       if(endpoint==="invitation")return route.fulfill({status:403,json:{success:false,error:"guest_share_unavailable"}});
       assert.equal(endpoint,"collect");
       return route.fulfill({json:{success:true,state:"admitted",...binding,grant_token:grant,lease_expires_in:60,
@@ -73,8 +82,32 @@ async function main(engine) {
       document.querySelector("#handoff")?.textContent.includes("Connecting")).catch(()=>{});
     for(let i=0;!socket && i<50;i++) await new Promise(resolve=>setTimeout(resolve,50));
     assert.ok(socket);
-    snapshot(8);
+    snapshot(8, "current", "playing", undefined, {
+      session_presentation:{mood:"chill",persona:"home_dj",presence:"presenter"},
+      artwork:null
+    });
+    const languagePicker = page.locator("#display-language");
+    const moodIcon = page.locator("#session-mood-icon");
+    await moodIcon.waitFor();
+    const languageBox = await languagePicker.boundingBox(), moodBox = await moodIcon.boundingBox();
+    assert.ok(languageBox && moodBox && languageBox.x + languageBox.width <= moodBox.x);
+    assert.ok(languageBox.y < moodBox.y + moodBox.height && moodBox.y < languageBox.y + languageBox.height);
+    assert.equal(await languagePicker.evaluate(element=>getComputedStyle(element).color), "rgb(255, 255, 255)");
+    assert.match(await languagePicker.evaluate(element=>getComputedStyle(element).backgroundColor), /^rgba\(0, 0, 0, 0\.22\)$/);
+    assert.equal(await page.locator(".session-status .spotlight-avatar").count(), 0);
+    for (const [name,label] of [["mood","Mood: Chill"],["persona","DJ character: Home DJ"],["presence","DJ presence: Presenter"]]) {
+      const icon = page.locator("#session-"+name+"-icon");
+      assert.equal(await icon.locator("title").textContent(), label);
+      assert.equal(await icon.getAttribute("aria-label"), label);
+    }
     const viewport=page.locator("#flow-viewport"), rows=page.locator("#flow-cards > .flow-card");
+    const placeholder = page.locator("#artwork-placeholder"), title = page.locator("#title");
+    await placeholder.waitFor();
+    const recordBox = await placeholder.boundingBox(), missingArtTitle = await title.boundingBox();
+    assert.ok(recordBox && missingArtTitle && recordBox.x + recordBox.width <= missingArtTitle.x);
+    assert.equal(await placeholder.locator(".vinyl-record").evaluate(element=>getComputedStyle(element).animationName), "none");
+    assert.equal(await page.locator(".spotlight-avatar-back, .waiting-avatar circle[fill='#000']").count(), 0);
+    snapshot(8);
     const atEdge=()=>viewport.evaluate(e=>e.scrollTop<=4);
     await rows.nth(7).waitFor();
     const timestamp=rows.first().locator("time");
@@ -83,10 +116,16 @@ async function main(engine) {
     assert.equal(await rows.nth(2).locator("time").count(),0);
     const albumCover=page.locator("#artwork");
     await page.waitForFunction(()=>document.querySelector("#artwork").naturalWidth>0);
+    await placeholder.waitFor({state:"hidden"});
+    const loadedArtTitle = await title.boundingBox();
+    assert.ok(loadedArtTitle && Math.abs(loadedArtTitle.x - missingArtTitle.x) < 1);
     const coverUrl=await albumCover.getAttribute("src");
     assert.match(coverUrl,/^blob:/);
     const contributionCover=rows.first().locator(".flow-artwork");
     await contributionCover.waitFor();
+    const thumbnailFrame = rows.first().locator(".flow-artwork-link");
+    assert.ok(parseFloat(await thumbnailFrame.evaluate(element=>getComputedStyle(element).borderTopLeftRadius)) > 0);
+    assert.ok(parseFloat(await thumbnailFrame.evaluate(element=>getComputedStyle(element).paddingLeft)) > 0);
     assert.equal(await contributionCover.getAttribute("src"),coverUrl);
     assert.equal(await rows.nth(2).locator(".flow-artwork").getAttribute("src"),coverUrl);
     const previousCover=rows.nth(1).locator(".flow-artwork");
@@ -282,6 +321,31 @@ async function main(engine) {
     await viewport.waitFor({state:"visible"});
     await liveStatus({reactions:[reaction]});
     assert.equal(await page.locator(".live-reaction").count(),1);
+    await liveStatus({view:{...view(.5),mode:"flow",revision:3}});
+    const flowMode=page.getByRole("button",{name:"Flow",exact:true});
+    const sceneMode=page.getByRole("button",{name:"VibeScape",exact:true});
+    const [flowModeBox,clockBox,sceneModeBox]=await Promise.all(
+      [flowMode,page.locator("#clock"),sceneMode].map(control=>control.boundingBox()));
+    assert.ok(flowModeBox && clockBox && sceneModeBox);
+    assert.ok(flowModeBox.x+flowModeBox.width <= clockBox.x && clockBox.x+clockBox.width <= sceneModeBox.x);
+    await sceneMode.click();
+    await page.waitForFunction(()=>document.querySelector("#display-view-vibescape").getAttribute("aria-pressed")==="true");
+    await liveStatus({view:{...view(.5),mode:"flow",revision:3}});
+    assert.equal(await sceneMode.getAttribute("aria-pressed"),"true");
+    await liveStatus({view:{...view(.5),mode:"flow",revision:5}});
+    assert.equal(await flowMode.getAttribute("aria-pressed"),"true");
+    await page.clock.install();
+    await viewport.hover();
+    await page.mouse.wheel(0,220);
+    await live.waitFor();
+    await page.clock.fastForward(10000);
+    await page.mouse.wheel(0,160);
+    await page.clock.fastForward(14500);
+    assert.equal(await live.isVisible(),true);
+    await page.clock.fastForward(650);
+    await live.waitFor({state:"hidden"});
+    assert.equal(await atEdge(),true);
+
     await page.evaluate(()=>window.dispatchEvent(new Event("djconnect-display-clear")));
     assert.equal(await page.locator("#live-guest-count").textContent(),"");
     assert.equal(await page.locator("#live-guest-count").isHidden(),true);

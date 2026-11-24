@@ -214,6 +214,23 @@ class SpotifyBackendTest(unittest.TestCase):
         self.assertEqual(observed.position_ms, 12000)
         self.assertFalse(hasattr(runtime, "last_playback"))
 
+    def test_observed_catalog_keeps_actual_artist_id_name_pairs_without_splitting(self):
+        runtime = types.SimpleNamespace(config={})
+        backend = self.backend.SpotifyBackend(object(), runtime)
+        credits = [{"id": "C" * 22, "name": "Group, With & Symbol"},
+                   {"id": "D" * 22, "name": "Second project"}]
+        async def request(method, path):
+            self.assertEqual((method, path), ("GET", "/me/player"))
+            return {"is_playing": True, "item": {
+                "uri": "spotify:track:" + "A" * 22,
+                "name": "Synthetic song (guest version)", "artists": credits}}
+        backend._request = request
+        observed = asyncio.run(backend.async_observe_current_playback())
+        self.assertEqual(observed.catalog["artist_credits"], credits)
+        self.assertEqual(observed.catalog["artist_ids"], [credit["id"] for credit in credits])
+        self.assertEqual(observed.catalog["artist"], "Group, With & Symbol, Second project")
+        self.assertFalse(hasattr(runtime, "last_playback"))
+
     def test_playback_observation_rejects_non_track_or_inactive_media(self) -> None:
         runtime = types.SimpleNamespace(config={})
         backend = self.backend.SpotifyBackend(object(), runtime)

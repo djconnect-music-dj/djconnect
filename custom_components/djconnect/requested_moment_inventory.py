@@ -317,6 +317,21 @@ def capture(hass, authority, manager, active):
     )
 
 
+def subject_context(captured):
+    """Presentation DATA from this original capture, never an action label."""
+    result = {"subject_ref": captured.reference}
+    values = {
+        "track_title": captured.catalog.get("title") or captured.playback.title,
+        "artist": captured.catalog.get("artist") or captured.playback.artist,
+        "album": captured.catalog.get("album_name"),
+    }
+    for key, value in values.items():
+        if (type(value) is str and 0 < len(value.strip()) <= 512
+                and not any(ord(char) < 32 or ord(char) == 127 for char in value)):
+            result[key] = value.strip()
+    return result
+
+
 def candidate_facts(captured, active):
     from .session_facts import producer_recommendation
 
@@ -382,6 +397,12 @@ def descriptors(captured, manager):
                 manager._bulletin_service is not None and captured.bulletin_provider is not None
             )
             reason = None if available else "producer_unavailable"
+            if available:
+                try:
+                    available, reason = manager._bulletin_service.availability(
+                        captured.profile, provider=captured.bulletin_provider)
+                except PermissionError:
+                    available, reason = False, "producer_unavailable"
         if name == "music_origin":
             available = bool(captured.playback.title and captured.playback.artist) and captured.narration_provider is not None and capable
             reason = None if available else reason or "subject_evidence_unavailable"
@@ -440,7 +461,9 @@ def descriptors(captured, manager):
     return rows
 
 
-def feedback(active, state):
+def feedback(active, state, *, reason=None):
+    if reason in BULLETIN_REASONS:
+        return BULLETIN_REASONS[reason][LANGUAGES.index(language(active))]
     copies = {
         "not_found": (
             "I couldn’t find a well-supported contribution about this subject.",
@@ -475,8 +498,41 @@ def feedback(active, state):
     return copies[state][LANGUAGES.index(language(active))] if state in copies else None
 
 
+BULLETIN_REASONS = {
+    "bulletin_sources_pending": (
+        "Current news is still being checked. Open Moments again shortly.",
+        "De actuele berichten worden nog gecontroleerd. Open Moments zo opnieuw.",
+        "Die aktuellen Nachrichten werden noch geprüft. Öffne Moments gleich erneut.",
+        "Les actualités sont en cours de vérification. Rouvrez Moments dans un instant.",
+        "Se están comprobando las noticias actuales. Vuelve a abrir Moments en breve.",
+    ),
+    "bulletin_sources_temporarily_unavailable": (
+        "The news sources are temporarily unavailable. Try again later.",
+        "De nieuwsbronnen zijn tijdelijk niet beschikbaar. Probeer het later opnieuw.",
+        "Die Nachrichtenquellen sind vorübergehend nicht verfügbar. Versuche es später erneut.",
+        "Les sources d’actualité sont temporairement indisponibles. Réessayez plus tard.",
+        "Las fuentes de noticias no están disponibles temporalmente. Inténtalo más tarde.",
+    ),
+    "bulletin_not_enough_fresh_sources": (
+        "There are not enough different current news stories for a DJ Bulletin yet.",
+        "Er zijn nu niet genoeg verschillende actuele berichten voor een DJ Bulletin.",
+        "Es gibt noch nicht genügend unterschiedliche aktuelle Meldungen für ein DJ-Bulletin.",
+        "Il n’y a pas encore assez d’actualités différentes pour un bulletin du DJ.",
+        "Todavía no hay suficientes noticias actuales diferentes para un boletín del DJ.",
+    ),
+    "bulletin_no_new_stories": (
+        "There are no new stories for a DJ Bulletin right now. Earlier stories are not repeated.",
+        "Er zijn nu geen nieuwe berichten voor een DJ Bulletin. Eerdere berichten worden niet herhaald.",
+        "Es gibt gerade keine neuen Meldungen für ein DJ-Bulletin. Frühere Meldungen werden nicht wiederholt.",
+        "Aucune nouvelle actualité n’est disponible pour un bulletin du DJ. Les précédentes ne sont pas répétées.",
+        "Ahora no hay noticias nuevas para un boletín del DJ. Las anteriores no se repiten.",
+    ),
+}
+
+
 def reason_text(active, reason, *, locale=None):
     values = {
+        **BULLETIN_REASONS,
         "subject_evidence_unavailable": (
             "A reliable contribution about this subject is not available right now.",
             "Over dit onderwerp is nu geen betrouwbare bijdrage beschikbaar.",

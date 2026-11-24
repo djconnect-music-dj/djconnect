@@ -644,9 +644,7 @@ class MusicDNAManager:
                     )
         genres = compact_track.get("genres")
         if isinstance(genres, list) and genres:
-            memory["favorite_genres"] = _unique_texts(
-                [*genres, *(memory.get("favorite_genres") or [])]
-            )[:20]
+            _publish_favorite_genres(memory, genres)
         memory["updated_at"] = _now()
 
     def update_track_insight_energy(
@@ -741,9 +739,7 @@ class MusicDNAManager:
                     self.update_recent_tracks(key, track)
             genres = compact.get("inferred_genres")
             if isinstance(genres, list) and genres:
-                memory["favorite_genres"] = _unique_texts(
-                    [*genres, *(memory.get("favorite_genres") or [])]
-                )[:20]
+                _publish_favorite_genres(memory, genres)
         written = deepcopy(memory)
         changed = {field for field in before.keys() | written.keys() if before.get(field) != written.get(field)}
         try:
@@ -2447,6 +2443,13 @@ def _range_items(value: Any) -> list[dict[str, Any]]:
         if isinstance(values, list):
             items.extend(item for item in values if isinstance(item, dict))
     return items
+
+
+def _publish_favorite_genres(memory, genres):
+    """Keep the original genre basis on no-op publication; changed values use COW."""
+    published = _unique_texts([*genres, *(memory.get("favorite_genres") or [])])[:20]
+    if memory.get("favorite_genres") != published:
+        memory["favorite_genres"] = published
 
 
 def _unique_texts(values: Any) -> list[str]:

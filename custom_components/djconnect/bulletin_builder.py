@@ -74,6 +74,32 @@ def possibly_same_story(left, right):
     return overlap >= 0.45 or SequenceMatcher(None, a, b).ratio() >= 0.75
 
 
+def select_news_pair(items, *, now, monotonic, reservations):
+    """Read the same bounded original stories without reserving or generating."""
+    ordered = sorted(items, key=lambda i: i.published_at, reverse=True)[:len(SOURCES) * 64]
+
+    def pool(reserved):
+        result = []
+        for item in ordered:
+            if (type(item) is not NewsItem or not qualified_item(item)
+                    or not item.fresh(now, monotonic=monotonic())
+                    or any(reserved.get(key, 0) > now for key in _keys(item))
+                    or any(possibly_same_story(item, old) for old in result)):
+                continue
+            result.append(item)
+        return result
+
+    def pair(values):
+        return next(((a, b) for index, a in enumerate(values) for b in values[index + 1:]
+                     if a.source_id != b.source_id), None)
+
+    selected = pair(pool(reservations))
+    if selected is not None:
+        return selected, None
+    reason = "bulletin_no_new_stories" if pair(pool({})) is not None else "bulletin_not_enough_fresh_sources"
+    return None, reason
+
+
 def _object(raw):
     if type(raw) is not str or len(raw.encode("utf-8")) > 8192:
         raise BuilderError("bulletin_model_invalid")
@@ -185,18 +211,10 @@ class BulletinBuilder:
                     return self._candidate
                 self._candidate = None
             self._state["reservations"] = {k: v for k, v in self._state["reservations"].items() if now < v}
-            pool = []
-            for item in sorted(items, key=lambda i: i.published_at, reverse=True)[:len(SOURCES) * 64]:
-                if (type(item) is not NewsItem or not qualified_item(item)
-                        or not item.fresh(now, monotonic=self.monotonic())
-                        or any(k in self._state["reservations"] for k in _keys(item))
-                        or any(possibly_same_story(item, old) for old in pool)):
-                    continue
-                pool.append(item)
             # Conservative V1: require two different publishers as well as two
             # preliminarily distinct stories. Assessment checks semantic independence.
-            selected = next(((a, b) for i, a in enumerate(pool) for b in pool[i+1:]
-                if a.source_id != b.source_id), None)
+            selected, _ = select_news_pair(items, now=now, monotonic=self.monotonic,
+                                           reservations=self._state["reservations"])
             if selected is None:
                 return None
             headline_text = private_headlines(selected)

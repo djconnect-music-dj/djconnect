@@ -7,6 +7,7 @@ import sys
 import tempfile
 import types
 import unittest
+from unittest.mock import patch
 from uuid import uuid4
 
 package = types.ModuleType("custom_components.djconnect")
@@ -15,8 +16,9 @@ sys.modules.setdefault("custom_components.djconnect", package)
 
 from custom_components.djconnect.music_canvas import (  # noqa: E402
     CanvasError, Cadence, apply_update, fresh_state, profile, reserve_forget,
-    finish_forget, validate_request,
+    digest, finish_forget, validate_request,
 )
+from custom_components.djconnect.music_canvas_adapters import discover  # noqa: E402
 from custom_components.djconnect.music_canvas_render import art_prompt, compose  # noqa: E402
 from custom_components.djconnect.persistence.music_canvas import CanvasRepository  # noqa: E402
 from custom_components.djconnect.persistence.service import PersistenceService  # noqa: E402
@@ -26,6 +28,84 @@ from custom_components.djconnect.persistence.sqlite import SQLitePersistenceProv
 def update(revision=0, **patch):
     return dict(contract_version=1, device_id="ios-test", client_type="ios", binding="a"*64,
                 operation_id=str(uuid4()), expected_revision=revision, patch=patch)
+
+
+class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
+    async def test_uses_vendor_advertisements_and_preserves_legacy_identity(self):
+        def advertisement(host, udn, name, manufacturer="Samsung Electronics"):
+            return types.SimpleNamespace(
+                upnp={"manufacturer": manufacturer, "friendlyName": name},
+                ssdp_usn=udn,
+                ssdp_location=f"http://{host}/description.xml",
+            )
+
+        renderer = "urn:schemas-upnp-org:device:MediaRenderer:1"
+        remote = "urn:samsung.com:device:RemoteControlReceiver:1"
+        main = "urn:samsung.com:service:MainTVAgent2:1"
+        rendering = "urn:schemas-upnp-org:service:RenderingControl:1"
+        records = {
+            renderer: [advertisement("192.0.2.43", "uuid:legacy", "Frame 43")],
+            remote: [
+                advertisement("192.0.2.43", "uuid:alias", "Frame 43 alias"),
+                advertisement("192.0.2.55", f"uuid:frame55::{remote}", "Frame 55"),
+            ],
+            main: [advertisement("192.0.2.55", "uuid:another-alias", "Frame 55 alias")],
+            rendering: [advertisement("192.0.2.99", "uuid:other", "Other screen", "Other vendor")],
+        }
+
+        async def by_target(_hass, search_target):
+            return records[search_target]
+
+        modules = {
+            "homeassistant.helpers": types.SimpleNamespace(
+                device_registry=types.SimpleNamespace(async_get=lambda _: object())),
+            "homeassistant.components.ssdp": types.SimpleNamespace(
+                async_get_discovery_info_by_st=by_target),
+        }
+        hass = types.SimpleNamespace(config_entries=types.SimpleNamespace(async_entries=lambda _: []))
+        with patch.dict(sys.modules, modules):
+            found = await discover(hass)
+        self.assertEqual(
+            {key: (row["name"], row["state"], row["stable_identity"]) for key, row in found.items()},
+            {
+                "samsung:" + digest("uuid:legacy")[:32]: ("Frame 43", "discovered", "uuid:legacy"),
+                "samsung:" + digest("uuid:frame55")[:32]: ("Frame 55", "discovered", "uuid:frame55"),
+            },
+        )
+
+    async def test_loaded_samsung_entry_supplies_discovery_without_multicast(self):
+        identifier = "3a482f5c-81ac-4c5d-b7cd-9d4d461ef5d1"
+
+        def entry(host, ident, state):
+            return types.SimpleNamespace(data={"host": host, "token": "other-integration-only"},
+                                         unique_id=ident, state=types.SimpleNamespace(value=state),
+                                         title="Configured Frame")
+
+        async def by_target(_hass, _search_target):
+            return []
+
+        entries = [
+            entry("192.0.2.55", identifier, "loaded"),
+            entry("192.0.2.56", str(uuid4()), "not_loaded"),
+            entry("192.0.2.57", "unknown-device-id", "loaded"),
+            entry("127.0.0.1", str(uuid4()), "loaded"),
+        ]
+        modules = {
+            "homeassistant.helpers": types.SimpleNamespace(
+                device_registry=types.SimpleNamespace(async_get=lambda _: object())),
+            "homeassistant.components.ssdp": types.SimpleNamespace(
+                async_get_discovery_info_by_st=by_target),
+        }
+        hass = types.SimpleNamespace(config_entries=types.SimpleNamespace(
+            async_entries=lambda domain: entries if domain == "samsungtv" else []))
+        with patch.dict(sys.modules, modules):
+            found = await discover(hass)
+        stable = "uuid:" + identifier
+        self.assertEqual(list(found), ["samsung:" + digest(stable)[:32]])
+        screen = next(iter(found.values()))
+        self.assertEqual((screen["stable_identity"], screen["host"], screen["state"]),
+                         (stable, "192.0.2.55", "discovered"))
+        self.assertNotIn("token", screen)
 
 
 class CanvasDomainTests(unittest.TestCase):

@@ -39,16 +39,13 @@ header { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); g
 #state { color:#fff; letter-spacing:.08em }
 .session-status,.session-icons { display:flex; align-items:center; gap:clamp(.45rem,1.1vw,.9rem) }
 .session-status { grid-column:3; justify-self:end }
-header .session-status:has(.display-language:not([hidden])) {
-  display:grid; grid-template-columns:minmax(0,1fr) auto; justify-items:end; column-gap:.4rem; row-gap:.35rem;
-  width:100%; min-width:0;
-}
 .display-language {
-  grid-column:1 / -1; justify-self:end; max-inline-size:100%; min-inline-size:0;
-  color:#f4f5ff; background:#243047; border:1px solid #71839e; border-radius:2rem;
-  padding:.35em .45em; font:inherit; font-size:clamp(.72rem,2.9vw,.95rem);
+  min-inline-size:0; max-inline-size:100%;
+  color:#fff; background:rgba(0,0,0,.22); border:1px solid #ffffff55; border-radius:2rem;
+  padding:.35em .5em; font:inherit; font-size:clamp(.72rem,2.9vw,.95rem);
   letter-spacing:normal; text-transform:none; color-scheme:dark;
 }
+.display-language option { background:var(--tone3); color:#fff }
 .display-language:focus-visible { outline:2px solid currentColor; outline-offset:2px }
 
 .session-icons { color:#fff }
@@ -63,9 +60,7 @@ header .session-status:has(.display-language:not([hidden])) {
 #vibescape-scene[hidden],#live-guest-count[hidden] { display:none }
 .vibescape-mode .session-panels { display:none }
 #live-guest-count { white-space:nowrap; font-size:clamp(.85rem,1.7vw,1.2rem); letter-spacing:normal }
-#session-dj-avatar { display:flex; align-items:center; gap:.5rem; height:40px; flex:none }
-#session-dj-avatar[hidden],#session-change-popup[hidden] { display:none }
-#session-dj-avatar .spotlight-avatar { display:block; width:40px; height:40px; flex:none }
+#session-change-popup[hidden] { display:none }
 #session-change-popup { position:fixed; z-index:45; top:18vh; left:50%; transform:translateX(-50%);
   display:flex; align-items:center; gap:1rem; padding:1rem 1.5rem; border-radius:2rem;
   background:#141222e8; border:1px solid #ffffff55; font-size:clamp(1.1rem,2.5vw,2rem) }
@@ -76,10 +71,10 @@ header .session-status:has(.display-language:not([hidden])) {
   15% { opacity:1 } to { opacity:0; transform:translateY(-65vh) scale(1.15) rotate(12deg) } }
 @media (prefers-reduced-motion:reduce) { .live-reaction { animation:none } }
 @media (prefers-reduced-motion:no-preference) {
-  .artwork { animation:artwork-breathe 7s ease-in-out infinite }
+  .artwork { animation:artwork-breathe 4.2s ease-in-out infinite }
   body.renderer-hidden .artwork { animation-play-state:paused }
 }
-@keyframes artwork-breathe { 0%,100% { transform:scale(1) } 50% { transform:scale(1.02) } }
+@keyframes artwork-breathe { 0%,100% { transform:scale(1) } 50% { transform:scale(.97) } }
 .track { margin:clamp(1.3rem,3vh,2.5rem) 0 0; font-size:clamp(2rem,5.2vw,5.4rem); line-height:1.04; letter-spacing:-.045em; max-width:15ch; overflow-wrap:anywhere }
 .artist { margin:.8rem 0 0; color:#ebe7f5; font-size:clamp(1.1rem,2.2vw,2rem) }
 .cards { display:grid; align-content:end; gap:clamp(.6rem,1.5vh,1.2rem); min-height:0; max-height:42vh }
@@ -121,6 +116,24 @@ main {
 }
 header { align-items:center; min-height:4rem; margin-inline:calc(var(--header-inset) - var(--page-inset)) }
 .header-clock { grid-column:2; justify-self:center; text-align:center }
+.header-clock:has(.display-view-button:not([hidden])) {
+  display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  align-items:center; gap:clamp(.4rem,1.4vw,1.1rem);
+}
+.display-view-button {
+  color:#fff; background:#0003; border:1px solid #fff; border-radius:2rem;
+  padding:.36em .68em; font:inherit; letter-spacing:normal; white-space:nowrap; cursor:pointer;
+}
+.display-view-button[hidden] { display:none }
+.display-view-button:first-child { justify-self:end }
+.display-view-button:last-child { justify-self:start }
+.display-view-button[aria-pressed="true"],.display-view-button:hover { background:#fff3 }
+.display-view-button:focus-visible { outline:2px solid #fff; outline-offset:3px }
+.display-view-button:disabled { cursor:wait }
+@media (max-width:600px) {
+  .header-clock:has(.display-view-button:not([hidden])) { grid-column:1 / -1; grid-row:2 }
+  header:has(.display-view-button:not([hidden])) .session-status { grid-column:2 / -1; grid-row:1 }
+}
 #clock { display:block; font-size:clamp(2.5rem,5.5vw,5rem); line-height:1.05; font-weight:850; letter-spacing:-.02em; font-variant-numeric:tabular-nums }
 #clock-date { display:block; margin-top:.1em; font-size:clamp(.875rem,1.45vw,1.2rem); letter-spacing:normal; text-transform:none; opacity:.78 }
 #clock-date::first-letter { text-transform:uppercase }
@@ -229,6 +242,19 @@ progress { height:.7rem; border-radius:1rem; overflow:hidden }
 .artwork-card { display:inline-block; max-width:100%; padding:var(--card-inset); vertical-align:top; overflow:hidden }
 .artwork-card[hidden] { display:none }
 .artwork-card .artwork { display:block; max-width:100%; height:auto; aspect-ratio:1; border-radius:calc(var(--card-radius) - var(--card-inset)); box-shadow:none; background:rgba(0,0,0,.12) }
+.artwork-card .artwork[hidden] { display:none }
+.artwork-card .artwork-placeholder {
+  background:radial-gradient(circle,color-mix(in srgb,var(--accent) 24%,transparent),transparent 66%);
+  animation:none;
+}
+.artwork-placeholder svg { display:block; width:100%; height:100% }
+.vinyl-record { transform-origin:50px 50px }
+@media (prefers-reduced-motion:no-preference) {
+  .artwork-placeholder .vinyl-record { animation:vinyl-spin 12s linear infinite paused }
+  body:not(.renderer-hidden) .artwork-placeholder.playing .vinyl-record { animation-play-state:running }
+}
+@keyframes vinyl-spin { to { transform:rotate(360deg) } }
+
 .up-next { padding:16px; overflow:hidden }
 .up-next img { padding:4px; border:var(--card-border); border-radius:24px; background:rgba(255,255,255,.08) }
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
@@ -341,6 +367,7 @@ main { height:auto; min-width:0 }
   .receiver-brand-label { flex:1 1 min-content }
   .receiver-mark { width:clamp(1.5rem,8vw,2.5rem); height:auto }
   .session-status { flex-wrap:wrap; justify-content:flex-end; min-width:0 }
+  .session-status:has(.display-language:not([hidden])) { grid-column:1 / -1; grid-row:2 }
   .waiting-wordmark { font-size:1rem }
   .idle .handoff:not([hidden]):has(> .handoff-code) { min-block-size:0; gap:0 }
   .idle .handoff > .handoff-code { margin-block-start:0 }
@@ -379,7 +406,7 @@ main { height:auto; min-width:0 }
 }
 .shared-flow-live .now-playing > :is(.track,.artist,.album-name,.display-meter,.display-timing,.display-output) { grid-column:2; margin:0 }
 .shared-flow-live .now-playing .eyebrow { display:none }
-.shared-flow-live .now-playing .track { font-size:clamp(1.2rem,3vw,2.6rem); line-height:1.12; max-width:none }
+.shared-flow-live .now-playing .track { grid-column:2; margin:0; font-size:clamp(1.2rem,3vw,2.6rem); line-height:1.12; max-width:none }
 .shared-flow-live .now-playing :is(.artist,.album-name) { font-size:clamp(.9rem,2vw,1.4rem); color:#d7d3e4 }
 .shared-flow-live .now-playing .artist { font-size:clamp(1.1rem,2.8vw,1.85rem) }
 .shared-flow-live .now-playing .album-name { margin-block-start:clamp(.25rem,.75vw,.65rem) }
@@ -443,7 +470,6 @@ main { height:auto; min-width:0 }
 .spotlight-avatar stop:first-child { stop-color:var(--mood-start) }
 .spotlight-avatar stop:nth-child(2) { stop-color:var(--mood-mid) }
 .spotlight-avatar stop:last-child { stop-color:var(--mood-end) }
-.spotlight-avatar-back { fill:#0b0918 }
 @media (prefers-reduced-motion:no-preference) {
   .display-spotlight .spotlight-wave rect {
     transform-box:fill-box; transform-origin:center;
@@ -456,7 +482,6 @@ main { height:auto; min-width:0 }
   .shared-flow-live.display-spotlight .moment-card:not([hidden]) { border-color:CanvasText }
   .shared-flow-live.display-spotlight .moment-card[data-mood]::before { content:none }
   .spotlight-avatar stop { stop-color:CanvasText!important }
-  .spotlight-avatar-back { fill:Canvas }
 }
 @keyframes spotlight-pulse { from { transform:scaleY(.45) } to { transform:scaleY(1) } }
 .shared-flow-live.display-spotlight .moment-summary { font-size:clamp(1.3rem,3.15vw,2.8rem) }
@@ -548,7 +573,12 @@ main { height:auto; min-width:0 }
   padding:.75em 1em;
 }
 .flow-with-artwork { display:grid; grid-template-columns:clamp(2.5rem,7vw,5rem) minmax(0,1fr); align-items:start; gap:.75em }
-.flow-artwork { display:block; width:100%; aspect-ratio:1; object-fit:contain; border-radius:.65rem }
+.flow-artwork-link {
+  display:block; padding:clamp(2px,.28vw,5px); overflow:hidden; border:var(--card-border); border-radius:.85rem;
+  background:linear-gradient(140deg,#ffffff28,#ffffff07),var(--track-card-background,#252940);
+  box-shadow:inset 0 1px 0 #ffffff35,0 .25rem .7rem #0005;
+}
+.flow-artwork { display:block; width:100%; aspect-ratio:1; object-fit:contain; border-radius:.62rem }
 .flow-card p { margin:.25em 0 0; white-space:pre-wrap; overflow-wrap:anywhere }
 .flow-card.flow-age-0 { border-radius:32px; font-weight:650 }
 .flow-card.flow-age-1 { font-weight:550 }
@@ -581,18 +611,23 @@ main { height:auto; min-width:0 }
   <rect x="33" y="47" width="4" height="12" rx="2"/><rect x="40.5" y="41" width="4" height="24" rx="2"/>
   <rect x="48" y="36" width="4" height="34" rx="2"/><rect x="55.5" y="41" width="4" height="24" rx="2"/>
   <rect x="63" y="47" width="4" height="12" rx="2"/>
-</svg><span class="receiver-brand-label">DJConnect VibeCast</span></span><div class="header-clock"><time id="clock" aria-label=""></time><time id="clock-date"></time></div><div class="session-status">
-<span id="session-icons" class="session-icons" hidden>
-  <svg id="session-mood-icon" viewBox="0 0 24 24" role="img" focusable="false" hidden><path/></svg>
-  <svg id="session-persona-icon" viewBox="0 0 24 24" role="img" focusable="false" hidden><path/></svg>
-  <svg id="session-presence-icon" viewBox="0 0 24 24" role="img" focusable="false" hidden><path/></svg>
-</span><span id="state" data-testid="connection-state">Idle</span><select id="display-language" class="display-language" aria-label="Language" hidden>
+</svg><span class="receiver-brand-label">DJConnect VibeCast</span></span><div class="header-clock">
+  <button type="button" id="display-view-flow" class="display-view-button" aria-pressed="true" hidden>Flow</button>
+  <div><time id="clock" aria-label=""></time><time id="clock-date"></time></div>
+  <button type="button" id="display-view-vibescape" class="display-view-button" aria-pressed="false" hidden>VibeScape</button>
+</div><div class="session-status">
+<select id="display-language" class="display-language" aria-label="Language" hidden>
   <option value="en" lang="en">English</option>
   <option value="nl" lang="nl">Nederlands</option>
   <option value="de" lang="de">Deutsch</option>
   <option value="fr" lang="fr">Français</option>
   <option value="es" lang="es">Español</option>
-</select></div></header><section class="stage"><div class="now-playing"><div class="waiting-brand"><svg class="hero-symbol" viewBox="0 0 96 80" width="96" height="80" aria-hidden="true" focusable="false">
+</select>
+<span id="session-icons" class="session-icons" hidden>
+  <svg id="session-mood-icon" viewBox="0 0 24 24" role="img" focusable="false" hidden><title id="session-mood-tooltip"></title><path/></svg>
+  <svg id="session-persona-icon" viewBox="0 0 24 24" role="img" focusable="false" hidden><title id="session-persona-tooltip"></title><path/></svg>
+  <svg id="session-presence-icon" viewBox="0 0 24 24" role="img" focusable="false" hidden><title id="session-presence-tooltip"></title><path/></svg>
+</span><span id="state" data-testid="connection-state">Idle</span></div></header><section class="stage"><div class="now-playing"><div class="waiting-brand"><svg class="hero-symbol" viewBox="0 0 96 80" width="96" height="80" aria-hidden="true" focusable="false">
   <defs>
     <linearGradient id="receiver-symbol-gradient" x1="10" y1="8" x2="87" y2="73" gradientUnits="userSpaceOnUse">
       <stop stop-color="#62d8f2"/><stop offset=".55" stop-color="#8aa7ff"/><stop offset="1" stop-color="#c392ff"/>
@@ -646,19 +681,37 @@ main { height:auto; min-width:0 }
       </g>
     </g>
   </g>
-</svg><span class="waiting-product"><span class="waiting-product-maker">DJConnect</span><br>VibeCast</span><div class="waiting-maker"><span id="waiting-maker-label" class="waiting-wordmark">Toon je DJ-sessie op dit scherm.</span></div></div><div id="artwork-card" class="artwork-card" hidden><img id="artwork" class="artwork" alt="" hidden></div><p id="mood" class="eyebrow">Ambient session</p><div class="waiting-status">
+</svg><span class="waiting-product"><span class="waiting-product-maker">DJConnect</span><br>VibeCast</span><div class="waiting-maker"><span id="waiting-maker-label" class="waiting-wordmark">Toon je DJ-sessie op dit scherm.</span></div></div><div id="artwork-card" class="artwork-card" hidden><img id="artwork" class="artwork" alt="" hidden><div id="artwork-placeholder" class="artwork artwork-placeholder" aria-hidden="true" hidden>
+  <svg viewBox="0 0 100 100" focusable="false">
+    <defs>
+      <linearGradient id="vinyl-disc" x2="100%" y2="100%"><stop stop-color="#1f2133"/><stop offset="1" stop-color="#060812"/></linearGradient>
+      <linearGradient id="vinyl-label" x2="100%" y2="100%"><stop stop-color="#1f73ff"/><stop offset="1" stop-color="#d638f5"/></linearGradient>
+      <linearGradient id="vinyl-arm" x1="100%" x2="0%" y2="100%"><stop stop-color="#f2f2f2"/><stop offset="1" stop-color="#7a7a7a"/></linearGradient>
+    </defs>
+    <g class="vinyl-record">
+      <circle cx="50" cy="50" r="33" fill="url(#vinyl-disc)"/>
+      <circle cx="50" cy="50" r="29.7" fill="none" stroke="#ffffff14"/>
+      <circle cx="50" cy="50" r="25.7" fill="none" stroke="#ffffff14"/>
+      <path d="M76.9 56.9A27.7 27.7 0 0 1 61.8 75.1" fill="none" stroke="#ffffff28" stroke-linecap="round"/>
+      <circle cx="50" cy="50" r="8.6" fill="url(#vinyl-label)" opacity=".85"/>
+      <circle cx="50" cy="50" r="1.5" fill="#090a17"/>
+    </g>
+    <circle cx="79" cy="25" r="3.6" fill="#222" stroke="#ffffff55" stroke-width=".3"/>
+    <rect x="77.2" y="18.1" width="4.3" height="4.6" rx=".8" fill="#888"/>
+    <path d="M79.7 19.6L79 25 75 52.3 61.9 62.2" fill="none" stroke="#303030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M79.7 19.6L79 25 75 52.3 61.9 62.2" fill="none" stroke="url(#vinyl-arm)" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="79" cy="25" r="1.45" fill="#b3b3b3"/>
+    <path d="M64.2 61.2L61.7 58.6 57.4 63.7 59.9 66.2Z" fill="#2e2940" stroke="#ffffff88" stroke-width=".3"/>
+    <path d="M58.6 64.9l-1.1 1.6" fill="none" stroke="#fff" stroke-width=".4" stroke-linecap="round"/>
+  </svg>
+</div></div><p id="mood" class="eyebrow">Ambient session</p><div class="waiting-status">
   <!-- Headset geometry from Apple DJPersonaMark (djconnect-app 9019c7af). -->
   <svg class="waiting-avatar" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
     <defs>
       <linearGradient id="waiting-avatar-gradient" x2="1" y2="1">
         <stop stop-color="#3285ff"/><stop offset=".5" stop-color="#843df5"/><stop offset="1" stop-color="#cb27f5"/>
       </linearGradient>
-      <radialGradient id="waiting-avatar-backing">
-        <stop stop-opacity=".76"/><stop offset=".6" stop-opacity=".56"/><stop offset="1" stop-opacity="0"/>
-      </radialGradient>
     </defs>
-    <circle cx="50" cy="50" r="50" fill="url(#waiting-avatar-backing)"/>
-    <circle cx="50" cy="50" r="35" fill="#000" fill-opacity=".82"/>
     <g class="waiting-avatar-mark" fill="url(#waiting-avatar-gradient)">
       <path d="M13 57C8-4 92-4 87 57" fill="none" stroke="url(#waiting-avatar-gradient)" stroke-width="5" stroke-linecap="round"/>
       <rect x="7" y="43" width="11" height="27" rx="5"/><rect x="82" y="43" width="11" height="27" rx="5"/>
@@ -680,7 +733,6 @@ main { height:auto; min-width:0 }
   <defs><linearGradient id="spotlight-avatar-gradient" x2="100%" y2="100%">
     <stop offset="0%"/><stop offset="50%"/><stop offset="100%"/>
   </linearGradient></defs>
-  <circle cx="50" cy="52" r="46" class="spotlight-avatar-back"/>
   <g fill="none" stroke="url(#spotlight-avatar-gradient)">
     <circle cx="50" cy="53" r="28" stroke-width="4.5"/>
     <path d="M13 57C8 -4 92 -4 87 57" stroke-width="5" stroke-linecap="round"/>
@@ -741,7 +793,7 @@ main { height:auto; min-width:0 }
 </aside>
 </div></section><footer><section id="up-next" class="up-next" hidden><img id="next-art" alt=""><div><span id="next-label" class="up-next-label"></span><strong id="next-title"></strong><span id="next-artist"></span></div></section><progress id="progress" max="1" value="0" hidden></progress><div class="meta"><span id="time"></span></div></footer></main>
 <footer class="renderer-footer">
-  <span id="renderer-build"><span id="renderer-build-label">VibeCast versie</span> 4.1.0 (5d41c6ef)</span>
+  <span id="renderer-build"><span id="renderer-build-label">VibeCast versie</span> 4.1.0 (da7f1ad5)</span>
   <a href="https://djconnect.dev/" rel="noreferrer">
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m9 15 6-6m-5 0h5v5"/></svg>
     djconnect.dev
@@ -750,7 +802,7 @@ main { height:auto; min-width:0 }
 <script>(() => {
   const params = new URLSearchParams(window.location.search);
   const staticHost = window.DJC_VIBECAST_MODE === "cast";
-  const displayHost = window.DJC_VIBECAST_MODE === "display";
+  let displayHost = window.DJC_VIBECAST_MODE === "display";
   let haOrigin = "", sessionId = staticHost || displayHost ? null : params.get("session_id"), broadcastToken = staticHost || displayHost ? null : params.get("broadcast_token");
   const endpoint = path => haOrigin + path;
   let displayArtwork=new Map(), displayLocale="";
@@ -786,7 +838,15 @@ main { height:auto; min-width:0 }
     if (staticHost && statusGeneration!==null) window.dispatchEvent(new CustomEvent("djconnect-renderer-status",{detail:{generation:statusGeneration,session_id:sessionId,state,reason,presentation}}));
   }
   function reportPresentation() {
-    if (snapshotAccepted && !ended) reportStatus("presenting",null,current ? "moment" : "silence");
+    if(displayHost && snapshotAccepted && !ended){
+      const captured=projection, presentation=current ? "moment" : "silence";
+      const painted=()=>{if(displayHost && snapshotAccepted && !ended && projection===captured)
+        window.dispatchEvent(new CustomEvent("djconnect-display-rendered",{detail:{
+          issuer_epoch:captured.issuer_epoch,display_id:captured.display_id,share_id:captured.share_id,
+          share_generation:captured.share_generation,session_id:sessionId,presentation}}));};
+      if(typeof requestAnimationFrame==="function")requestAnimationFrame(painted);else setTimeout(painted,0);
+    }
+    if (!displayHost && snapshotAccepted && !ended) reportStatus("presenting",null,current ? "moment" : "silence");
   }
   let placementCount=0, lastPlacedKey="";
   let playbackItem = "", current = null, previous = null, lastShownAt = -Infinity, lastArtwork = "", lastSequence = 0, snapshotSequence = 0, fieldSequences = {};
@@ -816,6 +876,29 @@ main { height:auto; min-width:0 }
   let sceneCanvas=null, sceneFrame=0, sceneLastFrame=0;
   const scenePalettes={chill:["#4da3ff","#7b61ff","#d184ff"],groove:["#06c7ad","#169bc8","#10b981"],
     energy:["#ddff00","#00b8ff","#39ff78"],party:["#ff287f","#aa38f5","#f43dce"]};
+  let displayViewRevision=-1, displayViewPending=false;
+  const displayViewModes=["flow","vibescape"];
+  function adoptDisplayView(view){
+    if(!view || !displayViewModes.includes(view.mode))return;
+    if(Number.isSafeInteger(view.revision)){
+      if(view.revision<displayViewRevision)return;
+      displayViewRevision=view.revision;
+    }else if(displayViewRevision>=0)return;
+    projection.view=view;
+    renderDisplayViewButtons();
+    renderScene();
+  }
+  function renderDisplayViewButtons(){
+    if(!displayHost)return;
+    const available=snapshotAccepted && !ended && displayViewRevision>=0;
+    for(const mode of displayViewModes){
+      const button=e("display-view-"+mode);
+      if(!button)continue;
+      button.hidden=!available;
+      button.disabled=displayViewPending;
+      button.setAttribute("aria-pressed",String(!!projection.view && projection.view.mode===mode));
+    }
+  }
   function sceneActive(){return snapshotAccepted && !ended && projection.view && projection.view.mode==="vibescape";}
   function hideScene(){
     document.body.classList.toggle("vibescape-mode",false);
@@ -891,7 +974,7 @@ main { height:auto; min-width:0 }
     for(const [node,timer] of reactionTimers){window.clearTimeout(timer);node.remove();}
     reactionTimers.clear();seenReactions.clear();
   }
-  let sessionAvatar=null,sessionChange=null,sessionChangeTimer=0,lastSessionPresentation="";
+  let sessionChange=null,sessionChangeTimer=0,lastSessionPresentation="";
   function avatarCopy(identifier){
     const original=e("spotlight-avatar");
     if(!original)return null;
@@ -902,25 +985,16 @@ main { height:auto; min-width:0 }
       if(node.getAttribute(attr)==="url(#"+oldId+")")node.setAttribute(attr,"url(#"+gradient.id+")");
     return copy;
   }
-  function clearSessionAvatar(){
+  function clearSessionChange(){
     lastSessionPresentation="";
-    if(sessionAvatar)sessionAvatar.hidden=true;
     if(sessionChange)sessionChange.hidden=true;
     if(sessionChangeTimer)window.clearTimeout(sessionChangeTimer);sessionChangeTimer=0;
   }
-  function renderSessionAvatar(){
+  function renderSessionChange(){
     if(!displayHost)return;
-    if(!snapshotAccepted || ended){clearSessionAvatar();return;}
+    if(!snapshotAccepted || ended){clearSessionChange();return;}
     const settings=projection.session_presentation || {};
     const signature=JSON.stringify([settings.mood || "",settings.persona || "",settings.presence || ""]);
-    if(!sessionAvatar){
-      sessionAvatar=document.createElement("span");sessionAvatar.id="session-dj-avatar";
-      sessionAvatar.className="mood-palette";
-      const svg=avatarCopy("persistent-dj-avatar");if(svg)sessionAvatar.appendChild(svg);
-      sessionAvatar.appendChild(e("session-icons"));
-      document.querySelector(".session-status").prepend(sessionAvatar);
-    }
-    sessionAvatar.hidden=false;sessionAvatar.dataset.mood=settings.mood || "";
     if(lastSessionPresentation && signature!==lastSessionPresentation){
       if(!sessionChange){
         sessionChange=document.createElement("div");sessionChange.id="session-change-popup";
@@ -948,7 +1022,7 @@ main { height:auto; min-width:0 }
     guestCounter.hidden=!enabled;
     const labels={en:"Connected guests",nl:"Verbonden gasten",de:"Verbundene Gäste",fr:"Invités connectés",es:"Invitados conectados"};
     guestCounter.textContent="👥 "+count;guestCounter.setAttribute("aria-label",(labels[root.lang] || labels.en)+": "+count);
-    if(detail.view && ["flow","vibescape"].includes(detail.view.mode)){projection.view=detail.view;renderScene();}
+    adoptDisplayView(detail.view);
     const now=Date.now();
     for(const [id,until] of seenReactions)if(until<=now)seenReactions.delete(id);
     if(!enabled)return;
@@ -1304,7 +1378,7 @@ main { height:auto; min-width:0 }
     horizonExpiry=window.setTimeout(()=>renderHorizon(active),Math.max(0,expires-Date.now()));
   }
   const flowRows = new Map();
-  let followFlow = true, manualFlowScroll = false, flowExpiry;
+  let followFlow = true, manualFlowScroll = false, flowExpiry, flowReturnTimer;
   function atLiveEdge(viewport) {
     return viewport.scrollTop <= 4;
   }
@@ -1319,6 +1393,7 @@ main { height:auto; min-width:0 }
     if (!active) {
       clearChildren(list);
       flowRows.clear();
+      clearFlowReturn();
       followFlow=true;
       manualFlowScroll=false;
       live.hidden=true;
@@ -1431,9 +1506,25 @@ main { height:auto; min-width:0 }
     }
     return true;
   }
+  function clearFlowReturn() {
+    if(flowReturnTimer!==undefined)window.clearTimeout(flowReturnTimer);
+    flowReturnTimer=undefined;
+  }
   function connectFlowControls() {
     const viewport=e("flow-viewport"), live=e("flow-live");
     if (!viewport || !live) return;
+    const returnToLive=focus=>{
+      clearFlowReturn();
+      followFlow=true;
+      manualFlowScroll=false;
+      viewport.scrollTo({top:0,behavior:"auto"});
+      if(focus)viewport.focus({preventScroll:true});
+      live.hidden=true;
+    };
+    const scheduleReturn=()=>{
+      clearFlowReturn();
+      flowReturnTimer=window.setTimeout(()=>returnToLive(false),15000);
+    };
     const startManual=()=>{
       manualFlowScroll=true;
       if (followFlow && !atLiveEdge(viewport)) {
@@ -1441,8 +1532,10 @@ main { height:auto; min-width:0 }
         followFlow=false;
         live.hidden=false;
       }
+      if(!followFlow)scheduleReturn();
     };
-    for (const event of ["wheel","touchstart","pointerdown"]) viewport.addEventListener(event,startManual,{passive:true});
+    for (const event of ["wheel","touchstart","touchmove","pointerdown"]) viewport.addEventListener(event,startManual,{passive:true});
+    viewport.addEventListener("pointermove",event=>{if(event.buttons)startManual();},{passive:true});
     viewport.addEventListener("keydown",event=>{
       const page = viewport.clientHeight;
       const steps = {ArrowUp:-48, ArrowDown:48, PageUp:-page, PageDown:page,
@@ -1454,17 +1547,15 @@ main { height:auto; min-width:0 }
     });
     viewport.addEventListener("scroll",()=>{
       if (!manualFlowScroll) return;
+      const wasFollowing=followFlow;
       followFlow=atLiveEdge(viewport);
       live.hidden=followFlow;
-      if (followFlow) manualFlowScroll=false;
+      if (followFlow) {
+        clearFlowReturn();
+        manualFlowScroll=false;
+      } else if(wasFollowing) scheduleReturn();
     },{passive:true});
-    live.addEventListener("click",()=>{
-      followFlow=true;
-      manualFlowScroll=false;
-      viewport.scrollTo({top:0,behavior:"auto"});
-      viewport.focus({preventScroll:true});
-      live.hidden=true;
-    });
+    live.addEventListener("click",()=>returnToLive(true));
   }
   const outputLabels = {
     en:["Speaker","Playback progress"], nl:["Speaker","Voortgang"],
@@ -1521,27 +1612,40 @@ main { height:auto; min-width:0 }
     let visible=false;
     sessionIconGroups.forEach(([name,key,glyphs],index)=>{
       const icon=e("session-"+name+"-icon");
-      if (!icon || !icon.firstElementChild) return;
+      const path=icon && icon.lastElementChild, tooltip=e("session-"+name+"-tooltip");
+      if (!path || !tooltip) return;
       const value=snapshotAccepted && !ended ? read(projection,["session",key]) : null;
       const glyphIndex=Object.keys(glyphs).indexOf(value);
       if (glyphIndex<0) {
         icon.setAttribute("hidden","");
-        icon.firstElementChild.removeAttribute("d");
+        path.removeAttribute("d");
+        tooltip.textContent="";
         icon.removeAttribute("aria-label");
         return;
       }
       icon.removeAttribute("hidden");
       visible=true;
-      icon.firstElementChild.setAttribute("d",glyphs[value]);
-      icon.setAttribute("aria-label",labels[index][0]+": "+labels[index][glyphIndex+1]);
+      path.setAttribute("d",glyphs[value]);
+      const label=labels[index][0]+": "+labels[index][glyphIndex+1];
+      tooltip.textContent=label;
+      icon.setAttribute("aria-label",label);
     });
     group.hidden=!visible;
+  }
+  function updateArtworkPlaceholder() {
+    const image=e("artwork"), placeholder=e("artwork-placeholder");
+    if (!placeholder) return;
+    const loaded=lastArtwork && image.complete && image.naturalWidth > 0;
+    image.hidden=!loaded;
+    placeholder.hidden=!playback().title || !!loaded;
+    placeholder.classList.toggle("playing",playback().state==="playing");
   }
   function render(animate=false) {
     const languageChanged=useLanguage(); updateClock();
     if (snapshotAccepted && !ended) e("state").textContent=text.live;
     renderSessionIcons();
-    renderSessionAvatar();
+    renderSessionChange();
+    renderDisplayViewButtons();
     renderScene();
     const p = playback(), mood = read(projection,["session","selected_mood"]);
     document.body.classList.toggle("idle",!p.title);
@@ -1567,7 +1671,7 @@ main { height:auto; min-width:0 }
       : asset(p.artwork_url || "");
     e("artwork").hidden = !art;
     const artworkCard = e("artwork-card");
-    if (artworkCard) artworkCard.hidden = !art;
+    if (artworkCard) artworkCard.hidden = !p.title && !art;
     if (art !== lastArtwork) {
       browserTint=undefined;
       if (root.removeAttribute) root.removeAttribute("data-art-palette");
@@ -1577,6 +1681,7 @@ main { height:auto; min-width:0 }
       else e("artwork").removeAttribute("src");
       lastArtwork = art;
     }
+    updateArtworkPlaceholder();
     setBrowserTheme(p.title ? browserTint || "#141222" : "#191b3a");
     e("artwork").alt = art ? (p.album || p.title || "") : "";
     root.style.setProperty("--art",art ? `url("${art.split('"').join('%22')}")` : "none");
@@ -1623,7 +1728,9 @@ main { height:auto; min-width:0 }
     } else render(false);
   }
   window.addEventListener("resize",fitBubble);
+  e("artwork").addEventListener("error",updateArtworkPlaceholder);
   e("artwork").addEventListener("load",()=>{
+    updateArtworkPlaceholder();
     fitBubble();
     // Sample colors only; never display cropped/blurred Spotify artwork.
     const image=e("artwork"), identity=lastArtwork;
@@ -1706,7 +1813,8 @@ main { height:auto; min-width:0 }
   });
   function stopHost() {
     clearLiveStatus();
-    clearSessionAvatar();
+    clearSessionChange();
+    displayViewRevision=-1; displayViewPending=false;
     reportStatus("stopped","host_stop"); snapshotAccepted=false; statusGeneration=null;
     ended=true; broadcastToken=null;
     if (reconnectTimer) window.clearTimeout(reconnectTimer); reconnectTimer=undefined;
@@ -1716,12 +1824,40 @@ main { height:auto; min-width:0 }
   }
   window.addEventListener("djconnect-host-stop",stopHost);
   window.addEventListener("beforeunload",stopHost);
-  if (displayHost) {
+  if (displayHost || staticHost) {
+    const originalSlots=["moment-cards","progress","time","spotify-source"].map(id=>{
+      const node=e(id);return {node,parent:node.parentNode,next:node.nextSibling};});
+    let controlsConnected=false;
+    function layoutDisplay(enabled){
+      if(enabled){
+        e("shared-flow").appendChild(e("moment-cards"));
+        e("display-meter").append(e("progress"),e("time"));
+        e("display-timing").appendChild(e("spotify-source"));
+        if(!controlsConnected){connectFlowControls();controlsConnected=true;}
+      }else{
+        for(const {node,parent,next} of originalSlots.slice().reverse())parent.insertBefore(node,next);
+      }
+    }
+    if(displayHost)layoutDisplay(true);
+    if(staticHost){
+      window.addEventListener("djconnect-cast-display-mode",()=>{stopHost();displayHost=true;layoutDisplay(true);});
+      window.addEventListener("djconnect-cast-legacy-mode",()=>{const wasDisplay=displayHost;stopHost();displayHost=false;if(wasDisplay)layoutDisplay(false);});
+    }
     window.addEventListener("djconnect-live-status",({detail})=>renderLiveStatus(detail));
-    e("shared-flow").appendChild(e("moment-cards"));
-    e("display-meter").append(e("progress"),e("time"));
-    e("display-timing").appendChild(e("spotify-source"));
-    connectFlowControls();
+    window.addEventListener("djconnect-display-view-result",({detail})=>{
+      displayViewPending=false;
+      adoptDisplayView(detail);
+      renderDisplayViewButtons();
+    });
+    for(const mode of displayViewModes){
+      const button=e("display-view-"+mode);
+      if(button)button.addEventListener("click",()=>{
+        if(button.hidden || displayViewPending || !projection.view || projection.view.mode===mode)return;
+        displayViewPending=true;
+        renderDisplayViewButtons();
+        window.dispatchEvent(new CustomEvent("djconnect-display-view-select",{detail:mode}));
+      });
+    }
     window.addEventListener("djconnect-display-locale",({detail}) => {
       displayLocale=typeof detail==="string" && /^(en|nl|de|fr|es)$/.test(detail) ? detail : "";
       const state=e("state");
@@ -1731,6 +1867,7 @@ main { height:auto; min-width:0 }
     });
     window.addEventListener("djconnect-display-clear",stopHost);
     window.addEventListener("djconnect-display-artwork",({detail}) => {
+      if(!displayHost)return;
       displayArtwork=new Map((Array.isArray(detail) ? detail : []).filter(cover=>String(cover.url).startsWith("blob:"))
         .map(({reference,item_id,url})=>[reference,{item_id,url}]));
       if(focusedOverlay){
@@ -1747,6 +1884,7 @@ main { height:auto; min-width:0 }
     }
     window.addEventListener("djconnect-display-clear",clearSharedFocus);
     window.addEventListener("djconnect-shared-focus",({detail})=>{
+      if(!displayHost)return;
       if(focusedOverlay && focusedRevision===(detail && detail.focus_revision))return;
       clearSharedFocus();
       const item=(projection.shared_flow||[]).concat(projection.dj_moments||[]).find(value=>value.moment_id===(detail && detail.focused_moment_id));
@@ -1779,11 +1917,11 @@ main { height:auto; min-width:0 }
       figure.append(img,caption);focusedOverlay.prepend(figure);
     });
     window.addEventListener("djconnect-display-snapshot",({detail}) => {
-      if (!detail || detail.contract_version !== 1 || !detail.session || detail.session.runtime_state !== "active") return;
+      if (!displayHost || !detail || detail.contract_version !== 1 || !detail.session || detail.session.runtime_state !== "active") return;
       const labels=detail.session_presentation || {};
       sessionId=detail.session.session_id; ended=false; snapshotAccepted=true;
       if(focusedOverlay && !(detail.shared_flow||[]).concat(detail.dj_moments||[]).some(item=>item.moment_id===focusedMomentId))clearSharedFocus();
-      apply({...detail,session:{...detail.session,selected_mood:labels.mood,dj_persona:labels.persona,selected_presence:labels.presence}});
+      apply({...detail,view:projection.view,session:{...detail.session,selected_mood:labels.mood,dj_persona:labels.persona,selected_presence:labels.presence}});
       e("state").textContent=text.live;
     });
   }

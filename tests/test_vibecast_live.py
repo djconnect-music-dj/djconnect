@@ -104,6 +104,32 @@ class VibeCastLiveGoldenTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(self.fixture.module.DisplayAdmissionError):
             await self.fixture.call('owner/presentation', {'mode': 'flow'}, headers=headers)
 
+    async def test_display_and_owner_share_presentation_without_guest_live_or_playback_effects(self):
+        admitted = self.fixture.admitted.payload
+        binding = {key: admitted[key] for key in ('issuer_epoch', 'display_id')}
+        headers = {'Authorization': 'Bearer ' + admitted['grant_token']}
+        before = self.active.broadcast.state
+        result = await self.fixture.call('display/presentation', {**binding, 'mode': 'vibescape'}, headers=headers)
+        result.release()
+        self.assertEqual(result.payload['view']['mode'], 'vibescape')
+        self.assertFalse(self.live.display_status(self.state.participation, self.share.share_id)['live_enabled'])
+        self.assertEqual((await self.fixture.call('owner/context')).payload['view']['mode'], 'vibescape')
+        for payload, request_headers, origins in (
+            ({**binding, 'mode': 'flow', 'dynamics': 1}, headers, None),
+            ({**binding, 'mode': 'flow'}, {}, None),
+            ({**binding, 'mode': 'flow'}, headers, ['https://other.invalid']),
+            ({**binding, 'mode': 'other'}, headers, None),
+        ):
+            with self.subTest(payload=payload), self.assertRaises(self.fixture.module.DisplayAdmissionError):
+                await self.fixture.call('display/presentation', payload, headers=request_headers, origins=origins)
+        await self.fixture.call('owner/presentation', {'mode': 'flow', 'dynamics': 0.8})
+        current = (await self.fixture.call('display/focus', binding, headers=headers)).payload['view']
+        self.assertEqual((current['mode'], current['dynamics']), ('flow', 0.8))
+        self.assertGreater(current['revision'], result.payload['view']['revision'])
+        self.assertIs(self.active.broadcast.state, before)
+        with self.assertRaises(self.fixture.module.DisplayAdmissionError):
+            result.release()
+
     async def test_dynamics_is_bounded_host_only_and_late_response_keeps_original_value(self):
         for value in (-.1, 1.1, True, '0.5', float('nan'), float('inf')):
             with self.subTest(value=value), self.assertRaises(self.fixture.module.DisplayAdmissionError):

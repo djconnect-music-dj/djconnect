@@ -35,7 +35,8 @@
   "requirements": [
     "segno>=1.6.1",
     "defusedxml>=0.7.1",
-    "samsungtvws>=3.0.7"
+    "samsungtvws>=3.0.7",
+    "PyChromecast==14.1.1"
   ],
   "version": "4.1.0"
 }

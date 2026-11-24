@@ -844,6 +844,54 @@ def _catalog_artist_lookup(catalog):
     return artist_id, original_catalog
 
 
+def _catalog_artist_candidates(catalog):
+    """Keep actual provider name/ID pairs; a display string is never split."""
+    credits = catalog.get("artist_credits")
+    if credits is None:
+        identifier, original = _catalog_artist_lookup(catalog)
+        return ((label(catalog.get("artist")), identifier, original),) if identifier else ()
+    ids = catalog.get("artist_ids")
+    if (type(credits) is not list or not 1 <= len(credits) <= 10
+            or type(ids) is not list or len(ids) != len(credits)):
+        return ()
+    rows, seen = [], set()
+    for index, credit in enumerate(credits):
+        if (type(credit) is not dict or set(credit) != {"id", "name"}
+                or type(credit["id"]) is not str
+                or not re.fullmatch(r"[A-Za-z0-9]{22}", credit["id"])
+                or credit["id"] != ids[index] or credit["id"] in seen
+                or not label(credit["name"], 160)):
+            return ()
+        seen.add(credit["id"])
+        rows.append((label(credit["name"], 160), credit["id"]))
+    if match_name(", ".join(name for name, _ in rows)) != match_name(catalog.get("artist")):
+        return ()
+    return tuple((name, identifier, {**catalog, "artist": name,
+                  "artist_ids": [identifier], "artist_credits": [{"id": identifier, "name": name}]})
+                 for name, identifier in rows[:4])
+
+
+async def _credited_artist_context(get, candidates, *, source_temporary=None):
+    """Select one qualified credit before generation, never another subject after it."""
+    for name, identifier, original_catalog in candidates:
+        identity = await public_artist_identity(get, name, identifier)
+        if identity is None:
+            if source_temporary is not None and source_temporary():
+                return ()
+            continue
+        person, entity, qid = identity
+        facts = artist_facts(original_catalog, person)
+        description = description_fact(original_catalog, entity, qid, person=person)
+        if description is not None:
+            facts.append(description)
+        if not facts:
+            continue
+        image = qualified_artist_image_identity(original_catalog, person, entity, qid)
+        return tuple(replace(fact, public_artist_qid=qid, artwork_artist_identity=image)
+                     for fact in facts)[:6]
+    return ()
+
+
 def _recording_summary(recording, title, artist):
     credit = recording.get("artist-credit") or []
     names = [c.get("artist", {}).get("name") for c in credit if isinstance(c, dict)]
@@ -1025,9 +1073,27 @@ class SessionFactsResolver:
         if authorize is not None:
             authorize()
         if isinstance(result, dict) and result.get("error"):
+            from .ask_dj.public_research import note_temporary_source_failure
+            note_temporary_source_failure()
             self.backoff_until = time.monotonic() + 60
             return {}
         return result if isinstance(result, dict) else {}
+
+    async def resolve_artist_story(self, catalog, *, authorize, source_temporary=None):
+        """Explicit artist identity is independent of recording/remix availability."""
+        authorize()
+        if not re.fullmatch(r"spotify:track:[A-Za-z0-9]{22}", str(catalog.get("uri") or "")):
+            return ()
+        candidates = _catalog_artist_candidates(catalog)
+
+        async def get(*args, **kwargs):
+            authorize()
+            result = await self._get(*args, **kwargs, authorize=authorize)
+            authorize()
+            return result
+
+        async with asyncio.timeout(35):
+            return await _credited_artist_context(get, candidates, source_temporary=source_temporary)
 
     async def resolve(self, catalog: dict[str, Any], *, authorize=None,
                       credits_only: bool = False) -> tuple[QualifiedSessionFact, ...]:
@@ -1056,21 +1122,12 @@ class SessionFactsResolver:
             return tuple(facts)
         # Capture the local lookup selection before any source await. It may
         # qualify this artist only, never the observed recording or its work.
-        artist_id, original_catalog = _catalog_artist_lookup(catalog)
+        artist_candidates = _catalog_artist_candidates(catalog)
         async def artist_only():
             if credits_only:
                 return tuple(facts)
-            identity = await public_artist_identity(get, artist, artist_id)
-            if identity is None:
-                return tuple(facts)
-            person, entity, qid = identity
-            artist_context = artist_facts(original_catalog, person)
-            description = description_fact(original_catalog, entity, qid, person=person)
-            if description is not None:
-                artist_context.append(description)
-            image = qualified_artist_image_identity(original_catalog, person, entity, qid)
-            return tuple((*facts, *(replace(f, public_artist_qid=qid,
-                artwork_artist_identity=image) for f in artist_context)))[:6]
+            context = await _credited_artist_context(get, artist_candidates)
+            return tuple((*facts, *context))[:6]
 
         async with asyncio.timeout(35):
             source = await _resolved_recording(get, isrc, title, artist)
