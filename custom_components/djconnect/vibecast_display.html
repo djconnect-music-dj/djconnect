@@ -60,6 +60,14 @@ header { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); g
 #vibescape-scene[hidden],#live-guest-count[hidden] { display:none }
 .vibescape-mode .session-panels { display:none }
 #live-guest-count { white-space:nowrap; font-size:clamp(.85rem,1.7vw,1.2rem); letter-spacing:normal }
+#live-indicator { display:inline-flex; flex:none; align-items:center; gap:.4em; color:#fff; white-space:nowrap }
+#live-indicator[hidden],.guest-participation[hidden] { display:none }
+#live-indicator svg { width:1.3em; height:1.3em; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round }
+.guest-participation {
+  position:fixed; right:calc(1.5rem + env(safe-area-inset-right,0px)); bottom:calc(2.75rem + env(safe-area-inset-bottom,0px));
+  z-index:40; margin:0; padding:.55rem; border-radius:.75rem; background:#17172de8;
+}
+.guest-participation img { display:block; width:min(128px,25vw); height:auto; background:#fff }
 #session-change-popup[hidden] { display:none }
 #session-change-popup { position:fixed; z-index:45; top:18vh; left:50%; transform:translateX(-50%);
   display:flex; align-items:center; gap:1rem; padding:1rem 1.5rem; border-radius:2rem;
@@ -611,7 +619,13 @@ main { height:auto; min-width:0 }
   <rect x="33" y="47" width="4" height="12" rx="2"/><rect x="40.5" y="41" width="4" height="24" rx="2"/>
   <rect x="48" y="36" width="4" height="34" rx="2"/><rect x="55.5" y="41" width="4" height="24" rx="2"/>
   <rect x="63" y="47" width="4" height="12" rx="2"/>
-</svg><span class="receiver-brand-label">DJConnect VibeCast</span></span><div class="header-clock">
+</svg><span class="receiver-brand-label">DJConnect VibeCast</span><span id="live-indicator" hidden>LIVE
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path id="sharing-hand" d="M2 2.5h9c.7 0 1.1.2 1.6.5l6.2 3.6a1.5 1.5 0 0 1-1.5 2.6l-3.5-2M2 2.5v5.8a5 5 0 0 0 6.7 0h3.7a1.4 1.4 0 0 0 0-2.8H8.3"/>
+    <use href="#sharing-hand" transform="rotate(180 12 12)"/>
+    <path d="M12 14.6l-2.2-2.2a1.55 1.55 0 0 1 2.2-2.2 1.55 1.55 0 0 1 2.2 2.2z"/>
+  </svg>
+</span></span><div class="header-clock">
   <button type="button" id="display-view-flow" class="display-view-button" aria-pressed="true" hidden>Flow</button>
   <div><time id="clock" aria-label=""></time><time id="clock-date"></time></div>
   <button type="button" id="display-view-vibescape" class="display-view-button" aria-pressed="false" hidden>VibeScape</button>
@@ -793,7 +807,7 @@ main { height:auto; min-width:0 }
 </aside>
 </div></section><footer><section id="up-next" class="up-next" hidden><img id="next-art" alt=""><div><span id="next-label" class="up-next-label"></span><strong id="next-title"></strong><span id="next-artist"></span></div></section><progress id="progress" max="1" value="0" hidden></progress><div class="meta"><span id="time"></span></div></footer></main>
 <footer class="renderer-footer">
-  <span id="renderer-build"><span id="renderer-build-label">VibeCast versie</span> 4.1.0 (bb3b847a)</span>
+  <span id="renderer-build"><span id="renderer-build-label">VibeCast versie</span> 4.1.0 (bacd56da)</span>
   <a href="https://djconnect.dev/" rel="noreferrer">
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m9 15 6-6m-5 0h5v5"/></svg>
     djconnect.dev
@@ -971,6 +985,7 @@ main { height:auto; min-width:0 }
   const reactionTimers=new Map();
   let guestCounter=null;
   function clearLiveStatus(){
+    e("live-indicator").hidden=true;
     if(guestCounter){guestCounter.hidden=true;guestCounter.textContent="";guestCounter.removeAttribute("aria-label");}
     for(const [node,timer] of reactionTimers){window.clearTimeout(timer);node.remove();}
     reactionTimers.clear();seenReactions.clear();
@@ -1015,6 +1030,7 @@ main { height:auto; min-width:0 }
     if(!displayHost || !detail)return;
     const enabled=detail.live_enabled===true;
     if(!enabled)clearLiveStatus();
+    e("live-indicator").hidden=!enabled;
     if(!guestCounter){
       guestCounter=document.createElement("span");guestCounter.id="live-guest-count";
       document.querySelector(".session-status").appendChild(guestCounter);
@@ -1643,6 +1659,7 @@ main { height:auto; min-width:0 }
   }
   function render(animate=false) {
     const languageChanged=useLanguage(); updateClock();
+    e("state").hidden=displayHost && snapshotAccepted && !ended;
     if (snapshotAccepted && !ended) e("state").textContent=text.live;
     renderSessionIcons();
     renderSessionChange();
@@ -2045,8 +2062,8 @@ window.DJCDisplayHost=function(transport){
     for(const reference of artwork.keys())removeArtwork(reference);
     publishArtwork();
   }
-  const participationLabels={en:["Scan to join the music conversation","Guest invitation"],nl:["Scan om mee te praten over de muziek","Gastuitnodiging"],de:["Scannen und über die Musik mitreden","Gasteinladung"],fr:["Scanne pour parler de la musique","Invitation des invités"],es:["Escanea para hablar de la música","Invitación para invitados"]};
-  let guestPanel=null,guestQR=null,guestCaption=null,guestPollGeneration=-1,guestQRDeadline=0;
+  const participationLabels={en:"Scan to join the music conversation",nl:"Scan om mee te praten over de muziek",de:"Scannen und über die Musik mitreden",fr:"Scanne pour parler de la musique",es:"Escanea para hablar de la música"};
+  let guestPanel=null,guestQR=null,guestPollGeneration=-1,guestQRDeadline=0;
   let sharedPhoto=null,sharedPhotoWanted=null,failedSharedPhotoRevision=null;
   function clearSharedPhoto(){
     sharedPhotoWanted=null;
@@ -2119,12 +2136,9 @@ window.DJCDisplayHost=function(transport){
       if(!guestPanel){
         guestPanel=document.createElement("aside");guestPanel.className="guest-participation";
         guestQR=document.createElement("img");guestQR.width=128;guestQR.height=128;
-        guestCaption=document.createElement("p");guestPanel.append(guestQR,guestCaption);document.body.append(guestPanel);
-        const style=document.createElement("style");style.textContent=".guest-participation{position:fixed;right:1.5rem;bottom:2.5rem;z-index:40;max-width:13rem;padding:.75rem;border-radius:1rem;background:#17172de8;color:white;text-align:center}.guest-participation img{max-width:100%;height:auto;background:white}.guest-participation p{font:500 .85rem/1.3 system-ui;margin:.5rem 0 0}.guest-participation[hidden]{display:none}";document.head.append(style);
+        guestPanel.append(guestQR);document.body.append(guestPanel);
       }
-      const labels=participationLabels[effectiveLocale]||participationLabels.en;
-      guestPanel.style.top="5.5rem";guestPanel.style.bottom="auto";guestPanel.style.maxWidth="9rem";
-      guestCaption.textContent=labels[0];guestQR.alt=labels[1];
+      guestQR.alt=participationLabels[effectiveLocale]||participationLabels.en;
       if(guestQR.getAttribute("src")!==invitation.qr_data_uri)guestQR.src=invitation.qr_data_uri;
       guestQRDeadline=started+invitation.expires_in*1000;guestPanel.hidden=now()>=guestQRDeadline;
       later(()=>{if(guestPanel && now()>=guestQRDeadline){guestPanel.hidden=true;guestQR.removeAttribute("src");}},Math.max(1,guestQRDeadline-now()));

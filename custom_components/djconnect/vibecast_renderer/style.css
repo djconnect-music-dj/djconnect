@@ -56,6 +56,14 @@ header { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); g
 #vibescape-scene[hidden],#live-guest-count[hidden] { display:none }
 .vibescape-mode .session-panels { display:none }
 #live-guest-count { white-space:nowrap; font-size:clamp(.85rem,1.7vw,1.2rem); letter-spacing:normal }
+#live-indicator { display:inline-flex; flex:none; align-items:center; gap:.4em; color:#fff; white-space:nowrap }
+#live-indicator[hidden],.guest-participation[hidden] { display:none }
+#live-indicator svg { width:1.3em; height:1.3em; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round }
+.guest-participation {
+  position:fixed; right:calc(1.5rem + env(safe-area-inset-right,0px)); bottom:calc(2.75rem + env(safe-area-inset-bottom,0px));
+  z-index:40; margin:0; padding:.55rem; border-radius:.75rem; background:#17172de8;
+}
+.guest-participation img { display:block; width:min(128px,25vw); height:auto; background:#fff }
 #session-change-popup[hidden] { display:none }
 #session-change-popup { position:fixed; z-index:45; top:18vh; left:50%; transform:translateX(-50%);
   display:flex; align-items:center; gap:1rem; padding:1rem 1.5rem; border-radius:2rem;

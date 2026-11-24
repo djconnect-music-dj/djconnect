@@ -115,8 +115,8 @@ window.DJCDisplayHost=function(transport){
     for(const reference of artwork.keys())removeArtwork(reference);
     publishArtwork();
   }
-  const participationLabels={en:["Scan to join the music conversation","Guest invitation"],nl:["Scan om mee te praten over de muziek","Gastuitnodiging"],de:["Scannen und über die Musik mitreden","Gasteinladung"],fr:["Scanne pour parler de la musique","Invitation des invités"],es:["Escanea para hablar de la música","Invitación para invitados"]};
-  let guestPanel=null,guestQR=null,guestCaption=null,guestPollGeneration=-1,guestQRDeadline=0;
+  const participationLabels={en:"Scan to join the music conversation",nl:"Scan om mee te praten over de muziek",de:"Scannen und über die Musik mitreden",fr:"Scanne pour parler de la musique",es:"Escanea para hablar de la música"};
+  let guestPanel=null,guestQR=null,guestPollGeneration=-1,guestQRDeadline=0;
   let sharedPhoto=null,sharedPhotoWanted=null,failedSharedPhotoRevision=null;
   function clearSharedPhoto(){
     sharedPhotoWanted=null;
@@ -189,12 +189,9 @@ window.DJCDisplayHost=function(transport){
       if(!guestPanel){
         guestPanel=document.createElement("aside");guestPanel.className="guest-participation";
         guestQR=document.createElement("img");guestQR.width=128;guestQR.height=128;
-        guestCaption=document.createElement("p");guestPanel.append(guestQR,guestCaption);document.body.append(guestPanel);
-        const style=document.createElement("style");style.textContent=".guest-participation{position:fixed;right:1.5rem;bottom:2.5rem;z-index:40;max-width:13rem;padding:.75rem;border-radius:1rem;background:#17172de8;color:white;text-align:center}.guest-participation img{max-width:100%;height:auto;background:white}.guest-participation p{font:500 .85rem/1.3 system-ui;margin:.5rem 0 0}.guest-participation[hidden]{display:none}";document.head.append(style);
+        guestPanel.append(guestQR);document.body.append(guestPanel);
       }
-      const labels=participationLabels[effectiveLocale]||participationLabels.en;
-      guestPanel.style.top="5.5rem";guestPanel.style.bottom="auto";guestPanel.style.maxWidth="9rem";
-      guestCaption.textContent=labels[0];guestQR.alt=labels[1];
+      guestQR.alt=participationLabels[effectiveLocale]||participationLabels.en;
       if(guestQR.getAttribute("src")!==invitation.qr_data_uri)guestQR.src=invitation.qr_data_uri;
       guestQRDeadline=started+invitation.expires_in*1000;guestPanel.hidden=now()>=guestQRDeadline;
       later(()=>{if(guestPanel && now()>=guestQRDeadline){guestPanel.hidden=true;guestQR.removeAttribute("src");}},Math.max(1,guestQRDeadline-now()));
