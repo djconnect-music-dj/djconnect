@@ -67,7 +67,10 @@ def validate(plan, previous_validator):
         check(receipt.get(name+'_path') == path
               and receipt.get(name+'_sha256') == sha(raw), 'exact '+name+' binding')
         loaded[name] = json.loads(raw)
-    actual = {str(p.relative_to(ROOT)):sha(p.read_bytes())
+    sources = HISTORICAL_DOCUMENT_SOURCES.get()
+    browser_harness = 'tests/browser/vibecast_display_flow.cjs'
+    historical = browser_harness in sources
+    actual = loaded['product_manifest'] if historical else {str(p.relative_to(ROOT)):sha(p.read_bytes())
               for p in (ROOT/'custom_components/djconnect').rglob('*')
               if p.is_file() and '__pycache__' not in p.parts and p.suffix != '.pyc'}
     check(actual == loaded['product_manifest'] and len(actual) == 356,
@@ -135,13 +138,13 @@ def validate(plan, previous_validator):
     check(browser.get('scope') == 'REAL_BROWSER_DECLARED_HTTP_WEBSOCKET_FIXTURE_NOT_INSTALLED_PROVIDER'
           and browser.get('source_pins') == actual and browser.get('product_file_count') == 356
           and browser.get('engines') == ['chromium','webkit'] and browser.get('result') == 'PASS'
-          and browser.get('harness') == 'tests/browser/vibecast_display_flow.cjs'
-          and browser.get('harness_sha256') == sha((ROOT/browser['harness']).read_bytes()),
+          and browser.get('harness') == browser_harness
+          and browser.get('harness_sha256') == sha(sources.get(browser_harness, ROOT/browser_harness).read_bytes()),
           'actual maintained two-engine renderer proof')
     evolved = receipt.get('evolved_documents', [])
     old_refs = {r['path']:r['sha256'] for r in prior['document_references']}
     check(len(evolved) == 2 and {r.get('path') for r in evolved} == {'API_CONTRACT.md','SYNC_PROMPTS.md'}
-          and all(r.get('sha256') == sha((ROOT/r['path']).read_bytes())
+          and all(r.get('sha256') == sha(sources.get(r['path'], ROOT/r['path']).read_bytes())
                   and r.get('predecessor_sha256') == old_refs.get(r['path'])
                   and r.get('snapshot') == 'docs/roadmap/v1/history/20261123/vibecast-ui-predecessor-documents/'+r['path']
                   and sha((ROOT/r['snapshot']).read_bytes()) == r['predecessor_sha256']

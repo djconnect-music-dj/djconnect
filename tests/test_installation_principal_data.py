@@ -45,11 +45,11 @@ class InstallationPrincipalDataTests(unittest.TestCase):
     def test_actual_HA_original_codec_and_same_final_harness_parent_RED_remain_exact(self):
         root = Path(__file__).resolve().parents[1]
         joined = json.loads((root / "examples/client_contracts/installation_principal_data_v1/actual-ha-data-codec-live-impression-20261119-requested-moments-20261120.json").read_text())
-        receipt = json.loads((root / 'examples/client_contracts/installation_principal_data_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--924bebbe.json').read_text())
+        receipt = json.loads((root / 'examples/client_contracts/installation_principal_data_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--1844db41.json').read_text())
         self.assertEqual(receipt["state"], "PASS")
         self.assertEqual(len(receipt["cases"]), 6)
         self.assertEqual(len(receipt["preceding_source_origin_cases"]), 19)
-        self.assertEqual(len(receipt["source_sha256"]), 356)
+        self.assertEqual(len(receipt["source_sha256"]), 359)
         for relative, digest in receipt["source_sha256"].items():
             self.assertEqual(hashlib.sha256((root / relative).read_bytes()).hexdigest(), digest)
         actual = hashlib.sha256((root / joined["codec_harness"]).read_bytes()).hexdigest()

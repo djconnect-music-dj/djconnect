@@ -334,16 +334,17 @@ async function main(engine) {
     assert.equal(await sceneMode.getAttribute("aria-pressed"),"true");
     await liveStatus({view:{...view(.5),mode:"flow",revision:5}});
     assert.equal(await flowMode.getAttribute("aria-pressed"),"true");
+    const returnToLive=page.getByRole("button",{name:"Volver al directo"});
     await page.clock.install();
     await viewport.hover();
     await page.mouse.wheel(0,220);
-    await live.waitFor();
+    await returnToLive.waitFor();
     await page.clock.fastForward(10000);
-    await page.mouse.wheel(0,160);
+    await viewport.press("ArrowDown");
     await page.clock.fastForward(14500);
-    assert.equal(await live.isVisible(),true);
+    assert.equal(await returnToLive.isVisible(),true);
     await page.clock.fastForward(650);
-    await live.waitFor({state:"hidden"});
+    await returnToLive.waitFor({state:"hidden"});
     assert.equal(await atEdge(),true);
 
     await page.evaluate(()=>window.dispatchEvent(new Event("djconnect-display-clear")));

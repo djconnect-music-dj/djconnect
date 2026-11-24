@@ -30,11 +30,11 @@ class RecentDisplayHistoryTests(unittest.IsolatedAsyncioTestCase):
         root = Path(__file__).resolve().parents[1]
         fixture = json.loads((root/'examples/client_contracts/ask_dj_recent_list_presentation_v1/actual-ha-wire-live-impression-20261119-requested-moments-20261120.json').read_bytes())
         self.assertEqual(fixture['classification'], 'ACTUAL_ISOLATED_HA_SOURCE_ONLY_NOT_INSTALLED_OR_NATIVE')
-        current = json.loads((root / 'examples/client_contracts/ask_dj_recent_list_presentation_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--e3e462b0.json').read_text())
+        current = json.loads((root / 'examples/client_contracts/ask_dj_recent_list_presentation_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--0612e972.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
         self.assertEqual(current['harness'], fixture['harness'])
         self.assertEqual(current['harness_sha256'], fixture['harness_sha256'])
-        self.assertEqual(len(current['source_pins']), 356)
+        self.assertEqual(len(current['source_pins']), 359)
         for name, digest in current['source_pins'].items():
             self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), digest, name)
         self.assertEqual(hashlib.sha256((root/fixture['harness']).read_bytes()).hexdigest(), fixture['harness_sha256'])
