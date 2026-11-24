@@ -1,6 +1,6 @@
 """Owner-selected For-you behavior reuses the original dialogue/effect owner."""
 from copy import deepcopy
-from time import monotonic, time
+import time
 from types import SimpleNamespace
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch
@@ -21,6 +21,10 @@ class ForYouTests(IsolatedAsyncioTestCase):
         self.addCleanup(restore_service)
         await fixtures.FirstPlayTests.asyncSetUp(self)
         importlib.reload(service)
+        # The ordinary fixture shares a timebase between publisher and reader.
+        # The clock-boundary tests replace these seams inside their own cases.
+        self.enterContext(patch.object(self.steering, 'time', time))
+        self.enterContext(patch.object(service, 'time', time))
     new_session = fixtures.FirstPlayTests.new_session
     new_turn = fixtures.FirstPlayTests.new_turn
     offer = fixtures.FirstPlayTests.offer
@@ -149,16 +153,7 @@ class ForYouTests(IsolatedAsyncioTestCase):
     async def test_cached_offer_uses_original_committed_dna_during_unrelated_save(self):
         import asyncio
         _, before = await self.prepared()
-        cached = self.active.broadcast.first_play_offer
-        admission = cached.get('_admission')
-        self.assertTrue(before['actions_available'], {
-            'state': before['state'],
-            'reason': before.get('reason'),
-            'broadcast_state': self.active.broadcast.first_play_state,
-            'wall_remaining': cached.get('_action_wall_deadline', 0) - time(),
-            'monotonic_remaining': cached.get('_action_monotonic_deadline', 0) - monotonic(),
-            'admission_remaining': admission.deadline - admission.clock() if admission else None,
-        })
+        self.assertTrue(before['actions_available'], "The original prepared offer must have a live deadline")
         memory = self.runtime.memory
         entered, release = asyncio.Event(), asyncio.Event()
         save = memory._store.async_save
@@ -207,7 +202,7 @@ class ForYouTests(IsolatedAsyncioTestCase):
         history = AskDJHistoryManager(store=FakeStore())
         # Use the same real clock as the offer reader when an earlier test
         # imported DialogueState with a synthetic clock patched.
-        history.dialogue.clock = monotonic
+        history.dialogue.clock = time.monotonic
         storage = self.hass.data['djconnect'][STORE_KEY]
         context = SimpleNamespace(profile_id='synthetic-owner', profile=storage.household.profiles['synthetic-owner'])
         source = patch('custom_components.djconnect.reply_artwork.source_admission', return_value=(self.source, lambda: self.allowed))
