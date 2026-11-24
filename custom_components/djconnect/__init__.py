@@ -3323,9 +3323,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # An unavailable optional art feature must not disable pairing or music.
     try:
         from .music_canvas_runtime import setup as setup_canvas
-        from .music_canvas_http import register_asset_configuration
+        from .music_canvas_http import register_asset_configuration, register_samsung_setup
         await setup_canvas(hass)
         register_asset_configuration(hass)
+        register_samsung_setup(hass)
     except Exception as exc:
         _LOGGER.warning("Music Canvas startup unavailable: %s", exc.__class__.__name__)
     # Some Home Assistant startup paths load config entries without first

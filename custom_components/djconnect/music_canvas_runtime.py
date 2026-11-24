@@ -289,7 +289,7 @@ class CanvasRuntime:
                                        for k in ("host", "ha_device_id") if k in item):
                                     current["devices"][key]["epoch"] += 1
                                     changed.append(key)
-                                current["devices"][key].update({k: item[k] for k in ("host", "ha_device_id") if k in item})
+                                current["devices"][key].update({k: item[k] for k in ("host", "ha_device_id", "name") if k in item})
                             elif len(current["devices"]) < 64:
                                 current["devices"][key] = item
                         return changed

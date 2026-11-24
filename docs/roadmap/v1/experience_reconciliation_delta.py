@@ -10,6 +10,10 @@ from contextvars import ContextVar
 # bytes and the immutable historical copy before entering this scoped context.
 HISTORICAL_DOCUMENT_SOURCES = ContextVar("historical_document_sources", default={})
 
+
+def historical_verification_source(root, name):
+    return HISTORICAL_DOCUMENT_SOURCES.get().get(name, root / name)
+
 PRIOR = 'history/20261017/settings-finalization-maintenance-v14.json'
 NODE = 'CORRECTION::CORE::PERSONAL-DJ-EXPERIENCE'
 

@@ -4,10 +4,11 @@ import asyncio
 import json
 import time
 from urllib.parse import urlsplit
+from uuid import uuid4
 from aiohttp import web
 from homeassistant.components.http import HomeAssistantView
 
-from .music_canvas import CanvasError, IDENTITY, need, validate_request
+from .music_canvas import CanvasError, IDENTITY, digest, need, validate_request, validate_screen
 from .music_canvas_runtime import KEY
 
 HEADERS = {"Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer",
@@ -206,3 +207,59 @@ def register_asset_configuration(hass):
         hass.data["djconnect"]["music_canvas_asset_origin"] = origin or None
     hass.services.async_register("djconnect", "music_canvas_asset_access", configure,
         schema=vol.Schema({vol.Required("https_origin"): str}))
+
+
+def register_samsung_setup(hass):
+    """Let a current HA administrator pair an existing Samsung device explicitly."""
+    import voluptuous as vol
+    from homeassistant.exceptions import ServiceValidationError
+    from homeassistant.helpers import device_registry as dr
+    from .music_canvas_adapters import samsung_entry_target
+
+    async def setup_samsung(call):
+        user = await hass.auth.async_get_user(call.context.user_id) if call.context.user_id else None
+        try:
+            need(user and current_admin(hass, user), "canvas_admin_required", 403)
+            runtime = hass.data.get("djconnect", {}).get(KEY)
+            need(runtime is not None and not runtime.stopped, "canvas_unavailable", 503)
+            registry = dr.async_get(hass)
+            device = registry.async_get(call.data["device_id"])
+            need(device is not None, "canvas_ha_samsung_target_unavailable", 404)
+            entries = [hass.config_entries.async_get_entry(key) for key in device.config_entries]
+            entries = [entry for entry in entries if entry is not None and entry.domain == "samsungtv"]
+            need(len(entries) == 1, "canvas_ha_samsung_target_unavailable", 404)
+            entry = entries[0]
+            target = samsung_entry_target(entry)
+            need(target is not None, "canvas_ha_samsung_target_unavailable", 404)
+
+            def authorize():
+                return (current_admin(hass, user) and not runtime.stopped
+                        and hass.data.get("djconnect", {}).get(KEY) is runtime
+                        and registry.async_get(call.data["device_id"]) is device
+                        and entry.entry_id in device.config_entries
+                        and hass.config_entries.async_get_entry(entry.entry_id) is entry
+                        and samsung_entry_target(entry) == target)
+
+            state = await runtime.repository.read(authorize)
+            registered = state["devices"].get(target["id"])
+            need(registered and registered["adapter"] == "samsung"
+                 and registered["stable_identity"] == target["stable_identity"]
+                 and registered["host"] == target["host"], "canvas_ha_samsung_target_unavailable", 404)
+            screen = {key: call.data[key] for key in ("width", "height", "orientation") if key in call.data}
+            validate_screen(screen)
+            owner = digest(["canvas_ha_admin", user.id])
+            result = await runtime.manage("setup", owner, digest([owner, entry.entry_id]), {
+                "operation_id": str(uuid4()), "target_id": target["id"], "screen": screen,
+            }, authorize)
+            need(result["state"] == "confirmed", "canvas_ha_samsung_setup_incomplete", 409)
+        except CanvasError as error:
+            raise ServiceValidationError(translation_domain="djconnect",
+                                         translation_key=error.code) from None
+
+    hass.services.async_register("djconnect", "music_canvas_samsung_setup", setup_samsung,
+        schema=vol.Schema({
+            vol.Required("device_id"): str,
+            vol.Optional("width"): vol.All(int, vol.Range(min=256, max=8192)),
+            vol.Optional("height"): vol.All(int, vol.Range(min=256, max=8192)),
+            vol.Optional("orientation"): vol.In(("landscape", "portrait")),
+        }))

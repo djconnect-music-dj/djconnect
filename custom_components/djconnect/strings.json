@@ -723,6 +723,12 @@
     }
   },
   "selector": {
+    "canvas_screen_orientation": {
+      "options": {
+        "landscape": "Landscape",
+        "portrait": "Portrait"
+      }
+    },
     "onboarding_profile": {
       "options": {
         "new": "Create a new profile"
@@ -1812,6 +1818,28 @@
         }
       }
     },
+    "music_canvas_samsung_setup": {
+      "name": "Connect Samsung Art Mode",
+      "description": "Pair a discovered Samsung TV with Music Canvas using its local Art Mode API.",
+      "fields": {
+        "device_id": {
+          "name": "Samsung TV",
+          "description": "Select the TV already added to Home Assistant."
+        },
+        "width": {
+          "name": "Width in pixels",
+          "description": "Enter the screen width if Music Canvas does not know it yet."
+        },
+        "height": {
+          "name": "Height in pixels",
+          "description": "Enter the screen height if Music Canvas does not know it yet."
+        },
+        "orientation": {
+          "name": "Screen orientation",
+          "description": "Choose the screen orientation if Music Canvas does not know it yet."
+        }
+      }
+    },
     "music_canvas_asset_access": {
       "name": "Music Canvas temporary image access",
       "description": "Explicitly configure the external HTTPS origin for short-lived, file-scoped frame downloads. Requires a Home Assistant administrator.",
@@ -1824,6 +1852,12 @@
     }
   },
   "exceptions": {
+    "canvas_ha_samsung_target_unavailable": {
+      "message": "This Samsung TV is unavailable in Music Canvas."
+    },
+    "canvas_ha_samsung_setup_incomplete": {
+      "message": "Art Mode pairing could not be confirmed. Check the TV and approve the Music Canvas connection if prompted."
+    },
     "canvas_admin_required": {
       "message": "Home Assistant administrator permissions are required."
     },

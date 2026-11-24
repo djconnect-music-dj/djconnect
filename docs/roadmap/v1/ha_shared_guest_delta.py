@@ -1,6 +1,8 @@
 """Bound stage3 source to its actual HA qualification without rewriting delivered history."""
 from copy import deepcopy
 import hashlib
+
+from experience_reconciliation_delta import historical_verification_source
 import json
 from pathlib import Path
 
@@ -109,7 +111,7 @@ def validate(plan, previous_validator, *, historical_product=False):
               'sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82',
               'sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4'}
               and r.get('exit_code') == 0
-              and r.get('harness_sha256') == sha((ROOT/r['harness']).read_bytes()) for r in rows),
+              and r.get('harness_sha256') == sha(historical_verification_source(ROOT, r['harness']).read_bytes()) for r in rows),
           '54 actual isolated HA executions bound to unchanged current source')
     check(shared.get('harness') == 'scripts/verification/verify_shared_guest_actual_ha.py'
           and shared.get('exit_code') == 0

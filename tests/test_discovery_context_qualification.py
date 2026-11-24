@@ -11,7 +11,7 @@ class DiscoveryContextQualificationTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         p = json.loads(
             (
-                root / 'examples/client_contracts/discovery_context_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--e51e2e31.json'
+                root / 'examples/client_contracts/discovery_context_v1/canvas-admin-20261124--vibecast-ui-20261123-ha-5995a971.json'
             ).read_text()
         )
         r = p["receipt"]

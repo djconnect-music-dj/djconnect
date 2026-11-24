@@ -1,6 +1,8 @@
 """Current UI source proof, with exact immutable delivered predecessor validation."""
 from copy import deepcopy
 import hashlib
+
+from experience_reconciliation_delta import historical_verification_source
 import importlib.util
 import json
 from pathlib import Path
@@ -105,7 +107,7 @@ def validate(plan, previous_validator):
           and proof.get('source_pins') == matrix.get('source_pins') == actual
           and proof.get('source_before_after_equal') is matrix.get('source_before_after_equal') is True
           and proof.get('execution_count') == len(rows) == len({r['harness'] for r in rows}) == 54
-          and all(r.get('exit_code') == 0 and r.get('harness_sha256') == sha((ROOT/r['harness']).read_bytes())
+          and all(r.get('exit_code') == 0 and r.get('harness_sha256') == sha(historical_verification_source(ROOT, r['harness']).read_bytes())
                   for r in rows), 'fresh full54 actual HA matrix')
     native = proof.get('additional_native_execution', {})
     native_raw = native.get('receipt', {})

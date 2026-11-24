@@ -571,7 +571,7 @@ class FirstPlayWireEvidenceTests(IsolatedAsyncioTestCase):
         from pathlib import Path
         root = Path(__file__).resolve().parents[1]
         fixture = json.loads((root/'examples/client_contracts/session_first_play_v2/actual-ha-wire.json').read_text())
-        current = json.loads((root / 'examples/client_contracts/session_for_you_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--6e8af982.json').read_text())
+        current = json.loads((root / 'examples/client_contracts/session_for_you_v1/canvas-admin-20261124--vibecast-ui-20261123-ha-1a2d8f8d.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
         self.assertEqual(len(current['source_pins']), 359)
         self.assertEqual(hashlib.sha256((root / current['harness']).read_bytes()).hexdigest(), current['harness_sha256'])
