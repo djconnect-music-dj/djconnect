@@ -173,7 +173,7 @@ class OriginalDnaHTTPContractTests(IsolatedAsyncioTestCase):
         import json
         from pathlib import Path
         root = Path(__file__).resolve().parents[1]
-        wire = json.loads((root / 'examples/client_contracts/for_you_original_dna_v1/cast-session-update-20261124-cast-ui-20261123-h-2c1-e07c3ef9.json').read_text())
+        wire = json.loads((root / 'examples/client_contracts/for_you_original_dna_v1/canvas-upload-custody-20261124-61124-cast-ui-20261123-ca59fce5.json').read_text())
         self.assertTrue(wire['source_before_after_equal'])
         self.assertEqual(len(wire['source_pins']), 359)
         for name, expected in {**wire['source_pins'], **wire['harness_pins']}.items():
