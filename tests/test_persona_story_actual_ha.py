@@ -12,7 +12,7 @@ class PersonaStoryActualHATest(unittest.TestCase):
 
     def test_current_source_and_verifiers_are_bound_to_the_original_actual_ha_trace(self):
         root, receipt = self.fixture()
-        current = json.loads((root / 'examples/client_contracts/personal_dj_artist_story_v1/local-art-20261124-vibecast-ui-20261123-h-d6baf10a.json').read_text())
+        current = json.loads((root / 'examples/client_contracts/personal_dj_artist_story_v1/cast-session-update-20261124-cast-ui-20261123-h-d6b-4b427334.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
         self.assertEqual(current['harness'], receipt['harness'])
         self.assertEqual(current['harness_sha256'], receipt['harness_sha256'])

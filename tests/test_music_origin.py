@@ -175,7 +175,7 @@ class MusicOriginActualHAProofTest(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads(
             (
-                root / 'examples/client_contracts/music_origin_v1/local-art-20261124-vibecast-ui-20261123-h-cd56ac76.json'
+                root / 'examples/client_contracts/music_origin_v1/cast-session-update-20261124-cast-ui-20261123-h-cd5-07c1d3c1.json'
             ).read_text()
         )
         self.assertEqual(len(proof["source_pins"]), 359)

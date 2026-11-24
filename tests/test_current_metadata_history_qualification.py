@@ -11,7 +11,7 @@ class CurrentMetadataHistoryQualificationTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads(
             (
-                root / 'examples/client_contracts/current_metadata_history_v1/local-art-20261124-vibecast-ui-20261123-h-0b6089bb.json'
+                root / 'examples/client_contracts/current_metadata_history_v1/cast-session-update-20261124-cast-ui-20261123-h-0b6-7f39be91.json'
             ).read_text()
         )
         self.assertTrue(proof["source_before_after_equal"])

@@ -280,7 +280,7 @@ class NativeVoiceActualHAEvidenceTest(unittest.TestCase):
         import json
         from pathlib import Path
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root/'examples/client_contracts/ha_native_voice_v1/local-art-20261124-personal-regression.json').read_text())
+        proof = json.loads((root/'examples/client_contracts/ha_native_voice_v1/cast-session-update-20261124-personal-regression.json').read_text())
         self.assertTrue(proof['source_before_after_equal'])
         actual = {str(path.relative_to(root)):hashlib.sha256(path.read_bytes()).hexdigest()
                   for path in (root/'custom_components/djconnect').rglob('*')
