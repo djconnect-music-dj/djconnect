@@ -425,3 +425,25 @@ The regression harness uses actual Core P-256, private file custody and SQLite,
 with explicitly synthetic owner, API/Apple-verifier and HTTP seams. It does not
 qualify App Attest, native clock, WidgetKit tokens, background delivery, actual
 provider dispatch or physical devices. Those separate gates remain required.
+
+
+### Native reauthorization intent — 24 November 2026
+
+The Apple consumer may begin one new original reauthorization intent after an
+authentically accepted owner Session start/commit identifies a genuinely new
+own active Session, under the same actual pair/Profile and current backend
+Widget consent. The current consent revision may remain equal when no OFF
+occurred. After an actual OFF, a subsequent ON must use its genuinely newer
+backend revision. An explicit new ON is also an intent.
+
+An unchanged Session snapshot, foreground transition, timer, view render,
+replayed response, guest/demo context, unknown result or retained JSON never
+creates another nonce/assertion. The consumer durably reserves each intent and
+SDK-effect phase before the effect. Unknown or cold interrupted operations use
+only the original status route; they do not generate replacement key material
+or repeat an assertion whose delivery is unknown. Only the original saved
+App Attest key and exact fresh server clientDataHash enter generateAssertion.
+
+These intents request a distinct server role; neither that role nor its public
+ready metadata supplies native clock, signed target, extension restoration or
+OS/provider delivery permission.

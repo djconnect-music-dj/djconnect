@@ -8226,3 +8226,14 @@ COW replacement fences the old owner/adoption and preserves old operation identi
 Ready/status are only closed DATA from the actual current RAM owner. Tests use
 explicit MODEL API/Apple seams with actual Core P-256 and SQLite; no native clock,
 provider or physical background-delivery acceptance follows from those tests.
+
+
+## 24 November 2026 — Native Widget reauthorization intent
+
+Apple selects one durable intent per authentically accepted genuinely new OWN
+active Session or explicit new backend Widget ON. Same-session/foreground/view
+refresh, guest/demo and unknown-result replay never generate an intent. An
+unchanged real consent revision is permitted without an intervening OFF; after
+OFF, only the genuinely newer ON revision applies. Original saved App Attest
+key, server hash and SDK phase custody remain required; native clock/target and
+actual background delivery are independent. See NATIVE_INSTALLATION_PUBLISHER_V1.
