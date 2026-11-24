@@ -306,7 +306,8 @@ progress { height:.7rem; border-radius:1rem; overflow:hidden }
   display:grid; grid-template-columns:minmax(0,1fr);
   width:min(100%,86rem); margin-inline:auto; padding:.5rem;
   align-content:safe center; align-items:center; justify-items:center;
-  gap:clamp(1.25rem,2vw,2rem); opacity:1; overflow-y:auto; scrollbar-width:thin;
+  gap:clamp(.75rem,2vh,1.5rem) clamp(1.25rem,2vw,2rem);
+  opacity:1; overflow-y:auto; scrollbar-width:thin;
 }
 .idle .now-playing { display:contents }
 .idle .now-playing > :not(.waiting-brand):not(.waiting-status) { display:none }
@@ -315,10 +316,10 @@ progress { height:.7rem; border-radius:1rem; overflow:hidden }
 .waiting-avatar { display:none }
 .idle .waiting-status {
   display:flex; grid-column:1/-1; order:1; align-items:center; justify-content:center;
-  gap:.55rem; margin-block-start:clamp(1.75rem,8vh,5rem);
+  gap:.55rem;
 }
 .idle .track { margin:0; text-align:center }
-.idle .waiting-avatar { display:block; flex:none; width:clamp(6rem,8vw,7rem) }
+.idle .waiting-avatar { display:block; flex:none; width:clamp(3.75rem,9vh,6rem) }
 .idle #title::after {
   content:""; display:inline-block; width:1.05em; height:.24em; margin-inline-start:.14em;
   background:radial-gradient(circle closest-side,currentColor 66%,transparent 78%) left center / calc(100% / 3) 100% repeat-x;
@@ -362,7 +363,9 @@ body {
   padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);
 }
 main { height:auto; min-width:0 }
-.renderer-footer { position:relative; z-index:1; display:flex; flex-wrap:wrap; justify-content:space-between; gap:.35rem 1rem; padding:.65rem 1.25rem; color:#b6b6c5; font-size:.8rem }
+.idle main { grid-template-rows:auto minmax(0,1fr); padding-block-end:0 }
+.idle main > footer { display:none }
+.renderer-footer { position:relative; z-index:1; display:flex; flex-wrap:wrap; justify-content:space-between; gap:.35rem 1rem; padding:.4rem 1.25rem; background:transparent; color:#b6b6c5; font-size:.8rem }
 .renderer-footer a { display:inline-flex; align-items:center; gap:.35em; color:inherit; text-decoration:none }
 .renderer-footer a svg { flex:none; width:1.15em; height:1.15em; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round }
 .renderer-footer a:focus { outline:2px solid #fff; outline-offset:3px }
@@ -379,11 +382,8 @@ main { height:auto; min-width:0 }
   .waiting-wordmark { font-size:1rem }
   .idle .handoff:not([hidden]):has(> .handoff-code) { min-block-size:0; gap:0 }
   .idle .handoff > .handoff-code { margin-block-start:0 }
-  .idle .waiting-status { margin-block-start:0 }
   .idle .waiting-status .track { max-width:none; font-size:clamp(1rem,5vw,1.4rem) }
   .idle .waiting-avatar { width:clamp(3.25rem,16vw,5.5rem) }
-  .idle main { padding-block-end:0; grid-template-rows:auto minmax(0,1fr) }
-  .idle main > footer { display:none }
   .renderer-footer { padding-block-start:0; padding-inline:.8rem }
 }
 @media (forced-colors:active) {
@@ -807,7 +807,7 @@ main { height:auto; min-width:0 }
 </aside>
 </div></section><footer><section id="up-next" class="up-next" hidden><img id="next-art" alt=""><div><span id="next-label" class="up-next-label"></span><strong id="next-title"></strong><span id="next-artist"></span></div></section><progress id="progress" max="1" value="0" hidden></progress><div class="meta"><span id="time"></span></div></footer></main>
 <footer class="renderer-footer">
-  <span id="renderer-build"><span id="renderer-build-label">VibeCast versie</span> 4.1.0 (bacd56da)</span>
+  <span id="renderer-build"><span id="renderer-build-label">VibeCast versie</span> 4.1.0 (2790e473)</span>
   <a href="https://djconnect.dev/" rel="noreferrer">
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m9 15 6-6m-5 0h5v5"/></svg>
     djconnect.dev

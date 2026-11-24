@@ -67,9 +67,29 @@ async function run(name,engine){
  });});
  try{
   await page.goto(receiver+'/');await page.waitForFunction(()=>typeof window.__cafReceive==='function');
+  async function verifyIdleLayout(hasCode){
+   for(const [width,height] of [[960,540],[1280,720],[1920,1080]]){
+    await page.setViewportSize({width,height});
+    const waiting=await page.locator('.waiting-status').boundingBox();
+    const stage=await page.locator('.stage').boundingBox();
+    const footer=await page.locator('.renderer-footer').boundingBox();
+    const brand=await page.locator('.waiting-brand').boundingBox();
+    const handoff=await page.locator('#handoff').boundingBox();
+    assert.equal(Boolean(handoff),hasCode);
+    assert.ok(waiting.y>=brand.y+brand.height);
+    if(handoff)assert.ok(waiting.y>=handoff.y+handoff.height);
+    assert.ok(waiting.y+waiting.height<=stage.y+stage.height+1,`Waiting row clipped at ${width}x${height}`);
+    assert.ok(waiting.y+waiting.height<footer.y);
+    assert.equal(await page.locator('.renderer-footer').evaluate(node=>getComputedStyle(node).backgroundColor),'rgba(0, 0, 0, 0)');
+   }
+   await page.screenshot({path:path.join(output,name+(hasCode?'-waiting-code.png':'-waiting.png'))});
+  }
+  await verifyIdleLayout(false);
   assert.equal(claimCalls,0); // SDK discovery alone cannot mint a claim.
   await page.evaluate(data=>window.__cafReceive(data),{kind:'vibecast_display_bootstrap',version:1,handoff_id:id,ha_origin:ha,bootstrap_token:cap,expires_in:30});
   await page.waitForFunction(()=>window.__cafSent.some(x=>x.data.kind==='vibecast_display_claim'));
+  await page.locator('#handoff .handoff-code strong').waitFor();
+  await verifyIdleLayout(true);
   assert.equal(claimCalls,1);assert.equal(approved,false);
   assert.equal(await page.evaluate(()=>window.__cafSent.some(x=>x.data.state==='presenting')),false);
   approved=true;
