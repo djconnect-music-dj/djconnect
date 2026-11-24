@@ -166,9 +166,13 @@ class CanvasRuntime:
                         if ((updates["screen"]["orientation"] == "portrait") != (height >= width)):
                             updates["screen"]["width"], updates["screen"]["height"] = height, width
                         if device["adapter"] == "samsung" and not device.get("token"):
+                            pairing = {**device}
+                            if entry_id := data.get("art_registry_entry_id"):
+                                pairing["art_registry_entry_id"] = entry_id
+                            need(self.registry_art_current(pairing), "canvas_target_unavailable", 404)
                             async with asyncio.timeout(20):
                                 import functools
-                                updates.update(await self.protocol(functools.partial(adapters.samsung_action, device, "pair")))
+                                updates.update(await self.protocol(functools.partial(adapters.samsung_action, pairing, "pair")))
                         updates["state"] = "ready"
                         updates["manual_takeover"] = False
                         updates["last_selected_content"] = None
@@ -179,6 +183,7 @@ class CanvasRuntime:
                                  "canvas_cleanup_unsupported", 409)
                             for content_id in device["owned_content"]:
                                 need(authorize(), "unauthorized", 401)
+                                need(self.registry_art_current(device), "canvas_target_unavailable", 404)
                                 import functools
                                 try:
                                     async with asyncio.timeout(20):
@@ -219,6 +224,16 @@ class CanvasRuntime:
         self.states.pop(target, None)
         self.claims.pop(target, None)
         self.leases = {k: v for k, v in self.leases.items() if v["target"] != target}
+
+    def registry_art_current(self, device):
+        entry_id = device.get("art_registry_entry_id")
+        if not entry_id:
+            return True
+        entry = self.hass.config_entries.async_get_entry(entry_id)
+        if entry is None or entry.domain != "samsungtv":
+            return False
+        target = adapters.samsung_entry_target(entry)
+        return target is not None and all(target[key] == device.get(key) for key in ("id", "host", "stable_identity"))
 
     async def purge_owner(self, owner):
         async with self.lock, self.effect_lock:
@@ -508,9 +523,9 @@ class CanvasRuntime:
     async def observe_samsung(self, device, authorize):
         """Respect manual artwork until an admin explicitly reconnects Canvas."""
         import functools
-        need(authorize(), "canvas_context_changed", 409)
+        need(authorize() and self.registry_art_current(device), "canvas_context_changed", 409)
         observed = await self.protocol(functools.partial(adapters.samsung_action, device, "observe"))
-        need(authorize(), "canvas_context_changed", 409)
+        need(authorize() and self.registry_art_current(device), "canvas_context_changed", 409)
         expected = device.get("last_selected_content")
         current = observed.get("current")
         if expected and (not isinstance(current, dict) or current.get("content_id") != expected):
@@ -524,7 +539,8 @@ class CanvasRuntime:
             def authorized():
                 row = current["devices"].get(target)
                 return (scope_current() and profile(current, owner)["revision"] == config["revision"]
-                        and row and row["epoch"] == device["epoch"] and not row.get("forgetting"))
+                        and row and row["epoch"] == device["epoch"] and not row.get("forgetting")
+                        and self.registry_art_current(device))
             need(authorized(), "canvas_context_changed", 409)
             self.states[target] = "delivering"
             if device["adapter"] == "samsung":

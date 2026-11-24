@@ -374,17 +374,28 @@ async def qualify(hass, manager, history, request, client):
         setup_target = adapters.samsung_entry_target(fixture_entry)
         await runtime.repository.mutate(lambda s: s["devices"].update({setup_target["id"]: setup_target}), lambda: True)
         setup_calls = []
-        def pair_fixture(device, action):
-            assert action == "pair" and device["id"] == setup_target["id"] and "token" not in device
-            setup_calls.append(action)
-            return {"token": "independent-art-fixture-token", "api_version": "0.97"}
+        class RegistryArt:
+            token = None
+            connection = SimpleNamespace(sock=SimpleNamespace(getpeercert=lambda **_: b"fixture-tv-tls-peer"))
+
+            def get_api_version(self):
+                setup_calls.append("pair")
+                return "6.0.0.0"
+
+            def get_artmode(self): return "on"
+            def get_current(self): return {"content_id": "fixture-current-art"}
+            def close(self): pass
+
+        def registry_remote(host, **kwargs):
+            assert host == setup_target["host"] and kwargs["port"] == 8002 and kwargs["token"] is None
+            return SimpleNamespace(art=RegistryArt)
         setup_data = {"device_id": "tv-fixture", "width": 3840, "height": 2160, "orientation": "landscape"}
         entry_lookup = hass.config_entries.async_get_entry
         with patch.object(dr, "async_get", return_value=SimpleNamespace(
                    async_get=lambda key: fixture_device if key == "tv-fixture" else None)), \
              patch.object(type(hass.config_entries), "async_get_entry", lambda self, key:
                    fixture_entry if key == fixture_entry.entry_id else entry_lookup(key)), \
-             patch.object(adapters, "samsung_action", pair_fixture):
+             patch("samsungtvws.SamsungTVWS", registry_remote):
             for fields, context, expected in (
                 (setup_data, Context(), "canvas_admin_required"),
                 ({**setup_data, "device_id": "unknown"}, Context(user_id=owner.id), "canvas_ha_samsung_target_unavailable"),
@@ -400,7 +411,9 @@ async def qualify(hass, manager, history, request, client):
                 blocking=True, context=Context(user_id=owner.id))
         assert setup_calls == ["pair"] and owner.id not in storage.household.shared.ha_user_profile_ids
         paired = (await runtime.repository.read())["devices"][setup_target["id"]]
-        assert paired["state"] == "ready" and paired["token"] == "independent-art-fixture-token"
+        assert paired["state"] == "ready" and "token" not in paired
+        assert paired["art_registry_entry_id"] == fixture_entry.entry_id and len(paired["art_tls_peer_sha256"]) == 64
+        assert not runtime.registry_art_current(paired), "Unloaded registry authority must withdraw access"
         unbound, code = await call("read")
         assert code == 200 and not unbound["can_manage_devices"] and any(
             item["id"] == setup_target["id"] and item["state"] == "ready" for item in unbound["targets"])
@@ -542,6 +555,7 @@ async def qualify(hass, manager, history, request, client):
             "preserve_reload_retains_runtime_final_unload_recreates_it": True,
             "asset_configuration_uses_localized_ha_errors": True,
             "ha_admin_pairs_exact_registered_samsung_without_profile_authority_change": True,
+            "tokenless_art_registration_pins_tls_and_requires_loaded_entry": True,
             "late_private_preview_after_forget_is_denied": True,
             "cancelled_private_save_drains_and_releases_all_references": True,
             "session_end_preserves_enabled_and_targets": True,

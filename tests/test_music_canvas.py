@@ -18,7 +18,7 @@ from custom_components.djconnect.music_canvas import (  # noqa: E402
     CanvasError, Cadence, apply_update, fresh_state, profile, reserve_forget,
     digest, finish_forget, validate_request,
 )
-from custom_components.djconnect.music_canvas_adapters import discover  # noqa: E402
+from custom_components.djconnect.music_canvas_adapters import discover, samsung_action  # noqa: E402
 from custom_components.djconnect.music_canvas_render import art_prompt, compose  # noqa: E402
 from custom_components.djconnect.persistence.music_canvas import CanvasRepository  # noqa: E402
 from custom_components.djconnect.persistence.service import PersistenceService  # noqa: E402
@@ -31,6 +31,36 @@ def update(revision=0, **patch):
 
 
 class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
+    def test_tokenless_art_requires_explicit_registry_binding_and_pinned_peer(self):
+        events = []
+        certificate = b"declared-tv-certificate"
+
+        class Art:
+            token = None
+            connection = types.SimpleNamespace(sock=types.SimpleNamespace(
+                getpeercert=lambda **_: certificate))
+
+            def open(self): events.append("open")
+            def close(self): events.append("close")
+            def get_api_version(self): return "6.0.0.0"
+            def get_artmode(self): events.append("mode"); return "on"
+            def get_current(self): events.append("current"); return {"content_id": "fixture-art"}
+
+        module = types.SimpleNamespace(SamsungTVWS=lambda *_args, **_kw: types.SimpleNamespace(art=Art))
+        device = {"host": "192.0.2.55"}
+        with patch.dict(sys.modules, {"samsungtvws": module}):
+            with self.assertRaisesRegex(CanvasError, "canvas_pairing_denied"):
+                samsung_action(device, "pair")
+            registration = samsung_action({**device, "art_registry_entry_id": "tv-entry"}, "pair")
+            self.assertNotIn("token", registration)
+            self.assertEqual(samsung_action({**device, **registration}, "observe"),
+                             {"current": {"content_id": "fixture-art"}})
+            events.clear()
+            certificate = b"unrelated-device-certificate"
+            with self.assertRaisesRegex(CanvasError, "canvas_pairing_denied"):
+                samsung_action({**device, **registration}, "observe")
+            self.assertEqual(events, ["open", "close"])
+
     async def test_uses_vendor_advertisements_and_preserves_legacy_identity(self):
         def advertisement(host, udn, name, manufacturer="Samsung Electronics"):
             return types.SimpleNamespace(
@@ -128,6 +158,7 @@ class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
         async def manage(kind, _owner, _binding, data, authorize):
             self.assertEqual(kind, "setup")
             self.assertEqual(data["target_id"], target["id"])
+            self.assertEqual(data["art_registry_entry_id"], entry.entry_id)
             self.assertEqual(data["screen"], {"width": 3840, "height": 2160, "orientation": "landscape"})
             self.assertTrue(authorize())
             self.assertNotIn("token", data)

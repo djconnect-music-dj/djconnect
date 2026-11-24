@@ -250,6 +250,7 @@ def register_samsung_setup(hass):
             owner = digest(["canvas_ha_admin", user.id])
             result = await runtime.manage("setup", owner, digest([owner, entry.entry_id]), {
                 "operation_id": str(uuid4()), "target_id": target["id"], "screen": screen,
+                "art_registry_entry_id": entry.entry_id,
             }, authorize)
             need(result["state"] == "confirmed", "canvas_ha_samsung_setup_incomplete", 409)
         except CanvasError as error:
