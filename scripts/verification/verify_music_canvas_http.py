@@ -4,6 +4,7 @@ import asyncio
 import json
 import os
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 import uuid
 
@@ -359,8 +360,50 @@ async def qualify(hass, manager, history, request, client):
         from homeassistant.auth.const import GROUP_ID_ADMIN
         from custom_components.djconnect.profile_context import profile_storage
         storage = profile_storage(hass)
-        await hass.auth.async_create_user("Synthetic lab owner", group_ids=[GROUP_ID_ADMIN])
+        owner = await hass.auth.async_create_user("Synthetic lab owner", group_ids=[GROUP_ID_ADMIN])
         admin = await hass.auth.async_create_user("Synthetic Canvas admin", group_ids=[GROUP_ID_ADMIN])
+        from homeassistant.core import Context
+        from homeassistant.exceptions import ServiceValidationError
+        from homeassistant.helpers import device_registry as dr
+        from custom_components.djconnect.music_canvas_http import register_samsung_setup
+        register_samsung_setup(hass)
+        fixture_entry = SimpleNamespace(entry_id="synthetic-ha-tv", domain="samsungtv", title="TV fixture",
+            data={"host": "192.0.2.55", "token": "separate-ha-remote-token"}, unique_id=str(uuid.uuid4()),
+            state=SimpleNamespace(value="loaded"))
+        fixture_device = SimpleNamespace(config_entries={fixture_entry.entry_id})
+        setup_target = adapters.samsung_entry_target(fixture_entry)
+        await runtime.repository.mutate(lambda s: s["devices"].update({setup_target["id"]: setup_target}), lambda: True)
+        setup_calls = []
+        def pair_fixture(device, action):
+            assert action == "pair" and device["id"] == setup_target["id"] and "token" not in device
+            setup_calls.append(action)
+            return {"token": "independent-art-fixture-token", "api_version": "0.97"}
+        setup_data = {"device_id": "tv-fixture", "width": 3840, "height": 2160, "orientation": "landscape"}
+        entry_lookup = hass.config_entries.async_get_entry
+        with patch.object(dr, "async_get", return_value=SimpleNamespace(
+                   async_get=lambda key: fixture_device if key == "tv-fixture" else None)), \
+             patch.object(type(hass.config_entries), "async_get_entry", lambda self, key:
+                   fixture_entry if key == fixture_entry.entry_id else entry_lookup(key)), \
+             patch.object(adapters, "samsung_action", pair_fixture):
+            for fields, context, expected in (
+                (setup_data, Context(), "canvas_admin_required"),
+                ({**setup_data, "device_id": "unknown"}, Context(user_id=owner.id), "canvas_ha_samsung_target_unavailable"),
+            ):
+                try:
+                    await hass.services.async_call("djconnect", "music_canvas_samsung_setup", fields,
+                        blocking=True, context=context)
+                    raise AssertionError("invalid Samsung setup accepted")
+                except ServiceValidationError as exc:
+                    assert exc.translation_domain == "djconnect" and exc.translation_key == expected
+            assert not setup_calls
+            await hass.services.async_call("djconnect", "music_canvas_samsung_setup", setup_data,
+                blocking=True, context=Context(user_id=owner.id))
+        assert setup_calls == ["pair"] and owner.id not in storage.household.shared.ha_user_profile_ids
+        paired = (await runtime.repository.read())["devices"][setup_target["id"]]
+        assert paired["state"] == "ready" and paired["token"] == "independent-art-fixture-token"
+        unbound, code = await call("read")
+        assert code == 200 and not unbound["can_manage_devices"] and any(
+            item["id"] == setup_target["id"] and item["state"] == "ready" for item in unbound["targets"])
         await storage.async_set_profile_mapping("ha_user", admin.id, "profile-a")
         privileged, code = await call("read")
         assert code == 200 and privileged["can_manage_devices"]
@@ -386,8 +429,6 @@ async def qualify(hass, manager, history, request, client):
             late_preview, code = await pending_preview
             assert code == 404 and not late_preview["success"], late_preview
         # Real HA action errors carry translation keys rather than English copy.
-        from homeassistant.core import Context
-        from homeassistant.exceptions import ServiceValidationError
         from custom_components.djconnect.music_canvas_http import register_asset_configuration
         register_asset_configuration(hass)
         for origin, context, expected in (
@@ -500,6 +541,7 @@ async def qualify(hass, manager, history, request, client):
             "unknown_forget_requires_new_explicit_admin_decision": True,
             "preserve_reload_retains_runtime_final_unload_recreates_it": True,
             "asset_configuration_uses_localized_ha_errors": True,
+            "ha_admin_pairs_exact_registered_samsung_without_profile_authority_change": True,
             "late_private_preview_after_forget_is_denied": True,
             "cancelled_private_save_drains_and_releases_all_references": True,
             "session_end_preserves_enabled_and_targets": True,
