@@ -41,10 +41,19 @@ class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
                 getpeercert=lambda **_: certificate))
 
             def open(self): events.append("open")
-            def close(self): events.append("close")
-            def get_api_version(self): return "6.0.0.0"
-            def get_artmode(self): events.append("mode"); return "on"
-            def get_current(self): events.append("current"); return {"content_id": "fixture-art"}
+            def close(self):
+                events.append("close")
+
+            def get_api_version(self):
+                return "6.0.0.0"
+
+            def get_artmode(self):
+                events.append("mode")
+                return "on"
+
+            def get_current(self):
+                events.append("current")
+                return {"content_id": "fixture-art"}
 
         module = types.SimpleNamespace(SamsungTVWS=lambda *_args, **_kw: types.SimpleNamespace(art=Art))
         device = {"host": "192.0.2.55"}
