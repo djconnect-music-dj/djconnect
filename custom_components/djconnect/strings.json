@@ -338,6 +338,16 @@
   },
   "options": {
     "step": {
+      "music_canvas_samsung": {
+        "title": "Samsung koppelen aan Music Canvas",
+        "description": "Kies de Samsung-tv die al aan Home Assistant is toegevoegd en zet hem in Art Mode. Vul breedte, hoogte en oriëntatie in als die nog niet bekend zijn.",
+        "data": {
+          "device_id": "Samsung-tv",
+          "width": "Breedte in pixels",
+          "height": "Hoogte in pixels",
+          "orientation": "Oriëntatie"
+        }
+      },
       "init": {
         "title": "DJConnect opties",
         "description": "Beheer DJConnect acties zoals de muziekbackend wijzigen, Spotify opnieuw autoriseren of opnieuw koppelen. Spotify is een handelsmerk van Spotify AB. DJConnect is niet verbonden aan, goedgekeurd door of gesponsord door Spotify AB.",
@@ -475,6 +485,7 @@
       }
     },
     "error": {
+      "canvas_samsung_setup_failed": "De koppeling kon niet worden bevestigd. Controleer of de gekozen Samsung in Art Mode staat en of de schermgegevens volledig zijn.",
       "repair_pairing_failed": "Opnieuw koppelen is mislukt. Controleer of het DJConnect apparaat bereikbaar is en een koppelcode toont.",
       "central_api_url_invalid": "Vul een volledige HTTPS DJConnect API URL in.",
       "install_token_invalid": "Voer een DJConnect install-token in die begint met djci_.",
@@ -499,6 +510,9 @@
       "guest_participation_unavailable": "De live deelsessie, het verzoek of de toestemming is gewijzigd. Open deze instellingen opnieuw."
     },
     "abort": {
+      "canvas_samsung_admin_required": "Meld je als beheerder aan bij Home Assistant om een Music Canvas-scherm te koppelen.",
+      "canvas_samsung_no_devices": "Voeg de tv toe met de Samsung Smart TV-integratie en kom terug zodra die beschikbaar is.",
+      "canvas_samsung_setup_complete": "De Samsung kan nu worden geselecteerd in Music Canvas.",
       "client_retired": "Deze client wordt niet meer ondersteund. Kies een ondersteunde client.",
       "guest_participation_updated": "Deelname bijgewerkt.",
       "guest_no_live_share": "Start eerst een live VibeCast-deelsessie."

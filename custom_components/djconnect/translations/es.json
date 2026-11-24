@@ -338,6 +338,16 @@
   },
   "options": {
     "step": {
+      "music_canvas_samsung": {
+        "title": "Vincular Samsung con Music Canvas",
+        "description": "Elige el televisor Samsung añadido a Home Assistant y activa el Modo Arte. Introduce las dimensiones y la orientación de la pantalla si aún no se conocen.",
+        "data": {
+          "device_id": "Televisor Samsung",
+          "width": "Anchura en píxeles",
+          "height": "Altura en píxeles",
+          "orientation": "Orientación"
+        }
+      },
       "init": {
         "title": "Opciones de DJConnect",
         "description": "Gestiona acciones de DJConnect como cambiar el backend de música, reautorizar Spotify o volver a emparejar. Spotify is a trademark of Spotify AB. DJConnect is not affiliated with, endorsed by, or sponsored by Spotify AB.",
@@ -475,6 +485,7 @@
       }
     },
     "error": {
+      "canvas_samsung_setup_failed": "No se pudo confirmar la vinculación. Comprueba el Modo Arte y los datos de la pantalla del televisor seleccionado.",
       "repair_pairing_failed": "El reemparejamiento falló. Comprueba que el dispositivo DJConnect sea accesible y muestre un código de emparejamiento.",
       "central_api_url_invalid": "Introduce una URL HTTPS completa de la API DJConnect.",
       "install_token_invalid": "Introduce un token de instalación de DJConnect que empiece por djci_.",
@@ -499,6 +510,9 @@
       "guest_participation_unavailable": "La sesión, la petición o el permiso ha cambiado. Abre de nuevo los ajustes."
     },
     "abort": {
+      "canvas_samsung_admin_required": "Inicia sesión como administrador en Home Assistant para vincular una pantalla con Music Canvas.",
+      "canvas_samsung_no_devices": "Añade el televisor mediante la integración Samsung Smart TV y vuelve cuando esté disponible.",
+      "canvas_samsung_setup_complete": "Ya puedes seleccionar el Samsung en Music Canvas.",
       "client_retired": "Este cliente ya no es compatible. Elige un cliente compatible.",
       "guest_participation_updated": "Participación actualizada.",
       "guest_no_live_share": "Inicia primero una sesión compartida de VibeCast en directo."

@@ -135,6 +135,7 @@ OPTIONS_ACTION_CHANGE_MUSIC_BACKEND = "change_music_backend"
 OPTIONS_ACTION_CENTRAL_API = "central_api"
 OPTIONS_ACTION_ROTATE_INSTALL_TOKEN = "rotate_install_token"
 OPTIONS_ACTION_PROFILE_PLATFORM = "profile_platform"
+OPTIONS_ACTION_CANVAS_SAMSUNG = "music_canvas_samsung"
 PROFILE_PLATFORM_ACTION_FIELD = "profile_platform_action"
 PROFILE_PLATFORM_ACTION_ADD_PROFILE = "add_profile"
 PROFILE_PLATFORM_ACTION_EDIT_PROFILE = "edit_profile"
@@ -274,6 +275,7 @@ def _options_actions_for_status(hass: Any, defaults: dict[str, Any]) -> dict[str
     """Return visible options actions for the current pairing state."""
     actions = dict(_options_action_names(hass))
     actions["guest_participation"] = flow_label(hass, "guest_participation")
+    actions[OPTIONS_ACTION_CANVAS_SAMSUNG] = flow_label(hass, OPTIONS_ACTION_CANVAS_SAMSUNG)
     if defaults.get("profile_backend_entry_id"):
         from .spotify_connection_repair import for_config, reauthorization_binding
 
@@ -300,6 +302,7 @@ def _conversation_agent_options_actions(hass: Any, defaults: dict[str, Any]) -> 
         OPTIONS_ACTION_PROFILE_PLATFORM: names[OPTIONS_ACTION_PROFILE_PLATFORM],
         "native_voice_access": flow_label(hass, "native_voice_access"),
         "guest_participation": flow_label(hass, "guest_participation"),
+        OPTIONS_ACTION_CANVAS_SAMSUNG: flow_label(hass, OPTIONS_ACTION_CANVAS_SAMSUNG),
         OPTIONS_ACTION_CHANGE_MUSIC_BACKEND: names[OPTIONS_ACTION_CHANGE_MUSIC_BACKEND],
     }
     if defaults.get(CONF_MUSIC_BACKEND, DEFAULT_MUSIC_BACKEND) != MUSIC_BACKEND_MUSIC_ASSISTANT:
@@ -2910,6 +2913,8 @@ class DJConnectOptionsFlow(config_entries.OptionsFlow):
                 return await self.async_step_profile_platform()
             if action == "guest_participation":
                 return await self.async_step_guest_participation()
+            if action == OPTIONS_ACTION_CANVAS_SAMSUNG:
+                return await self.async_step_music_canvas_samsung()
             if action == "native_voice_access" and current.get(CONF_CLIENT_TYPE) == CLIENT_TYPE_CONVERSATION_AGENT:
                 return await self.async_step_native_voice_access()
             if action == OPTIONS_ACTION_CENTRAL_API:
@@ -2962,6 +2967,59 @@ class DJConnectOptionsFlow(config_entries.OptionsFlow):
     ) -> FlowResult:
         """Manage compact options for Assist conversation agent entries."""
         return await self.async_step_init(user_input)
+
+    async def async_step_music_canvas_samsung(self, user_input=None):
+        """Set up a registered Samsung in the authenticated HA Options Flow."""
+        from homeassistant.components.http import KEY_HASS_USER
+        from homeassistant.core import Context
+        from homeassistant.exceptions import ServiceValidationError
+        from homeassistant.helpers import device_registry as dr
+        from homeassistant.helpers.http import current_request
+
+        from .music_canvas_adapters import samsung_entry_target
+        from .music_canvas_http import current_admin
+
+        request = current_request.get()
+        user = request.get(KEY_HASS_USER) if request is not None else None
+        if user is None or not current_admin(self.hass, user):
+            return self.async_abort(reason="canvas_samsung_admin_required")
+
+        registry = dr.async_get(self.hass)
+        devices = {}
+        for entry in self.hass.config_entries.async_entries("samsungtv"):
+            target = samsung_entry_target(entry)
+            if target is not None:
+                for device in dr.async_entries_for_config_entry(registry, entry.entry_id):
+                    devices[device.id] = device.name_by_user or target["name"]
+        if not devices:
+            return self.async_abort(reason="canvas_samsung_no_devices")
+
+        errors = {}
+        if user_input is not None:
+            if user_input["device_id"] not in devices:
+                errors["base"] = "canvas_samsung_setup_failed"
+            else:
+                try:
+                    await self.hass.services.async_call(
+                        DOMAIN, "music_canvas_samsung_setup", user_input,
+                        blocking=True, context=Context(user_id=user.id),
+                    )
+                except ServiceValidationError:
+                    errors["base"] = "canvas_samsung_setup_failed"
+                else:
+                    return self.async_abort(reason="canvas_samsung_setup_complete")
+
+        sides = {side: flow_label(self.hass, "canvas_" + side) for side in ("landscape", "portrait")}
+        return self.async_show_form(
+            step_id=OPTIONS_ACTION_CANVAS_SAMSUNG,
+            data_schema=vol.Schema({
+                vol.Required("device_id"): vol.In(devices),
+                vol.Optional("width"): vol.All(int, vol.Range(min=256, max=8192)),
+                vol.Optional("height"): vol.All(int, vol.Range(min=256, max=8192)),
+                vol.Optional("orientation"): vol.In(sides),
+            }),
+            errors=errors,
+        )
 
     async def async_step_guest_participation(self, user_input=None):
         """Actual HA-admin OptionsFlow, not a paired-owner credential surrogate."""
