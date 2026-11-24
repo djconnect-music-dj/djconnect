@@ -51,8 +51,8 @@ class _LoadedGenreSeeds:
         # from pending data. Relevant identity/value/epoch changes still retire it.
         current = self.manager._loaded_genre_signature(self.owner, self.limit, existing_snapshot=True)
         if (self.withdrawn or current is None
-                or any(a is not b for a, b in zip(self.signature[:6], current[:6]))
-                or self.signature[6:] != current[6:]):
+                or any(a is not b for a, b in zip(self.signature[:5], current[:5]))
+                or self.signature[5:] != current[5:]):
             self.withdrawn = True
         return not self.withdrawn
 
@@ -114,9 +114,9 @@ class MusicDNAManager:
                 break
         if len(genres) < 3:
             return None
-        # Normal genre publications replace these containers without changing
-        # generation. Their original identities also fence unobserved A-B-A.
-        return (self._data, memories, row, favorite, listening, inferred,
+        # Genre publications can replace the lists without changing generation.
+        # Their original identities also fence unobserved A-B-A changes.
+        return (self._data, memories, row, favorite, inferred,
                 generation, self._genre_safety_epoch, tuple(genres))
 
     def loaded_for_you_choices(self, profile_id):
@@ -727,6 +727,9 @@ class MusicDNAManager:
                     value["artwork"]["owner"] = owner
         before = deepcopy(memory)
         if compact:
+            prior_genres = prior.get("inferred_genres")
+            if isinstance(prior_genres, list) and prior_genres == compact.get("inferred_genres"):
+                compact["inferred_genres"] = prior_genres
             memory["listening_profile"] = compact
             memory["listening_profile_snapshots"] = _updated_listening_profile_snapshots(
                 memory.get("listening_profile_snapshots"),

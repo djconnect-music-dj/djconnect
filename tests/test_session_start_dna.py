@@ -3,7 +3,7 @@ import asyncio
 from copy import deepcopy
 from unittest import IsolatedAsyncioTestCase
 
-from tests.test_music_dna import FakeStore, MusicDNAManager
+from tests.test_music_dna import FakeStore, MusicDNAManager, runtime_for
 
 
 class LoadedGenreSeedTests(IsolatedAsyncioTestCase):
@@ -84,6 +84,24 @@ class LoadedGenreSeedTests(IsolatedAsyncioTestCase):
         await manager.async_save()
         self.assertTrue(original.valid())
 
+    async def test_republishing_the_same_genres_preserves_original_basis_until_real_change(self):
+        genres = ["Neo Soul", "R&B", "indie rock"]
+        manager, _ = self.manager(listening_profile={"inferred_genres": genres})
+        await manager.async_load()
+        original = self.snapshot(manager)
+        runtime = runtime_for()
+        payload = {"music_dna_key": "profile:owner-a"}
+
+        await manager.async_update_listening_profile(
+            runtime, {"inferred_genres": genres, "recent_artists": ["Different metadata"]}, payload
+        )
+        self.assertTrue(original.valid())
+        self.assertEqual(original.genres, ("neo soul", "r&b", "indie rock"))
+
+        await manager.async_update_listening_profile(runtime, {"inferred_genres": ["Jazz"]}, payload)
+        await manager.async_update_listening_profile(runtime, {"inferred_genres": genres}, payload)
+        self.assertFalse(original.valid(), "Restoring the genre values cannot revive the original basis")
+
     async def test_pending_unrelated_save_preserves_only_original_committed_seed_basis(self):
         manager, store = self.manager()
         await manager.async_load()
@@ -155,7 +173,7 @@ class OriginalDnaHTTPContractTests(IsolatedAsyncioTestCase):
         import json
         from pathlib import Path
         root = Path(__file__).resolve().parents[1]
-        wire = json.loads((root / 'examples/client_contracts/for_you_original_dna_v1/local-art-20261124-vibecast-ui-20261123-h-2c1d8aa0.json').read_text())
+        wire = json.loads((root / 'examples/client_contracts/for_you_original_dna_v1/cast-session-update-20261124-cast-ui-20261123-h-2c1-e07c3ef9.json').read_text())
         self.assertTrue(wire['source_before_after_equal'])
         self.assertEqual(len(wire['source_pins']), 359)
         for name, expected in {**wire['source_pins'], **wire['harness_pins']}.items():

@@ -8,7 +8,7 @@ import unittest
 class ProfileSpotifyReconnectQualificationTests(unittest.TestCase):
     def test_current_source_has_profile_owned_callback_and_shared_caller_proof(self):
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root / 'examples/client_contracts/profile_spotify_reconnect_v1/local-art-20261124-vibecast-ui-20261123-h-a7319a52.json').read_text())
+        proof = json.loads((root / 'examples/client_contracts/profile_spotify_reconnect_v1/cast-session-update-20261124-cast-ui-20261123-h-a73-456091c3.json').read_text())
         self.assertTrue(proof['source_before_after_equal'])
         self.assertEqual(len(proof['source_pins']), 359)
         for name, expected in {**proof['source_pins'], **proof['harness_pins']}.items():

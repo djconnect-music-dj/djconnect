@@ -1,0 +1,41 @@
+{
+  "scope": "REAL_BROWSER_SHARED_RENDERER_WITH_DECLARED_FIXTURE_WIRES_AND_SYNTHETIC_CAF_NOT_ACTUAL_HA_SDK_OR_TV",
+  "results": [
+    {
+      "engine": "chromium",
+      "claim_calls": 1,
+      "collect_calls": 2,
+      "leave_calls": 1,
+      "preflights": 0,
+      "actual_route_paths": [
+        "/api/djconnect/v1/cast/claim",
+        "/api/djconnect/v1/cast/collect",
+        "/api/djconnect/v1/cast/participation/display/focus",
+        "/api/djconnect/v1/cast/participation/display/invitation",
+        "/api/djconnect/v1/cast/leave"
+      ],
+      "page_errors": [],
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "claim_calls": 1,
+      "collect_calls": 2,
+      "leave_calls": 1,
+      "preflights": 0,
+      "actual_route_paths": [
+        "/api/djconnect/v1/cast/claim",
+        "/api/djconnect/v1/cast/collect",
+        "/api/djconnect/v1/cast/participation/display/focus",
+        "/api/djconnect/v1/cast/participation/display/invitation",
+        "/api/djconnect/v1/cast/leave"
+      ],
+      "page_errors": [],
+      "passed": true
+    }
+  ],
+  "candidate": "5b0bd384c71c5c37bb8ef306922816b836be30ac",
+  "cast_index_sha256": "c54ad0944f2fd66353bdfd82bfe6e1b46881a8d27ada24442662adbe5fdd8f0e",
+  "test_sha256": "db5c7ab5382fd4f84aa2bfbcf7f9b14e253706580250948f030443080759c5b0",
+  "cast_language_storage_accesses_expected": 0
+}
