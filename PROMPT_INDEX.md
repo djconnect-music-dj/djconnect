@@ -1,3 +1,27 @@
+## 24 November 2026 — VibeCast baseline Core source Finalization
+
+Core [PR #1683](https://github.com/djconnect-music-dj/djconnect/pull/1683)
+merged through the protected source path as `4aa041f5ae65589437410dad4d3acd59244d5996`.
+The complete merged tree equals reviewed `5116a37e5fb38fdc6e35822bce9db391de3e03ec`.
+Exact-main [validation](https://github.com/djconnect-music-dj/djconnect/actions/runs/45441440376)
+and [internal publication](https://github.com/djconnect-music-dj/djconnect/actions/runs/45442366029)
+succeeded. Independent download found all 359 exact product files and passed the
+12 canonical Trusted Delivery checks.
+The machine receipt is `docs/verification/vibecast-baseline-source-publication-20261124.json`.
+
+The qualified source includes the Cast B bridge, the combined renderer, Moments,
+For You, DJ Bulletin and Music Canvas discovery. The Mac mini ran the isolated
+54-probe HA matrix and the additional Cast B, Widget and VibeCast Live probes.
+Chromium and WebKit covered the renderer against declared fixture transport.
+
+This separate Finalization needs its own protected merge and main evidence.
+HA-dev installation, receiver publication, and physical acceptance remain open.
+The selected target is the Samsung The Frame 55 inch. Physical acceptance calls
+for full-frame VibeCast initiated in DJConnect and an actual Music Canvas image
+displayed in Art Mode.
+
+---
+
 # VibeCast Live/UI source Finalization — 2026-11-24
 
 Core PR [#1681](https://github.com/djconnect-music-dj/djconnect/pull/1681) protected merged reviewed `f632cac2c6dd7da96cd51281030fba3e12387b30` as `d9fb3eb41fa7cdb9ca6c5c7df5764e06a3b3a5eb` with identical complete trees. The owner explicitly approved merge and separate Finalization, including automatic internal publications. Source-main Validate45365764597 passed unit/coverage, governance, lint, security and integration checks. The immutable internal HA archive has all356 exact product files and SHA-256 `b35b3169bf17744ea53645ddf5ea72d38486c639f171a9a107381ff547e6f4cd`. Its durable record passes the unchanged canonical twelve-check validator and pinned policy identity. Ask DJ migration qualification is DEFERRED, not a pass.

@@ -1,0 +1,81 @@
+{
+  "archive_exact_product_manifest": "docs/verification/vibecast-baseline-product-manifest-20261124.json",
+  "archive_exact_product_manifest_sha256": "31d280ec594d6f7aba61660cfd60427e3cfecd2a893678e5d9f6a90f6670117a",
+  "archive_product_file_count": 359,
+  "archive_sha256": "79c50e1d0e0f56d796c2fd9556b876726aab7d7dc68e59c003e22479ecdba8c2",
+  "canonical_validator_sha256": "3fba299f26c75e47804e66218cabea8fd50627bd2a84a1dd294d59009714466f",
+  "complete_tree_equal": true,
+  "durable_qualification": {
+    "commit_sha": "4aa041f5ae65589437410dad4d3acd59244d5996",
+    "integrity": {
+      "algorithm": "sha256-canonical-json",
+      "digest": "0f2108cf4ac0dfd94523be73550a18f31f03614221e4435f0f27859d294c4cbc"
+    },
+    "kind": "durable_qualification_evidence",
+    "policy_source_identity": {
+      "original_repository_id": 1258575431,
+      "original_revision": "ebbb35f038a7a3c7d46c12660968bcd50eb67580",
+      "repository": "djconnect-music-dj/.github",
+      "repository_id": 1461539726,
+      "revision": "89a2a8b4c7571965249bed745bf7c5c37a1221f1",
+      "snapshot": "evidence-ebbb"
+    },
+    "published_at": "2026-11-24T16:54:02Z",
+    "qualification": {
+      "outcome": "POST_MERGE_RELEASE_EVIDENCE_QUALIFIED",
+      "profile": "post_merge_release_evidence",
+      "required_checks": {
+        "post_merge_build_validation": "PASS",
+        "post_merge_ci": "PASS",
+        "post_merge_coverage": "PASS",
+        "post_merge_governance": "PASS",
+        "post_merge_lint": "PASS",
+        "post_merge_static_analysis": "PASS",
+        "post_merge_tests": "PASS",
+        "required_checks": "PASS",
+        "software_assurance": "PASS",
+        "trusted_delivery": "PASS",
+        "verification": "PASS",
+        "workflow_integrity": "PASS"
+      }
+    },
+    "record_id": "djconnect-music-dj/djconnect@4aa041f5ae65589437410dad4d3acd59244d5996:post-merge-release-evidence",
+    "redaction": {
+      "included_data": "formal allowlisted decision fields only",
+      "policy_version": 1,
+      "status": "REDACTED"
+    },
+    "release_identifier": "internal-ha-4aa041f5ae65589437410dad4d3acd59244d5996",
+    "repository": "djconnect-music-dj/djconnect",
+    "repository_role": "active_source",
+    "retention_class": "LONG_TERM",
+    "revision": 1,
+    "schema_version": 1,
+    "source_evidence_digest": "14e5c518625833bdb0af018cefb419e7e5735104a95d33639b50b8fb78f924cc",
+    "source_revision": "89a2a8b4c7571965249bed745bf7c5c37a1221f1",
+    "supplemental_evidence": [
+      {
+        "kind": "coverage_artifact_digest",
+        "sha256": "aa5f52d403186141caee8f634662c827ca55ce71240f4878113de8569c791404"
+      }
+    ],
+    "workflow_references": {
+      "post_merge_run_ids": [
+        "45441440376"
+      ],
+      "producer_run_id": "45442366029"
+    }
+  },
+  "durable_sha256": "96b23b25e3873bf270b20e9807f656023a1578ee90fcccc9af57a5e4a5abc205",
+  "installed": "NOT_RUN",
+  "main_sha": "4aa041f5ae65589437410dad4d3acd59244d5996",
+  "physical_provider_acceptance": "OPEN",
+  "publication_workflow": 45442366029,
+  "release": "internal-ha-4aa041f5ae65589437410dad4d3acd59244d5996",
+  "reviewed_head": "5116a37e5fb38fdc6e35822bce9db391de3e03ec",
+  "schema_version": 1,
+  "source_main_validation_run": 45441440376,
+  "source_pr": 1683,
+  "tree": "26b634c13be8181d7979dbb4d605549f3a7e49cb",
+  "validator_findings": []
+}
