@@ -8,6 +8,8 @@ Run with a read-only candidate and a new private lab, never installed HA config.
 from __future__ import annotations
 
 import asyncio
+import ast
+import textwrap
 import base64
 from copy import deepcopy
 from dataclasses import replace
@@ -353,6 +355,29 @@ async def main():
     before = product_pins()
     original_entry = harness.owning_harness.entry
     original_save = ConfigEntryStore.async_save
+    original_getsource = inspect.getsource
+    def owning_setup_source(target):
+        source = original_getsource(target)
+        if target is not harness.owning_harness.main:
+            return source
+        tree = ast.parse(textwrap.dedent(source))
+        body = tree.body[0].body
+        storage_index = next(i for i, node in enumerate(body) if isinstance(node, ast.Assign)
+            and any(isinstance(t, ast.Name) and t.id == 'storage' for t in node.targets))
+        # Invoke the actual integration cold setup before its real Profile store
+        # constructor. Keep that same domain object when adding fixture services.
+        body[storage_index:storage_index] = ast.parse(
+            'from custom_components.djconnect import async_setup as native_actual_setup\n'
+            'await native_actual_setup(hass, {})').body
+        domain_assignments = [node for node in body if isinstance(node, ast.Assign)
+            and any(isinstance(t, ast.Subscript) and ast.unparse(t) == "hass.data['djconnect']" for t in node.targets)]
+        assert len(domain_assignments) == 1
+        node = domain_assignments[0]
+        body[body.index(node)] = ast.Expr(value=ast.Call(
+            func=ast.Attribute(value=node.targets[0], attr='update', ctx=ast.Load()),
+            args=[node.value], keywords=[]))
+        ast.fix_missing_locations(tree)
+        return ast.unparse(tree)
     def configured_entry(identifier, data):
         if identifier in {'owner-entry', 'second-entry'}:
             data = {**data, 'ha_install_id': 'synthetic-actual-ha', 'djconnect_install_token': TOKEN}
@@ -370,7 +395,8 @@ async def main():
             data = {**data, 'entries': [*entries, second.as_storage_fragment]}
         return await original_save(store, data, *args, **kwargs)
     harness.qualify = qualify
-    with patch.object(harness.owning_harness, 'entry', configured_entry), patch.object(ConfigEntryStore, 'async_save', initial_entries):
+    with patch.object(harness.owning_harness, 'entry', configured_entry), patch.object(ConfigEntryStore, 'async_save', initial_entries), \
+         patch.object(inspect, 'getsource', owning_setup_source):
         await harness.run()
     assert product_pins() == before
     result = json.loads((lab / 'http-requested-moments-receipt.json').read_text())
