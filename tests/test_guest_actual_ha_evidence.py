@@ -13,7 +13,7 @@ def sha(path):
 
 class SharedGuestActualHAEvidenceTests(unittest.TestCase):
     def test_full_current_manifest_and_all_executed_adapters_are_bound(self):
-        proof = json.loads((ROOT/'docs/verification/vibecast-cast-session-update-qualification-20261124.json').read_text())
+        proof = json.loads((ROOT/'docs/verification/music-canvas-upload-custody-qualification-20261124.json').read_text())
         actual = {str(p.relative_to(ROOT)):sha(p) for p in (ROOT/'custom_components/djconnect').rglob('*')
                   if p.is_file() and '__pycache__' not in p.parts and p.suffix != '.pyc'}
         self.assertEqual(len(actual), 359)
