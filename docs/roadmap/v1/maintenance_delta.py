@@ -84,6 +84,9 @@ def validate_delta(plan: dict[str, Any]) -> list[str]:
             errors.append("maintenance: " + reason)
 
     version = d.get("schema_version")
+    if version == "djconnect-federated-planning-delta/32":
+        from vibecast_ui_finalization_delta import validate as validate_ui_finalization
+        return validate_ui_finalization(plan, validate_delta)
     if version == "djconnect-federated-planning-delta/31":
         from vibecast_ui_delta import validate as validate_ui
         return validate_ui(plan, validate_delta)
