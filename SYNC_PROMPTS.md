@@ -8186,3 +8186,5 @@ retention at genuine first-key ACK and the bounded own-principal Widget
 reauthorize/challenge + register paths. Reuse actual assertion crypto with
 independent native SQL once/counter/consent authority; no HostWake alias, old
 ACK restore, first-key reversal or new-build assertion claim.
+
+Reauthorization ACK explicitly adds publication_operation_id and reauthorization_challenge_id; native_operation_id remains the original genuine first-key operation. Separate stored publication provenance prevents old-consent revival.
