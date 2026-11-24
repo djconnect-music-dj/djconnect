@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class BulletinManualSpeechContractTests(unittest.TestCase):
     def test_actual_paired_manual_use_denial_and_withdrawal_join_current_source(self):
-        wire = json.loads((ROOT / 'examples/client_contracts/bulletin_manual_speech_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--3d5fa976.json').read_text())
+        wire = json.loads((ROOT / 'examples/client_contracts/bulletin_manual_speech_v1/canvas-admin-20261124--vibecast-ui-20261123-ha-ab1abc18.json').read_text())
         self.assertTrue(wire["source_before_after_equal"])
         self.assertEqual(len(wire["source_pins"]), 359)
         for name, digest in wire["source_pins"].items():

@@ -8,7 +8,7 @@ import unittest
 class PassiveRetainedQualificationTests(unittest.TestCase):
     def test_current_receipt_binds_original_purpose_and_all_product_bytes(self):
         root=Path(__file__).resolve().parents[1]
-        proof=json.loads((root/'examples/client_contracts/passive_retained_v1/vibecast-baseline-20261124-vibecast-ui-20261123-ha--8cbe6ab8.json').read_text())
+        proof=json.loads((root/'examples/client_contracts/passive_retained_v1/canvas-admin-20261124--vibecast-ui-20261123-ha-0b115a87.json').read_text())
         receipt=proof['receipt']
         self.assertTrue(proof['source_before_after_equal'])
         self.assertTrue(receipt['source_unchanged'])
