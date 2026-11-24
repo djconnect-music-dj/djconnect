@@ -9,6 +9,9 @@ from typing import Any
 
 LABELS = {
     "en": {
+        "music_canvas_samsung": "Pair Samsung with Music Canvas",
+        "canvas_landscape": "Landscape",
+        "canvas_portrait": "Portrait",
         "guest_participation": "Shared DJ participation",
         "guest_off": "Off",
         "guest_information": "Music questions",
@@ -43,6 +46,9 @@ LABELS = {
         "repair_device_pairing": "Re-pair with new pairing code",
     },
     "nl": {
+        "music_canvas_samsung": "Samsung koppelen aan Music Canvas",
+        "canvas_landscape": "Liggend",
+        "canvas_portrait": "Staand",
         "guest_participation": "Samen meedoen met de DJ",
         "guest_off": "Uit",
         "guest_information": "Muziekvragen",
@@ -77,6 +83,9 @@ LABELS = {
         "repair_device_pairing": "Opnieuw koppelen met nieuwe koppelcode",
     },
     "de": {
+        "music_canvas_samsung": "Samsung mit Music Canvas koppeln",
+        "canvas_landscape": "Querformat",
+        "canvas_portrait": "Hochformat",
         "guest_participation": "Gemeinsam am DJ teilnehmen",
         "guest_off": "Aus",
         "guest_information": "Musikfragen",
@@ -111,6 +120,9 @@ LABELS = {
         "repair_device_pairing": "Mit neuem Kopplungscode erneut koppeln",
     },
     "fr": {
+        "music_canvas_samsung": "Associer Samsung à Music Canvas",
+        "canvas_landscape": "Paysage",
+        "canvas_portrait": "Portrait",
         "guest_participation": "Participer ensemble au DJ",
         "guest_off": "Désactivé",
         "guest_information": "Questions musicales",
@@ -145,6 +157,9 @@ LABELS = {
         "repair_device_pairing": "Associer à nouveau avec un nouveau code",
     },
     "es": {
+        "music_canvas_samsung": "Vincular Samsung con Music Canvas",
+        "canvas_landscape": "Horizontal",
+        "canvas_portrait": "Vertical",
         "guest_participation": "Participación compartida con el DJ",
         "guest_off": "Desactivada",
         "guest_information": "Preguntas musicales",

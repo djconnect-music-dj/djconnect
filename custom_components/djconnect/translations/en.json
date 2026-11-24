@@ -338,6 +338,16 @@
   },
   "options": {
     "step": {
+      "music_canvas_samsung": {
+        "title": "Pair Samsung with Music Canvas",
+        "description": "Select the Samsung TV already added to Home Assistant and put it in Art Mode. Enter screen dimensions and orientation if they are still unknown.",
+        "data": {
+          "device_id": "Samsung TV",
+          "width": "Width in pixels",
+          "height": "Height in pixels",
+          "orientation": "Orientation"
+        }
+      },
       "init": {
         "title": "DJConnect options",
         "description": "Manage DJConnect actions such as changing the music backend, reauthorizing Spotify or re-pairing. Spotify is a trademark of Spotify AB. DJConnect is not affiliated with, endorsed by, or sponsored by Spotify AB.",
@@ -475,6 +485,7 @@
       }
     },
     "error": {
+      "canvas_samsung_setup_failed": "Pairing could not be confirmed. Check that the selected Samsung is in Art Mode and that the screen details are complete.",
       "repair_pairing_failed": "Re-pairing failed. Check that the DJConnect device is reachable and showing a pairing code.",
       "central_api_url_invalid": "Enter a complete HTTPS DJConnect API URL.",
       "install_token_invalid": "Enter a DJConnect install token that starts with djci_.",
@@ -499,6 +510,9 @@
       "guest_participation_unavailable": "The live share, request or permission changed. Open these settings again."
     },
     "abort": {
+      "canvas_samsung_admin_required": "Sign in to Home Assistant as an administrator to pair a Music Canvas screen.",
+      "canvas_samsung_no_devices": "Add the TV with the Samsung Smart TV integration and return here once it is available.",
+      "canvas_samsung_setup_complete": "Samsung is ready to select in Music Canvas.",
       "client_retired": "This client is no longer supported. Choose a supported client.",
       "guest_participation_updated": "Participation updated.",
       "guest_no_live_share": "Start a live VibeCast share first."

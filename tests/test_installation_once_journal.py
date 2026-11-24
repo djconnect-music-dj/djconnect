@@ -22,7 +22,7 @@ class OriginalActualOnceProofTests(unittest.TestCase):
     def test_current_HA_originals_and_parent_missing_journal_remain_exact(self):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads((root / "examples/client_contracts/installation_once_metadata_v1/actual-ha-once-metadata-live-impression-20261119-requested-moments-20261120.json").read_text())
-        raw = json.loads((root / 'examples/client_contracts/installation_once_metadata_v1/canvas-upload-custody-20261124-61124-cast-ui-20261123-9d8ea51c.json').read_text())
+        raw = json.loads((root / 'examples/client_contracts/installation_once_metadata_v1/canvas-samsung-options-20261124-0261124-61124-cast-ui--b76971b0.json').read_text())
         self.assertEqual(raw["state"], "PASS")
         self.assertEqual(len(raw["cases"]), 8)
         self.assertEqual(len(raw["preceding_installation_codec_cases"]), 6)
