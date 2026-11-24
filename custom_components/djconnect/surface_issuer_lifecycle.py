@@ -88,7 +88,8 @@ class IssuerLifecycle:
         capture = attempt.capture
         require(self.transport is attempt.transport, 'surface_issuer_transport_changed', 503)
         from .surface_widget_private_transport import PrivateWidgetHTTPS
-        if type(attempt.transport) is PrivateWidgetHTTPS:
+        from .native_widget_transport import ProductionWidgetHTTPS
+        if type(attempt.transport) in (PrivateWidgetHTTPS, ProductionWidgetHTTPS):
             attempt.transport.validate_origin(capture.origin)
         if action == 'live' and attempt.local_guard is not None:
             require(attempt.local_guard() is None, 'surface_issuer_owner_unavailable', 503)
@@ -228,7 +229,9 @@ class IssuerLifecycle:
             # The challenge window only gates issuance. Original grant anchors
             # remain unchanged for the RAM purpose, never reply/adoption time.
             from .surface_widget_private_transport import PrivateWidgetHTTPS
-            private_transport = attempt.transport if type(attempt.transport) is PrivateWidgetHTTPS else None
+            from .native_widget_transport import ProductionWidgetHTTPS
+            private_transport = (attempt.transport if type(attempt.transport)
+                in (PrivateWidgetHTTPS, ProductionWidgetHTTPS) else None)
             purpose = SurfacePurposeCredential(issued.bearer, capture.origin, issued.capability_id,
                 capture.expected.delegation_id, capture.expected.scope_digest,
                 capture.binding_id, capture.device_binding, capture.owner_binding,

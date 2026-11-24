@@ -651,7 +651,9 @@ def _cached_for_you_dna_current(hass, runtime, profile_id, active):
     offer = active.broadcast.first_play_offer if active is not None else None
     admission = offer.get('_admission') if isinstance(offer, dict) else None
     if type(admission) is FirstPlayAdmission:
-        return (not admission.withdrawn and admission.hass is hass
+        # Selection cancellation/expiry is not a withdrawal of the original
+        # display source. Check actual DNA ownership independently.
+        return (admission.hass is hass
                 and admission.active.session_id == active.session_id
                 and admission.active.broadcast is active.broadcast and admission.profile_id == profile_id
                 and getattr(admission.dna_seeds, 'owner', None) == profile_id
@@ -758,6 +760,7 @@ class FirstPlayAdmission:
     selected_media: tuple = ()
     chosen_action: object = None
     withdrawn: bool = False
+    source_withdrawal_reason: str | None = None
     captured_source: tuple = field(init=False, repr=False)
 
     def __post_init__(self):
@@ -781,7 +784,8 @@ class FirstPlayAdmission:
             if task is not None and task.cancelling():
                 raise asyncio.CancelledError
             now = self.manager.current_active(self.profile_id)
-            if (self.withdrawn or self.clock() >= self.deadline or time.time() >= self.wall_deadline
+            if (self.withdrawn or self.source_withdrawal_reason is not None
+                    or self.clock() >= self.deadline or time.time() >= self.wall_deadline
                     or session_runtime_manager(self.hass) is not self.manager or now is None
                     or session_scope(now) != self.scope or not self.authority()
                     or not callable(self.dna_guard) or not self.dna_guard()
@@ -847,6 +851,63 @@ class FirstPlayAdmission:
 
 
 
+@dataclass(eq=False)
+class FirstPlayPreparationAdmission(FirstPlayAdmission):
+    """Private automatic producer read role, consumed once before publication.
+
+    This is not an issued choice. It retains the original preparation deadline
+    and cannot dispatch; sealing creates a different selection actor instead of
+    renewing this actor or any result/DTO already issued to a client.
+    """
+    prepared: bool = False
+    sealed: bool = False
+    preparation_turn: object = field(default=None, init=False, repr=False)
+    preparation_frame: object = field(default=None, init=False, repr=False)
+    preparation_frame_state: tuple = field(default=(), init=False, repr=False)
+    preparation_effect_guard: object = field(default=None, init=False, repr=False)
+    preparation_delivery_guard: object = field(default=None, init=False, repr=False)
+
+    def bind(self, turn):
+        if self.preparation_turn is not None or not turn.startup_preparation:
+            raise DialogueError("first_play_context_changed", 409)
+        super().bind(turn)
+        self.preparation_turn, self.preparation_frame = turn, turn.frame
+        self.preparation_frame_state = (turn.frame.generation, turn.frame.read_context_revision,
+                                        turn.frame.pending_revision, turn.frame.result_set)
+        self.preparation_effect_guard = turn.effect_validators[-1]
+        self.preparation_delivery_guard = turn.delivery_validators[-1]
+
+    def before_dispatch(self, family, media, output_id):
+        raise DialogueError("playback_effect_not_authorized", 403)
+
+    def seal(self):
+        """Called synchronously after the producer's last genuine turn guard."""
+        self.guard()
+        turn, frame = self.preparation_turn, self.preparation_frame
+        captured = self.preparation_frame_state
+        if (self.sealed or not self.prepared or turn is None or current_turn.get() is not turn
+                or not turn.startup_preparation or turn.first_play_admission is not self
+                or turn.frame is not frame or frame.generation != captured[0]
+                or frame.read_context_revision != captured[1] or frame.pending_revision != captured[2]
+                or frame.result_set is not captured[3] or self.phase != "genres"
+                or turn.effect_started or self.output_attempted or self.output_dispatched
+                or self.selection_pending or self.play_attempted or self.play_dispatched
+                or not any(v is self.preparation_effect_guard for v in turn.effect_validators)
+                or not any(v is self.preparation_delivery_guard for v in turn.delivery_validators)):
+            raise DialogueError("first_play_context_changed", 409)
+        self.sealed = True
+        selection = FirstPlayAdmission(self.hass, self.manager, self.profile_id, self.active,
+            self.source, self.authority, self.scope, self.grant, self.locale, self.clock,
+            self.clock() + 60, time.time() + 60, self.dna_seeds, self.dna_guard, phase="genres")
+        # Remove only the exact private preparation validators. Keep every
+        # independent owner/history/source/delivery fence on the producer turn.
+        turn.effect_validators = [v for v in turn.effect_validators if v is not self.preparation_effect_guard]
+        turn.delivery_validators = [v for v in turn.delivery_validators if v is not self.preparation_delivery_guard]
+        self.withdrawn = True
+        selection.bind(turn)
+        return selection
+
+
 def _first_play_reply(admission, text, actions=(), *, state, reason=None):
     result = {"success": state != "unavailable", "text": text, "dj_text": text,
         "action": "none", "origin": "session_first_play", "playback_actions": list(actions),
@@ -898,6 +959,8 @@ async def _first_play_genres(hass, runtime, admission, backend):
     admission.phase = "genres"
     intro, generated = await _for_you_intro(hass, runtime, admission, directions)
     admission.guard()
+    if type(admission) is FirstPlayPreparationAdmission:
+        admission.prepared = True
     reply = _first_play_reply(admission, intro, actions, state="genres")
     reply.update(is_generated_text=generated,
                  text_source="generated" if generated else "runtime_acknowledgement")
@@ -931,7 +994,8 @@ async def first_play_response(hass, runtime):
     dna = _first_play_dna(hass, runtime, profile_id)
     if dna is None:
         return _first_play_reply(None, FIRST_PLAY_DNA_UNAVAILABLE[locale], state="unavailable", reason="music_dna_unavailable")
-    admission = FirstPlayAdmission(hass, manager, profile_id, active, source, authority,
+    actor = FirstPlayPreparationAdmission if turn.startup_preparation else FirstPlayAdmission
+    admission = actor(hass, manager, profile_id, active, source, authority,
         session_scope(active), history_grant_revision(hass, profile_id), locale,
         turn.history.dialogue.clock, turn.history.dialogue.clock()+60, time.time()+60, dna[0], dna[1])
     admission.bind(turn)
@@ -1138,7 +1202,8 @@ async def _record_for_you_confirmation(runtime, admission):
         profile = storage.household.profiles.get(admission.profile_id) if storage else None
         from .session_conversation import history_grant_revision
         current = admission.manager.current_active(admission.profile_id)
-        return bool(profile is not None and admission.dna_guard() and admission.authority()
+        return bool(profile is not None and admission.source_withdrawal_reason is None
+                    and admission.dna_guard() and admission.authority()
                     and current is not None and current.session_id == admission.active.session_id
                     and current.broadcast is admission.active.broadcast
                     and history_grant_revision(admission.hass, admission.profile_id) == admission.grant
@@ -1174,6 +1239,18 @@ def unprepared_for_you_offer_id(active):
     return f'{active.session_id}-mood-{active.mood_revision}'
 
 
+def _withdraw_for_you_source(offer, reason):
+    """Latch original authority loss; a projection never reissues that offer."""
+    admission = offer.get('_admission') if isinstance(offer, dict) else None
+    if type(admission) is FirstPlayAdmission:
+        if (admission.source_withdrawal_reason is None
+                or (admission.source_withdrawal_reason == "session_settings_changed"
+                    and reason != "session_settings_changed")):
+            admission.source_withdrawal_reason = reason
+        if reason != 'session_settings_changed':
+            admission.withdrawn = True
+
+
 def for_you_projection(hass, runtime, profile_id, active, *, client_device_id="", locale=None):
     """Read an already-prepared offer; polling never performs generation or effects."""
     if active is None or active.broadcast.first_play_state == 'unknown':
@@ -1198,6 +1275,7 @@ def for_you_projection(hass, runtime, profile_id, active, *, client_device_id=""
             result['result_set']['expires_in'] = remaining
         from .current_track_insight import session_scope
         if offer.get('_session_scope') is not None and offer['_session_scope'] != session_scope(active):
+            _withdraw_for_you_source(offer, 'session_settings_changed')
             result.update(actions_available=False, reason='session_settings_changed')
         pending = active.broadcast.first_play_pending
         if (type(pending) is FirstPlayAdmission and pending.chosen_action is not None
@@ -1209,6 +1287,7 @@ def for_you_projection(hass, runtime, profile_id, active, *, client_device_id=""
         source, authority = source_admission(hass, runtime, profile_id)
         if (not source or not callable(authority) or not authority()
                 or session_runtime_manager(hass)._history_source_contexts.get(active.session_id) != source):
+            _withdraw_for_you_source(offer, 'session_or_source_unavailable')
             result.update(state='unavailable', reason='session_or_source_unavailable', options=[], actions_available=False)
             result.pop('result_set', None)
             result['intro'] = ''
@@ -1258,9 +1337,17 @@ def for_you_projection(hass, runtime, profile_id, active, *, client_device_id=""
     admission = offer.get('_admission') if isinstance(offer, dict) else None
     if result['visible'] and (not _cached_for_you_dna_current(hass, runtime, profile_id, active)
             or (type(admission) is FirstPlayAdmission and (not admission.dna_guard() or not admission.authority()))):
+        _withdraw_for_you_source(offer, 'music_dna_unavailable')
         result.update(state='unavailable', reason='music_dna_unavailable', options=[], actions_available=False)
         result.pop('result_set', None)
         result['intro'] = ''
+    if (result['visible'] and type(admission) is FirstPlayAdmission
+            and admission.source_withdrawal_reason is not None):
+        result.update(reason=admission.source_withdrawal_reason, actions_available=False)
+        if admission.source_withdrawal_reason != 'session_settings_changed':
+            result.update(state='unavailable', options=[])
+            result.pop('result_set', None)
+            result['intro'] = ''
     if result.get('state') == 'unavailable' or not result['visible']:
         result.pop('continuation', None)
     if not result['visible']:

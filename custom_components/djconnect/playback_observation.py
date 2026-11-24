@@ -453,7 +453,7 @@ class PlaybackObservationManager:
             )
             accept_observation(self._hass, observed, result, visual_admission)
             from .display_delivery import schedule_artwork
-            schedule_artwork(self._hass, manager, observed, result, original_status)
+            schedule_artwork(self._hass, manager, observed, result, original_status, occurrence=announcement)
             catalog = getattr(result, "catalog", {})
             if (result.is_playing and result.media_identity and forecast_authority()
                     and isinstance(catalog, dict) and catalog.get("artist_ids")

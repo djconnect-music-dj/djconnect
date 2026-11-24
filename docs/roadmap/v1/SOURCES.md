@@ -14,6 +14,8 @@ Selected shared Profile/Session settings consolidation: DJC-PROFILE-SESSION-SETT
 
 Music Canvas v1 owner-selected implementation is SOURCE_DELIVERED / PROTECTED_MERGED. Core contracts, persistent preferences, lifecycle, composition and Samsung/SwitchBot adapters feed the native Apple panel. Joint real-provider/native/hardware acceptance stays Planned/OPEN; no Cast route, deployment or automatic dispatch.
 
+Current VibeCast Live and Apple-presentation Core checkpoint is LOCAL / UNPUBLISHED: complete347 product files, fresh54 HA probes,11 additional actual HA/TLS Live cases and Chromium/WebKit renderer tests. Installed/native/provider/APNs/editorial acceptance and the remaining cross-lane work stay OPEN. Delivered maintenance30 and all original publications below are preserved history.
+
 Same-tab invitation repair #1679 is protected source delivered with its own qualified main/package and original12-check evidence. Historical local source proof is retained below; broader physical/provider/receiver/installed acceptance remains OPEN and no product bytes or owning nodes change in this Finalization.
 
 Bounded same-tab guest invitation correction is implemented locally, not merged. Fresh real-browser/declared HTTP proof and all54 HA probes bind the current343 product files. Existing nodes, historical publication proofs and physical/provider/installed acceptance remain unchanged; the retained source branch has an owner-approved admission exception only for this repair.
@@ -54,7 +56,7 @@ Frozen raw SHA256 `5b7ae65fba263150e1deacbec865cc44622033afb9125fae995a61b88a348
 | [docs/product/DJ_PRESENCE_CORE_POLICY_V1.md](../../../docs/product/DJ_PRESENCE_CORE_POLICY_V1.md) | `8d8a0871538d18df4a273c583836b29a4e45f3cb5f95ed663f8bde21977fde7e` |
 | [docs/product/DJ_PRESENCE_OWNER_CONTRACT_V1.md](../../../docs/product/DJ_PRESENCE_OWNER_CONTRACT_V1.md) | `be132d88b24f54659f4ab64e8381b4d2e3a45e3fdd874ce37ab6cf5e515bcc9c` |
 | [docs/product/DISCOVERY_ARTWORK_CONTINUITY_V1.md](../../../docs/product/DISCOVERY_ARTWORK_CONTINUITY_V1.md) | `66afc37ff6b71b0dacffe6e340ccde274bd3f0f7354155920ebd327fd822ed98` |
-| [API_CONTRACT.md](../../../API_CONTRACT.md) | `596879fd36dc1e9336248f2822c7c3f0be896d831cc4111a2bbc823107c0e977` |
+| [API_CONTRACT.md](../../../API_CONTRACT.md) | `365f0331ac84c4369c242af10af089b9c33b83693f89fc3f68b258ea039f31ca` |
 | [docs/product/NARRATIVE_ALBUM_CONTINUITY_V1.md](../../../docs/product/NARRATIVE_ALBUM_CONTINUITY_V1.md) | `179d45df97a9f4e260c90fdfa211563f6ed2789ec78a0e691f4d89784c4f5552` |
 | [docs/product/DJ_INTELLIGENCE_MATURITY.md](../../../docs/product/DJ_INTELLIGENCE_MATURITY.md) | `d74bd11b57afda561c21bc3df0cd829c5a2ae0b3baf6e8138a89e91d1c5b8241` |
 | [docs/product/SHARED_PRODUCER_CONTINUITY_CONTRACT.md](../../../docs/product/SHARED_PRODUCER_CONTINUITY_CONTRACT.md) | `d06d2563b1de4fcfdff15bd76e0952e19f0970666b8ce5677db10cf6ee11a2ed` |
@@ -166,7 +168,7 @@ Frozen raw SHA256 `5b7ae65fba263150e1deacbec865cc44622033afb9125fae995a61b88a348
 | [CLIENT_CAPABILITY_MATRIX.md](../../../CLIENT_CAPABILITY_MATRIX.md) | `c0d06385f8fd232a214aed220e0b52b5fb31306c94a8a832e15555277120ec55` |
 | [DJCONNECT_CAPABILITY_MODEL.md](../../../DJCONNECT_CAPABILITY_MODEL.md) | `5b085dd73c78a3b9d78de709d447f460fb39dc4dcbf25d99c6c35f7480bc3be3` |
 | [docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md](../../../docs/technical/HA_NATIVE_VOICE_DJCONNECT_CORE_V1.md) | `a28eea33f6039995a0ecda36c05a9b06ba73c96631ec4caaa692ef4617016382` |
-| [SYNC_PROMPTS.md](../../../SYNC_PROMPTS.md) | `877e633734af30b3c21475a2dde47f155c38cf5174b573baea551738f140bf8e` |
+| [SYNC_PROMPTS.md](../../../SYNC_PROMPTS.md) | `1b2c9f88149aa60d99b76d9cbf6a82f4da03dbb9637e6a87e73532fd1764dcc1` |
 | [docs/technical/VIBECAST_GUEST_PARTICIPATION_V1.md](../../../docs/technical/VIBECAST_GUEST_PARTICIPATION_V1.md) | `cc83bdabe475acc9125fd0023434553299645744427906f683df8fa8399aecbb` |
 | [docs/history/prompts/2026-11-23-ha-shared-guest-participation.md](../../../docs/history/prompts/2026-11-23-ha-shared-guest-participation.md) | `7afb9a0dddb34d28c05b4259651468cb0374b0004c5abfe34ced0829fea5fb2f` |
 | [docs/verification/HA_GUEST_INVITATION_REPAIR_20261123.md](../../../docs/verification/HA_GUEST_INVITATION_REPAIR_20261123.md) | `50c64e5477b365ba112bbb1ae999eaeac137e97c8eff7813471d9c8f63bf20b2` |

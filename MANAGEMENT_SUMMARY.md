@@ -1,3 +1,32 @@
+## 2026-11-24 — Current VibeCast Live/UI review candidate
+
+The reconciled delivered predecessor remains main
+`20b9caa92dbcaec9faf3deda8166022f684ba4f4`. The current source is a local
+review candidate on PR #1681, not merged, installed or provider-accepted.
+All 356 product files at `91217843d8cdfcd7bde5dc51c664780d86fe31ec` passed
+55 actual isolated HA executions, 11 further Live scenarios and Chromium/WebKit.
+Complete unit discovery at `bc48f5337536d39c45b9caf475a32e4ff6732989` ran
+5,178 tests with no failures/errors and 11 skips. Current golden/supplemental
+checks passed74; roadmap/tamper checks passed236. The resolved order-dependent
+For-you fixture leak changed no product guard. Fresh 20261124 evidence preserves
+all older 343/347-source receipts. See
+[the current software qualification](docs/verification/VIBECAST_UI_CORE_QUALIFICATION_20261124.md).
+
+Source covers the shared Live presentation/guest contracts, near-end preview,
+generic clarification/research and recording constraints, visible For-you budget
+and original Widget consent/key/reauthorization plumbing. Native clock, target,
+extension restoration and physical/provider push acceptance remain open.
+
+Execution Horizon:
+1. Qualify the current PR head in hosted CI and obtain its separate owner decision.
+2. Finish Apple source/build review and the authorized iPad mini/The Frame43 tests.
+3. Perform protected source delivery and separate Finalization, then authorized
+   HA-dev adoption with exact artifact/readback and retained rollback.
+4. Complete separate API/receiver delivery and physical/native qualification;
+   software receipts never substitute for those outcomes.
+
+Earlier entries below retain their original historical checkpoint scope.
+
 ## 2026-11-23 — Guest invitation repair source Finalization
 
 ### Repository Status

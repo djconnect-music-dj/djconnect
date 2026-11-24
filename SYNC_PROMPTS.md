@@ -1,3 +1,11 @@
+## 2026-11-23 — Generic disclaimer moves to Help
+
+Owner explicitly removes the permanent “Je DJ kan zich vergissen” line from ordinary Apple Ask DJ/Session surfaces and places that generic explanation in Help instead. This overrides prior composer placement only; specific source/uncertainty claims remain unchanged. See native guest/UI product refinement.
+
+## 2026-11-23 — Native guest and VibeCast UI improvements
+
+Owner selects the collected Apple/VibeCast refinements and native-only text guest v1, including guest model usage, golden/E2E expansion, anonymous public requests and own-request feedback. Canonical producer/consumer delta: [native guest UI v1](docs/product/VIBECAST_NATIVE_GUEST_UI_V1.md). Core is sole producer/shared-renderer writer; Apple consumes native UI; receiver adopts qualified bundles and owns a content-free native-open/install landing. Central API remains content-free and is changed only for a proven owning-contract need. Source/CI/merge/Finalization/install/physical/runtime claims remain separate; this record does not claim delivery.
+
 ## 2026-11-23 — selected shared HA/VibeCast participation continuation
 
 Owner continues Core #1532 stage3 after protected source #1675 / Finalization #1676. Explicit owner exception removed only the old fully merged local source branch; clean synchronized main bbf56161 is WORKSPACE_READY. Sole Core writer: codex/ha-native-shared-participation-20261123. This is implementation selection for the existing WEB::CHAT/REQUEST/EFFECT-POLICY/ENQUEUE/SHARED contracts, not a second guest engine or consumer writer.
@@ -8051,3 +8059,181 @@ Canonical design: docs/product/LIVE_IMPRESSION_EXPERIENCE_V1.md. Additive consum
 ## Ask DJ: Moments avatar v1 — current integral Core/Apple increment
 
 Authority: Core1101 comment6849511889; current20November2026 user authorizes integral source implementation. Canonical [product](docs/product/ASK_DJ_MOMENTS_V1.md) and [version1 inventory/request/status/result contract](docs/technical/ASK_DJ_MOMENTS_AVATAR_CONTRACT_V1.md) control native ios/iPadOS/macOS reuse of the existing avatarcard. Implement only after those documents; source/runtime qualification, native adoption and AM01–AM12 actual acceptance stay separate. No installation/deployment, new provider, VibeCast/API/Watch writer or unrelated producer. Stable inventory has10source-owned rows, paired Hybrid operation/UUIDv7 and opaque frozen-original-subject capture; pending copy does not call a model. Same canonical Moment/history immediately committed, original source/media3/speech rights retained. Typed fixtures follow actual serializer implementation; no guessed client wire.
+# Watch push consumer selection — 23 November 2026
+
+Watch Smart Stack is explicitly in scope, independently of Watch Moments.
+Consume the existing `watch_smart_stack` → widget/watchos target
+`dev.djconnect.ios.watch.complications` / `DJConnectComplication`, with original
+per-Watch pairing, consent, issuer purpose, v4 read and v3 clock qualification.
+Do not reuse phone clocks/grants or Watch Moment alert consent. See
+`docs/product/NATIVE_SURFACE_PUSH_V1.md`, selected Watch consumers.
+
+# Native guest artwork selection
+
+Apple may consume the optional guest-scoped prepared artwork descriptors and
+closed `participation/artwork` binary read documented in
+`docs/product/VIBECAST_NATIVE_GUEST_UI_V1.md`. This is a separate guest purpose,
+not a display grant, provider-image URL or permission to acquire new media.
+# Up-next Horizon DJ Moment preview
+
+Owner-only nullable `horizon_moment` is specified in
+`docs/product/UP_NEXT_HORIZON_MOMENT_PREVIEW_V1.md`. It is a transient preview
+of the already qualified first queue entry during the final45seconds, with
+original source expiry and existing owner image-proxy purpose. It supplements
+announcements and grants no TTS, persistence, shared-image or Watch alert right.
+
+# Visible native Help read refresh
+
+The original15s Help observation remains bounded. A visible active native panel
+may issue a fresh pure GET, at most one in flight and automatically once per10s, under exactly
+the same current owned context. Only its validated actual response may establish
+a new observation. See `docs/product/ASK_DJ_HELP_CONTEXT_V1.md`; timers/old DTOs
+never extend permission and hidden/withdrawn contexts cancel immediately.
+
+# Automatic original Core custody selection
+
+Implement genuine per-installation private key custody behind authenticated
+original pair/channel choice, per `NATIVE_SURFACE_PUSH_V1.md`. No operator-file
+shipping default or fabricated positive enrollment. Real once-only generation,
+durable original custody and genuine API/native ACKs remain distinct, and actual
+widget delegation/target/field policy is still required before dispatch.
+
+## Apple Widget consent entry selection — 23 November 2026
+
+Use the ordinary per-device Widgets settings flow to call the existing Core
+consent read/revision-bound write/independent-readback operation and then genuine
+production-audience first-key enrollment. The exact selection is in
+`docs/product/NATIVE_SURFACE_PUSH_V1.md`; no debug trial flag or local preference
+can substitute for authoritative consent, an original issuer or a native clock
+qualification. Other push channels remain independently admitted.
+
+## Explicit track / album identity (2026-11-23)
+
+See `docs/product/EXPLICIT_RECORDING_CONSTRAINTS_V1.md`. A literal track +
+artist + album request stays a track request. Preserve all original constraints
+through the existing Core intent and provider dispatch; verify bounded provider
+candidates before any playback write. No first-result substitution, new public
+wire or client authority. Inline speaker selection remains its existing owner.
+
+
+## For-you preparation and visible choice admission (2026-11-23)
+
+`SESSION_FOR_YOU_V1.md` distinguishes private FirstPlayPreparationAdmission
+(read/generation, original60s, no effects) from the existing FirstPlayAdmission
+(explicit selection, one newly issued original60s). Only successful preparation
+and the last real unchanged owner/source/settings/DNA/history validation may
+consume the former once to mint the latter. This does not extend any issued
+choice or alter the public for_you/expires_in wire. Polling, reconnect, rendering,
+expiry, old DTOs and a second seal never issue a new admission or provider/model
+work. Original identity and withdrawal guards remain mandatory.
+
+## Original For-you withdrawal — 24 November 2026
+
+The exact original offer ID is terminal after an accepted Core unavailable
+projection for source/DNA/settings withdrawal; old available DTOs and A-to-B-to-A
+source recovery never revive it. Preserve scope-bound native tombstones and the
+server private original admission latch. Ordinary transport/history failures or
+preparing placeholders are not withdrawal. See SESSION_FOR_YOU_V1.md.
+# Automatic installation-owned native publisher
+
+The selected production auth boundary is specified in
+`docs/product/NATIVE_INSTALLATION_PUBLISHER_V1.md`. API authenticates the exact
+existing active credential ID/token hash as an isolated publisher; caller HA ID
+never selects another principal. Core retains the actual original pair,
+committed device/Profile/source, SQLite consent and signer before publication.
+Resolve/publication are not native enrollment. Production audience and tables
+are separate from existing HA-dev CF-machine qualification. Original App Attest,
+first-key proof/ACK and independent widget target/policy/native gates remain.
+
+Native installation key custody is partitioned by the actual origin,
+installation ID and original committed PairJournal registration binding, not a
+caller hash or global shared HA ID. Original-pair credential rotation cannot
+regenerate it. The private original publication credential ledger is strictly
+negative-only for the existing retirement journal after unpair/restart; it must
+never enter positive enrollment, issuer or native-clock restoration.
+
+The signed Widget delegation request and exact role-ACK fields are frozen in
+`NATIVE_INSTALLATION_PUBLISHER_V1.md`. Core signs the canonical actual first-key
+receipt plus unchanged Surface Enrolment with its original P-256 custodian.
+Only an actual current own-principal API winner may supply a role acknowledgement;
+its original role expiry is distinct from the initial first-key request window.
+Root owns the private once-only first-key→WidgetRoleKeyCustody transition. No
+status/replay, raw signer export, operator alias or invented native clock qualifies.
+# Native Widget purpose prepare before context (24 November 2026)
+
+Implement the explicit paired POST `/push/surface/widget/prepare` selected in
+`NATIVE_INSTALLATION_PUBLISHER_V1.md` and `API_CONTRACT.md`. The actual original
+register winner supplies a per-pair enrolled role. One shared original issuer
+journal and exact per-role lifecycles route immutable captures to the existing
+Widget adoption owner; arbitrary owners retain the existing single-lifecycle rule.
+Preparation precedes the separate native context operation and its own C0;
+neither the receipt nor a local preference supplies native clock/target/restore
+permission. No enrollment effects in GET state or awaited context-root repair.
+
+Native unknown-outcome recovery is negative-only: actual resolver + durably
+staged exact PairJournal original precede private per-pair credential retention
+and publication RPC. Existing exact SQL originals remain mandatory. An own
+missing publication may be covered by an authenticated negative tombstone;
+existing rows require exact original matching. No positive restore, fake ACK,
+TTL deletion or reset of retired pairs is admitted. Version-2 negative custody
+prunes only after every original/reference has both genuine closure ACKs.
+
+
+### 24 November — native Widget reauthorization contract
+
+NATIVE_INSTALLATION_PUBLISHER_V1.md selects original actual App Attest metadata
+retention at genuine first-key ACK and the bounded own-principal Widget
+reauthorize/challenge + register paths. Reuse actual assertion crypto with
+independent native SQL once/counter/consent authority; no HostWake alias, old
+ACK restore, first-key reversal or new-build assertion claim.
+
+Reauthorization ACK explicitly adds publication_operation_id and reauthorization_challenge_id; native_operation_id remains the original genuine first-key operation. Separate stored publication provenance prevents old-consent revival.
+
+
+### 24 November — selected original production ACK key bounds
+
+Root selected the minimal production-only registered receipt extension:
+apple_evidence_expires_at_ms and apple_status_expires_at_ms from the exact
+original AppleEvidence, stored atomically with its native ACK. Preserve both in
+the sealed original Core receipt and choose the role policy minimum before
+signing; no post-signature clamp, inferred key lifetime or HA-dev wire change.
+# Native legacy Cast lifecycle selection — 24 November 2026
+
+Implement the real iOS SDK/owner-token handoff selected in
+`docs/product/VIBECAST_NATIVE_GUEST_UI_V1.md`: one original explicit connect,
+one existing authenticated `POST /session/broadcast/token`, retained real
+pair/Profile/Session and exact SDK-session/channel identity. Background detaches
+observation without Cast-stop or authority/status renewal. New handoff requires
+fresh original owner validation and explicit intent; real withdrawal/Stop targets
+only the owned original. No Live-share/QR/4h privilege follows from legacy token.
+# Ordinary Core Widget reauthorization proxy — 24 November 2026
+
+The exact paired challenge/register/status bodies and DATA response are selected
+in `NATIVE_INSTALLATION_PUBLISHER_V1.md`. Core alone captures actual pair/source,
+SQLite opt-in, existing key, publication and signed delegation. App supplies only
+its original receipt DATA and a fresh genuine assertion from the same saved key.
+Only actual winning API ACK yields a new opaque role; old operation/status/cold
+JSON never switches owners or regenerates keys. Native clock/target gates remain
+independent. Existing first-key and HA-dev contracts are unchanged.
+
+## 24 November 2026 — Ordinary Widget reauthorization Core implementation
+
+The selected ordinary paired `/native/widget/reauthorize/{challenge,register,status}`
+proxy now retains the actual API challenge/delegation and original production
+13-field receipt. Existing-only key custody never regenerates or claims missing
+material. Exact winning API ACK alone creates the private once-only role handoff;
+COW replacement fences the old owner/adoption and preserves old operation identity.
+Ready/status are only closed DATA from the actual current RAM owner. Tests use
+explicit MODEL API/Apple seams with actual Core P-256 and SQLite; no native clock,
+provider or physical background-delivery acceptance follows from those tests.
+
+
+## 24 November 2026 — Native Widget reauthorization intent
+
+Apple selects one durable intent per authentically accepted genuinely new OWN
+active Session or explicit new backend Widget ON. Same-session/foreground/view
+refresh, guest/demo and unknown-result replay never generate an intent. An
+unchanged real consent revision is permitted without an intervening OFF; after
+OFF, only the genuinely newer ON revision applies. Original saved App Attest
+key, server hash and SDK phase custody remain required; native clock/target and
+actual background delivery are independent. See NATIVE_INSTALLATION_PUBLISHER_V1.

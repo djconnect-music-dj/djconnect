@@ -73,6 +73,25 @@ class WidgetPurposeAdoptions:
         self._handles = set()  # Retained identities: no eviction/reissue repair.
         self._latest = {}
         self._lifecycle = None
+        self._native_journal = None
+        self._native_lifecycles = set()
+
+    def admit_native_lifecycle(self, lifecycle, journal):
+        """Internal genuine role admission, never a client/config ingestion port."""
+        from .native_widget_issuer import CoreWidgetIssuerOwner
+        from .native_widget_transport import ProductionWidgetHTTPS
+        require(type(lifecycle) is IssuerLifecycle
+            and type(lifecycle.owner) is CoreWidgetIssuerOwner
+            and type(lifecycle.transport) is ProductionWidgetHTTPS
+            and lifecycle.transport._owner is lifecycle.owner
+            and lifecycle.journal is journal
+            and journal.store.adapter.persistence is self.persistence
+            and (self._native_journal is None or self._native_journal is journal)
+            and len(self._native_lifecycles) < MAX_HANDLES,
+            'surface_widget_owner_unavailable', 503)
+        lifecycle.owner._live()
+        self._native_journal = journal
+        self._native_lifecycles.add(lifecycle)
 
     @staticmethod
     def _key(handle):
@@ -179,7 +198,9 @@ class WidgetPurposeAdoptions:
         _cancelled()
         require(type(lifecycle) is IssuerLifecycle and isinstance(lifecycle.owner, WidgetIssuerOwner)
             and lifecycle.journal.store.adapter.persistence is self.persistence
-            and (self._lifecycle is None or self._lifecycle is lifecycle),
+            and (self._lifecycle is None or self._lifecycle is lifecycle
+                 or (lifecycle in self._native_lifecycles
+                     and lifecycle.journal is self._native_journal)),
             'surface_widget_owner_unavailable', 503)
         require(type(identity) is dict and set(identity) == {'device_id', 'client_type'}
             and type(identity['device_id']) is str and identity['client_type'] in {'ios', 'macos', 'watchos'}

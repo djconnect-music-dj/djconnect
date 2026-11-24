@@ -9,9 +9,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class PassiveObservationContractTests(unittest.TestCase):
     def test_original_grant_frames_and_nonrenewing_reads_match_current_source(self):
-        wire = json.loads((ROOT / 'examples/client_contracts/passive_observation_sequence_v1/ha-guest-invitation-20261123-ha-shared-guest-20261123-edc3221e.json').read_text())
+        wire = json.loads((ROOT / 'examples/client_contracts/passive_observation_sequence_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--7e973f9d.json').read_text())
         self.assertTrue(wire['source_before_after_equal'])
-        self.assertEqual(len(wire['source_pins']), 343)
+        self.assertEqual(len(wire['source_pins']), 356)
         for name, digest in {**wire['source_pins'], **wire['harness_pins']}.items():
             self.assertEqual(hashlib.sha256((ROOT / name).read_bytes()).hexdigest(), digest, name)
         receipt = wire['receipt']

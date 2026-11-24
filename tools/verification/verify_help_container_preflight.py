@@ -108,7 +108,8 @@ def run(source: Path, directory: Path):
     lab = directory / 'private-synthetic-lab'
     lab.mkdir(mode=0o700)
     before = product_hashes(source)
-    if len(before) != 343 or lab.stat().st_uid != os.getuid():
+    manifest = json.loads((source / 'docs/verification/vibecast-ui-product-manifest-20261124.json').read_text())
+    if len(before) != 356 or before != manifest or lab.stat().st_uid != os.getuid():
         raise ValueError('preflight_source_or_owner_invalid')
     expected = profile_source_hashes(source)
     name = 'djc-help-preflight-' + secrets.token_hex(8)

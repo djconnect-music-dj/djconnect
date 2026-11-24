@@ -55,6 +55,27 @@ header .session-status:has(.display-language:not([hidden])) {
 .now-playing { min-height:0 }
 .eyebrow { margin:0 0 1rem; color:#dfd5ff; font-size:clamp(.8rem,1.4vw,1.15rem); font-weight:700; letter-spacing:.13em; text-transform:uppercase }
 .artwork { width:min(54vw,23rem); aspect-ratio:1; border-radius:2rem; object-fit:cover; box-shadow:0 2rem 6rem #0008; background:#262137 }
+#vibescape-scene { position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none }
+#vibescape-scene[hidden],#live-guest-count[hidden] { display:none }
+.vibescape-mode .session-panels { display:none }
+#live-guest-count { white-space:nowrap; font-size:clamp(.85rem,1.7vw,1.2rem); letter-spacing:normal }
+#session-dj-avatar { display:flex; align-items:center; gap:.5rem; height:40px; flex:none }
+#session-dj-avatar[hidden],#session-change-popup[hidden] { display:none }
+#session-dj-avatar .spotlight-avatar { display:block; width:40px; height:40px; flex:none }
+#session-change-popup { position:fixed; z-index:45; top:18vh; left:50%; transform:translateX(-50%);
+  display:flex; align-items:center; gap:1rem; padding:1rem 1.5rem; border-radius:2rem;
+  background:#141222e8; border:1px solid #ffffff55; font-size:clamp(1.1rem,2.5vw,2rem) }
+#session-change-popup .spotlight-avatar { display:block; width:96px; height:96px; flex:none }
+.live-reaction { position:fixed; bottom:12vh; z-index:50; pointer-events:none; font-size:clamp(2rem,6vw,5rem);
+  animation:live-reaction-rise 4s ease-out both }
+@keyframes live-reaction-rise { from { opacity:0; transform:translateY(2rem) scale(.7) }
+  15% { opacity:1 } to { opacity:0; transform:translateY(-65vh) scale(1.15) rotate(12deg) } }
+@media (prefers-reduced-motion:reduce) { .live-reaction { animation:none } }
+@media (prefers-reduced-motion:no-preference) {
+  .artwork { animation:artwork-breathe 7s ease-in-out infinite }
+  body.renderer-hidden .artwork { animation-play-state:paused }
+}
+@keyframes artwork-breathe { 0%,100% { transform:scale(1) } 50% { transform:scale(1.02) } }
 .track { margin:clamp(1.3rem,3vh,2.5rem) 0 0; font-size:clamp(2rem,5.2vw,5.4rem); line-height:1.04; letter-spacing:-.045em; max-width:15ch; overflow-wrap:anywhere }
 .artist { margin:.8rem 0 0; color:#ebe7f5; font-size:clamp(1.1rem,2.2vw,2rem) }
 .cards { display:grid; align-content:end; gap:clamp(.6rem,1.5vh,1.2rem); min-height:0; max-height:42vh }
@@ -441,7 +462,8 @@ main { height:auto; min-width:0 }
 }
 .shared-flow { display:grid; grid-template:minmax(0,1fr) / minmax(0,1fr); min-height:0; position:relative; font-family:system-ui,-apple-system,sans-serif }
 .shared-flow .flow-viewport { grid-area:1 / 1 }
-.horizon-panel { min-height:0; overflow:auto; scrollbar-width:thin; padding:0 .55rem .75rem }
+.horizon-panel { min-height:0; overflow:auto; scrollbar-width:none; padding:0 .55rem .75rem }
+.horizon-panel::-webkit-scrollbar { display:none }
 .horizon-banner {
   margin-bottom:.85em; padding:clamp(.25rem,1vw,.55rem);
   border:1px solid #ffffff40; border-radius:1rem;
@@ -498,7 +520,9 @@ main { height:auto; min-width:0 }
   .session-panels:not(:has(#horizon-card:not([hidden]))) { grid-template-rows:minmax(0,1fr) }
   .horizon-panel:has(#horizon-card[hidden]) { display:none }
 }
-.flow-viewport { height:100%; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; overflow-anchor:none }
+.flow-viewport { height:100%; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; overflow-anchor:none;
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 calc(100% - 2.5rem),transparent 100%);
+  mask-image:linear-gradient(to bottom,#000 0%,#000 calc(100% - 2.5rem),transparent 100%) }
 .flow-viewport:focus-visible { outline:none }
 .flow-viewport:focus-visible::before {
   content:""; position:absolute; inset:.9rem auto auto .12rem; height:1.2rem;
@@ -515,20 +539,20 @@ main { height:auto; min-width:0 }
   border-radius:18px;
   corner-shape:squircle;
   color:#f5f6ff;
-  font-size:clamp(.88rem,1.5vw,1.12rem);
-  line-height:1.45;
+  font-size:clamp(1.15rem,2.45vw,2rem);
+  line-height:1.3;
   padding:.75em 1em;
 }
 .flow-with-artwork { display:grid; grid-template-columns:clamp(2.5rem,7vw,5rem) minmax(0,1fr); align-items:start; gap:.75em }
 .flow-artwork { display:block; width:100%; aspect-ratio:1; object-fit:contain; border-radius:.65rem }
 .flow-card p { margin:.25em 0 0; white-space:pre-wrap; overflow-wrap:anywhere }
-.flow-card.flow-age-0 { border-radius:32px; font-size:clamp(1.15rem,2.45vw,2rem); font-weight:650; line-height:1.3 }
-.flow-card.flow-age-1 { font-size:clamp(1.02rem,2.15vw,1.65rem); font-weight:550 }
-.flow-card.flow-age-2 { font-size:clamp(.95rem,1.8vw,1.35rem) }
+.flow-card.flow-age-0 { border-radius:32px; font-weight:650 }
+.flow-card.flow-age-1 { font-weight:550 }
 .flow-meta { display:flex; flex-wrap:wrap; justify-content:space-between; gap:.25em 1em; font-size:.68em; font-weight:650; color:#d9deff }
 .flow-meta time { font-variant-numeric:tabular-nums; white-space:nowrap }
 .flow-sources { display:flex; flex-wrap:wrap; gap:.35rem .9rem; margin-top:.5rem; font-size:.65em }
 .flow-sources a { color:#d9deff; text-underline-offset:.16em }
+.flow-sources img { display:block; width:5rem; max-width:100%; height:auto }
 .flow-live { position:absolute; inset:auto 1rem .65rem auto; border:var(--card-border); border-radius:18px; padding:.55rem .9rem; color:#fff; font:600 .9rem system-ui,sans-serif }
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
   .flow-card, .flow-live { background:var(--track-card-background,#252940) }

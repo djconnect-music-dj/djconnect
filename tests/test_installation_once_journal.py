@@ -22,12 +22,12 @@ class OriginalActualOnceProofTests(unittest.TestCase):
     def test_current_HA_originals_and_parent_missing_journal_remain_exact(self):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads((root / "examples/client_contracts/installation_once_metadata_v1/actual-ha-once-metadata-live-impression-20261119-requested-moments-20261120.json").read_text())
-        raw = json.loads((root / 'examples/client_contracts/installation_once_metadata_v1/ha-guest-invitation-20261123-ha-shared-guest-20261123-bd45da0c.json').read_text())
+        raw = json.loads((root / 'examples/client_contracts/installation_once_metadata_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--5f0aa714.json').read_text())
         self.assertEqual(raw["state"], "PASS")
         self.assertEqual(len(raw["cases"]), 8)
         self.assertEqual(len(raw["preceding_installation_codec_cases"]), 6)
         self.assertEqual(len(raw["preceding_source_origin_cases"]), 19)
-        self.assertEqual(len(raw["source_sha256"]), 343)
+        self.assertEqual(len(raw["source_sha256"]), 356)
         for name, digest in raw["source_sha256"].items():
             self.assertEqual(hashlib.sha256((root / name).read_bytes()).hexdigest(), digest, name)
         digest = hashlib.sha256((root / proof["harness"]).read_bytes()).hexdigest()

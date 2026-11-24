@@ -9,9 +9,9 @@ import unittest
 class ArtistCollectionsQualificationTests(unittest.TestCase):
     def test_original_paired_http_offer_proof_matches_current_source(self):
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root / 'examples/client_contracts/artist_collections_v1/ha-guest-invitation-20261123-ha-shared-guest-20261123-d8cbabe0.json').read_text())
+        proof = json.loads((root / 'examples/client_contracts/artist_collections_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--c106f24f.json').read_text())
         self.assertTrue(proof["source_before_after_equal"])
-        self.assertEqual(len(proof["source_pins"]), 343)
+        self.assertEqual(len(proof["source_pins"]), 356)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root / name).read_bytes()).hexdigest(), expected, name)
         receipt = proof["receipt"]

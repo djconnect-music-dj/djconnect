@@ -19,10 +19,34 @@ def shared_items(active, *, now):
 
 def public_context(actor):
     actor.validate()
+    from .display_projection import _shared_horizon
+    from .guest_live import view, _label
     items = shared_items(actor.active, now=actor.manager._display_admission._clock())
-    return {'playback':actor.shared_status()['playback'], 'moments':[
+    current = actor.active.broadcast.state
+    result = {'playback':actor.shared_status()['playback'], 'moments':[
         {key:item[key] for key in ('moment_id', 'title', 'summary', 'moment_type') if key in item}
-        for item in list(items.values())[-12:]]}
+        for item in list(items.values())[-12:]],
+        'session': {'session_id': actor.active.session_id, 'locale': actor.share.locale or current.locale,
+                    'mood': _label(current.selected_mood), 'persona': _label(current.dj_persona),
+                    'presence': _label(current.selected_presence)},
+        'shared_flow': list(items.values())[-12:], 'view': view(actor.share, actor.active)}
+    from .display_observed import public as public_observations
+    result['observed_playback'] = public_observations(actor.share, actor.manager._display_admission)
+    from .guest_artwork import descriptor
+    artwork = descriptor(actor)
+    if artwork is not None:
+        result['playback']['artwork'] = artwork
+    # Copies belong to this response; never mutate the accepted public source.
+    result['shared_flow'] = [dict(item) for item in result['shared_flow']]
+    for item in [*result['shared_flow'], *result['observed_playback']]:
+        item_id = item.get('playback_item_id')
+        artwork = descriptor(actor, flow_item_id=item_id) if item_id else None
+        if artwork is not None:
+            item['artwork'] = artwork
+    horizon = _shared_horizon(actor.active.broadcast, locale=result['session']['locale'])
+    if horizon is not None:
+        result['horizon'] = horizon
+    return result
 
 
 def focus(actor, moment_id):

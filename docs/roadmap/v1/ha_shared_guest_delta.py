@@ -68,10 +68,11 @@ def validate(plan, previous_validator, *, historical_product=False):
                 node.pop('assignment_status', None)
     restored['document_references'] = prior['document_references']
     check(restored == prior, 'all other nodes, scopes, edges and receipts unchanged')
+    sources = HISTORICAL_DOCUMENT_SOURCES.get()
     original_docs = {d['path']:d['sha256'] for d in prior['ha_native_voice_receipt']['documents']}
     docs = receipt.get('documents', [])
     check(len(docs) == 11 and {d.get('path') for d in docs} == original_docs.keys() | ADDED_DOCS
-          and all(sha((ROOT/d['path']).read_bytes()) == d.get('sha256') for d in docs),
+          and all(sha(Path(sources.get(d['path'], ROOT/d['path'])).read_bytes()) == d.get('sha256') for d in docs),
           'current canonical contracts and prompt history')
     refs = {d['path']:d['sha256'] for d in delta['document_references']}
     old_refs = {d['path']:d['sha256'] for d in prior['document_references']}

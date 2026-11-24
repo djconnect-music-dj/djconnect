@@ -285,8 +285,8 @@ class CurrentTrackInsightTests(IsolatedAsyncioTestCase):
         import json
         from pathlib import Path
         root = Path(__file__).resolve().parents[1]
-        fixture = json.loads((root / 'examples/client_contracts/track_insight/ha-guest-invitation-20261123-ha-shared-guest-20261123-0f40720c.json').read_text())
-        self.assertEqual(len(fixture["source_files_sha256"]), 343)
+        fixture = json.loads((root / 'examples/client_contracts/track_insight/vibecast-ui-20261124-vibecast-ui-20261123-ha--27907b23.json').read_text())
+        self.assertEqual(len(fixture["source_files_sha256"]), 356)
         for relative, digest in fixture["source_files_sha256"].items():
             self.assertEqual(hashlib.sha256((root / relative).read_bytes()).hexdigest(), digest, relative)
         self.assertEqual(hashlib.sha256((root / "scripts/verification/verify_current_track_insight_http.py").read_bytes()).hexdigest(), fixture["harness_sha256"])

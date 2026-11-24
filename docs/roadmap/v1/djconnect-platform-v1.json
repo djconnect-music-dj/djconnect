@@ -37594,7 +37594,7 @@
     }
   ],
   "planning_maintenance": {
-    "schema_version": "djconnect-federated-planning-delta/30",
+    "schema_version": "djconnect-federated-planning-delta/31",
     "decision_id": "DJC-DJ-PRESENCE-ROADMAP-DESIGN-V1-20261011",
     "decision_url": "https://github.com/pcvantol/djconnect/issues/1101#issuecomment-6110375785",
     "design_date": "2026-10-11",
@@ -42925,7 +42925,7 @@
       },
       {
         "path": "API_CONTRACT.md",
-        "sha256": "596879fd36dc1e9336248f2822c7c3f0be896d831cc4111a2bbc823107c0e977"
+        "sha256": "365f0331ac84c4369c242af10af089b9c33b83693f89fc3f68b258ea039f31ca"
       },
       {
         "path": "docs/product/NARRATIVE_ALBUM_CONTINUITY_V1.md",
@@ -43373,7 +43373,7 @@
       },
       {
         "path": "SYNC_PROMPTS.md",
-        "sha256": "877e633734af30b3c21475a2dde47f155c38cf5174b573baea551738f140bf8e"
+        "sha256": "1b2c9f88149aa60d99b76d9cbf6a82f4da03dbb9637e6a87e73532fd1764dcc1"
       },
       {
         "path": "docs/technical/VIBECAST_GUEST_PARTICIPATION_V1.md",
@@ -44756,6 +44756,46 @@
         {
           "path": "docs/history/prompts/2026-11-23-ha-invitation-source-finalization.md",
           "sha256": "5fa7fbc26b525d802fcc403794749f55964461b2b739fe43ccef92d3db19e3e1"
+        }
+      ]
+    },
+    "vibecast_ui_receipt": {
+      "predecessor_path": "history/20261123/vibecast-ui-predecessor-maintenance-v30.json",
+      "predecessor_sha256": "4043ce5cfecdc51b384e3044b778e4fd61c06e69cd30f87edc9a57bc8a2aa964",
+      "base_sha": "20b9caa92dbcaec9faf3deda8166022f684ba4f4",
+      "source_delivery": "LOCAL_IMPLEMENTATION_NOT_MERGED",
+      "overall_acceptance": "OPEN",
+      "editorial_acceptance": "OPEN",
+      "installed": "NOT_RUN",
+      "deployment": "NOT_RUN",
+      "real_provider": "NOT_RUN",
+      "physical_satellite": "NOT_RUN",
+      "automatic_dispatch": false,
+      "consumer_writes": false,
+      "document": "docs/verification/VIBECAST_UI_CORE_QUALIFICATION_20261124.md",
+      "document_sha256": "f58641a89dcd279adda83a035d5b3be802982ef9542f5e24b62a7d6c7fb6469e",
+      "product_manifest_path": "docs/verification/vibecast-ui-product-manifest-20261124.json",
+      "product_manifest_sha256": "1b04e3f05645d79eb8665927a52591f83397e9276a167db91104a8c76a9c91fd",
+      "qualification_path": "docs/verification/vibecast-ui-qualification-20261124.json",
+      "qualification_sha256": "a6009fa151172da2807cd6c757b0d2f661dd7a43fd1380fbb6b9daa7b3e2a8df",
+      "live_ui_path": "docs/verification/vibecast-live-ui-actual-ha-20261124.json",
+      "live_ui_sha256": "f193d0a9e595ba9dac82b83206c5ab6cef6be6f860eb2961c1240c90942523a7",
+      "browser_path": "docs/verification/vibecast-ui-browser-20261124.json",
+      "browser_sha256": "df2c87bee4403495f3548e05cd653c0964e41bbb1f764670ed916104a2231f18",
+      "base_publication_path": "docs/verification/vibecast-ui-base-publication-20261123.json",
+      "base_publication_sha256": "c018fe065de286b61da5a9a48a3ee9524761ff99682e23e8d8e4513953e158cd",
+      "evolved_documents": [
+        {
+          "path": "API_CONTRACT.md",
+          "sha256": "365f0331ac84c4369c242af10af089b9c33b83693f89fc3f68b258ea039f31ca",
+          "predecessor_sha256": "596879fd36dc1e9336248f2822c7c3f0be896d831cc4111a2bbc823107c0e977",
+          "snapshot": "docs/roadmap/v1/history/20261123/vibecast-ui-predecessor-documents/API_CONTRACT.md"
+        },
+        {
+          "path": "SYNC_PROMPTS.md",
+          "sha256": "1b2c9f88149aa60d99b76d9cbf6a82f4da03dbb9637e6a87e73532fd1764dcc1",
+          "predecessor_sha256": "877e633734af30b3c21475a2dde47f155c38cf5174b573baea551738f140bf8e",
+          "snapshot": "docs/roadmap/v1/history/20261123/vibecast-ui-predecessor-documents/SYNC_PROMPTS.md"
         }
       ]
     }

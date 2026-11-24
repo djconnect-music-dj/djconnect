@@ -1262,6 +1262,41 @@ class RequestedMomentsTest(unittest.IsolatedAsyncioTestCase):
                 {"inventory": menu, "request_envelope": envelope, "failure_response": result},
             )
 
+    async def test_shared_musicbrainz_backoff_is_temporary_not_missing_facts(self):
+        from types import SimpleNamespace
+        from custom_components.djconnect import musicbrainz_rate, session_facts
+
+        # A valid synthetic ISRC is essential: without one the resolver exits
+        # before exercising the shared MusicBrainz limiter at all.
+        self.catalog['isrc'] = 'NLAAA0100001'
+        resolver = session_facts.session_facts_resolver(self.hass)
+        actual_get = resolver._get
+        lookups = []
+
+        async def observed_get(*args, **kwargs):
+            lookups.append(args[0])
+            return await actual_get(*args, **kwargs)
+
+        await self.manager.async_update_allowed_capability_intents(owner_profile_id='profile-a',
+            session_id=self.session.session_id,
+            allowed_capability_intents=frozenset({'track_context', 'artist_story'}))
+        self.session = self.manager.current_active('profile-a')
+        self.hass.data['djconnect']['playback_observation_manager'] = SimpleNamespace(
+            _spotify_sessions={'profile-a':SimpleNamespace(session_id=self.session.session_id,
+                moment_catalog=deepcopy(self.catalog), moment_catalog_observed_at=time.monotonic())})
+        musicbrainz_rate.defer('60')
+        with self.production(), patch.object(resolver, '_get', observed_get):
+            menu = await self.menu()
+            descriptor = next(item for item in menu['types'] if item['type_id'] == 'recording_story')
+            self.assertTrue(descriptor['available'], descriptor)
+            result, status, envelope = await self.submit(menu, 'recording_story')
+        self.assertIn('isrc/NLAAA0100001', lookups)
+        self.assertEqual((self.calls, self.urls), ([], []))
+        self.assertEqual((status, result['state']), (200, 'temporarily_unavailable'), result)
+        self.assertEqual(result['operation_receipt']['phase'], 'rejected')
+        self.emit('temporary-source-backoff', {'inventory':menu, 'request_envelope':envelope,
+                                              'failure_response':result})
+
     async def test_missing_agent_is_a_visible_disabled_producer_without_io(self):
         with patch.object(self.pipeline, "_assist_context", return_value={}):
             menu = await self.menu()
@@ -1444,11 +1479,11 @@ class RequestedMomentsTest(unittest.IsolatedAsyncioTestCase):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads(
             (
-                root / 'examples/client_contracts/requested_moments_v1/ha-guest-invitation-20261123-ha-shared-guest-20261123-74cc06b4.json'
+                root / 'examples/client_contracts/requested_moments_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--6d26b6d8.json'
             ).read_text()
         )
         self.assertTrue(proof["source_before_after_equal"])
-        self.assertEqual(len(proof["source_pins"]), 343)
+        self.assertEqual(len(proof["source_pins"]), 356)
         for name, digest in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root / name).read_bytes()).hexdigest(), digest, name)
         receipt = proof["receipt"]

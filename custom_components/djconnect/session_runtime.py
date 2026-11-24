@@ -4426,6 +4426,9 @@ class RendererSafePlaybackProjection:
                         "current_item_id": item_id,
                         "title": _bounded_text((up_next or {}).get("title"), 256),
                         "artist": _bounded_text((up_next or {}).get("artist"), 256),
+                        "source_url": (str(up_next.get('source_url')) if re.fullmatch(
+                            r'https://open\.spotify\.com/track/[A-Za-z0-9]{22}',
+                            str((up_next or {}).get('source_url', ''))) else ''),
                         "artwork_url": _safe_artwork_url((up_next or {}).get("artwork_url")),
                         "expires_at": _bounded_text((up_next or {}).get("expires_at"), 40),
                     }.items()
@@ -5235,6 +5238,7 @@ class DJSessionBroadcastEngine:
             historical=historical,
         )
         result.pop("session_media", None)
+        result.pop("horizon_moment", None)
         if include_owner_only and self.media_projector is not None:
             result["session_media"] = self.media_projector()
         if historical:
@@ -5317,6 +5321,13 @@ class DJSessionBroadcastEngine:
             }
 
     def _append_current_forecast(self, result, *, include_owner_only, forecast_locale):
+        if include_owner_only:
+            from .horizon_preview import project
+            frame = result.get('playback', self.state.playback.as_dict())
+            current = self.state.playback.as_dict()
+            result['horizon_moment'] = (project(self, locale=forecast_locale)
+                if all(frame.get(key) == current.get(key) for key in
+                       ('state', 'item_id', 'position_ms', 'duration_ms')) else None)
         # Never relabel an old playback frame with a different value under its forecast revision.
         forecast = self.forecast.as_dict(locale=forecast_locale, include_queue=include_owner_only)
         frame_playback = result.get("playback", self.state.playback.as_dict())

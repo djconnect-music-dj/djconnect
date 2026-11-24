@@ -18,7 +18,7 @@ def sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
-def validate(plan, previous_validator):
+def validate(plan, previous_validator, *, historical_product=False):
     from ha_shared_guest_delta import validate as shared_source
     from ha_shared_guest_finalization_delta import validate as shared_final
     delta = plan['planning_maintenance']
@@ -72,7 +72,7 @@ def validate(plan, previous_validator):
         check(receipt.get(name+'_path') == path and receipt.get(name+'_sha256') == sha(raw),
               'exact ' + name + ' binding')
         loaded[name] = json.loads(raw)
-    actual = {str(p.relative_to(ROOT)):sha(p.read_bytes())
+    actual = loaded['product_manifest'] if historical_product else {str(p.relative_to(ROOT)):sha(p.read_bytes())
               for p in (ROOT/'custom_components/djconnect').rglob('*')
               if p.is_file() and '__pycache__' not in p.parts and p.suffix != '.pyc'}
     check(loaded['product_manifest'] == actual and len(actual) == 343, 'all current product bytes')

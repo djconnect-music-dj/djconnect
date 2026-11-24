@@ -9,6 +9,11 @@
   const read = (value, path) => path.reduce((current,key) => current && current[key],value);
   function togglePlacement(below) { const stage=document.querySelector && document.querySelector(".stage"); if (stage && stage.classList) stage.classList.toggle("bubble-below",below); }
   const e = id => document.getElementById(id), root = document.documentElement;
+  if(document.addEventListener){
+    const visibility=()=>document.body.classList.toggle("renderer-hidden",document.hidden);
+    document.addEventListener("visibilitychange",visibility);
+    visibility();
+  }
   const browserTheme = e("browser-theme-color");
   let browserTint;
   function setBrowserTheme(color) {
@@ -59,6 +64,156 @@
   const theme = mood => ({chill:"#7d8dff",groove:"#c07dff",energy:"#ff806b",party:"#ffce55"}[mood] || "#9f7cff");
   const format = value => Number.isFinite(value) && value >= 0 ? `${Math.floor(value/60000)}:${String(Math.floor(value/1000)%60).padStart(2,"0")}` : "";
   const reduceMotion = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  let sceneCanvas=null, sceneFrame=0, sceneLastFrame=0;
+  const scenePalettes={chill:["#4da3ff","#7b61ff","#d184ff"],groove:["#06c7ad","#169bc8","#10b981"],
+    energy:["#ddff00","#00b8ff","#39ff78"],party:["#ff287f","#aa38f5","#f43dce"]};
+  function sceneActive(){return snapshotAccepted && !ended && projection.view && projection.view.mode==="vibescape";}
+  function hideScene(){
+    document.body.classList.toggle("vibescape-mode",false);
+    if(sceneCanvas)sceneCanvas.hidden=true;
+    if(sceneFrame)window.cancelAnimationFrame(sceneFrame);
+    sceneFrame=0;
+  }
+  function drawScene(stamp=0){
+    sceneFrame=0;
+    if(!sceneActive() || document.hidden || !sceneCanvas)return;
+    const still=reduceMotion();
+    if(still || !document.body.classList.contains("vibescape-mode") || stamp-sceneLastFrame>=33){
+      sceneLastFrame=stamp;
+      const width=Math.min(1280,window.innerWidth),height=Math.min(720,window.innerHeight);
+      if(sceneCanvas.width!==width || sceneCanvas.height!==height){sceneCanvas.width=width;sceneCanvas.height=height;}
+      const ctx=sceneCanvas.getContext("2d");
+      if(!ctx){hideScene();return;}
+      const settings=projection.view || {},colors=scenePalettes[settings.mood] || ["#3285ff","#843df5","#cb27f5"];
+      const persona=settings.persona,base={home_dj:.30,radio_dj:.24,club_dj:.20,festival_dj:.26}[persona] || .12;
+      const mood={chill:.6,energy:1.2,party:1.4}[settings.mood] || 1;
+      const dynamics=Number.isFinite(settings.dynamics) ? Math.max(0,Math.min(1,settings.dynamics)) : .5;
+      const motion=.35+dynamics*1.3;
+      const time=still ? 0 : stamp*.0002*base*mood*motion;
+      ctx.fillStyle="#080b19";ctx.fillRect(0,0,width,height);
+      ctx.globalCompositeOperation="screen";
+      for(let i=0;i<7;i++){
+        const phase=time+i*Math.PI*2/7;
+        const x=width*(.5+(.18+.28*dynamics)*Math.sin(phase)),y=height*(.5+(.16+.24*dynamics)*Math.cos(phase*.8));
+        const glow=ctx.createRadialGradient(x,y,0,x,y,width*.43);
+        glow.addColorStop(0,colors[i%3]+"77");glow.addColorStop(1,colors[i%3]+"00");
+        ctx.fillStyle=glow;ctx.fillRect(0,0,width,height);
+        ctx.strokeStyle=colors[i%3]+"88";ctx.lineWidth=1.5;
+        ctx.beginPath();
+        if(persona==="club_dj"){
+          ctx.moveTo(width*.1,height*(.2+i*.1));ctx.lineTo(x,y);ctx.lineTo(width*.9,height*(.8-i*.08));
+        }else if(persona==="festival_dj"){
+          ctx.moveTo(width*.5,height*.72);ctx.lineTo(x+Math.sin(phase)*width*.3,y-height*.4);
+        }else if(persona==="radio_dj"){
+          ctx.ellipse(width*.5,height*.5,width*(.16+i*.035),height*(.12+i*.025),Math.sin(phase)*.3,0,Math.PI*2);
+        }else{
+          ctx.moveTo(0,height*(.3+i*.06));
+          ctx.bezierCurveTo(width*.3,y,width*.7,height-y,width,height*(.5+i*.04));
+        }
+        ctx.stroke();
+      }
+      ctx.globalCompositeOperation="source-over";
+      sceneCanvas.hidden=false;
+      document.body.classList.add("vibescape-mode");
+    }
+    if(!still)sceneFrame=window.requestAnimationFrame(drawScene);
+  }
+  function renderScene(){
+    const active=sceneActive();
+    if(!active){hideScene();return;}
+    if(!sceneCanvas){
+      sceneCanvas=document.createElement("canvas");sceneCanvas.id="vibescape-scene";
+      sceneCanvas.setAttribute("aria-hidden","true");document.body.appendChild(sceneCanvas);
+    }
+    if(document.hidden){if(sceneFrame)window.cancelAnimationFrame(sceneFrame);sceneFrame=0;return;}
+    if(!sceneFrame)drawScene(performance.now());
+  }
+  if(document.addEventListener)document.addEventListener("visibilitychange",renderScene);
+  const sceneMedia=window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)");
+  if(sceneMedia && sceneMedia.addEventListener)sceneMedia.addEventListener("change",()=>{
+    if(sceneFrame)window.cancelAnimationFrame(sceneFrame);sceneFrame=0;renderScene();
+  });
+  const reactionEmoji={heart:"❤️",fire:"🔥",applause:"👏",love:"😍",dance:"💃"};
+  const seenReactions=new Map();
+  const reactionTimers=new Map();
+  let guestCounter=null;
+  function clearLiveStatus(){
+    if(guestCounter){guestCounter.hidden=true;guestCounter.textContent="";guestCounter.removeAttribute("aria-label");}
+    for(const [node,timer] of reactionTimers){window.clearTimeout(timer);node.remove();}
+    reactionTimers.clear();seenReactions.clear();
+  }
+  let sessionAvatar=null,sessionChange=null,sessionChangeTimer=0,lastSessionPresentation="";
+  function avatarCopy(identifier){
+    const original=e("spotlight-avatar");
+    if(!original)return null;
+    const copy=original.cloneNode(true);copy.id=identifier;
+    const gradient=copy.querySelector("linearGradient"),oldId=gradient.id;
+    gradient.id=identifier+"-gradient";
+    for(const node of copy.querySelectorAll("[fill],[stroke]"))for(const attr of ["fill","stroke"])
+      if(node.getAttribute(attr)==="url(#"+oldId+")")node.setAttribute(attr,"url(#"+gradient.id+")");
+    return copy;
+  }
+  function clearSessionAvatar(){
+    lastSessionPresentation="";
+    if(sessionAvatar)sessionAvatar.hidden=true;
+    if(sessionChange)sessionChange.hidden=true;
+    if(sessionChangeTimer)window.clearTimeout(sessionChangeTimer);sessionChangeTimer=0;
+  }
+  function renderSessionAvatar(){
+    if(!displayHost)return;
+    if(!snapshotAccepted || ended){clearSessionAvatar();return;}
+    const settings=projection.session_presentation || {};
+    const signature=JSON.stringify([settings.mood || "",settings.persona || "",settings.presence || ""]);
+    if(!sessionAvatar){
+      sessionAvatar=document.createElement("span");sessionAvatar.id="session-dj-avatar";
+      sessionAvatar.className="mood-palette";
+      const svg=avatarCopy("persistent-dj-avatar");if(svg)sessionAvatar.appendChild(svg);
+      sessionAvatar.appendChild(e("session-icons"));
+      document.querySelector(".session-status").prepend(sessionAvatar);
+    }
+    sessionAvatar.hidden=false;sessionAvatar.dataset.mood=settings.mood || "";
+    if(lastSessionPresentation && signature!==lastSessionPresentation){
+      if(!sessionChange){
+        sessionChange=document.createElement("div");sessionChange.id="session-change-popup";
+        sessionChange.className="mood-palette";sessionChange.setAttribute("role","status");
+        const svg=avatarCopy("session-change-dj-avatar");if(svg)sessionChange.appendChild(svg);
+        sessionChange.appendChild(document.createElement("span"));document.body.appendChild(sessionChange);
+      }
+      const labels={en:"Session updated",nl:"Sessie bijgewerkt",de:"Session aktualisiert",fr:"Session mise à jour",es:"Sesión actualizada"};
+      sessionChange.lastElementChild.textContent=labels[root.lang] || labels.en;
+      sessionChange.dataset.mood=settings.mood || "";sessionChange.hidden=false;
+      if(sessionChangeTimer)window.clearTimeout(sessionChangeTimer);
+      sessionChangeTimer=window.setTimeout(()=>{sessionChange.hidden=true;sessionChangeTimer=0;},4000);
+    }
+    lastSessionPresentation=signature;
+  }
+  function renderLiveStatus(detail){
+    if(!displayHost || !detail)return;
+    const enabled=detail.live_enabled===true;
+    if(!enabled)clearLiveStatus();
+    if(!guestCounter){
+      guestCounter=document.createElement("span");guestCounter.id="live-guest-count";
+      document.querySelector(".session-status").appendChild(guestCounter);
+    }
+    const count=Number.isInteger(detail.guest_count) && detail.guest_count>=0 && detail.guest_count<=64 ? detail.guest_count : 0;
+    guestCounter.hidden=!enabled;
+    const labels={en:"Connected guests",nl:"Verbonden gasten",de:"Verbundene Gäste",fr:"Invités connectés",es:"Invitados conectados"};
+    guestCounter.textContent="👥 "+count;guestCounter.setAttribute("aria-label",(labels[root.lang] || labels.en)+": "+count);
+    if(detail.view && ["flow","vibescape"].includes(detail.view.mode)){projection.view=detail.view;renderScene();}
+    const now=Date.now();
+    for(const [id,until] of seenReactions)if(until<=now)seenReactions.delete(id);
+    if(!enabled)return;
+    for(const event of (Array.isArray(detail.reactions) ? detail.reactions : []).slice(-64)){
+      const until=Date.parse(event.expires_at),emoji=reactionEmoji[event.emotion];
+      if(!emoji || typeof event.event_id!=="string" || event.event_id.length>128 || seenReactions.has(event.event_id) ||
+        event.playback_item_id!==playback().item_id || !(until>now && until<=now+6000))continue;
+      seenReactions.set(event.event_id,until);
+      const node=document.createElement("span");node.className="live-reaction";node.textContent=emoji;
+      node.setAttribute("aria-hidden","true");node.style.left=(12+event.event_id.charCodeAt(0)%76)+"%";
+      document.body.appendChild(node);
+      reactionTimers.set(node,window.setTimeout(()=>{node.remove();reactionTimers.delete(node);},Math.min(5000,until-now)));
+    }
+  }
   function clearTimer(name) {
     const timer = name === "expiry" ? expiryTimer : scrollTimer;
     if (timer && window.clearTimeout) window.clearTimeout(timer);
@@ -369,36 +524,33 @@
     fr:["Fil de la session", "Revenir au direct"],
     es:["Flujo de la sesión", "Volver al directo"]
   };
-  const horizonLabels = {
-    en:["The next few minutes","Music and contributions may change."],
-    nl:["De komende minuten","Muziek en bijdragen kunnen veranderen."],
-    de:["Die nächsten Minuten","Musik und Beiträge können sich ändern."],
-    fr:["Les prochaines minutes","La musique et les interventions peuvent changer."],
-    es:["Los próximos minutos","La música y las intervenciones pueden cambiar."]
-  };
-  let horizonExpiry;
+  let horizonExpiry, horizonContentKey;
   function renderHorizon(active) {
     const panels=e("session-panels"), card=e("horizon-card"), sections=e("horizon-sections");
     if (!panels || !card || !sections) return;
     panels.hidden=!active;
     if (horizonExpiry) window.clearTimeout(horizonExpiry);
-    const [title,notice]=horizonLabels[root.lang] || horizonLabels.en;
-    e("horizon-card-title").textContent=title;
-    e("horizon-notice").textContent=notice;
-    clearChildren(sections);
     const horizon=active && projection.horizon;
     const expires=Date.parse(horizon && horizon.valid_until);
     const items=horizon && Array.isArray(horizon.sections) ? horizon.sections.slice(0,3).filter(section=>
       section && typeof section.title==="string" && typeof section.text==="string" && section.text) : [];
     card.hidden=!(expires>Date.now() && items.length);
-    if (card.hidden) return;
+    if (card.hidden) {
+      if(horizonContentKey!==undefined)clearChildren(sections);
+      horizonContentKey=undefined;
+      return;
+    }
     card.dataset.mood=read(projection,["session","selected_mood"]) || "";
-    for (const item of items) {
-      const section=document.createElement("section"), label=document.createElement("h3"), text=document.createElement("p");
-      label.textContent=item.title;
-      text.textContent=item.text;
-      section.append(label,text);
-      sections.appendChild(section);
+    const key=JSON.stringify(items.map(item=>item.text));
+    if(key!==horizonContentKey){
+      clearChildren(sections);
+      for (const item of items) {
+        const section=document.createElement("section"), text=document.createElement("p");
+        text.textContent=item.text;
+        section.appendChild(text);
+        sections.appendChild(section);
+      }
+      horizonContentKey=key;
     }
     horizonExpiry=window.setTimeout(()=>renderHorizon(active),Math.max(0,expires-Date.now()));
   }
@@ -427,7 +579,18 @@
     viewport.setAttribute("aria-label",labels[0]);
     live.textContent=labels[1];
     const time=Date.now();
-    const items=projection.shared_flow.slice(-12).filter(item=>item && typeof item.moment_id==="string"
+    const observedLabels={en:"Observed playback",nl:"Waargenomen playback",de:"Beobachtete Wiedergabe",fr:"Lecture observée",es:"Reproducción observada"};
+    const observations=(Array.isArray(projection.observed_playback) ? projection.observed_playback : []).slice(-12)
+      .filter(item=>item && typeof item.entry_id==="string" && item.entry_id.length<=128
+        && typeof item.title==="string" && item.title && typeof item.artist==="string"
+        && /^https:\/\/open\.spotify\.com\/track\/[A-Za-z0-9]{22}$/.test(item.source_url)
+        && Date.parse(item.expires_at)>time)
+      .map(item=>({...item,moment_id:"observed:"+item.entry_id,type:"playback_observed",
+        content:[item.title,item.artist].filter(Boolean).join(" — "),published_at:item.observed_at,
+        flow_expires_at:item.expires_at,source_attribution:{provider:"Spotify",url:item.source_url}}));
+    const combined=projection.shared_flow.slice(-12).concat(observations);
+    if(observations.length)combined.sort((a,b)=>(Date.parse(a.published_at||a.created_at)||0)-(Date.parse(b.published_at||b.created_at)||0));
+    const items=combined.slice(-12).filter(item=>item && typeof item.moment_id==="string"
       && typeof item.content==="string" && item.content && Date.parse(item.flow_expires_at == null ? item.display_expires_at : item.flow_expires_at)>time).reverse();
     const firstVisible = followFlow ? null : Array.from(list.children).find(row=>
       row.getBoundingClientRect().bottom > viewport.getBoundingClientRect().top);
@@ -466,7 +629,11 @@
           for (const source of sources) {
             const link=document.createElement("a");
             link.href=source.revision_url || source.url;
-            link.textContent=[source.title,source.provider,source.attributed_author || source.license].filter(Boolean).join(" · ");
+            const spotifyLogo=e("spotify-source").querySelector("img");
+            if(source.provider==="Spotify" && spotifyLogo){
+              const logo=document.createElement("img");logo.src=spotifyLogo.src;logo.alt="Spotify";
+              link.appendChild(logo);link.setAttribute("aria-label","Spotify");
+            }else link.textContent=[source.title,source.provider,source.attributed_author || source.license].filter(Boolean).join(" · ");
             link.target="_blank";
             link.rel="noopener noreferrer";
             links.appendChild(link);
@@ -475,9 +642,9 @@
         }
         flowRows.set(item.moment_id,row);
       }
-      row.querySelector(".flow-kind").textContent=text.types[item.type] || item.title || "";
+      row.querySelector(".flow-kind").textContent=item.type==="playback_observed" ? observedLabels[root.lang] || observedLabels.en : text.types[item.type] || item.title || "";
       const cover = item.artwork ? displayArtwork.get(item.artwork.reference) : currentCover;
-      const source = read(item,["artwork","source_url"]) || playback().source_url || "";
+      const source = read(item,["artwork","source_url"]) || read(item,["source_attribution","url"]) || playback().source_url || "";
       const showCover = cover && item.playback_item_id === cover.item_id
         && (!item.artwork || /^https:\/\/open\.spotify\.com\/track\/[A-Za-z0-9]{22}$/.test(source));
       let artLink = row.querySelector(".flow-artwork-link");
@@ -625,6 +792,8 @@
     const languageChanged=useLanguage(); updateClock();
     if (snapshotAccepted && !ended) e("state").textContent=text.live;
     renderSessionIcons();
+    renderSessionAvatar();
+    renderScene();
     const p = playback(), mood = read(projection,["session","selected_mood"]);
     document.body.classList.toggle("idle",!p.title);
     e("mood").textContent = mood || text.ambient;
@@ -787,6 +956,8 @@
     e("handoff").hidden=true; connect();
   });
   function stopHost() {
+    clearLiveStatus();
+    clearSessionAvatar();
     reportStatus("stopped","host_stop"); snapshotAccepted=false; statusGeneration=null;
     ended=true; broadcastToken=null;
     if (reconnectTimer) window.clearTimeout(reconnectTimer); reconnectTimer=undefined;
@@ -797,6 +968,7 @@
   window.addEventListener("djconnect-host-stop",stopHost);
   window.addEventListener("beforeunload",stopHost);
   if (displayHost) {
+    window.addEventListener("djconnect-live-status",({detail})=>renderLiveStatus(detail));
     e("shared-flow").appendChild(e("moment-cards"));
     e("display-meter").append(e("progress"),e("time"));
     e("display-timing").appendChild(e("spotify-source"));

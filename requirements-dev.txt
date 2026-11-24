@@ -7,3 +7,5 @@ pytest==9.2.0
 Pillow==13.0.0
 # Same hardened XML parser as the integration runtime.
 defusedxml==0.7.1
+# Real P-256 custody/signature regressions use the existing HA-qualified library.
+cryptography==50.0.1

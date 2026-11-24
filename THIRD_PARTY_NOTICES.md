@@ -171,3 +171,13 @@ not make a photograph MIT-licensed. Source/creator/license links must accompany
 qualified display. Product source licensing remains MIT; the integration package
 does not bundle these photographs. See
 [artist photo contract2](docs/product/SESSION_ARTIST_PHOTO_V2.md).
+# Native installation cryptography test dependency (24 November 2026)
+
+The developer environment pins PyCA cryptography50.0.1, the exact library
+already present in the qualified Home Assistant Python environment. Its upstream
+source and Apache-2.0/BSD license are at
+https://github.com/pyca/cryptography/tree/50.0.1 and
+https://github.com/pyca/cryptography/blob/50.0.1/LICENSE.
+No upstream source is vendored or modified. Tests exercise real P-256 key
+generation and signatures; this does not replace native attestation or add an
+integration runtime dependency beyond Home Assistant's existing library.

@@ -62,7 +62,10 @@ class HelpContainerPreflightTest(unittest.TestCase):
     def test_unknown_cleanup_cannot_produce_a_passing_setup_receipt(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
-            products = {f'synthetic-{i}': 'a' * 64 for i in range(343)}
+            products = {f'synthetic-{i}': 'a' * 64 for i in range(356)}
+            manifest = root/'docs/verification/vibecast-ui-product-manifest-20261124.json'
+            manifest.parent.mkdir(parents=True)
+            manifest.write_text(json.dumps(products))
             result = SimpleNamespace(returncode=0, stdout=json.dumps(valid({})).encode())
             with patch.object(preflight, 'product_hashes', return_value=products), \
                  patch.object(preflight, 'profile_source_hashes', return_value={}), \
@@ -78,7 +81,8 @@ class HelpContainerPreflightTest(unittest.TestCase):
         source = Path(__file__).resolve().parents[1]
         products = preflight.product_hashes(source)
         expected = preflight.profile_source_hashes(source)
-        self.assertEqual(len(products), 343)
+        self.assertEqual(len(products), 356)
+        self.assertEqual(products, json.loads((source/'docs/verification/vibecast-ui-product-manifest-20261124.json').read_text()))
         for module in ('live_impression','live_impression_research','live_impression_media',
                        'requested_moments','requested_moment_inventory','requested_moment_proof'):
             self.assertIn(f'custom_components/djconnect/{module}.py',products)
@@ -114,7 +118,13 @@ class HelpContainerPreflightTest(unittest.TestCase):
                  patch.object(preflight, 'container_absent', return_value=True):
                 self.assertEqual(preflight.run(source, directory / 'current'), 0)
                 self.assertEqual(execute.call_count, 2)  # One probe plus owned cleanup.
-            for size in (308, 310, 331, 342, 344):
+            tampered = {**products, next(iter(products)): '0'*64}
+            with patch.object(preflight, 'product_hashes', return_value=tampered), \
+                 patch.object(preflight.subprocess, 'run') as execute:
+                with self.assertRaisesRegex(ValueError, 'preflight_source_or_owner_invalid'):
+                    preflight.run(source, directory/'equal-count-tamper')
+                execute.assert_not_called()
+            for size in (308, 310, 331, 342, 343, 344, 346, 348):
                 with patch.object(preflight, 'product_hashes', return_value={str(i): 'a' * 64 for i in range(size)}), \
                      patch.object(preflight.subprocess, 'run') as execute:
                     with self.assertRaisesRegex(ValueError, 'preflight_source_or_owner_invalid'):

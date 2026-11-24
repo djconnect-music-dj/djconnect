@@ -64,9 +64,30 @@ approve its short first-person question. Unavailable or rejected narration uses
 a localized authored fallback, never a false generated-text claim. No provider
 keys, action grants or track URIs enter that narration prompt.
 
-The exact original owner/source/Session/Broadcast/settings/DNA/history grant and
-both wall/monotonic60-second deadline fence every awaited continuation and final
-dispatch. A cached card survives lease expiry, with disabled actions and an explicit
+Automatic Session-start and confirmed-Mood preparation use the private
+**FirstPlayPreparationAdmission**, a read/generation role with its
+own original wall/monotonic60-second preparation deadline. It grants no output or
+playback dispatch. The exact original owner/source/Session/Broadcast/settings/
+DNA/history grant fences every awaited continuation and the final publication.
+After all three mixes and bounded narration/fallback have successfully prepared,
+and after the last genuine owner/source/settings/DNA/history currentness check,
+this same producer may consume that preparation actor exactly once and mint a
+**distinct FirstPlayAdmission** for selection with its own original60-second
+wall/monotonic decision period. No visible choice grant existed before this seal.
+The legacy explicit launcher keeps its existing original selection lease; it
+does not become a second seal path. The new selection actor retains every
+original identity/source/currentness guard;
+only the preparation role's exact validators are replaced. A failed/expired/
+withdrawn preparation, changed frame or second seal cannot issue choices.
+
+An already issued selection actor/action/DTO is never extended or resealed.
+Reads, rendering, reconnect, expiry, old DTOs and manual choice continuations
+cannot mint this role transition. It spends no extra provider/model calls or
+retries, and no output/playback effect occurs before explicit selection. The
+existing public `for_you` / `expires_in` wire is unchanged. Its deadlines project
+the original private selection admission; they are not recreated from read time.
+The selection actor's original owner/source/Session/Broadcast/settings/DNA/
+history guards and both wall/monotonic deadlines fence final dispatch. A cached card survives lease expiry, with disabled actions and an explicit
 refresh_request (automatic:false); polling never renews it. That compatibility
 request remains manual. The additive server-owned refresh policy below is not a
 client request to synthesize or replay an Ask DJ prompt.
@@ -224,3 +245,29 @@ Read/cached projection never extends the original60-second dual-clock choice,
 creates another offer, warms data, grants playback or retries an attempted or
 uncertain operation. Other clients need the same loaded Profile memory owner;
 a missing/different manager cannot borrow the original cached admission.
+
+### Original offer withdrawal cannot be reversed by a later DTO
+
+A genuinely accepted Core projection with state unavailable and reason
+session_or_source_unavailable or music_dna_unavailable withdraws that original
+offer in its unchanged owner/session context. The
+original private admission latches that withdrawal; a source/DNA/configuration
+that later happens to resemble the old values cannot revive it. Native clients
+retain the withdrawn offer ID as a context-scoped tombstone and reject an older
+available DTO for it. Only a genuinely different offer from an authorized new
+preparation can be adopted. Display deadlines still never increase.
+
+A transport timeout, history conflict, ordinary refresh-in-flight state or an
+initial not-prepared placeholder is not this authoritative withdrawal signal.
+Such failures may retain only an already valid observation to its original
+expiry, without making it current or extending a choice. Withdrawal performs
+no provider/model lookup, preference write, persistent shared-flow mutation or
+new selection. The explicit existing refresh remains available to request a
+new offer; polling and source recovery alone cannot perform it.
+
+An explicit session_settings_changed projection also permanently disables that
+original selection, while preserving the existing inert genre/visual preview
+when owner/source/DNA display rights remain. It need not turn that preview's
+state into unavailable or erase its metadata. A later source/DNA withdrawal
+still clears it and takes precedence over that settings-only reason. An older
+available/actions-enabled DTO never re-enables the selection.

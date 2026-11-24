@@ -93,6 +93,7 @@ class GuestAdmissionState:
         self._model_shares: dict[str, list[float]] = {}
         self._requests = None
         self._qr_invites = {}
+        self._emotion_receipts = {}
         self._focus = {}
         self._focus_media_reads = {}
         self._focus_media_attempts = set()
@@ -130,6 +131,8 @@ class GuestAdmissionState:
 
     def _drop_guest(self, principal_id):
         grant = self._guests.pop(principal_id, None)
+        self._emotion_receipts = {key: value for key, value in self._emotion_receipts.items()
+                                 if key[0] != principal_id}
         if grant is not None and self._requests is not None:
             self._requests.prune_guest(grant)
         self._model_guests.pop(principal_id, None)

@@ -128,6 +128,13 @@ class EnrollmentOperation:
         expected.update(pairing_generation=self.bindings["pairing_generation"],
                         core_key_thumbprint=self.bindings["core_key_thumbprint"],
                         key_revision=1, transcript_sha256=self.digest, state="registered")
+        if self.challenge["api_audience"] == "djc-native-push/1":
+            # Genuine server ACK data only; the nonce expiry is NOT key lifetime.
+            for name in ("apple_evidence_expires_at_ms", "apple_status_expires_at_ms"):
+                value = body.get(name)
+                require(type(value) is int and 0 < value < 2**53,
+                        "native_pair_receipt_invalid", 502)
+                expected[name] = value
         require(set(body) == {*expected, "registry_generation"}
                 and canonical({key: body[key] for key in expected}) == canonical(expected)
                 and _matches(_IDENTIFIER, body["registry_generation"]), "native_pair_receipt_invalid", 502)
@@ -146,14 +153,22 @@ class NativePairEnrollment:
     derivation and Core signing custody. It is never selected by the app.
     """
 
-    def __init__(self, hass, transport, selection, *, publisher=None, wall=time.time, monotonic=time.monotonic):
+    def __init__(self, hass, transport, selection=None, *, publisher=None, wall=time.time, monotonic=time.monotonic, api_audience=_AUDIENCE):
+        require(api_audience in (_AUDIENCE, "djc-native-push/1"), "native_audience_unavailable", 503)
+        self.api_audience = api_audience
+        self._installation = None
         self.hass = hass
         self.transport = transport
+        if selection is None:
+            from .native_installation_key_custody import InstallationWidgetKeyCustodian
+            selection = InstallationWidgetKeyCustodian(self)
         self.selection = selection
         self.publisher = publisher
         self.wall = wall
         self.monotonic = monotonic
         self.pending = {}
+        from .native_enrollment_handoff import _RegisteredEnrollmentHandoffs
+        self._registered_handoffs = _RegisteredEnrollmentHandoffs(self)
         self.bootstrap_pending = set()
         self.consent_writes = set()
         self.consent_fences = WeakValueDictionary()
@@ -170,6 +185,7 @@ class NativePairEnrollment:
             self.hass, self.poll_retirements, timedelta(seconds=30))
 
     def stop_retirement_delivery(self):
+        self._registered_handoffs.invalidate()
         unsubscribe, self._retirement_unsubscribe = self._retirement_unsubscribe, None
         if unsubscribe is not None:
             unsubscribe()
@@ -202,6 +218,8 @@ class NativePairEnrollment:
                 except (SurfacePushError, PersistenceError):
                     pass
             await journal.deliver(transport, guard=guard, deadline=deadline)
+            if self._installation is not None:
+                await self._installation.prune(guard=guard)
         except (SurfacePushError, PersistenceError):
             # The exact event remains on disk for the next scheduled attempt.
             pass
@@ -219,6 +237,8 @@ class NativePairEnrollment:
         return token
 
     async def credential(self, pair):
+        if self._installation is not None:
+            return await self._installation.credential(pair)
         await _durable_pair(pair)
         token = await self.read_selected_install(pair, _install_store(pair), self.install_binding(pair))
         require(token is not None, "native_install_credential_unavailable", 503)
@@ -228,6 +248,9 @@ class NativePairEnrollment:
         """Provision an origin-bound credential after the ordinary pair settles."""
         pair = capture_pair(self.hass, headers, device_id=device_id, client_type=client_type)
         require(client_type == "ios", "native_platform_unavailable", 503)
+        if self._installation is not None:
+            await self.credential(pair)  # Actual existing metadata, no provisioning/key effect.
+            return {"contract_version": 1, "ready": True}
         deadline = self.monotonic() + 10
 
         def guard():
@@ -312,6 +335,11 @@ class NativePairEnrollment:
         require(binding not in self.consent_writes, "native_widget_consent_pending", 409)
         self.consent_writes.add(binding)
         self.consent_fences.pop(binding, None)
+        self._registered_handoffs.withdraw_pair(pair.registration)
+        surface = self.hass.data.get("djconnect", {}).get("surface_push_service")
+        pool = getattr(surface, "_native_widget_preparation", None)
+        if pool is not None:
+            pool.fence_pair(pair.registration)
         try:
             result = await write_widget_consent(
                 pair, enabled=enabled, operation_id=operation_id, expected_revision=expected_revision)
@@ -321,6 +349,8 @@ class NativePairEnrollment:
             self.consent_writes.remove(binding)
 
     def guard(self, pair, authority, deadline, consent_current):
+        if self._installation is not None:
+            self._installation.selected()
         require(self.hass.data.get("djconnect", {}).get(KEY) is self
                 and self.monotonic() < deadline and pair.current()
                 and consent_current() and authority.current() and pair.current(), "native_pair_changed", 403)
@@ -336,7 +366,7 @@ class NativePairEnrollment:
             expiry = min(expiry, nonce_expiry)
         require(now_ms < expiry, "native_pair_changed", 403)
         currentness = {
-            "contract_version": 1, "api_audience": _AUDIENCE, "action": action,
+            "contract_version": 1, "api_audience": self.api_audience, "action": action,
             "decision_id": str(uuid.uuid4()), "install_credential_id": credential_id,
             "operation_id": body["operation_id"], **bindings,
             "request_sha256": hashlib.sha256(canonical(body).encode("utf-8")).hexdigest(),
@@ -397,7 +427,7 @@ class NativePairEnrollment:
             publication = {**request, "install_credential_id": credential_id,
                            "request_expires_at_ms": int(self.wall() * 1000) + 120_000}
             await journal.stage(pair, self.transport.origin, {
-                **publication, "api_audience": _AUDIENCE, "event_id": operation,
+                **publication, "api_audience": self.api_audience, "event_id": operation,
             }, consent, self.publisher.origin, current)
             guard()
             await self.publisher.publish("operation", {**publication, "consent_revision": consent.revision},
@@ -411,7 +441,7 @@ class NativePairEnrollment:
             expiry = challenge.get("expires_at_ms")
             require(set(challenge) == set(_CHALLENGE)
                     and type(challenge["contract_version"]) is int and challenge["contract_version"] == 1
-                    and challenge["api_audience"] == _AUDIENCE and challenge["operation_id"] == operation
+                    and challenge["api_audience"] == self.api_audience and challenge["operation_id"] == operation
                     and challenge["install_credential_id"] == credential_id
                     and type(challenge["expected_key_revision"]) is int and challenge["expected_key_revision"] == 0
                     and all(_matches(_IDENTIFIER, challenge[key]) for key in _CHALLENGE[3:6])
@@ -421,7 +451,7 @@ class NativePairEnrollment:
             require(self.pending.get(device_id) is reservation, "native_pair_changed", 403)
             deadline = min(deadline, self.monotonic() + (expiry - now_ms) / 1000)
             statement = canonical([
-                "djc-native-pair-witness/1", _AUDIENCE, "POST", "/v1/push/native/key/register",
+                "djc-native-pair-witness/1", self.api_audience, "POST", "/v1/push/native/key/register",
                 "widget-first-key", *(challenge[key] for key in _CHALLENGE[2:]),
                 *(bindings[key] for key in _BINDINGS),
             ]).encode()
@@ -452,12 +482,18 @@ class NativePairEnrollment:
         require(credential == original.credential, "native_install_credential_changed", 403)
         return token
 
+    async def take_registered_enrollment(self, operation_id):
+        """Internal once-only custody handoff; no HTTP route or widget permission."""
+        return await self._registered_handoffs.take(operation_id)
+
     async def register(self, headers, *, device_id, client_type, operation_id, apple_proof):
         deadline, original = self.original(headers, device_id, client_type, operation_id, recoverable=False)
         _validate_attestation(apple_proof)
         reservation = (deadline, None)
         self.pending[device_id] = reservation
+        attempt = None
         try:
+            attempt = self._registered_handoffs.begin(original, deadline, reservation)
             token = await self.original_credential(original)
             guard = partial(self.guard, original.pair, original.authority, deadline, original.consent_current)
             guard()
@@ -470,8 +506,18 @@ class NativePairEnrollment:
                     guard=guard, deadline=deadline, operation_expiry=original.challenge["expires_at_ms"])
                 guard()
                 receipt = original.receipt(reply.body)
+                self._registered_handoffs.publish(attempt, receipt)
                 original.recoverable = True
                 self.pending[device_id] = (deadline, original)
+                if self._installation is not None:
+                    from .native_widget_preparation import accept_registered_winner
+                    from .transport_operations import OperationError
+                    try:
+                        await accept_registered_winner(self, operation_id, headers)
+                    except (SurfacePushError, OperationError):
+                        # The actual first key is registered. A missing/unknown
+                        # separate role never converts status into a new winner.
+                        pass
                 return receipt
             except (asyncio.CancelledError, SurfacePushError) as error:
                 if isinstance(error, asyncio.CancelledError) or error.status == 502:
@@ -484,6 +530,7 @@ class NativePairEnrollment:
                         self.pending[device_id] = (deadline, original)
                 raise
         finally:
+            self._registered_handoffs.abort(attempt)
             if self.pending.get(device_id) is reservation:
                 del self.pending[device_id]
 
@@ -520,7 +567,7 @@ class NativePairEnrollment:
             keys = ("operation_id", "api_installation_id", "install_credential_id", "pairing_generation",
                     "core_key_thumbprint", "transcript_sha256", "expires_at_ms", *nonce_fields)
             statement = canonical([
-                "djc-native-first-key-status/1", _AUDIENCE, "POST", "/v1/push/native/key/status",
+                "djc-native-first-key-status/1", self.api_audience, "POST", "/v1/push/native/key/status",
                 "widget-first-key", *(status_challenge[key] for key in keys),
             ]).encode()
             token = await self.original_credential(original)

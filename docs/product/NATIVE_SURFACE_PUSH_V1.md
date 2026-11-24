@@ -1,5 +1,61 @@
 # Native surface push V1 — source preparation
 
+## Selected Watch consumers — 23 November 2026
+
+The current user scope explicitly includes both Watch Moments notifications and
+Watch Smart Stack refreshes. These are independent consumers. Smart Stack uses
+the existing `watch_smart_stack` enrollment channel, surface token role `widget`,
+platform `watchos`, extension `dev.djconnect.ios.watch.complications`, and widget
+kind `DJConnectComplication`. Migration aliases do not enlarge the enrolled
+target. It receives only the existing content-free `widget_reload` signal;
+authorized content is read by the extension through the existing v4 background
+read contract and original v3 native clock mapping. No iPhone Activity token or
+iPhone cache supplies Watch authority or a replacement clock. An explicit Watch
+task-owner adapter may support this existing platform, but requires the same
+original Watch pairing, per-channel consent, issuer purpose, target digest,
+read grant and original native clock qualification before becoming available.
+
+Watch Moments retains its existing `watch.moment.notifications.v1` preference
+and `djc-watch-moment/1` transport. A current original Moment locator opens that
+exact Moment full screen; dismissing returns to the Watch main screen. It is
+not permission for a Smart Stack registration, and Smart Stack consent is not
+permission for alerts. Disabling either consumer fences its own pending work
+before remote withdrawal and leaves independently selected channels eligible.
+Unknown, revoked, expired or wrong-session locators never open a latest-Moment
+substitute. Neither this selection nor source tests establishes APNs acceptance
+or physical Watch rendering.
+
+## Automatic Core key custody selection — 23 November 2026
+
+The requested production-equivalent enrollment must not depend on an operator
+secret file or a hand-created positive witness. A concrete installation-owned
+custodian may load the original private Core signing/binding keys from HA's
+private atomic store, or create them once for a genuinely new installation
+following an authenticated paired-device channel opt-in. Creating actual key
+material is distinct from inventing an enrolled identity: an absent/unknown API
+registration or delegation remains unavailable until its genuine verified ACK.
+No key/reference from a test, old receipt or another installation is admitted.
+
+Select the custodian only from the actual loaded installation credential/origin,
+original durable pair, device/Profile/consent generations and current source.
+Startup may wire a dormant service but performs no key or SDK operation merely
+because a client is paired. Key creation records its original once-only durable
+claim before generation/publication and never regenerates after an ambiguous
+outcome. Preserve the same original key on retry/status; malformed custody,
+installation/credential mismatch or missing original operation requires normal
+recovery, not a replacement identity or an operator-file fallback. Private keys
+stay in the owning HA service/store, never wire, logs or evidence.
+
+The actual first-key/role/challenge/verification/registration chain remains
+mandatory. A sealed winning registration ACK can carry its original custody
+into the existing issuer lifecycle, but a separately current widget delegation,
+channel target and field policy are still required by `WidgetIssuerOwner`.
+Binding dialects are recomputed from their own original contract and real owner
+objects; matching or copied hashes do not establish equivalence. Until the real
+native and API decisions succeed, registration and provider dispatch stay closed.
+This selects implementation of genuine missing production custody, not a waiver
+of any gate or an assertion that positive enrollment already exists.
+
 ## Automatic enrollment for Apple push
 
 Validate the same enrollment flow on HA-dev that a new production installation
@@ -235,3 +291,36 @@ normalizes conflicting fields into readiness or triggers another send.
 `examples/client_contracts/surface_push_v1/actual-ha-wire.json` retains actual HA2026.10.0 HTTP request JSON and response bodies from the disposable producer harness, with exact product/harness and original RAW hashes. It covers unavailable/no-purpose context, registration winner and replay, generation-preserving revision+1 rotation, separate background reads, status, revoke and unknown-outcome replay. HEAD is status/header-only. Synthetic issuer/API boundaries are explicit. Fixture credentials and captured original timestamps are test data, never enrollment, a fresh lease or native delivery evidence. Do not replace original timestamps or mint a grant from this fixture.
 
 Rotation retains the registration ID, generation and original expiry; only revision increments by exactly one. The `djcsurface_` read credential is separate from paired app authentication and issuer `djcs_` mutation authority. Unknown outcomes do not return a read credential or authorize a new operation retry.
+
+## Ordinary device Widget consent and first-key entry — 23 November 2026
+
+The ordinary Widgets settings entry is selected to use the existing paired Core
+widget-consent operation, rather than retaining the debug trial as its only
+writer. An explicit per-device Widgets choice supplies user intent only. The
+client must read the current authoritative consent revision, submit one original
+operation ID against that revision, and independently read back the matching
+committed consent before attempting ordinary first-key enrollment. A local
+UserDefaults flag or historical local-only choice is not SQLite consent, an
+issuer purpose, a native clock permission or a push grant.
+
+The ordinary enrollment helper consumes the actual authenticated production
+challenge's strict audience and original context; it must not substitute the old
+HA-dev audience, operator credential file or a trial argument. Only the genuine
+App Attest/key proof and matching original Core/API registration acknowledgement
+can complete enrollment. Failed or ambiguous consent/registration remains closed;
+replay uses its original operation and deadline. Withdrawal uses the same actual
+paired consent owner and its own confirmed operation, immediately closes the
+local channel, and preserves required remote cleanup until independently
+confirmed. Reenabling is a new explicit consent transition, not restored authority
+from the previous local preference.
+
+This selection promotes only the already existing Widget consent/first-key
+entry. Live Activities, Moments alerts and Watch Smart Stack retain separate
+per-device/channel consent, original issuer and native-platform qualification.
+Widget consent or first-key acknowledgement grants none of those rights. The
+original sealed purpose, pre-I/O clock capture, independently qualified clock
+mapping, source expiry, per-target policy and original read lifetime still need
+real producers; ordinary UI enrollment does not manufacture them. The owning
+Apple implementation must test conflict, lost reply, withdrawal during each await,
+context/pair/Profile changes and independent-readback mismatch, without extra
+provider effects or positive restoration from a persisted local boolean.

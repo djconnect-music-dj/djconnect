@@ -24,6 +24,11 @@ async def play_from_intent(
     intent: dict[str, Any],
     conf: dict[str, Any],
 ) -> dict[str, Any]:
+    if str(intent.get("type") or "search").lower() in {"search", "music"} and not any(
+            intent.get(key) for key in ("title", "track", "artist", "album", "playlist")):
+        parsed = parse_spoken_music_request(intent.get("spotify_search_query") or intent.get("query") or "")
+        if parsed.get("album"):
+            intent = {**intent, **parsed}
     source = (conf.get(CONF_SPOTIFY_SOURCE) or "").strip()
     if source:
         await run_music_command(hass, runtime, "set_output", source, play=False)
@@ -39,6 +44,9 @@ async def play_from_intent(
     value: Any = media_content_id
     if command == "play" and not media_content_id.startswith("spotify:"):
         value = {"query": media_content_id, "type": media_content_type}
+        if media_content_type == "track" and intent.get("album"):
+            value["constraints"] = {"title": intent.get("title") or intent.get("track"),
+                                    "artist": intent.get("artist"), "album": intent["album"]}
     if command == "play_artist_top_tracks":
         value = {"query": media_content_id}
     response = await run_music_command(

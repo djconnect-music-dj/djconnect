@@ -20,7 +20,7 @@ def sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
-def validate(plan, previous_validator):
+def validate(plan, previous_validator, *, historical_product=False):
     delta = plan['planning_maintenance']
     receipt = delta.get('ha_invitation_finalization_receipt', {})
     errors = []
@@ -84,4 +84,7 @@ def validate(plan, previous_validator):
           'actual published full product inventory')
     previous = dict(plan)
     previous['planning_maintenance'] = restored
+    if historical_product:
+        from ha_guest_invitation_delta import validate as source
+        return errors + source(previous, previous_validator, historical_product=True)
     return errors + previous_validator(previous)

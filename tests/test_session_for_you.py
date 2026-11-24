@@ -8,11 +8,18 @@ from tests import test_session_first_play as fixtures
 
 class ForYouTests(IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        await fixtures.FirstPlayTests.asyncSetUp(self)
-        # Other module fixtures reload Session authority. Bind the preparation
-        # service to this test's current real dialogue/authority modules too.
         import importlib
-        importlib.reload(importlib.import_module('custom_components.djconnect.ask_dj.service'))
+        service = importlib.import_module('custom_components.djconnect.ask_dj.service')
+        original_namespace = vars(service).copy()
+        def restore_service():
+            vars(service).clear()
+            vars(service).update(original_namespace)
+        # The fixture reloads synthetic Runtime authority. Restore the entire
+        # original service namespace even when setup fails, so no temporary
+        # imported owner/commit functions leak into later history suites.
+        self.addCleanup(restore_service)
+        await fixtures.FirstPlayTests.asyncSetUp(self)
+        importlib.reload(service)
     new_session = fixtures.FirstPlayTests.new_session
     new_turn = fixtures.FirstPlayTests.new_turn
     offer = fixtures.FirstPlayTests.offer

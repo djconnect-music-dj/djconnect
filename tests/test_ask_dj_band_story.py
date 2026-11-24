@@ -281,11 +281,11 @@ class BandStoryActualHAEvidenceTests(unittest.TestCase):
         import hashlib
         root = Path(__file__).resolve().parents[1]
         proof = json.loads((root / "examples/client_contracts/band_members_story_v1/actual-ha-current-live-impression-20261119-requested-moments-20261120.json").read_text())
-        current = json.loads((root / 'examples/client_contracts/band_members_story_v1/ha-guest-invitation-20261123-ha-shared-guest-20261123-f11786c5.json').read_text())
+        current = json.loads((root / 'examples/client_contracts/band_members_story_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--f3e2df18.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
         self.assertEqual(current['harness'], proof['harness'])
         self.assertEqual(current['harness_sha256'], proof['harness_sha256'])
-        self.assertEqual(len(current['source_pins']), 343)
+        self.assertEqual(len(current['source_pins']), 356)
         for name, digest in {**current['source_pins'],
                 proof["harness"]: proof["harness_sha256"]}.items():
             self.assertEqual(hashlib.sha256((root / name).read_bytes()).hexdigest(), digest, name)

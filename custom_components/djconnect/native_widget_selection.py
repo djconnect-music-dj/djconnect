@@ -54,28 +54,8 @@ class WidgetEnrollmentSelection:
         return r.to_bytes(32, "big") + s.to_bytes(32, "big")
 
     async def capture(self, pair, *, channel):
-        from .domain.storage import STORE_KEY, STORE_VERSION, household_to_storage
-        from .profile_observation import capture_source_committed
-        from .profile_privacy import resolve_profile_privacy_policy
-
-        require(channel == "widgetkit" and pair.current(), "native_pair_changed", 403)
-        snapshot = capture_source_committed(pair.hass)
-        require(snapshot is not None, "native_widget_owner_unavailable", 503)
+        snapshot, device, profile = await capture_widget_owner(pair, channel=channel)
         device_id, client_type = pair.coordinates[:2]
-        device = snapshot.household.devices.get(device_id)
-        require(device is not None and device.client_type == client_type
-                and str(device.pairing_state) == "paired"
-                and re.fullmatch(r"[0-9a-f]{32}", device.binding_generation or ""),
-                "native_widget_owner_unavailable", 403)
-        profile = snapshot.household.profiles.get(device.linked_profile_id)
-        require(profile is not None and str(profile.state) == "active"
-                and str(profile.privacy_mode) == "normal"
-                and resolve_profile_privacy_policy(profile, {}).allow_personal_read,
-                "native_widget_owner_unavailable", 403)
-        saved = await pair.hass.async_add_executor_job(
-            _matches_storage, snapshot.original.store.path, STORE_KEY, STORE_VERSION,
-            household_to_storage(snapshot.household))
-        require(saved and snapshot.current() and pair.current(), "native_widget_owner_unavailable", 503)
         acknowledgement = pair.acknowledgement
         common = (acknowledgement.instance_id, acknowledgement.auth_generation)
         preimages = {
@@ -87,3 +67,29 @@ class WidgetEnrollmentSelection:
         bindings = {field: hmac.digest(self._binding_key, json.dumps(values, ensure_ascii=True, separators=(",", ":")).encode("ascii"), "sha256").hex()
                     for field, values in preimages.items()}
         return WidgetEnrollmentAuthority(snapshot, bindings, self._spki, self._sign)
+
+
+async def capture_widget_owner(pair, *, channel):
+    from .domain.storage import STORE_KEY, STORE_VERSION, household_to_storage
+    from .profile_observation import capture_source_committed
+    from .profile_privacy import resolve_profile_privacy_policy
+
+    require(channel == "widgetkit" and pair.current(), "native_pair_changed", 403)
+    snapshot = capture_source_committed(pair.hass)
+    require(snapshot is not None, "native_widget_owner_unavailable", 503)
+    device_id, client_type = pair.coordinates[:2]
+    device = snapshot.household.devices.get(device_id)
+    require(device is not None and device.client_type == client_type
+            and str(device.pairing_state) == "paired"
+            and re.fullmatch(r"[0-9a-f]{32}", device.binding_generation or ""),
+            "native_widget_owner_unavailable", 403)
+    profile = snapshot.household.profiles.get(device.linked_profile_id)
+    require(profile is not None and str(profile.state) == "active"
+            and str(profile.privacy_mode) == "normal"
+            and resolve_profile_privacy_policy(profile, {}).allow_personal_read,
+            "native_widget_owner_unavailable", 403)
+    saved = await pair.hass.async_add_executor_job(
+        _matches_storage, snapshot.original.store.path, STORE_KEY, STORE_VERSION,
+        household_to_storage(snapshot.household))
+    require(saved and snapshot.current() and pair.current(), "native_widget_owner_unavailable", 503)
+    return snapshot, device, profile

@@ -1393,6 +1393,13 @@ def classify_conversation_turn(
             _conversational_response_text(normalized),
         )
     if _is_clarification_or_correction(normalized):
+        from .dialogue import current_turn
+        from .exploration import captured_age_pending
+        turn = current_turn.get()
+        if turn is not None and captured_age_pending(turn) is not None:
+            # This is an actual pending choice, not a rewrite of the previous
+            # question. The ordinary semantic read keeps this reply verbatim.
+            return AskDjConversationTurn(_conversation_kind_for_intent(text), text)
         merged = _merge_with_previous_user_request(text, memory_context)
         return AskDjConversationTurn("clarification_or_correction", merged)
     return AskDjConversationTurn(_conversation_kind_for_intent(text), text)
@@ -1472,6 +1479,8 @@ def _contextualize_play_request_from_recent_actions(
     ):
         return text
     parsed = parse_spoken_music_request(text)
+    if parsed.get("album"):
+        return text  # A recent result cannot replace explicit recording constraints.
     query = str(parsed.get("query") or "").strip()
     if not query:
         query = _play_request_title_candidate(text)
@@ -2169,6 +2178,13 @@ async def _handle_hybrid(
 ) -> dict[str, Any]:
     if not classification.play:
         return await _deferred_playback_request_response(hass, runtime, text)
+    from .dialogue import current_turn
+    from .recording_output import prepare, current_inventory
+    text, output_response = await prepare(hass, runtime, text, payload, classification,
+        inventory=current_inventory, offer=_playback_output_selection_response,
+        turn=current_turn.get())
+    if output_response is not None:
+        return output_response
     try:
         result = await run_text_command(
             hass,
@@ -2222,9 +2238,10 @@ async def _playback_output_selection_response(
     text: str,
     payload: dict[str, Any],
     classification: AskDjIntent,
-    *, selection=None,
+    *, selection=None, devices=None,
 ) -> dict[str, Any]:
-    devices = await _available_output_devices(hass, runtime)
+    if devices is None:
+        devices = await _available_output_devices(hass, runtime)
     actions = _output_device_play_request_actions(devices, text, payload, selection=selection)
     if not actions:
         return {}
@@ -2275,7 +2292,9 @@ async def _deferred_playback_request_response(
             hass,
             runtime,
             "search_media",
-            {"query": query, "type": media_type},
+            {"query": query, "type": media_type,
+             **({"constraints":{key:parsed.get(key) for key in ("title","artist","album")}}
+                if parsed.get("album") else {})},
         )
     except Exception as exc:  # noqa: BLE001
         _LOGGER.debug("DJConnect deferred playback search failed: %s", exc)
@@ -3116,10 +3135,12 @@ async def _group_inception_research_response(
     from .exploration import band_age_question
 
     original_group_sources = tuple(fetched_sources)
+    original_group_research = json.loads(json.dumps(turn.public_research, ensure_ascii=False))
     group_language = turn.style.get("language", "en")
+    age_target = turn.public_age_target
     group_answer = (
         group_inception_answer(original_group_sources, subject, group_language)
-        if band_age_question(turn.public_research, group_language, question=text)
+        if band_age_question(original_group_research, group_language, question=text, age_target=age_target)
         is None
         else None
     )
@@ -3127,7 +3148,8 @@ async def _group_inception_research_response(
 
         def original_group_date_delivery_guard():
             if (
-                group_inception_answer(original_group_sources, subject, group_language)
+                (None if band_age_question(original_group_research, group_language, question=text, age_target=age_target)
+                 is not None else group_inception_answer(original_group_sources, subject, group_language))
                 != group_answer
             ):
                 raise DialogueError("conversation_context_changed", 409)
@@ -3246,21 +3268,24 @@ async def _current_events_research_response(
 async def _group_age_research_response(
     fetched_sources, turn, text, research_state, DialogueError
 ):
-    from .exploration import band_age_question
+    from .exploration import band_age_question, stage_age_pending
 
     original_research = json.loads(json.dumps(turn.public_research, ensure_ascii=False))
     language = turn.style.get("language", "en")
-    question = band_age_question(original_research, language, question=text)
+    age_target = turn.public_age_target
+    question = band_age_question(original_research, language, question=text, age_target=age_target)
     if question is not None:
 
         def original_group_evidence():
             if (
-                band_age_question(original_research, language, question=text)
+                band_age_question(original_research, language, question=text, age_target=age_target)
                 != question
             ):
                 raise DialogueError("conversation_context_changed", 409)
 
         turn.delivery_validators.append(original_group_evidence)
+        stage_age_pending(turn, original_research.get("resolved_public_subject"), text,
+                          person=age_target == "person_age")
         await turn.guard()
         return _core_answer(
             question,
@@ -3476,7 +3501,7 @@ class _InformationalResearchPreparation:
             )
             if response is not _NO_INFORMATIONAL_RESEARCH_RESPONSE:
                 return response
-        if self.public_research.direct_question(self.text)[0] == "age":
+        if self.research_angle == "age" or self.public_research.direct_question(self.text)[0] == "age":
             response = await _person_age_research_response(
                 self.fetched_sources, self.subject, self.turn, self.error_type
             )

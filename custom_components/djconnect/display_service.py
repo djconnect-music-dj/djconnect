@@ -151,8 +151,11 @@ class DisplayAdmissionService:
             if active and share.owner.session_id == active.session_id
             and share.deadline > state._clock() and share.owner.valid()), None)
         if share:
+            record = state.participation._policies.get(share.share_id)
             return {'share_id': share.share_id, 'share_generation': share.generation,
-                    'expires_in': max(0, share.deadline - state._clock())}
+                    'expires_in': max(0, share.deadline - state._clock()),
+                    'live': bool(record and record.policy.information), 'language': share.locale,
+                    'view': {'mode': share.view_mode}}
         return {}
 
     def _owner_context(self, state, owner, selected):
@@ -183,7 +186,7 @@ class DisplayAdmissionService:
                              for display_id, share_id, generation in live_displays],
             },
             "limits": {"claim_seconds": 120, "lease_seconds": 60,
-                       "share_seconds_default": 7200, "displays_per_share": MAX_PER_PROFILE_SESSION}}
+                       "share_seconds_default": 14400, "displays_per_share": MAX_PER_PROFILE_SESSION}}
         result.update(self._active_share_context(state, active))
         return _ActionOutcome(result, guard=guard)
 
@@ -280,7 +283,7 @@ class DisplayAdmissionService:
                 raise DisplayAdmissionError("display_artwork_unavailable", 404)
             snapshot = shared_snapshot(active, display, state)
             if not any(item.get("artwork", {}).get("reference") == reference
-                       for item in snapshot["shared_flow"]):
+                       for item in [*snapshot["shared_flow"], *snapshot.get('observed_playback', [])]):
                 raise DisplayAdmissionError("display_artwork_unavailable", 404)
             flow_guard = projection_release_guard(active, display, state, snapshot)
         asset = found[1]

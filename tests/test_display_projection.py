@@ -71,6 +71,10 @@ class DisplayProjectionTests(unittest.TestCase):
         self.assertEqual(set(card), {"valid_until", "sections"})
         self.assertEqual(card["valid_until"], forecast.value["valid_until"])
         self.assertTrue(all(set(section) == {"title", "text"} for section in card["sections"]))
+        # The track already has its own now-playing surface. Horizon is the
+        # forward-looking guidance, never another copy of that same track.
+        self.assertEqual(len(card["sections"]), 1)
+        self.assertNotEqual(card["sections"][0]["text"], forecast.value["sections"][0]["text"])
         self.assertNotIn("owner.invalid", json.dumps(card))
         guard = self.projection.projection_release_guard(self.session, self.display, self.state, snapshot)
         with patch("time.monotonic", return_value=101):

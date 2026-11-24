@@ -653,6 +653,7 @@ def _local_music_intent(user_text: str) -> dict[str, Any]:
         "type": media_type,
         "artist": parsed.get("artist"),
         "title": parsed.get("title"),
+        **({"album": parsed["album"]} if parsed.get("album") else {}),
         "playlist": parsed.get("playlist"),
         "query": query,
         "spotify_search_query": query,

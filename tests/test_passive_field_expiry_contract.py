@@ -9,9 +9,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class PassiveFieldExpiryContractTests(unittest.TestCase):
     def test_actual_original_frame_survives_only_shorter_field_expiry(self):
-        wire = json.loads((ROOT / 'examples/client_contracts/passive_field_expiry_v1/ha-guest-invitation-20261123-ha-shared-guest-20261123-f09f584d.json').read_text())
+        wire = json.loads((ROOT / 'examples/client_contracts/passive_field_expiry_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--e134530a.json').read_text())
         self.assertTrue(wire['source_before_after_equal'])
-        self.assertEqual(len(wire['source_pins']), 343)
+        self.assertEqual(len(wire['source_pins']), 356)
         for name, digest in {**wire['source_pins'], **wire['harness_pins']}.items():
             self.assertEqual(hashlib.sha256((ROOT / name).read_bytes()).hexdigest(), digest, name)
         r = wire['receipt']
