@@ -199,12 +199,12 @@ class CanvasDomainTests(unittest.TestCase):
         import hashlib
         import json
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/canvas-admin-20261124-actual-ha.json").read_text())
+        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/local-art-20261124-actual-ha.json").read_text())
         self.assertEqual(len(proof["source_pins"]), 359)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), expected, name)
         self.assertTrue(proof["source_before_after_equal"])
-        matrix = json.loads((root/"docs/verification/music-canvas-admin-actual-ha-matrix-20261124.json").read_text())
+        matrix = json.loads((root/"docs/verification/music-canvas-local-art-actual-ha-matrix-20261124.json").read_text())
         self.assertEqual(matrix["source_pins"], proof["source_pins"])
         self.assertTrue(matrix["source_before_after_equal"])
         self.assertEqual(len(matrix["results"]), 54)
@@ -214,6 +214,7 @@ class CanvasDomainTests(unittest.TestCase):
         actual = proof["receipt"]["extension"]
         for field in ("actual_sqlite", "paired_tls", "native_switchbot_schema",
                       "ha_admin_pairs_exact_registered_samsung_without_profile_authority_change",
+                      "tokenless_art_registration_pins_tls_and_requires_loaded_entry",
                       "samsung_upload_select_separate", "samsung_off_no_upload",
                       "shared_samsung_generation", "matte_reuses_source",
                       "cross_profile_preview_denied", "offline_target_isolated",
