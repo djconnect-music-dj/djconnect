@@ -181,3 +181,32 @@ value is returned as `view.dynamics` and projected to the TV and joined guests.
 Omitting the field preserves the previous acknowledged value, initially 0.5.
 This is temporary share presentation state, not a Profile or musical preference.
 Guest-local dynamics changes remain local and never call this owner route.
+
+## Native legacy Google Cast owner lifecycle — 24 November 2026
+
+The selected iOS sender uses the real Google Cast SDK and the existing
+`POST /session/broadcast/token` owner-read route. At an explicit connect action,
+capture the actual paired origin/install/device/token, authorized Profile and
+active Session once. Validate that same original capture around the one token
+read and the original SDK launch/channel handoff. A device name, Bonjour match,
+old status DTO or historical receiver app ID alone is no owned connection.
+
+Scene background or UI-history suspension stops discovery/status observation
+and fences their callbacks, but sends no Cast-stop for an already explicitly
+handed-off readonly TV view. Retain only its exact owned SDK session/channel
+as an optional withdrawal handle. Do not refresh its status lease, request a
+new token or send another handoff while suspended. Foreground status remains
+unconfirmed until fresh original owner validation; a new handoff requires an
+explicit connect intent and its own single current token read. No old15-second
+status observation is revived by a timer or reconnection.
+
+Explicit Stop and actual pairing, origin, token, Profile or Session withdrawal
+may revoke only that original owned handoff. A late launch callback cannot stop
+an unrelated successor or a pre-existing session. The real receiver App ID and
+current published registration remain separately qualified inputs.
+
+This legacy `view_broadcast` token conveys no A/B display/share admission,
+four-hour Live share, guest QR or owner-control grant. Current native guest and
+Live display content continue to use their existing independently owned share
+contracts. A future legacy-CAF/Live bridge needs an explicit Core projection
+and original share binding; this lifecycle selection does not manufacture it.

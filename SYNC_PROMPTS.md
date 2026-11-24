@@ -8197,3 +8197,12 @@ apple_evidence_expires_at_ms and apple_status_expires_at_ms from the exact
 original AppleEvidence, stored atomically with its native ACK. Preserve both in
 the sealed original Core receipt and choose the role policy minimum before
 signing; no post-signature clamp, inferred key lifetime or HA-dev wire change.
+# Native legacy Cast lifecycle selection — 24 November 2026
+
+Implement the real iOS SDK/owner-token handoff selected in
+`docs/product/VIBECAST_NATIVE_GUEST_UI_V1.md`: one original explicit connect,
+one existing authenticated `POST /session/broadcast/token`, retained real
+pair/Profile/Session and exact SDK-session/channel identity. Background detaches
+observation without Cast-stop or authority/status renewal. New handoff requires
+fresh original owner validation and explicit intent; real withdrawal/Stop targets
+only the owned original. No Live-share/QR/4h privilege follows from legacy token.
