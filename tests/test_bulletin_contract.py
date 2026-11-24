@@ -12,7 +12,7 @@ class BulletinWireContractTests(unittest.TestCase):
         wire = json.loads((ROOT / "examples/client_contracts/dj_bulletin_v1/actual-ha-wire-live-impression-20261119-requested-moments-20261120.json").read_text())
         self.assertEqual(wire["schema_version"], 1)
         self.assertEqual(wire["ha_sdk_version"], "2026.10.0")
-        current = json.loads((ROOT / 'examples/client_contracts/dj_bulletin_v1/vibecast-live-tv-layout-20261124-20261124-0261124-61124-59d2b732.json').read_text())
+        current = json.loads((ROOT / 'examples/client_contracts/dj_bulletin_v1/canvas-recover-upload-20261124-20261124-0261124-61124-59d2b732.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
         self.assertEqual(len(current['source_pins']), 359)
         self.assertEqual(hashlib.sha256((ROOT / current['harness']).read_bytes()).hexdigest(), current['harness_sha256'])

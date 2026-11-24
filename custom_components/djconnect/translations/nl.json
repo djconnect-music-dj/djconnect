@@ -345,7 +345,11 @@
           "device_id": "Samsung-tv",
           "width": "Breedte in pixels",
           "height": "Hoogte in pixels",
-          "orientation": "Oriëntatie"
+          "orientation": "Oriëntatie",
+          "recover_pending_upload": "Hervat na een onbevestigde upload"
+        },
+        "data_description": {
+          "recover_pending_upload": "Gebruik dit na een vastgelopen upload. Bestaande kunst blijft op de tv. Laat breedte, hoogte en oriëntatie leeg."
         }
       },
       "init": {
@@ -1851,6 +1855,10 @@
         "orientation": {
           "name": "Schermoriëntatie",
           "description": "Kies de schermoriëntatie als Music Canvas die nog niet kent."
+        },
+        "recover_pending_upload": {
+          "name": "Hervat na een onbevestigde upload",
+          "description": "Gebruik dit na een vastgelopen upload. Bestaande kunst blijft op de tv. Laat breedte, hoogte en oriëntatie leeg."
         }
       }
     },

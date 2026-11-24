@@ -409,6 +409,7 @@ async def qualify(hass, manager, history, request, client):
 
             def get_artmode(self): return "on"
             def get_current(self): return {"content_id": "fixture-current-art"}
+            def open(self): pass
             def close(self): pass
 
         def registry_remote(host, **kwargs):
@@ -463,6 +464,24 @@ async def qualify(hass, manager, history, request, client):
                 assert rejected["errors"]["base"] == "canvas_samsung_setup_failed" and not setup_calls
                 result = await flow.async_step_music_canvas_samsung(setup_data)
                 assert result["reason"] == "canvas_samsung_setup_complete"
+                await runtime.repository.mutate(
+                    lambda canvas: canvas["devices"][setup_target["id"]].update(
+                        upload_pending=True, owned_content=["fixture-prior-owned-art"]),
+                    lambda: True,
+                )
+                recover = {"device_id": "tv-fixture", "recover_pending_upload": True}
+                rejected = await flow.async_step_music_canvas_samsung({**recover, "width": 3840})
+                assert rejected["errors"]["base"] == "canvas_samsung_setup_failed"
+                before_recovery = await runtime.repository.read()
+                assert before_recovery["devices"][setup_target["id"]]["upload_pending"]
+                result = await flow.async_step_music_canvas_samsung(recover)
+                assert result["reason"] == "canvas_samsung_setup_complete"
+                after_recovery = await runtime.repository.read()
+                assert not after_recovery["devices"][setup_target["id"]]["upload_pending"]
+                assert after_recovery["devices"][setup_target["id"]]["owned_content"] == ["fixture-prior-owned-art"]
+                assert after_recovery["profiles"] == before_recovery["profiles"]
+                assert any(item["result"].get("previous_upload_unverified")
+                           for item in after_recovery["operations"].values())
             finally:
                 current_request.reset(request_token)
         assert setup_calls == ["pair"] and owner.id not in storage.household.shared.ha_user_profile_ids
@@ -614,6 +633,7 @@ async def qualify(hass, manager, history, request, client):
             "ha_admin_pairs_exact_registered_samsung_without_profile_authority_change": True,
             "tokenless_art_registration_pins_tls_and_requires_loaded_entry": True,
             "ha_options_flow_pairs_registered_samsung_with_live_admin": True,
+            "ha_admin_recovers_unverified_samsung_upload_without_touching_art_or_profiles": True,
             "late_private_preview_after_forget_is_denied": True,
             "cancelled_private_save_drains_and_releases_all_references": True,
             "session_end_preserves_enabled_and_targets": True,

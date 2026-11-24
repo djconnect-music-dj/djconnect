@@ -102,11 +102,11 @@ def validate(plan, previous_validator):
     current = {str(path.relative_to(ROOT)): sha(path)
                for path in (ROOT / "custom_components/djconnect").rglob("*")
                if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"}
-    successor = ROOT / "docs/verification/vibecast-live-tv-layout-actual-ha-matrix-20261124.json"
+    successor = ROOT / "docs/verification/music-canvas-recover-upload-actual-ha-matrix-20261124.json"
     successor_matrix = json.loads(successor.read_bytes())
     successor_rows = successor_matrix["results"]
     check(current == successor_matrix["source_pins"]
-          == json.loads((ROOT / "docs/verification/vibecast-live-tv-layout-product-manifest-20261124.json").read_bytes())
+          == json.loads((ROOT / "docs/verification/music-canvas-recover-upload-product-manifest-20261124.json").read_bytes())
           and successor_matrix["source_before_after_equal"] is True
           and len(current) == 359 and len(successor_rows) == 54
           and all(row["exit_code"] == 0 and sha(ROOT / row["harness"]) == row["harness_sha256"]

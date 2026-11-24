@@ -8,7 +8,7 @@ import unittest
 class SpotifyScopeQualificationTests(unittest.TestCase):
     def test_actual_callback_configflow_refresh_and_store_bind_current_source(self):
         root=Path(__file__).resolve().parents[1]
-        proof=json.loads((root/'examples/client_contracts/spotify_scope_evidence_v1/vibecast-live-tv-layout-20261124-20261124-0261124-61124-f962cb37.json').read_text())
+        proof=json.loads((root/'examples/client_contracts/spotify_scope_evidence_v1/canvas-recover-upload-20261124-20261124-0261124-61124-f962cb37.json').read_text())
         receipt=proof['receipt']
         self.assertTrue(proof['source_before_after_equal'])
         self.assertTrue(receipt['source_unchanged'])
