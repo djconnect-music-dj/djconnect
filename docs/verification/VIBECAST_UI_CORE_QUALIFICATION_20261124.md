@@ -39,8 +39,15 @@ Current maintenance31 binds fresh 356-source results; it does not relabel old
 results. Forty-five current golden bindings and supplemental receipts are
 derived from the actual fresh logs and original same-case outputs.
 
-The whole unit run is not yet qualified: it exposed stale receipt references
-and an order-dependent history-test wait. Those findings remain open until a
-complete successful rerun. No installed Apple/HA, real Spotify, physical Cast,
-APNs, native background delivery or editorial acceptance is claimed. Installed
-HA dev was last observed on the older 322-file integration.
+The complete normal unittest discovery on `bc48f5337536d39c45b9caf475a32e4ff6732989`
+ran 5,178 tests in 217.437 seconds: no failures/errors, 11 skips. The exact local
+log digest and unchanged full product manifest are retained in
+`vibecast-ui-unit-20261124.json`. Before that result, stale 347-source references
+were rebound to fresh evidence and a causal fixture leak was repaired: the
+For-you test's temporary shared-module reload now restores its entire original
+namespace. The retained before-run failed11 cases; the combined after-run passed
+all74 For-you/history-deletion/history cases. Product guards were unchanged.
+
+No installed Apple/HA, real Spotify, physical Cast, APNs, native background
+delivery or editorial acceptance is claimed. Installed HA dev was last observed
+on the older 322-file integration.

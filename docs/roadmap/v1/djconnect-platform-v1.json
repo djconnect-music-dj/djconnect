@@ -44773,7 +44773,7 @@
       "automatic_dispatch": false,
       "consumer_writes": false,
       "document": "docs/verification/VIBECAST_UI_CORE_QUALIFICATION_20261124.md",
-      "document_sha256": "97a55dd4c4e2c1b9878b76720392f34c074647f911ffc9ca2655ee9875a9cb3e",
+      "document_sha256": "f58641a89dcd279adda83a035d5b3be802982ef9542f5e24b62a7d6c7fb6469e",
       "product_manifest_path": "docs/verification/vibecast-ui-product-manifest-20261124.json",
       "product_manifest_sha256": "1b04e3f05645d79eb8665927a52591f83397e9276a167db91104a8c76a9c91fd",
       "qualification_path": "docs/verification/vibecast-ui-qualification-20261124.json",
