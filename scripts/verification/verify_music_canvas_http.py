@@ -176,6 +176,7 @@ async def qualify(hass, manager, history, request, client):
     # Native action registration is an explicit fixture; its actual SDK schema
     # was exercised above, and physical cloud execution remains substituted.
     hass.services.async_register("switchbot_cloud", "upload_art_frame_image", lambda call: None)
+    real_samsung_action = adapters.samsung_action
     with patch.object(render, "generation_available", lambda _hass: True), \
          patch.object(render, "generate", generate), patch.object(adapters, "samsung_action", hardware), \
          patch.object(adapters, "deliver_switchbot", cloud):
@@ -395,6 +396,7 @@ async def qualify(hass, manager, history, request, client):
                    async_get=lambda key: fixture_device if key == "tv-fixture" else None)), \
              patch.object(type(hass.config_entries), "async_get_entry", lambda self, key:
                    fixture_entry if key == fixture_entry.entry_id else entry_lookup(key)), \
+             patch.object(adapters, "samsung_action", real_samsung_action), \
              patch("samsungtvws.SamsungTVWS", registry_remote):
             for fields, context, expected in (
                 (setup_data, Context(), "canvas_admin_required"),
