@@ -15,6 +15,8 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
+PRODUCT_MANIFEST = 'docs/verification/vibecast-baseline-product-manifest-20261124.json'
+PRODUCT_FILE_COUNT = 359
 sys.path.insert(0, str(ROOT))
 from tools.verification.run_help_catalogue_qualification_20261023 import (  # noqa: E402
     IMAGE, container_absent, product_hashes, profile_source_hashes as historical_profile_source_hashes, write_json,
@@ -108,8 +110,8 @@ def run(source: Path, directory: Path):
     lab = directory / 'private-synthetic-lab'
     lab.mkdir(mode=0o700)
     before = product_hashes(source)
-    manifest = json.loads((source / 'docs/verification/vibecast-ui-product-manifest-20261124.json').read_text())
-    if len(before) != 356 or before != manifest or lab.stat().st_uid != os.getuid():
+    manifest = json.loads((source / PRODUCT_MANIFEST).read_text())
+    if len(before) != PRODUCT_FILE_COUNT or before != manifest or lab.stat().st_uid != os.getuid():
         raise ValueError('preflight_source_or_owner_invalid')
     expected = profile_source_hashes(source)
     name = 'djc-help-preflight-' + secrets.token_hex(8)
