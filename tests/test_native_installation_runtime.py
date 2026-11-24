@@ -79,6 +79,9 @@ class NativeInstallationRuntimeTests(fixture.NativeInstallationCustodyTests):
                                           "install_credential_id", "expires_at_ms", "pairing_generation", "core_key_thumbprint")}
             result.update(registry_generation="synthetic-fixture-ACK", key_revision=1, state="registered",
                           transcript_sha256=hashlib.sha256(statement).hexdigest())
+            # Explicit MODEL verifier metadata, not an Apple acceptance claim.
+            result.update(apple_evidence_expires_at_ms=int(self.service.wall() * 1000) + 21_600_000,
+                          apple_status_expires_at_ms=int(self.service.wall() * 1000) + 14_400_000)
         elif path.endswith("/retire"):
             result = {"contract_version": 1, "api_audience": "djc-native-push/1", "event_id": body["event_id"],
                       "pair_binding": body["pair_binding"], "event_sha256": hashlib.sha256(canonical(body).encode()).hexdigest(),
@@ -108,6 +111,25 @@ class NativeInstallationRuntimeTests(fixture.NativeInstallationCustodyTests):
         witness = await self.service.take_registered_enrollment(operation)
         self.assertEqual(dict(witness.receipt), receipt)
         self.assertTrue(await witness.sign(b"synthetic retained production-key custody"))
+
+    async def test_old_production_receipt_without_original_apple_bounds_creates_no_witness(self):
+        await self.production()
+        original = self.service.transport._post
+        async def old_reply(origin, path, body, headers, **kwargs):
+            reply = await original(origin, path, body, headers, **kwargs)
+            if path.endswith("/key/register"):
+                reply.body.pop("apple_evidence_expires_at_ms")
+                reply.body.pop("apple_status_expires_at_ms")
+            return reply
+        self.service.transport._post = old_reply
+        status, challenge = await self.post("challenge")
+        self.assertEqual(status, 200)
+        operation = challenge["operation_id"]
+        status, reply = await self.post("register", operation_id=operation, apple_proof=self.proof())
+        self.assertEqual(status, 502)
+        self.assertEqual(reply["error"], "native_pair_receipt_invalid")
+        with self.assertRaises(SurfacePushError):
+            await self.service.take_registered_enrollment(operation)
 
     async def test_unknown_or_mismatched_resolve_cannot_create_key_or_publish(self):
         await self.production()

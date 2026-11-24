@@ -128,6 +128,13 @@ class EnrollmentOperation:
         expected.update(pairing_generation=self.bindings["pairing_generation"],
                         core_key_thumbprint=self.bindings["core_key_thumbprint"],
                         key_revision=1, transcript_sha256=self.digest, state="registered")
+        if self.challenge["api_audience"] == "djc-native-push/1":
+            # Genuine server ACK data only; the nonce expiry is NOT key lifetime.
+            for name in ("apple_evidence_expires_at_ms", "apple_status_expires_at_ms"):
+                value = body.get(name)
+                require(type(value) is int and 0 < value < 2**53,
+                        "native_pair_receipt_invalid", 502)
+                expected[name] = value
         require(set(body) == {*expected, "registry_generation"}
                 and canonical({key: body[key] for key in expected}) == canonical(expected)
                 and _matches(_IDENTIFIER, body["registry_generation"]), "native_pair_receipt_invalid", 502)

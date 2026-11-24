@@ -182,6 +182,18 @@ class NativeWidgetIssuerTests(IsolatedAsyncioTestCase):
             owner.validate_live(capture)
         owner.validate_withdrawal(capture)
 
+    async def test_role_policy_uses_original_server_bounds_before_its_real_signature(self):
+        owner, _, receipt = await self.enrol()
+        role = owner._live()
+        policy = self.role_calls[0]["delegation"]["policy"]
+        self.assertEqual(policy["original_grant_expires_at_ms"], receipt["apple_status_expires_at_ms"])
+        self.assertEqual(role.base.expected.original_grant_expires_ms, receipt["apple_status_expires_at_ms"])
+        self.assertLess(receipt["expires_at_ms"], receipt["apple_status_expires_at_ms"])
+        self.clock[0] += 14400
+        self.clock[1] += 14400
+        with self.assertRaises(SurfacePushError):
+            owner._live()
+
     async def test_unload_cannot_restore_role_from_same_service_or_old_ack(self):
         owner, _, _ = await self.enrol()
         capture = self.capture(owner)

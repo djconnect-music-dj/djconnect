@@ -120,9 +120,12 @@ class CoreWidgetIssuerOwner(WidgetIssuerOwner):
             token = await service.original_credential(first)
             await witness.validate()
             now, mono = int(service.wall() * 1000), service.monotonic()
-            expiry = min(now + 28_800_000, _POLICY_EXPIRY)
-            require(now < expiry, _ERROR, 403)
             receipt = dict(witness.receipt)
+            # Keep the original verified server-key bounds. Never sign8h first
+            # and silently clamp an already signed policy/scope afterward.
+            expiry = min(now + 28_800_000, _POLICY_EXPIRY,
+                receipt["apple_evidence_expires_at_ms"], receipt["apple_status_expires_at_ms"])
+            require(now < expiry, _ERROR, 403)
             key = _jwk(witness.public_key_spki)
             thumbprint = public_key_thumbprint(key)
             policy = {"token_role": "widget", "platform": "ios", "apns_environment": "sandbox",
