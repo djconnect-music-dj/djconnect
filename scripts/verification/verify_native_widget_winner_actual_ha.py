@@ -82,7 +82,17 @@ async def qualify(hass, manager, history, request, client):
         hass.config_entries.async_update_entry(paired_entry, data={**paired_entry.data,
             'music_backend': 'source-spotify', 'profile_backend_entry_id': 'source-entry',
             'music_account_id': 'source-account'})
-    # The only ConfigEntry fixture setup occurs before the ordinary pair captures.
+    # Provider reconfiguration invalidates the old manual pair's exact data
+    # capture. Begin a fresh ordinary pairing with a freshly minted token; do
+    # not reuse, rewrite or revive its original journal acknowledgement.
+    first_runtime = hass.data['djconnect']['owner-entry']
+    first_runtime.device_token = ''
+    response = await client.post('/api/djconnect/v1/pair', json={
+        **first_identity, 'pair_code': '123456'})
+    first_pair = await response.json()
+    assert response.status == 200 and first_pair['success'], (response.status, first_pair.get('error'))
+    captured['headers']['Authorization'] = 'Bearer ' + first_pair['device_token']
+    first_headers['Authorization'] = captured['headers']['Authorization']
     # A real HTTP pair (rather than a forged PairJournal ACK) creates device2.
     # Ordinary pair selects the configured active runtime (unlike authenticated
     # reads, it has no existing device token to select the second entry).
@@ -103,7 +113,7 @@ async def qualify(hass, manager, history, request, client):
         registration = hass.data['djconnect'][entry_id].surface_pair_registration
         while registration.tasks:
             await asyncio.gather(*tuple(registration.tasks))
-        assert registration.phase == 'recorded' and registration.current()
+        assert registration.phase == 'recorded' and registration.current(), (entry_id, registration.phase)
     # Force actual HA's pending ConfigEntry Store writer to complete before
     # the real native factory independently reads disk and its exact pair tuple.
     await ConfigEntryStore(hass).async_save({'entries': [
