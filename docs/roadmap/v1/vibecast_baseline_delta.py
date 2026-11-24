@@ -14,6 +14,11 @@ HISTORY = ROADMAP / "history/20261124"
 FREEZE = HISTORY / "vibecast-baseline-predecessor-maintenance-v32.json"
 FREEZE_SHA256 = "f371f0317b7b266001616c8ba60d419314ee81f5943c281f6d4282d7da5659b4"
 SNAPSHOTS = HISTORY / "vibecast-baseline-predecessor-files"
+BASELINE_ARCHIVE = HISTORY / "vibecast-baseline-main-files"
+CHANGED_VERIFICATION_INPUTS = {
+    "scripts/verification/verify_music_canvas_http.py",
+    "scripts/verification/passive_observation_sequence_lab.py",
+}
 FILES = {
     "API_CONTRACT.md",
     "ARCHITECTURE_PRINCIPLES.md",
@@ -41,7 +46,8 @@ def sha(path):
 @contextmanager
 def predecessor_files():
     previous = HISTORICAL_DOCUMENT_SOURCES.get()
-    token = HISTORICAL_DOCUMENT_SOURCES.set({**previous, **{name: SNAPSHOTS / name for name in FILES}})
+    token = HISTORICAL_DOCUMENT_SOURCES.set({**previous, **{name: SNAPSHOTS / name for name in FILES},
+        **{name: BASELINE_ARCHIVE / name for name in CHANGED_VERIFICATION_INPUTS}})
     try:
         yield
     finally:
@@ -73,9 +79,11 @@ def validate(plan, previous_validator):
           and receipt.get("automatic_dispatch") is receipt.get("consumer_writes") is False,
           "software scope and open acceptance")
     retained = receipt.get("retained_files", [])
+    archived_document = "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md"
     check(len(retained) == len(FILES) and {row.get("path") for row in retained} == FILES
           and all(sha(SNAPSHOTS / row["path"]) == row.get("previous_sha256")
-                  and sha(ROOT / row["path"]) == row.get("current_sha256") for row in retained),
+                  and sha((BASELINE_ARCHIVE if row["path"] == archived_document else ROOT) / row["path"])
+                  == row.get("current_sha256") for row in retained),
           "current and historical documents and harness")
     evidence = receipt.get("evidence", {})
     check(set(evidence) == set(EVIDENCE)
@@ -83,9 +91,26 @@ def validate(plan, previous_validator):
                   and evidence[kind].get("sha256") == sha(ROOT / name) for kind, name in EVIDENCE.items()),
           "exact evidence file bindings")
     loaded = {kind: json.loads((ROOT / name).read_bytes()) for kind, name in EVIDENCE.items()}
-    actual = {str(path.relative_to(ROOT)): sha(path)
-              for path in (ROOT / "custom_components/djconnect").rglob("*")
-              if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"}
+    actual = loaded["product_manifest"]
+    publication = ROOT / "docs/verification/vibecast-baseline-source-publication-20261124.json"
+    published = json.loads(publication.read_bytes())
+    check(sha(publication) == "b383a7ff21ed2f6a93c5af3ef2b1fa6bb127a6ca8554142ec5cc6aa6a13cf54d"
+          and published["archive_exact_product_manifest"] == EVIDENCE["product_manifest"]
+          and published["archive_exact_product_manifest_sha256"] == sha(ROOT / EVIDENCE["product_manifest"])
+          and published["archive_product_file_count"] == len(actual) == 359,
+          "independent publication binding for the frozen product bytes")
+    current = {str(path.relative_to(ROOT)): sha(path)
+               for path in (ROOT / "custom_components/djconnect").rglob("*")
+               if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"}
+    successor = ROOT / "docs/verification/music-canvas-admin-actual-ha-matrix-20261124.json"
+    successor_matrix = json.loads(successor.read_bytes())
+    successor_rows = successor_matrix["results"]
+    check(current == successor_matrix["source_pins"]
+          == json.loads((ROOT / "docs/verification/music-canvas-admin-product-manifest-20261124.json").read_bytes())
+          and successor_matrix["source_before_after_equal"] is True
+          and len(current) == 359 and len(successor_rows) == 54
+          and all(row["exit_code"] == 0 and sha(ROOT / row["harness"]) == row["harness_sha256"]
+                  for row in successor_rows), "current Music Canvas exact-source HA requalification")
     proof = loaded["qualification"]
     matrix_path = ROOT / "docs/verification/vibecast-baseline-actual-ha-matrix-20261124.json"
     matrix = json.loads(matrix_path.read_bytes())
@@ -97,11 +122,12 @@ def validate(plan, previous_validator):
           and proof.get("source_before_after_equal") is matrix.get("source_before_after_equal") is True
           and len(rows) == proof.get("execution_count") == 54
           and {row["harness"] for row in rows} == {row["harness"] for row in prior_matrix["results"]}
-          and all(row["exit_code"] == 0 and sha(ROOT / row["harness"]) == row["harness_sha256"] for row in rows),
+          and all(row["exit_code"] == 0 and sha((BASELINE_ARCHIVE if row["harness"] in CHANGED_VERIFICATION_INPUTS else ROOT)
+                  / row["harness"]) == row["harness_sha256"] for row in rows),
           "complete 359-file inventory and actual HA matrix")
     retry, = [row for row in rows if row["harness"] == "scripts/verification/verify_passive_observation_http.py"]
     check(retry.get("updated_helper") == "scripts/verification/passive_observation_sequence_lab.py"
-          and retry.get("updated_helper_sha256") == sha(ROOT / "scripts/verification/passive_observation_sequence_lab.py")
+          and retry.get("updated_helper_sha256") == sha(BASELINE_ARCHIVE / "scripts/verification/passive_observation_sequence_lab.py")
           and retry.get("previous_failed_run", {}).get("exit_code") == 1,
           "original failure and verified corrected passive-observation harness")
     widget = proof.get("additional_native_execution", {})
