@@ -41,10 +41,12 @@ window.DJCDisplayHost=function(transport){
   const languageLabels={en:"Language",nl:"Taal",de:"Sprache",fr:"Langue",es:"Idioma"};
   const validLocale=value=>typeof value==="string" && /^(en|nl|de|fr|es)$/.test(value);
   let preference="", sessionLocale="", effectiveLocale="", text, handoff;
-  try {
-    const saved=window.localStorage.getItem(localeKey);
-    if(validLocale(saved))preference=saved;
-  }catch(_){ /* Keep this page usable when browser storage is blocked. */ }
+  if(!cast){
+    try {
+      const saved=window.localStorage.getItem(localeKey);
+      if(validLocale(saved))preference=saved;
+    }catch(_){ /* Keep this page usable when browser storage is blocked. */ }
+  }
   function selectLocale(locale){
     sessionLocale=validLocale(locale) ? locale : "";
     const selected=preference || sessionLocale || (validLocale(language) ? language : "en");
@@ -59,7 +61,9 @@ window.DJCDisplayHost=function(transport){
   listen(selector,"change",()=>{
     if(!validLocale(selector.value))return;
     preference=selector.value;
-    try{window.localStorage.setItem(localeKey,preference);}catch(_){ /* Memory-only preference. */ }
+    if(!cast){
+      try{window.localStorage.setItem(localeKey,preference);}catch(_){ /* Memory-only preference. */ }
+    }
     selectLocale(sessionLocale);
   });
   selectLocale("");

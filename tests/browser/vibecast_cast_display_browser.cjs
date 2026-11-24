@@ -15,6 +15,13 @@ window.cast={framework:{CastReceiverContext:{getInstance:()=>({isSystemReady:()=
 async function run(name,engine){
  const browser=await engine.launch({headless:true,...(engine===chromium?(process.env.DJC_CHROMIUM_EXECUTABLE?{executablePath:process.env.DJC_CHROMIUM_EXECUTABLE}:{channel:"chromium"}):{})});
  const page=await browser.newPage({viewport:{width:1920,height:1080},reducedMotion:'reduce',locale:'nl-NL'});
+ await page.addInitScript(()=>{
+  window.__castStorageAccesses=0;
+  Object.defineProperty(window,'localStorage',{get(){
+   window.__castStorageAccesses++;
+   throw new Error('Cast receiver must not access local storage');
+  }});
+ });
  const errors=[];page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(7000);
  let claimCalls=0,collectCalls=0,leaveCalls=0,approved=false,socket,preflights=0;
  const calls=[];
@@ -68,6 +75,8 @@ async function run(name,engine){
   approved=true;
   await page.waitForFunction(()=>window.__cafSent.some(x=>x.data.state==='presenting'));
   assert.equal(await page.locator('#title').textContent(),'Declared fixture recording');
+  await page.locator('#display-language').selectOption('en');
+  assert.equal(await page.evaluate(()=>window.__castStorageAccesses),0);
   await page.locator('#flow-cards .flow-card').waitFor();await page.locator('.guest-participation img').waitFor();
   assert.equal(await page.locator('#end-session').isVisible(),false);
   const sent=await page.evaluate(()=>window.__cafSent);
