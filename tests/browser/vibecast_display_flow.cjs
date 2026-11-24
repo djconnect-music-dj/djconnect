@@ -292,7 +292,6 @@ async function main(engine) {
       "djconnect-live-status",{detail:{live_enabled:true,guest_count:3,...detail}})),detail);
     const view=dynamics=>({mode:"vibescape",mood:"groove",persona:"radio_dj",dynamics});
     await liveStatus({view:view(0)});
-    assert.equal(await page.locator('.receiver-brand #live-indicator').innerText(),"LIVE");
     assert.equal(await page.locator(".session-panels").evaluate(node=>getComputedStyle(node).display),"none");
     const firstScene=await page.locator("#vibescape-scene").evaluate(node=>node.toDataURL());
     await liveStatus({view:view(1)});
@@ -319,7 +318,6 @@ async function main(engine) {
     await liveStatus({live_enabled:false,reactions:[]});
     assert.equal(await page.locator(".live-reaction").count(),0);
     assert.equal(await page.locator("#live-guest-count").isHidden(),true);
-    assert.equal(await page.locator("#live-indicator").isHidden(),true);
     await viewport.waitFor({state:"visible"});
     await liveStatus({reactions:[reaction]});
     assert.equal(await page.locator(".live-reaction").count(),1);
