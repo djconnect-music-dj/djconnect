@@ -3,7 +3,7 @@ import asyncio
 from copy import deepcopy
 from unittest import IsolatedAsyncioTestCase
 
-from tests.test_music_dna import FakeStore, MusicDNAManager
+from tests.test_music_dna import FakeStore, MusicDNAManager, runtime_for
 
 
 class LoadedGenreSeedTests(IsolatedAsyncioTestCase):
@@ -83,6 +83,24 @@ class LoadedGenreSeedTests(IsolatedAsyncioTestCase):
         manager.data["memories"]["profile:owner-a"]["last_seen"] = "synthetic-change"
         await manager.async_save()
         self.assertTrue(original.valid())
+
+    async def test_republishing_the_same_genres_preserves_original_basis_until_real_change(self):
+        genres = ["Neo Soul", "R&B", "indie rock"]
+        manager, _ = self.manager(listening_profile={"inferred_genres": genres})
+        await manager.async_load()
+        original = self.snapshot(manager)
+        runtime = runtime_for()
+        payload = {"music_dna_key": "profile:owner-a"}
+
+        await manager.async_update_listening_profile(
+            runtime, {"inferred_genres": genres, "recent_artists": ["Different metadata"]}, payload
+        )
+        self.assertTrue(original.valid())
+        self.assertEqual(original.genres, ("neo soul", "r&b", "indie rock"))
+
+        await manager.async_update_listening_profile(runtime, {"inferred_genres": ["Jazz"]}, payload)
+        await manager.async_update_listening_profile(runtime, {"inferred_genres": genres}, payload)
+        self.assertFalse(original.valid(), "Restoring the genre values cannot revive the original basis")
 
     async def test_pending_unrelated_save_preserves_only_original_committed_seed_basis(self):
         manager, store = self.manager()
