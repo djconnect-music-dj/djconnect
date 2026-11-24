@@ -351,8 +351,12 @@ class CanvasRuntime:
                 self.states[target] = "unavailable"
 
     async def protocol(self, action):
-        """Cancellation cannot release an effect slot while its thread still runs."""
         task = asyncio.ensure_future(self.hass.async_add_executor_job(action))
+        return await self.await_effect_completion(task)
+
+    @staticmethod
+    async def await_effect_completion(task):
+        """Cancellation cannot release an effect slot while its effect is unresolved."""
         try:
             return await asyncio.shield(task)
         except asyncio.CancelledError:
@@ -550,14 +554,28 @@ class CanvasRuntime:
                 def reserve_upload(state):
                     state["devices"][target]["upload_pending"] = True
                 await self.repository.mutate(reserve_upload, authorized)
-                result = await self.protocol(
-                    functools.partial(adapters.samsung_action, device, "upload", content=art))
-                content_id = result["content_id"]
-                def own(state):
-                    need(authorized(), "canvas_context_changed", 409)
-                    state["devices"][target]["owned_content"].append(content_id)
-                    state["devices"][target]["upload_pending"] = False
-                await self.repository.mutate(own, authorized)
+                async def upload_and_record():
+                    result = await self.protocol(
+                        functools.partial(adapters.samsung_action, device, "upload", content=art))
+                    uploaded = result["content_id"]
+
+                    def own(state):
+                        row = state["devices"].get(target)
+                        need(row and row["epoch"] == device["epoch"] and row.get("upload_pending") is True
+                             and not row.get("forgetting")
+                             and all(row.get(field) == device.get(field) for field in
+                                     ("stable_identity", "host", "art_registry_entry_id", "art_tls_peer_sha256")),
+                             "canvas_context_changed", 409)
+                        if uploaded not in row["owned_content"]:
+                            row["owned_content"].append(uploaded)
+                        row["upload_pending"] = False
+
+                    # Attribute the acknowledged effect to its original target even
+                    # if the Session withdrew. Only a current Session may select it.
+                    await self.repository.mutate(own, self.effect_lock.locked)
+                    return uploaded
+
+                content_id = await self.await_effect_completion(asyncio.create_task(upload_and_record()))
                 need(authorized(), "canvas_context_changed", 409)
                 result = await self.protocol(
                     functools.partial(adapters.samsung_action, device, "select", content_id=content_id))

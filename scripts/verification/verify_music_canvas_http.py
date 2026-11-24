@@ -281,6 +281,29 @@ async def qualify(hass, manager, history, request, client):
         device = deepcopy(state["devices"]["samsung:fixture-a"])
         config = state["profiles"]["profile-a"]
         allowed = [True]
+
+        def withdraw_during_upload(device, action, **kwargs):
+            result = hardware(device, action, **kwargs)
+            if action == "upload":
+                allowed[0] = False
+            return result
+
+        before_select = sum(action == "select" for _, action in deliveries)
+        with patch.object(adapters, "samsung_action", withdraw_during_upload):
+            try:
+                await runtime.deliver("profile-a", config, manager.current_active("profile-a"), device["id"],
+                    device, device["preview"], fixture_image.getvalue(), lambda: allowed[0], device["source_image"])
+                raise AssertionError("withdrawn upload selected")
+            except CanvasError as exc:
+                assert exc.code == "canvas_context_changed"
+        acknowledged = (await runtime.repository.read())["devices"][device["id"]]
+        assert not acknowledged["upload_pending"]
+        assert len(acknowledged["owned_content"]) == len(device["owned_content"]) + 1
+        assert sum(action == "select" for _, action in deliveries) == before_select
+        # Retain the original fixture for the independent withdrawal during select.
+        await runtime.repository.mutate(lambda current: current["devices"].update({device["id"]: device}), lambda: True)
+        allowed[0] = True
+
         def withdraw_during_select(device, action, **kwargs):
             result = hardware(device, action, **kwargs)
             if action == "select":
@@ -545,6 +568,7 @@ async def qualify(hass, manager, history, request, client):
             "manual_artwork_takeover_suspends_without_generation": True,
             "interval_survives_track_transition_but_per_track_does_not": True,
             "withdrawal_during_select_prevents_cleanup": True,
+            "withdrawal_records_acknowledged_upload_without_selecting_it": True,
             "requests": calls, "actual_sqlite": True, "paired_tls": True,
             "native_switchbot_schema": True, "samsung_upload_select_separate": True,
             "samsung_off_no_upload": True, "synthetic_image_generations": len(generations),
