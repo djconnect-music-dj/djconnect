@@ -8215,3 +8215,14 @@ its original receipt DATA and a fresh genuine assertion from the same saved key.
 Only actual winning API ACK yields a new opaque role; old operation/status/cold
 JSON never switches owners or regenerates keys. Native clock/target gates remain
 independent. Existing first-key and HA-dev contracts are unchanged.
+
+## 24 November 2026 — Ordinary Widget reauthorization Core implementation
+
+The selected ordinary paired `/native/widget/reauthorize/{challenge,register,status}`
+proxy now retains the actual API challenge/delegation and original production
+13-field receipt. Existing-only key custody never regenerates or claims missing
+material. Exact winning API ACK alone creates the private once-only role handoff;
+COW replacement fences the old owner/adoption and preserves old operation identity.
+Ready/status are only closed DATA from the actual current RAM owner. Tests use
+explicit MODEL API/Apple seams with actual Core P-256 and SQLite; no native clock,
+provider or physical background-delivery acceptance follows from those tests.

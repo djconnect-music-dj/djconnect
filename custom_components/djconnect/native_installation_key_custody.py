@@ -112,18 +112,18 @@ class InstallationWidgetKeyCustodian:
         self._service = service
         self._lock = asyncio.Lock()
 
-    async def capture(self, pair, *, channel):
+    async def capture(self, pair, *, channel, existing_only=False):
         from cryptography.exceptions import UnsupportedAlgorithm
         from .surface_push_contract import SurfacePushError
         try:
-            return await self._capture(pair, channel=channel)
+            return await self._capture(pair, channel=channel, existing_only=existing_only)
         except SurfacePushError:
             raise
         except (OSError, ValueError, TypeError, KeyError, UnsupportedAlgorithm):
             # Do not put decoder/key/store contents into HA exception logs.
             require(False, _ERROR, 503)
 
-    async def _capture(self, pair, *, channel):
+    async def _capture(self, pair, *, channel, existing_only=False):
         from .native_pair_enrollment import KEY
         service = self._service
         require(channel == "widgetkit", _ERROR, 503)
@@ -157,7 +157,8 @@ class InstallationWidgetKeyCustodian:
             # Both are private local custody; neither is an API acknowledgement.
             document = await pair.hass.async_add_executor_job(_private_read, store.path)
             await recheck()
-            claim, fresh = await pair.hass.async_add_executor_job(_claim, os.fspath(store.path) + ".claim", binding, document is None)
+            require(not existing_only or document is not None, _ERROR, 503)
+            claim, fresh = await pair.hass.async_add_executor_job(_claim, os.fspath(store.path) + ".claim", binding, document is None and not existing_only)
             await recheck()
             if document is None:
                 require(fresh, _ERROR, 503)  # Unknown generation/write outcome: no retry.

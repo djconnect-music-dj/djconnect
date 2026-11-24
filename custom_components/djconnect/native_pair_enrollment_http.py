@@ -118,8 +118,38 @@ class NativeWidgetConsentView(HomeAssistantView):
             return _failed(error)
 
 
+class NativeWidgetReauthorizationView(HomeAssistantView):
+    requires_auth = False  # Exact ordinary pair and current SQLite consent.
+
+    def __init__(self, hass, operation):
+        self.hass, self.action = hass, operation
+        self.url = API_BASE + "/native/widget/reauthorize/" + operation
+        self.name = "api:djconnect:native-widget-reauthorize:" + operation
+
+    async def post(self, request):
+        try:
+            from .native_widget_reauthorization import NativeWidgetReauthorization
+            service = _selected_service(self.hass)
+            _request_headers(request, self.url)
+            fields = {"device_id", "client_type", "operation_id"}
+            if self.action == "challenge":
+                fields.add("first_key_receipt")
+            if self.action == "register":
+                fields.add("apple_proof")
+            payload = await _payload(request, limit={"register": 32768, "challenge": 8192, "status": 1024}[self.action], fields=fields)
+            controller = getattr(service, "_widget_reauthorization", None)
+            if controller is None:
+                controller = NativeWidgetReauthorization(service)
+                service._widget_reauthorization = controller
+            require(type(controller) is NativeWidgetReauthorization, "native_widget_reauthorization_unavailable", 503)
+            return _response(await getattr(controller, self.action)(payload, request.headers))
+        except Exception as error:
+            return _failed(error)
+
+
 def native_pair_enrollment_views(hass):
     return [
+        *(NativeWidgetReauthorizationView(hass, operation) for operation in ("challenge", "register", "status")),
         *(NativePairEnrollmentView(hass, operation) for operation in ("bootstrap", "challenge", "register", "status")),
         NativeWidgetConsentView(hass),
     ]

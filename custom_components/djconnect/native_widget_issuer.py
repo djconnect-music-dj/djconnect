@@ -195,6 +195,30 @@ class CoreWidgetIssuerOwner(WidgetIssuerOwner):
         finally:
             first_state.broker.discard(witness)
 
+    @classmethod
+    def from_reauthorization(cls, winner):
+        """Consume only the private actual winning API continuation, once."""
+        from .native_widget_reauthorization import take_winner
+        first = take_winner(winner)
+        service = first.controller.service
+        capture = first.capture
+        now, mono = int(service.wall() * 1000), service.monotonic()
+        capture.expected.live(now, mono)
+        owner = object.__new__(cls)
+        basis = (first.pair, first.authority, first.consent_current,
+            bytes(first.spki), first.credential, bytes(first.statement), first.digest,
+            canonical(first.challenge), canonical(first.bindings))
+        broker = service._registered_handoffs
+        _OWNERS[owner] = _Role(service, first, basis, first.paired, dict(first.source),
+            first.source_current, broker, broker._generation, service._installation,
+            service.transport, service.publisher, service.selection, first.signer,
+            bytes(first.spki), capture, service.wall, service.monotonic,
+            now, mono, capture.expected.original_grant_monotonic +
+                (capture.expected.original_grant_expires_ms -
+                 capture.expected.original_grant_wall_ms) / 1000)
+        owner._live()
+        return owner
+
     def _historical(self):
         task = asyncio.current_task()
         if task is not None and task.cancelling():

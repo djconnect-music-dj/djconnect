@@ -403,3 +403,25 @@ owner. Unknown/absent/restarted captures stay content-free and unavailable;
 status never creates or restores a role, key, challenge or native permission.
 No first-key nonce, policy, key-bound deadline or existing role is renewed.
 Native clock, target, field and cold-extension restoration remain separate.
+
+### Core proxy implementation boundary — 24 November 2026
+
+`native_widget_reauthorization.py` implements that ordinary paired proxy. Its
+retained challenge/delegation/receipt are service-private comparison data. The
+existing installation custodian's `existing_only` path refuses absent custody
+before creating a claim or generating any key. SQLite retirement/consent
+originals and private negative custody are staged before publication RPC.
+
+Only the exact winning 17-field API reauthorization ACK creates a private,
+non-serializable, once-consumed RAM continuation. Core transfers that result to
+a distinct role owner with the original role-policy wall/monotonic expiry. The
+preparation coordinator fences the previous owner and its existing adoption
+before admitting the replacement. Historical operation records keep their
+original owner; they never resolve to the latest role. A failed/unknown response,
+replayed ACK, consent/source/credential change, clock rollback, missing original
+key, imported receipt, restart or status lookup cannot create an owner.
+
+The regression harness uses actual Core P-256, private file custody and SQLite,
+with explicitly synthetic owner, API/Apple-verifier and HTTP seams. It does not
+qualify App Attest, native clock, WidgetKit tokens, background delivery, actual
+provider dispatch or physical devices. Those separate gates remain required.

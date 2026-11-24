@@ -129,3 +129,27 @@ async def accept_registered_winner(native, operation_id, headers):
     require(type(pool) is NativeWidgetPreparation and pool.native is native, _ERROR, 503)
     owner = await CoreWidgetIssuerOwner.enrol(native, operation_id, headers)
     pool.admit(owner)
+
+
+def accept_reauthorized_winner(native, owner):
+    """COW replacement; old operations retain the fenced original role."""
+    from .surface_push_service import SurfacePushService
+    surface = native.hass.data.get("djconnect", {}).get("surface_push_service")
+    require(type(surface) is SurfacePushService and not surface.closed, _ERROR, 503)
+    pool = getattr(surface, "_native_widget_preparation", None)
+    if pool is None:
+        pool = NativeWidgetPreparation(surface, native)
+        surface._native_widget_preparation = pool
+    require(type(pool) is NativeWidgetPreparation and pool.native is native, _ERROR, 503)
+    role = owner._live()
+    registration = role.first_original[0].registration
+    previous = pool.roles.get(id(registration))
+    if previous is not None:
+        require(previous.registration is registration and previous.owner is not owner, _ERROR, 409)
+        pool.fence_pair(registration)
+        del pool.roles[id(registration)]
+    try:
+        pool.admit(owner)
+    except BaseException:
+        owner.fence_live()
+        raise
