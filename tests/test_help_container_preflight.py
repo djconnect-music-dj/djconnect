@@ -62,8 +62,8 @@ class HelpContainerPreflightTest(unittest.TestCase):
     def test_unknown_cleanup_cannot_produce_a_passing_setup_receipt(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
-            products = {f'synthetic-{i}': 'a' * 64 for i in range(347)}
-            manifest = root/'docs/verification/vibecast-ui-product-manifest-20261123.json'
+            products = {f'synthetic-{i}': 'a' * 64 for i in range(356)}
+            manifest = root/'docs/verification/vibecast-ui-product-manifest-20261124.json'
             manifest.parent.mkdir(parents=True)
             manifest.write_text(json.dumps(products))
             result = SimpleNamespace(returncode=0, stdout=json.dumps(valid({})).encode())
@@ -81,8 +81,8 @@ class HelpContainerPreflightTest(unittest.TestCase):
         source = Path(__file__).resolve().parents[1]
         products = preflight.product_hashes(source)
         expected = preflight.profile_source_hashes(source)
-        self.assertEqual(len(products), 347)
-        self.assertEqual(products, json.loads((source/'docs/verification/vibecast-ui-product-manifest-20261123.json').read_text()))
+        self.assertEqual(len(products), 356)
+        self.assertEqual(products, json.loads((source/'docs/verification/vibecast-ui-product-manifest-20261124.json').read_text()))
         for module in ('live_impression','live_impression_research','live_impression_media',
                        'requested_moments','requested_moment_inventory','requested_moment_proof'):
             self.assertIn(f'custom_components/djconnect/{module}.py',products)

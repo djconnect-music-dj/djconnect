@@ -12,10 +12,10 @@ BASE_SHA = '20b9caa92dbcaec9faf3deda8166022f684ba4f4'
 BASE_PROOF_SHA = 'c018fe065de286b61da5a9a48a3ee9524761ff99682e23e8d8e4513953e158cd'
 PREFIX = 'docs/verification/'
 PATHS = {
-    'product_manifest': PREFIX+'vibecast-ui-product-manifest-20261123.json',
-    'qualification': PREFIX+'vibecast-ui-qualification-20261123.json',
-    'live_ui': PREFIX+'vibecast-live-ui-actual-ha-20261123.json',
-    'browser': PREFIX+'vibecast-ui-browser-20261123.json',
+    'product_manifest': PREFIX+'vibecast-ui-product-manifest-20261124.json',
+    'qualification': PREFIX+'vibecast-ui-qualification-20261124.json',
+    'live_ui': PREFIX+'vibecast-live-ui-actual-ha-20261124.json',
+    'browser': PREFIX+'vibecast-ui-browser-20261124.json',
     'base_publication': PREFIX+'vibecast-ui-base-publication-20261123.json',
 }
 
@@ -57,7 +57,7 @@ def validate(plan, previous_validator):
           and receipt.get('automatic_dispatch') is False
           and receipt.get('consumer_writes') is False,
           'bounded local source and independent acceptance')
-    document = PREFIX+'VIBECAST_UI_CORE_QUALIFICATION_20261123.md'
+    document = PREFIX+'VIBECAST_UI_CORE_QUALIFICATION_20261124.md'
     check(receipt.get('document') == document
           and receipt.get('document_sha256') == sha((ROOT/document).read_bytes()),
           'current qualification document')
@@ -70,7 +70,7 @@ def validate(plan, previous_validator):
     actual = {str(p.relative_to(ROOT)):sha(p.read_bytes())
               for p in (ROOT/'custom_components/djconnect').rglob('*')
               if p.is_file() and '__pycache__' not in p.parts and p.suffix != '.pyc'}
-    check(actual == loaded['product_manifest'] and len(actual) == 347,
+    check(actual == loaded['product_manifest'] and len(actual) == 356,
           'complete current product bytes')
     base = loaded['base_publication']
     old = json.loads((ROOT/'docs/verification/ha-guest-invitation-product-manifest.json').read_bytes())
@@ -91,23 +91,36 @@ def validate(plan, previous_validator):
           and module.validate_record(durable, expected_policy_source=base['expected_policy_source']) == [],
           'actual predecessor twelve-check qualification')
     proof = loaded['qualification']
-    raw = (ROOT/'docs/verification/vibecast-ui-actual-ha-matrix-20261123.json').read_bytes()
+    raw = (ROOT/'docs/verification/vibecast-ui-actual-ha-matrix-20261124.json').read_bytes()
     matrix = json.loads(raw)
     rows = matrix['results']
     old_matrix = json.loads((ROOT/'docs/verification/ha-guest-invitation-actual-ha-matrix-20261123.json').read_bytes())
     check({r['harness'] for r in rows} == {r['harness'] for r in old_matrix['results']},
           'same complete owning HA harness set')
-    check(proof.get('matrix_path') == 'docs/verification/vibecast-ui-actual-ha-matrix-20261123.json'
+    check(proof.get('matrix_path') == 'docs/verification/vibecast-ui-actual-ha-matrix-20261124.json'
           and proof.get('matrix_sha256') == sha(raw)
           and proof.get('source_pins') == matrix.get('source_pins') == actual
           and proof.get('source_before_after_equal') is matrix.get('source_before_after_equal') is True
           and proof.get('execution_count') == len(rows) == len({r['harness'] for r in rows}) == 54
           and all(r.get('exit_code') == 0 and r.get('harness_sha256') == sha((ROOT/r['harness']).read_bytes())
                   for r in rows), 'fresh full54 actual HA matrix')
+    native = proof.get('additional_native_execution', {})
+    native_raw = native.get('receipt', {})
+    native_cases = native_raw.get('extension', {}).get('cases', [])
+    extra = matrix.get('additional_executions', [])
+    check(len(extra) == 1 and extra[0].get('exit_code') == 0
+          and native.get('harness') == extra[0].get('harness')
+          == 'scripts/verification/verify_native_widget_winner_actual_ha.py'
+          and native.get('harness_sha256') == extra[0].get('harness_sha256')
+          == sha((ROOT/native['harness']).read_bytes())
+          and native_raw.get('product_source_pins') == actual
+          and native_raw.get('product_source_before_after_equal') is True
+          and len(native_cases) == 10 and all(c.get('status') == 'PASS' for c in native_cases),
+          'additional genuine HA Widget winner and withdrawal software cases')
     live = loaded['live_ui']
     extension = live['extension']
     cases = extension['requests']
-    check(live.get('product_source_pins') == actual and live.get('product_source_count') == 347
+    check(live.get('product_source_pins') == actual and live.get('product_source_count') == 356
           and live.get('product_source_before_after_equal') is True
           and live.get('live_ui_harness_sha256') == sha((ROOT/'scripts/verification/verify_vibecast_live_ui_actual_ha.py').read_bytes())
           and all(sha((ROOT/'scripts/verification'/n).read_bytes()) == v
@@ -120,7 +133,7 @@ def validate(plan, previous_validator):
           'additional actual Live HTTP cases with explicit provider/native boundary')
     browser = loaded['browser']
     check(browser.get('scope') == 'REAL_BROWSER_DECLARED_HTTP_WEBSOCKET_FIXTURE_NOT_INSTALLED_PROVIDER'
-          and browser.get('source_pins') == actual and browser.get('product_file_count') == 347
+          and browser.get('source_pins') == actual and browser.get('product_file_count') == 356
           and browser.get('engines') == ['chromium','webkit'] and browser.get('result') == 'PASS'
           and browser.get('harness') == 'tests/browser/vibecast_display_flow.cjs'
           and browser.get('harness_sha256') == sha((ROOT/browser['harness']).read_bytes()),
@@ -143,7 +156,7 @@ def validate(plan, previous_validator):
     previous = dict(plan)
     previous['planning_maintenance'] = restored
     # Historical validation retains the actual downloaded343-file package;
-    # only the new outer layer qualifies current347 product bytes.
+    # only the new outer layer qualifies current356 product bytes.
     token = HISTORICAL_DOCUMENT_SOURCES.set({**HISTORICAL_DOCUMENT_SOURCES.get(),
         **{r['path']:ROOT/r['snapshot'] for r in evolved
            if r.get('path') in {'API_CONTRACT.md','SYNC_PROMPTS.md'}

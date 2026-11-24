@@ -49,8 +49,8 @@ class ManagementGrammarTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads((root / "examples/client_contracts/installation_management_preparation_v1/actual-ha-management-preparation-live-impression-20261119-requested-moments-20261120.json").read_text())
         original = proof["original_receipt"]
-        current = json.loads((root / 'examples/client_contracts/installation_management_preparation_v1/vibecast-ui-20261123-ha-guest-invitation-2026-00b031b7.json').read_text())
-        self.assertEqual(len(current["source_sha256"]), 347)
+        current = json.loads((root / 'examples/client_contracts/installation_management_preparation_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--26d7659d.json').read_text())
+        self.assertEqual(len(current["source_sha256"]), 356)
         for name, digest in current["source_sha256"].items():
             self.assertEqual(hashlib.sha256((root / name).read_bytes()).hexdigest(), digest, name)
         self.assertEqual(hashlib.sha256((root / proof["harness"]).read_bytes()).hexdigest(), proof["harness_sha256"])

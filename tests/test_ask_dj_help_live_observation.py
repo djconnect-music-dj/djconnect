@@ -48,10 +48,10 @@ class HelpObservationTests(unittest.IsolatedAsyncioTestCase):
         root = Path(__file__).resolve().parents[1]
         receipts = root / 'examples/client_contracts/ask_dj_help_context_v1'
         original = json.loads((receipts / 'actual-ha-wire-live-impression-20261119-requested-moments-20261120.json').read_text())
-        fixture = json.loads((receipts / 'vibecast-ui-20261123-ha-guest-invitation-2026-26b1f5f5.json').read_text())
+        fixture = json.loads((receipts / 'vibecast-ui-20261124-vibecast-ui-20261123-ha--ddc12995.json').read_text())
         self.assertEqual(fixture['status'], 'PASS')
         self.assertTrue(fixture['source_before_after_equal'])
-        self.assertEqual(len(fixture['source_hashes']), 347)
+        self.assertEqual(len(fixture['source_hashes']), 356)
         for path, digest in fixture['source_hashes'].items():
             self.assertEqual(hashlib.sha256((root / path).read_bytes()).hexdigest(), digest, path)
         self.assertEqual(hashlib.sha256((root / original['harness']).read_bytes()).hexdigest(), original['harness_sha256'])

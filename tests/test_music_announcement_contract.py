@@ -9,9 +9,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class AnnouncementContractTests(unittest.TestCase):
     def test_current_producer_and_manual_replay_match_original_actual_ha(self):
-        record = json.loads((ROOT/'examples/client_contracts/music_announcement_v1/vibecast-ui-20261123-ha-guest-invitation-2026-06d04248.json').read_text())
+        record = json.loads((ROOT/'examples/client_contracts/music_announcement_v1/vibecast-ui-20261124-vibecast-ui-20261123-ha--c71891d8.json').read_text())
         self.assertTrue(record['source_before_after_equal'])
-        self.assertEqual(len(record['source_pins']), 347)
+        self.assertEqual(len(record['source_pins']), 356)
         for name, digest in record['source_pins'].items():
             self.assertEqual(hashlib.sha256((ROOT/name).read_bytes()).hexdigest(), digest, name)
         self.assertEqual(hashlib.sha256((ROOT/record['harness']).read_bytes()).hexdigest(), record['harness_sha256'])
