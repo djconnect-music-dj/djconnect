@@ -8188,3 +8188,12 @@ independent native SQL once/counter/consent authority; no HostWake alias, old
 ACK restore, first-key reversal or new-build assertion claim.
 
 Reauthorization ACK explicitly adds publication_operation_id and reauthorization_challenge_id; native_operation_id remains the original genuine first-key operation. Separate stored publication provenance prevents old-consent revival.
+
+
+### 24 November — selected original production ACK key bounds
+
+Root selected the minimal production-only registered receipt extension:
+apple_evidence_expires_at_ms and apple_status_expires_at_ms from the exact
+original AppleEvidence, stored atomically with its native ACK. Preserve both in
+the sealed original Core receipt and choose the role policy minimum before
+signing; no post-signature clamp, inferred key lifetime or HA-dev wire change.
