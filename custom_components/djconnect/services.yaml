@@ -1837,6 +1837,39 @@ clear_profile_state:
       selector:
         boolean:
 
+music_canvas_samsung_setup:
+  name: Connect Samsung Art Mode
+  description: Pair a discovered Samsung TV with Music Canvas using its local Art Mode API.
+  fields:
+    device_id:
+      name: Samsung TV
+      required: true
+      selector:
+        device:
+          integration: samsungtv
+    width:
+      name: Width in pixels
+      selector:
+        number:
+          min: 256
+          max: 8192
+          mode: box
+    height:
+      name: Height in pixels
+      selector:
+        number:
+          min: 256
+          max: 8192
+          mode: box
+    orientation:
+      name: Screen orientation
+      selector:
+        select:
+          options:
+            - landscape
+            - portrait
+          translation_key: canvas_screen_orientation
+
 music_canvas_asset_access:
   fields:
     https_origin:

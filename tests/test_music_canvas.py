@@ -7,7 +7,7 @@ import sys
 import tempfile
 import types
 import unittest
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 package = types.ModuleType("custom_components.djconnect")
@@ -79,7 +79,7 @@ class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
         def entry(host, ident, state):
             return types.SimpleNamespace(data={"host": host, "token": "other-integration-only"},
                                          unique_id=ident, state=types.SimpleNamespace(value=state),
-                                         title="Configured Frame")
+                                         title="55&quot; The Frame")
 
         async def by_target(_hass, _search_target):
             return []
@@ -106,6 +106,61 @@ class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((screen["stable_identity"], screen["host"], screen["state"]),
                          (stable, "192.0.2.55", "discovered"))
         self.assertNotIn("token", screen)
+        self.assertEqual(screen["name"], '55" The Frame')
+
+    async def test_ha_admin_setup_is_fenced_to_the_registered_samsung(self):
+        from custom_components.djconnect.music_canvas_adapters import samsung_entry_target
+
+        entry = types.SimpleNamespace(entry_id="tv", domain="samsungtv", title="Frame",
+                                     data={"host": "192.0.2.55", "token": "separate"},
+                                     unique_id=str(uuid4()), state=types.SimpleNamespace(value="loaded"))
+        target = samsung_entry_target(entry)
+        device = types.SimpleNamespace(config_entries={entry.entry_id})
+        devices = {"registered": device}
+        user = types.SimpleNamespace(id="owner", is_active=True, is_admin=True, system_generated=False)
+        users = {user.id: user}
+        handlers = {}
+
+        class ServiceValidationError(Exception):
+            def __init__(self, *, translation_domain, translation_key):
+                super().__init__(translation_key)
+
+        async def manage(kind, _owner, _binding, data, authorize):
+            self.assertEqual(kind, "setup")
+            self.assertEqual(data["target_id"], target["id"])
+            self.assertEqual(data["screen"], {"width": 3840, "height": 2160, "orientation": "landscape"})
+            self.assertTrue(authorize())
+            self.assertNotIn("token", data)
+            users.clear()
+            self.assertFalse(authorize())
+            raise CanvasError("unauthorized", 401)
+
+        runtime = types.SimpleNamespace(stopped=False,
+            repository=types.SimpleNamespace(read=AsyncMock(return_value={"devices": {target["id"]: target}})),
+            manage=AsyncMock(side_effect=manage))
+        hass = types.SimpleNamespace(data={"djconnect": {"music_canvas": runtime}},
+            config_entries=types.SimpleNamespace(async_get_entry={entry.entry_id: entry}.get),
+            services=types.SimpleNamespace(async_register=lambda _domain, name, run, **_: handlers.update({name: run})),
+            auth=types.SimpleNamespace(_store=types.SimpleNamespace(_users=users), async_get_user=AsyncMock(return_value=user)))
+        modules = {
+            "homeassistant.components.http": types.SimpleNamespace(HomeAssistantView=object),
+            "homeassistant.exceptions": types.SimpleNamespace(ServiceValidationError=ServiceValidationError),
+            "homeassistant.helpers": types.SimpleNamespace(device_registry=types.SimpleNamespace(
+                async_get=lambda _: types.SimpleNamespace(async_get=devices.get))),
+            "voluptuous": types.SimpleNamespace(Schema=dict, Required=str, Optional=str,
+                All=lambda *items: items, Range=lambda **bounds: bounds, In=tuple),
+        }
+        with patch.dict(sys.modules, modules):
+            from custom_components.djconnect.music_canvas_http import register_samsung_setup
+            register_samsung_setup(hass)
+            setup = handlers["music_canvas_samsung_setup"]
+            call = types.SimpleNamespace(context=types.SimpleNamespace(user_id=user.id), data={
+                "device_id": "registered", "width": 3840, "height": 2160, "orientation": "landscape"})
+            with self.assertRaisesRegex(ServiceValidationError, "unauthorized"):
+                await setup(call)
+            with self.assertRaisesRegex(ServiceValidationError, "canvas_admin_required"):
+                await setup(call)
+        runtime.manage.assert_awaited_once()
 
 
 class CanvasDomainTests(unittest.TestCase):

@@ -32,6 +32,15 @@ SSDP identity where present. The fallback reads the configured address and
 UDN only, and opens no connection during discovery. DJConnect still pairs
 independently with the Art API before the screen can become ready.
 
+An authenticated, active HA administrator can explicitly pair an already
+discovered and registered Samsung TV using `djconnect.music_canvas_samsung_setup`
+in HA. The action needs the HA device registry selection and any unknown
+screen width, height and orientation. It uses the same bounded Art pairing
+operation as native setup. It rechecks both HA administrator and exact registry
+identity through the physical effect and commit. It changes no Profile mapping
+or selection. The administrator must approve the independent Music Canvas
+connection on the TV when its firmware presents a prompt.
+
 ## Native wire
 
 All native routes are POST under `/api/djconnect/v1/music_canvas/`, use the

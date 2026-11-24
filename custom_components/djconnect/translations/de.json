@@ -723,6 +723,12 @@
     }
   },
   "selector": {
+    "canvas_screen_orientation": {
+      "options": {
+        "landscape": "Querformat",
+        "portrait": "Hochformat"
+      }
+    },
     "onboarding_profile": {
       "options": {
         "new": "Neues Profil erstellen"
@@ -1812,6 +1818,24 @@
         }
       }
     },
+    "music_canvas_samsung_setup": {
+      "name": "Samsung Art Mode verbinden",
+      "description": "Verbinde einen erkannten Samsung-Fernseher über seine lokale Art-Mode-API mit Music Canvas.",
+      "fields": {
+        "device_id": {
+          "name": "Samsung-Fernseher"
+        },
+        "width": {
+          "name": "Breite in Pixeln"
+        },
+        "height": {
+          "name": "Höhe in Pixeln"
+        },
+        "orientation": {
+          "name": "Bildschirmausrichtung"
+        }
+      }
+    },
     "music_canvas_asset_access": {
       "name": "Music Canvas temporärer Bildzugriff",
       "description": "Externen HTTPS-Ursprung für zeitlich begrenzte Bilddownloads einrichten. Erfordert einen Home Assistant-Administrator.",
@@ -1824,6 +1848,12 @@
     }
   },
   "exceptions": {
+    "canvas_ha_samsung_target_unavailable": {
+      "message": "Dieser Samsung-Fernseher ist in Music Canvas nicht verfügbar."
+    },
+    "canvas_ha_samsung_setup_incomplete": {
+      "message": "Die Art-Mode-Kopplung konnte nicht bestätigt werden. Prüfe den Fernseher und erlaube die Music-Canvas-Verbindung, wenn du dazu aufgefordert wirst."
+    },
     "canvas_admin_required": {
       "message": "Home-Assistant-Administratorrechte sind erforderlich."
     },

@@ -1,5 +1,6 @@
 """Two explicit output families. No playback, Cast or SwitchBot credential copy."""
 from __future__ import annotations
+from html import unescape
 from ipaddress import ip_address
 from urllib.parse import urlsplit
 from uuid import UUID
@@ -18,9 +19,24 @@ SAMSUNG_SSDP_TARGETS = (
 
 def _samsung_target(udn, host, name):
     key = "samsung:" + digest(udn)[:32]
-    return dict(id=key, name=str(name or "Samsung")[:128], adapter="samsung",
+    return dict(id=key, name=unescape(str(name or "Samsung"))[:128], adapter="samsung",
                 host=host, stable_identity=udn, state="discovered", screen={},
                 epoch=0, owned_content=[])
+
+
+def samsung_entry_target(entry):
+    """Resolve a loaded HA entry without reading its remote-control credential."""
+    host, identifier = entry.data.get("host"), entry.unique_id
+    if entry.state.value != "loaded" or not isinstance(host, str) or not isinstance(identifier, str):
+        return None
+    try:
+        address = ip_address(host)
+        uid = UUID(identifier.removeprefix("uuid:"))
+    except ValueError:
+        return None
+    if address.is_loopback or address.is_multicast or address.is_unspecified:
+        return None
+    return _samsung_target("uuid:" + str(uid), str(address), entry.title)
 
 
 async def discover(hass):
@@ -64,22 +80,11 @@ async def discover(hass):
             targets[target["id"]] = target
             samsung_hosts.add(host)
     for entry in hass.config_entries.async_entries("samsungtv"):
-        host, identifier = entry.data.get("host"), entry.unique_id
-        if entry.state.value != "loaded" or not isinstance(host, str) or not isinstance(identifier, str):
+        target = samsung_entry_target(entry)
+        if target is None or target["host"] in samsung_hosts:
             continue
-        try:
-            address = ip_address(host)
-            uid = UUID(identifier.removeprefix("uuid:"))
-        except ValueError:
-            continue
-        if address.is_loopback or address.is_multicast or address.is_unspecified:
-            continue
-        host = str(address)
-        if host in samsung_hosts:
-            continue
-        target = _samsung_target("uuid:" + str(uid), host, entry.title)
         targets.setdefault(target["id"], target)
-        samsung_hosts.add(host)
+        samsung_hosts.add(target["host"])
     return targets
 
 

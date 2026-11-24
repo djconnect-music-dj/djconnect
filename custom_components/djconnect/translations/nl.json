@@ -723,6 +723,12 @@
     }
   },
   "selector": {
+    "canvas_screen_orientation": {
+      "options": {
+        "landscape": "Liggend",
+        "portrait": "Staand"
+      }
+    },
     "onboarding_profile": {
       "options": {
         "new": "Nieuw profiel maken"
@@ -1812,6 +1818,24 @@
         }
       }
     },
+    "music_canvas_samsung_setup": {
+      "name": "Samsung Art Mode koppelen",
+      "description": "Koppel een gevonden Samsung-tv via de lokale Art Mode-API aan Music Canvas.",
+      "fields": {
+        "device_id": {
+          "name": "Samsung-tv"
+        },
+        "width": {
+          "name": "Breedte in pixels"
+        },
+        "height": {
+          "name": "Hoogte in pixels"
+        },
+        "orientation": {
+          "name": "Schermoriëntatie"
+        }
+      }
+    },
     "music_canvas_asset_access": {
       "name": "Music Canvas tijdelijke beeldtoegang",
       "description": "Stel expliciet de externe HTTPS-origin in voor tijdelijke toegang tot één kunstbestand per frame. Vereist een Home Assistant-beheerder.",
@@ -1824,6 +1848,12 @@
     }
   },
   "exceptions": {
+    "canvas_ha_samsung_target_unavailable": {
+      "message": "Deze Samsung-tv is niet beschikbaar in Music Canvas."
+    },
+    "canvas_ha_samsung_setup_incomplete": {
+      "message": "De Art Mode-koppeling kon niet worden bevestigd. Controleer de tv en sta de Music Canvas-verbinding toe als daarom wordt gevraagd."
+    },
     "canvas_admin_required": {
       "message": "Beheerdersrechten voor Home Assistant zijn vereist."
     },
