@@ -9,7 +9,7 @@ import unittest
 class SessionPrivateCatalogueQualificationTests(unittest.TestCase):
     def test_actual_original_session_wire_omits_partial_history_objects(self):
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root / 'examples/client_contracts/session_private_catalogue_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---1a098b25.json').read_text())
+        proof = json.loads((root / 'examples/client_contracts/session_private_catalogue_v1/music-canvas-switchbot-rotation-20261125-setup-20261125-ark-202-446794a5.json').read_text())
         self.assertTrue(proof["source_before_after_equal"])
         self.assertEqual(len(proof["source_pins"]), 361)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():

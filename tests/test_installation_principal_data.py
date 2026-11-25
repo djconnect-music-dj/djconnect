@@ -45,7 +45,7 @@ class InstallationPrincipalDataTests(unittest.TestCase):
     def test_actual_HA_original_codec_and_same_final_harness_parent_RED_remain_exact(self):
         root = Path(__file__).resolve().parents[1]
         joined = json.loads((root / "examples/client_contracts/installation_principal_data_v1/actual-ha-data-codec-live-impression-20261119-requested-moments-20261120.json").read_text())
-        receipt = json.loads((root / 'examples/client_contracts/installation_principal_data_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---8597f675.json').read_text())
+        receipt = json.loads((root / 'examples/client_contracts/installation_principal_data_v1/music-canvas-switchbot-rotation-20261125-setup-20261125-ark-202-968fd938.json').read_text())
         self.assertEqual(receipt["state"], "PASS")
         self.assertEqual(len(receipt["cases"]), 6)
         self.assertEqual(len(receipt["preceding_source_origin_cases"]), 19)
