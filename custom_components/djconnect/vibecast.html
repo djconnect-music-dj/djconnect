@@ -527,7 +527,8 @@ main { height:auto; min-width:0 }
 .horizon-panel #horizon-notice { font-size:.8em; opacity:.82 }
 #horizon-preview:not([hidden]) + #horizon-card { margin-top:.7rem }
 .horizon-preview-track { display:flex; align-items:flex-start; gap:.65rem; overflow-wrap:anywhere }
-.horizon-preview-track > img { flex:none; width:clamp(3rem,6vw,5rem); aspect-ratio:1; object-fit:cover; border-radius:.65rem }
+.horizon-preview-artwork { flex:none; width:clamp(3rem,6vw,5rem) }
+.horizon-preview-artwork[hidden] { display:none }
 #horizon-preview-title { display:block }
 #horizon-preview-artist { opacity:.78 }
 #horizon-preview-text { margin-top:.35em }
@@ -592,12 +593,12 @@ main { height:auto; min-width:0 }
   padding:.75em 1em;
 }
 .flow-with-artwork { display:grid; grid-template-columns:clamp(2.5rem,7vw,5rem) minmax(0,1fr); align-items:start; gap:.75em }
-.flow-artwork-link {
+.flow-artwork-link,.horizon-preview-artwork:not([hidden]) {
   display:block; padding:clamp(2px,.28vw,5px); overflow:hidden; border:var(--card-border); border-radius:.85rem;
   background:linear-gradient(140deg,#ffffff28,#ffffff07),var(--track-card-background,#252940);
   box-shadow:inset 0 1px 0 #ffffff35,0 .25rem .7rem #0005;
 }
-.flow-artwork { display:block; width:100%; aspect-ratio:1; object-fit:contain; border-radius:.62rem }
+.flow-artwork,.horizon-preview-artwork img { display:block; width:100%; aspect-ratio:1; object-fit:contain; border-radius:.62rem }
 .flow-card p { margin:.25em 0 0; white-space:pre-wrap; overflow-wrap:anywhere }
 .flow-card.flow-age-0 { border-radius:32px; font-weight:650 }
 .flow-card.flow-age-1 { font-weight:550 }
@@ -792,7 +793,9 @@ main { height:auto; min-width:0 }
   <article id="horizon-preview" class="flow-card mood-palette" hidden>
     <h2 id="horizon-preview-label"></h2>
     <div class="horizon-preview-track">
-      <img id="horizon-preview-art" alt="" hidden>
+      <div id="horizon-preview-artwork" class="horizon-preview-artwork" hidden>
+        <img id="horizon-preview-art" alt="">
+      </div>
       <div>
         <strong id="horizon-preview-title"></strong>
         <p id="horizon-preview-artist"></p>
@@ -836,7 +839,7 @@ main { height:auto; min-width:0 }
 </aside>
 </div></section><footer><section id="up-next" class="up-next" hidden><img id="next-art" alt=""><div><span id="next-label" class="up-next-label"></span><strong id="next-title"></strong><span id="next-artist"></span></div></section><progress id="progress" max="1" value="0" hidden></progress><div class="meta"><span id="time"></span></div></footer></main>
 <footer class="renderer-footer">
-  <span id="renderer-build"><span id="renderer-build-label">VibeCast versie</span> 4.1.0 (dba46496)</span>
+  <span id="renderer-build"><span id="renderer-build-label">VibeCast versie</span> 4.1.0 (bb40f890)</span>
   <a href="https://djconnect.dev/" rel="noreferrer">
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m9 15 6-6m-5 0h5v5"/></svg>
     djconnect.dev
@@ -1661,12 +1664,13 @@ main { height:auto; min-width:0 }
     e("horizon-preview-artist").textContent=visible ? track.artist : "";
     e("horizon-preview-text").textContent=visible ? preview.text : "";
     const source=e("horizon-preview-source"), image=e("horizon-preview-art");
+    const artwork=e("horizon-preview-artwork");
     const cover=visible && preview.artwork && displayArtwork.get(preview.artwork.reference);
     if (cover && cover.item_id===track.item_id) {
       if(image.getAttribute("src")!==cover.url)image.src=cover.url;
-      image.hidden=false;
+      artwork.hidden=false;
     } else {
-      image.hidden=true;
+      artwork.hidden=true;
       image.removeAttribute("src");
     }
     if (!visible) {

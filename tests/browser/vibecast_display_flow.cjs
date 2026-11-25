@@ -306,12 +306,23 @@ async function main(engine) {
     const previewCover=previewCard.locator("#horizon-preview-art");
     await previewCover.waitFor({state:"visible"});
     assert.match(await previewCover.getAttribute("src"),/^blob:/);
+    const artworkCard=previewCard.locator("#horizon-preview-artwork");
+    const artworkStyle=await artworkCard.evaluate(node=>{
+      const {backgroundImage,borderTopWidth}=getComputedStyle(node);
+      return {backgroundImage,borderTopWidth};
+    });
+    assert.notEqual(artworkStyle.backgroundImage,"none");
+    assert.ok(parseFloat(artworkStyle.borderTopWidth)>0);
+    const artworkBounds=await artworkCard.boundingBox(), previewBounds=await previewCover.boundingBox();
+    assert.ok(previewBounds.x>artworkBounds.x && previewBounds.y>artworkBounds.y);
+    assert.ok(Math.abs(previewBounds.width-previewBounds.height)<1);
     assert.equal(await previewCard.locator("h2").textContent(),"A continuación");
     assert.equal(await previewCard.locator("strong").textContent(),"Upcoming recording");
     assert.equal(await previewCard.locator("#horizon-preview-text").textContent(),horizonPreview.text);
     assert.equal(await previewCard.locator("a img").getAttribute("alt"),"Spotify");
     assert.equal(await rows.getByText("Upcoming recording").count(),0);
     await previewCard.waitFor({state:"hidden"});
+    assert.equal(await artworkCard.evaluate(node=>node.hidden),true);
     assert.equal(await previewCover.getAttribute("src"),null);
     const freshPreview={...horizonPreview,expires_at:new Date(Date.now()+10000).toISOString()};
     snapshot(11,"next-recording","playing",undefined,{session,horizon_preview:freshPreview});

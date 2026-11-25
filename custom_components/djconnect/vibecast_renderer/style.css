@@ -523,7 +523,8 @@ main { height:auto; min-width:0 }
 .horizon-panel #horizon-notice { font-size:.8em; opacity:.82 }
 #horizon-preview:not([hidden]) + #horizon-card { margin-top:.7rem }
 .horizon-preview-track { display:flex; align-items:flex-start; gap:.65rem; overflow-wrap:anywhere }
-.horizon-preview-track > img { flex:none; width:clamp(3rem,6vw,5rem); aspect-ratio:1; object-fit:cover; border-radius:.65rem }
+.horizon-preview-artwork { flex:none; width:clamp(3rem,6vw,5rem) }
+.horizon-preview-artwork[hidden] { display:none }
 #horizon-preview-title { display:block }
 #horizon-preview-artist { opacity:.78 }
 #horizon-preview-text { margin-top:.35em }
@@ -588,12 +589,12 @@ main { height:auto; min-width:0 }
   padding:.75em 1em;
 }
 .flow-with-artwork { display:grid; grid-template-columns:clamp(2.5rem,7vw,5rem) minmax(0,1fr); align-items:start; gap:.75em }
-.flow-artwork-link {
+.flow-artwork-link,.horizon-preview-artwork:not([hidden]) {
   display:block; padding:clamp(2px,.28vw,5px); overflow:hidden; border:var(--card-border); border-radius:.85rem;
   background:linear-gradient(140deg,#ffffff28,#ffffff07),var(--track-card-background,#252940);
   box-shadow:inset 0 1px 0 #ffffff35,0 .25rem .7rem #0005;
 }
-.flow-artwork { display:block; width:100%; aspect-ratio:1; object-fit:contain; border-radius:.62rem }
+.flow-artwork,.horizon-preview-artwork img { display:block; width:100%; aspect-ratio:1; object-fit:contain; border-radius:.62rem }
 .flow-card p { margin:.25em 0 0; white-space:pre-wrap; overflow-wrap:anywhere }
 .flow-card.flow-age-0 { border-radius:32px; font-weight:650 }
 .flow-card.flow-age-1 { font-weight:550 }
