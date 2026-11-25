@@ -140,7 +140,7 @@ class ForecastProjection:
                                  if _valid_wall_deadline(a.get('expires_at'), self.wall_clock())]
         return result
 
-    def shared_text(self, playback, *, locale: str, persona: str, mood: str) -> dict | None:
+    def shared_text(self, playback, *, locale: str, persona: str, mood: str, include_queue: bool = False) -> dict | None:
         """Realize the current, authored forecast from display-safe inputs only."""
         valid_until = self.value.get("valid_until")
         if (self.value.get("state") != "ready" or self.withdrawn or self.expired
@@ -155,11 +155,16 @@ class ForecastProjection:
             ("title", playback.title), ("artist", playback.artist), ("album", album),
         )):
             return None
-        _, sections = realize({
+        semantic = {
             "has_current": True, "title": playback.title, "artist": playback.artist, "album": album,
             "source_url": "", "guidance": self._semantic.get("guidance"),
             "aim": mood if self._semantic.get("aim") == mood else "",
-        }, locale, persona)
+        }
+        if include_queue and (queue := self._semantic.get("queue_preview")):
+            if queue != self.queue_context(playback.item_id):
+                return None
+            semantic["queue_preview"] = queue
+        _, sections = realize(semantic, locale, persona)
         return {"valid_until": valid_until, "sections": [
             {"title": section["title"], "text": section["text"]} for section in sections
             if section.get("claim_type") != "current"

@@ -87,6 +87,52 @@ class DisplayProjectionTests(unittest.TestCase):
             self.assertFalse(guard())
         self.assertNotIn("horizon", self.snapshot())
 
+    def test_approved_display_horizon_uses_the_same_authorized_queue_text_as_owner(self):
+        self.prepared()
+        broadcast = self.session.broadcast
+        forecast = broadcast.forecast
+        forecast.clock = lambda: 101
+        forecast.wall_clock = lambda: 1_800_000_000
+        queue_allowed = True
+        playback = broadcast.state.playback
+        forecast.accept_observation()
+        forecast.accept_queue({
+            "items": [{"title": "Upcoming recording", "artist": "Upcoming artist", "genres": ["choral"],
+                       "private_id": "provider-internal-id"}],
+            "deadline": 120, "wall_deadline": 1_800_000_015,
+        }, playback.item_id, lambda: queue_allowed)
+        forecast.update({
+            "has_current": True, "supported": True, "title": playback.title,
+            "artist": playback.artist, "album": playback.album or playback.title,
+            "source_url": "https://owner.invalid/private", "guidance": "quiet",
+            "queue_preview": forecast.queue_context(playback.item_id),
+        }, locale="nl", persona="radio_dj", current_item_id=playback.item_id)
+
+        snapshot = self.snapshot()
+        card = snapshot["horizon"]
+        locale = snapshot["session"]["locale"]
+        owner = forecast.as_dict(locale=locale)
+        owner_guidance = next(section["text"] for section in owner["sections"] if section["id"] == "guidance")
+        self.assertEqual(card["sections"][0]["text"], owner_guidance)
+        self.assertIn("Upcoming recording", owner_guidance)
+        self.assertIn("Upcoming artist", owner_guidance)
+        self.assertEqual(card["valid_until"], owner["valid_until"])
+        self.assertNotIn("provider-internal-id", json.dumps(card))
+        self.assertNotIn("owner.invalid", json.dumps(card))
+        guest = self.projection._shared_horizon(broadcast, locale=locale)
+        self.assertNotIn("Upcoming recording", json.dumps(guest))
+
+        guard = self.projection.projection_release_guard(self.session, self.display, self.state, snapshot)
+        with patch("time.monotonic", return_value=101):
+            self.assertTrue(guard())
+            forecast.wall_clock = lambda: 1_800_000_015
+            self.assertFalse(guard())
+            self.assertNotIn("horizon", self.snapshot())
+            forecast.wall_clock = lambda: 1_800_000_000
+            queue_allowed = False
+            self.assertFalse(guard())
+            self.assertNotIn("horizon", self.snapshot())
+
     def test_pending_content_erasure_withdraws_cached_guard_and_shared_text(self):
         moment = self.prepared()
         snapshot = self.snapshot()
