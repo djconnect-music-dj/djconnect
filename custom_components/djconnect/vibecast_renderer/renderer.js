@@ -413,7 +413,6 @@
   }
   function clearLiveStatus(){
     renderReceiverBrand(false);
-    e("live-indicator").hidden=true;
     if(guestCounter){guestCounter.hidden=true;guestCounter.textContent="";guestCounter.removeAttribute("aria-label");}
     for(const [node,timer] of reactionTimers){window.clearTimeout(timer);node.remove();}
     reactionTimers.clear();seenReactions.clear();
@@ -459,7 +458,6 @@
     const enabled=detail.live_enabled===true;
     if(enabled)renderReceiverBrand(true);
     else clearLiveStatus();
-    e("live-indicator").hidden=!enabled;
     if(!guestCounter){
       guestCounter=document.createElement("span");guestCounter.id="live-guest-count";
       document.querySelector(".session-status").appendChild(guestCounter);

@@ -93,6 +93,8 @@ async function main(engine) {
     const languagePicker = page.locator("#display-language");
     const moodIcon = page.locator("#session-mood-icon");
     await moodIcon.waitFor();
+    assert.deepEqual(await page.locator("#session-icons > svg").evaluateAll(icons=>icons.map(icon=>icon.id)),
+      ["session-mood-icon","session-presence-icon","session-persona-icon"]);
     await languagePicker.waitFor({state:"hidden"});
     const modeStatus=page.locator("#display-view-status");
     assert.equal(await modeStatus.textContent(),"Flow");
@@ -330,7 +332,7 @@ async function main(engine) {
     await liveStatus({view:view(0)});
     const receiverBrand=page.locator("#receiver-brand-label");
     assert.equal(await receiverBrand.textContent(),"VibeCast Party");
-    assert.equal((await page.locator("#live-indicator").innerText()).trim(),"");
+    assert.equal(await page.locator("#live-indicator, #sharing-hand").count(),0);
     assert.equal(await page.locator(".session-panels").evaluate(node=>getComputedStyle(node).display),"none");
     const firstScene=await page.locator("#vibescape-scene").evaluate(node=>node.toDataURL());
     await liveStatus({view:view(1)});
