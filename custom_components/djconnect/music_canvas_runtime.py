@@ -86,12 +86,15 @@ class CanvasRuntime:
                     observed = "busy"
                 else:
                     observed = self.states.get(key, device["state"])
+            preview = device.get("preview") if key in selected and device.get("preview_owner") == owner \
+                and not device.get("forgetting") else None
             devices.append({
                 "id": key, "name": device["name"], "adapter": device["adapter"],
                 "state": observed,
                 "screen": device["screen"], "remote_cleanup": device["adapter"] == "samsung"
                     and device.get("cleanup_supported") is True,
-                "preview_available": key in selected and device.get("preview_owner") == owner and bool(device.get("preview")),
+                "preview_available": bool(preview),
+                "preview_revision": digest(preview) if preview else None,
                 "shared_profiles": sum(key in x["preferences"]["selected_targets"] for x in state["profiles"].values()),
                 "forgetting": device.get("forgetting") is True,
             })

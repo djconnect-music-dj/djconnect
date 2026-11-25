@@ -58,6 +58,9 @@ fields and return private no-store responses. Every request has
 * `read`: returns opaque binding, authoritative revision/preferences, target
   descriptors, per-target observed state, generation availability, and management
   permission. Reading/opening/preview never triggers generation or discovery scans.
+  A target with an authorized preview can include an opaque `preview_revision`
+  that changes when its committed JPEG changes. Clients can refetch the private
+  preview when that revision changes while the settings page is open.
 * `update`: binding, operation_id (UUID), expected_revision, patch. Accepted
   writes atomically persist preferences plus a bounded original-operation receipt.
   Conflict is 409; unknown transmission uses `operation`, never execute replay.

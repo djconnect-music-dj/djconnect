@@ -228,6 +228,9 @@ async def qualify(hass, manager, history, request, client):
             state["profiles"]["profile-other"] = {"revision": 1, "preferences": {
                 **state["profiles"]["profile-a"]["preferences"], "selected_targets": ["samsung:fixture-a"]}}
         await runtime.repository.mutate(select_other, lambda: True)
+        other_snapshot = await runtime.snapshot("profile-other", lambda: True)
+        other_tv = next(target for target in other_snapshot["targets"] if target["id"] == "samsung:fixture-a")
+        assert not other_tv["preview_available"] and other_tv["preview_revision"] is None
         try:
             await runtime.preview("profile-other", "samsung:fixture-a", lambda: True)
             raise AssertionError("cross-Profile preview exposed")
@@ -237,6 +240,8 @@ async def qualify(hass, manager, history, request, client):
         failing.add("samsung:fixture-a")
         latest, code = await call("read")
         assert code == 200 and latest["per_screen_composition_and_cadence"] is True
+        before_preview = next(target for target in latest["targets"] if target["id"] == "samsung:fixture-b")
+        assert before_preview["preview_available"] and len(before_preview["preview_revision"]) == 64
         changed, code = await call("update", dict(binding=binding, operation_id=str(uuid.uuid4()),
             expected_revision=latest["revision"], patch={
                 "matte": "contrast", "show_track_title": True,
@@ -254,6 +259,10 @@ async def qualify(hass, manager, history, request, client):
         untitled = rendered["devices"]["samsung:fixture-b"]
         assert titled["presentation"] == ["full", "matching", True]
         assert titled["preview"] != untitled["preview"] and titled["source_image"] == untitled["source_image"]
+        latest, code = await call("read")
+        assert code == 200
+        after_preview = next(target for target in latest["targets"] if target["id"] == "samsung:fixture-b")
+        assert after_preview["preview_available"] and after_preview["preview_revision"] != before_preview["preview_revision"]
         assert updated_devices["switchbot:fixture-p"]["presentation"] == ["central", "off", False]
         assert updated_devices["switchbot:fixture-p"]["preview"] == rendered["devices"]["switchbot:fixture-p"]["preview"]
         with patch.object(runtime.cadence, "due", wraps=runtime.cadence.due) as due:
