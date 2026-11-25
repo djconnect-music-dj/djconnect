@@ -24,7 +24,7 @@ class QueueForecastLab(forecast_lab.ForecastLab):
                 {'type':'track','id':str(i)*22,'uri':'spotify:track:'+str(i)*22,
                  'name':f'{getattr(self, "queue_flavour", "Queue fixture")} {i}', 'duration_ms':300000,
                  'artists':[{'id':forecast_lab.ARTIST,'name':'Queue artist'}]}
-                for i in range(1, 6)]}
+                for i in getattr(self, "queue_order", range(1, 6))]}
         if path.startswith('/artists?ids='):
             self.calls += 1
             return {'artists':[{'id':forecast_lab.ARTIST,'genres':['ambient','downtempo']}]}
@@ -68,6 +68,15 @@ class QueueForecastLab(forecast_lab.ForecastLab):
                 rows.append({'locale':locale,'persona':persona.value,'HTTP':200,
                              'queue_count':3,'read_effects':0,'original_expiry':True})
             assert len(set(texts)) == 4
+        await self.start(locale='nl')
+        self.queue_order = [1, 1, 1]
+        await self.step(1)
+        await self.settle_art()
+        status, response = await self.forecast()
+        summary = response['forecast']['summary']
+        assert status == 200 and summary.count('Queue fixture 1') == 1, response
+        duplicate_queue = {'HTTP':status, 'visible_count':summary.count('Queue fixture 1')}
+        del self.queue_order
         # Two output identities with the same display name cannot share an old queue.
         await self.start()
         await self.step(1)
@@ -111,7 +120,7 @@ class QueueForecastLab(forecast_lab.ForecastLab):
             assert status == 200
             assert 'Queue fixture' not in value['forecast']['summary'], (case, value)
             stale.append({'case':case, 'late_queue_discarded':True})
-        return {'state':'PASS', 'cases':rows,'invalid_requests':invalid,'stale_results':stale,
+        return {'state':'PASS', 'cases':rows,'invalid_requests':invalid,'stale_results':stale, 'duplicate_queue':duplicate_queue,
                 'external_boundary':'Synthetic Spotify/CDN only; real HA pairing/HTTP/backend/observer/Runtime',
                 'HA_dev_writes':False,'native_acceptance':'NOT_RUN'}
 
