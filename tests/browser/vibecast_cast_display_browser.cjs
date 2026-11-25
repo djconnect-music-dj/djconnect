@@ -64,7 +64,7 @@ async function run(name,engine){
   ws.send(JSON.stringify({type:'snapshot',contract_version:1,connection_generation:3,snapshot:{contract_version:1,...binding,
    session:{session_id:binding.session_id,runtime_state:'active',locale:'nl'},session_presentation:{mood:'calm',persona:'relaxed',presence:'soft'},
    view:{mode:'flow',revision:0,dynamics:.5},
-   playback:{state:'playing',item_id:'declared-fixture-track',title:'Declared fixture recording',artist:'Declared fixture performer',duration_ms:240000,position_ms:210000},
+   playback:{state:'playing',item_id:'declared-fixture-track',title:'Declared fixture recording',artist:'Declared fixture performer',duration_ms:240000,position_ms:4000},
    horizon_preview:{current_item_id:'declared-fixture-track',expires_at:new Date(Date.now()+20000).toISOString(),
     text:'Hierna staat het volgende nummer klaar.',track:{item_id:'declared-next',title:'Declared next recording',
      artist:'Declared next performer',source_url:'https://open.spotify.com/track/'+'A'.repeat(22)}},

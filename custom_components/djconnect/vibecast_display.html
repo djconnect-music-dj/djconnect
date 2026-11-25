@@ -836,7 +836,7 @@ main { height:auto; min-width:0 }
 </aside>
 </div></section><footer><section id="up-next" class="up-next" hidden><img id="next-art" alt=""><div><span id="next-label" class="up-next-label"></span><strong id="next-title"></strong><span id="next-artist"></span></div></section><progress id="progress" max="1" value="0" hidden></progress><div class="meta"><span id="time"></span></div></footer></main>
 <footer class="renderer-footer">
-  <span id="renderer-build"><span id="renderer-build-label">VibeCast versie</span> 4.1.0 (b3cd19b7)</span>
+  <span id="renderer-build"><span id="renderer-build-label">VibeCast versie</span> 4.1.0 (dba46496)</span>
   <a href="https://djconnect.dev/" rel="noreferrer">
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m9 15 6-6m-5 0h5v5"/></svg>
     djconnect.dev
@@ -2370,7 +2370,9 @@ window.DJCDisplayHost=function(transport){
     publishArtwork();
   }
   const participationLabels={en:"Scan to join the music conversation",nl:"Scan om mee te praten over de muziek",de:"Scannen und über die Musik mitreden",fr:"Scanne pour parler de la musique",es:"Escanea para hablar de la música"};
-  let guestPanel=null,guestQR=null,guestManual=null,guestCode=null,guestAddress=null,guestPollGeneration=-1,guestQRDeadline=0;
+  const guestTrackIntroMs=20000;
+  let guestPanel=null,guestQR=null,guestManual=null,guestCode=null,guestAddress=null,guestPollGeneration=-1;
+  let guestQRDeadline=0,guestQRTimer=null,guestPlayback=null,guestTrackDeadline=0,participationRevision=0;
   let sharedPhoto=null,sharedPhotoWanted=null,failedSharedPhotoRevision=null;
   function clearSharedPhoto(){
     sharedPhotoWanted=null;
@@ -2403,13 +2405,41 @@ window.DJCDisplayHost=function(transport){
     finally{clearTimeout(timeout);requests.delete(controller);}
   }
   function hideGuestInvitation(){
+    guestQRDeadline=0;
+    clearTimeout(guestQRTimer);
+    guestQRTimer=null;
     if(!guestPanel)return;
     guestPanel.hidden=true;guestQR.removeAttribute("src");
     guestCode.textContent="";guestAddress.textContent="";guestManual.hidden=true;
   }
+  function renderGuestInvitation(){
+    clearTimeout(guestQRTimer);
+    guestQRTimer=null;
+    if(!guestPanel || !guestQRDeadline)return;
+    const time=now();
+    if(expired() || time>=guestQRDeadline){hideGuestInvitation();return;}
+    const playing=guestPlayback?.state==="playing" && guestPlayback.item_id;
+    const visibleUntil=Math.min(guestQRDeadline,playing ? guestTrackDeadline : Infinity);
+    guestPanel.hidden=!guestPlayback || time>=visibleUntil;
+    const nextDeadline=guestPanel.hidden ? guestQRDeadline : visibleUntil;
+    guestQRTimer=setTimeout(renderGuestInvitation,Math.max(1,nextDeadline-time));
+  }
+  function updateGuestPlayback(snapshot){
+    const next=snapshot.playback || {};
+    if(next.state==="playing" && next.item_id){
+      if(guestPlayback?.item_id!==next.item_id || guestPlayback.state!=="playing"){
+        const position=Number.isFinite(next.position_ms) ? Math.max(0,next.position_ms) : 0;
+        guestTrackDeadline=now()+Math.max(0,guestTrackIntroMs-position);
+      }
+    }
+    guestPlayback=next;
+    renderGuestInvitation();
+  }
   function clearParticipation(){
+    participationRevision++;
+    guestPlayback=null;
+    guestTrackDeadline=0;
     failedSharedPhotoRevision=null;clearSharedPhoto();
-    guestQRDeadline=0;
     hideGuestInvitation();
     window.dispatchEvent(new CustomEvent("djconnect-shared-focus",{detail:{focused_moment_id:null}}));
   }
@@ -2427,18 +2457,21 @@ window.DJCDisplayHost=function(transport){
   listen(window,"djconnect-display-return",()=>{if(!expired())void participationPost("return").catch(()=>{});});
   async function participationPoll(g){
     if(g!==generation || expired())return;
-    const started=now();
+    const started=now(), revision=participationRevision;
+    const current=()=>g===generation && revision===participationRevision && !expired() && guestPlayback!==null;
     try{
+      if(!current())return;
       const focus=await participationPost("focus");
-      if(g!==generation || expired())return;
+      if(!current())return;
       window.dispatchEvent(new CustomEvent("djconnect-shared-focus",{detail:focus}));
       window.dispatchEvent(new CustomEvent("djconnect-live-status",{detail:focus}));
       void updateSharedPhoto(focus,g,started);
+      if(focus.live_enabled!==true){hideGuestInvitation();return;}
       const invitation=await participationPost("invitation");
-      if(g!==generation || expired() || !(invitation.expires_in>0))return;
+      if(!current() || !(invitation.expires_in>0))return;
       if(!/^data:image\/svg\+xml;base64,[A-Za-z0-9+/=]+$/.test(invitation.qr_data_uri))return;
       if(!guestPanel){
-        guestPanel=document.createElement("aside");guestPanel.className="guest-participation";
+        guestPanel=document.createElement("aside");guestPanel.className="guest-participation";guestPanel.hidden=true;
         guestQR=document.createElement("img");guestQR.width=128;guestQR.height=128;
         guestManual=document.createElement("div");guestManual.className="guest-manual-entry";guestManual.hidden=true;
         guestCode=document.createElement("strong");guestAddress=document.createElement("span");
@@ -2456,9 +2489,9 @@ window.DJCDisplayHost=function(transport){
       guestAddress.textContent=manualAddress;guestManual.hidden=!manualAddress;
       guestQR.alt=participationLabels[effectiveLocale]||participationLabels.en;
       if(guestQR.getAttribute("src")!==invitation.qr_data_uri)guestQR.src=invitation.qr_data_uri;
-      guestQRDeadline=started+invitation.expires_in*1000;guestPanel.hidden=now()>=guestQRDeadline;
-      later(()=>{if(now()>=guestQRDeadline)hideGuestInvitation();},Math.max(1,guestQRDeadline-now()));
-    }catch(_){if(g===generation)hideGuestInvitation();}
+      guestQRDeadline=started+invitation.expires_in*1000;
+      renderGuestInvitation();
+    }catch(_){if(current())hideGuestInvitation();}
     finally{if(g===generation && !expired())later(()=>participationPoll(g),3000);}
   }
   function updateArtwork(snapshot){
@@ -2661,6 +2694,7 @@ window.DJCDisplayHost=function(transport){
           share_id:snapshot.share_id,share_generation:snapshot.share_generation,session_id:snapshot.session_id,
           connection_generation:frame.connection_generation});
         window.dispatchEvent(new CustomEvent("djconnect-display-snapshot",{detail:snapshot}));
+        updateGuestPlayback(snapshot);
         void updateArtwork(snapshot);panel.hidden=true;
         if(guestPollGeneration!==g){guestPollGeneration=g;void participationPoll(g);}
       }catch(_){terminal("denied");}
