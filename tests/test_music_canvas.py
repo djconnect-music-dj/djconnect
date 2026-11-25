@@ -411,12 +411,12 @@ class CanvasDomainTests(unittest.TestCase):
         import hashlib
         import json
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/music-canvas-switchbot-rotation-20261125-actual-ha.json").read_text())
+        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/music-canvas-resume-settings-20261125-actual-ha.json").read_text())
         self.assertEqual(len(proof["source_pins"]), 361)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), expected, name)
         self.assertTrue(proof["source_before_after_equal"])
-        matrix = json.loads((root/"docs/verification/music-canvas-switchbot-rotation-actual-ha-matrix-20261125.json").read_text())
+        matrix = json.loads((root/"docs/verification/music-canvas-resume-settings-actual-ha-matrix-20261125.json").read_text())
         self.assertEqual(matrix["source_pins"], proof["source_pins"])
         self.assertTrue(matrix["source_before_after_equal"])
         self.assertEqual(len(matrix["results"]), 54)
@@ -466,6 +466,16 @@ class CanvasDomainTests(unittest.TestCase):
         with self.assertRaisesRegex(CanvasError, "revision_conflict"):
             apply_update(state, "alice", "binding", update(enabled=False), 103)
         self.assertTrue(profile(state, "alice")["preferences"]["enabled"])
+
+    def test_saving_unchanged_preferences_keeps_the_revision_and_replays_its_receipt(self):
+        state = fresh_state()
+        request = update(enabled=False, show_track_title=False)
+        result = apply_update(state, "owner", "binding", request, 100)
+        self.assertEqual(result["revision"], 0)
+        changed = apply_update(state, "owner", "binding", update(enabled=True), 101)
+        self.assertEqual(changed["revision"], 1)
+        self.assertEqual(apply_update(state, "owner", "binding", request, 102), result)
+        self.assertEqual(profile(state, "owner"), changed)
 
     def test_closed_contract_identity_and_invalid_choice(self):
         for request in (update(enabled="yes"), update(show_track_title=1), {**update(enabled=True), "profile_id": "bob"},
@@ -629,9 +639,9 @@ class CanvasPersistenceTests(unittest.IsolatedAsyncioTestCase):
             await service.async_initialize()
             repo = CanvasRepository(service)
             results = await asyncio.gather(*(
-                repo.mutate(lambda s, request=update(enabled=enabled):
+                repo.mutate(lambda s, request=update(**patch_values):
                             apply_update(s, "owner", "binding", request, 100), lambda: True)
-                for enabled in (True, False)), return_exceptions=True)
+                for patch_values in ({"enabled": True}, {"composition": "free"})), return_exceptions=True)
             self.assertEqual(sum(isinstance(x, CanvasError) for x in results), 1)
             self.assertEqual(profile(await repo.read(), "owner")["revision"], 1)
             await service.async_close()

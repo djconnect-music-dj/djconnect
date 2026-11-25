@@ -1,6 +1,7 @@
 """Real HA2026.11 TLS/pairing/SQLite Canvas proof; no provider or hardware calls."""
 from __future__ import annotations
 import asyncio
+from copy import deepcopy
 import json
 import os
 from pathlib import Path
@@ -185,6 +186,33 @@ async def qualify(hass, manager, history, request, client):
         await runtime.jobs["profile-a"]
         assert not generations, "debounce skipped"
         await asyncio.sleep(5.1)
+        first_generation = asyncio.Event()
+
+        async def wait_for_settings(_hass, _prompt):
+            first_generation.set()
+            await asyncio.Future()
+
+        with patch.object(render, "generate", wait_for_settings):
+            await runtime.tick()
+            original_job = runtime.jobs["profile-a"]
+            await asyncio.wait_for(first_generation.wait(), 5)
+            current, code = await call("read")
+            assert code == 200
+            unchanged, code = await call("update", dict(binding=binding, operation_id=str(uuid.uuid4()),
+                expected_revision=current["revision"], patch=deepcopy(current["preferences"])))
+            assert code == 200 and unchanged["revision"] == current["revision"]
+            assert not original_job.done() and not original_job.cancelling()
+            changed, code = await call("update", dict(binding=binding, operation_id=str(uuid.uuid4()),
+                expected_revision=current["revision"], patch={"show_track_title": True}))
+            assert code == 200 and changed["revision"] == current["revision"] + 1
+            try:
+                await original_job
+            except asyncio.CancelledError:
+                pass
+            assert not deliveries or all(action == "observe" for _, action in deliveries)
+            restored, code = await call("update", dict(binding=binding, operation_id=str(uuid.uuid4()),
+                expected_revision=changed["revision"], patch={"show_track_title": False}))
+            assert code == 200 and restored["revision"] == changed["revision"] + 1
         await runtime.tick()
         await runtime.jobs["profile-a"]
         assert len(generations) == 2, "identical Samsung targets must share one generation"
@@ -224,7 +252,6 @@ async def qualify(hass, manager, history, request, client):
         runtime.next_probe.clear()  # Isolate later cases from the deliberate offline backoff.
         # A physically running executor retains its effect slot through repeated cancellation.
         import threading
-        from copy import deepcopy
         started_thread, finish_thread = threading.Event(), threading.Event()
         def blocking_hardware():
             started_thread.set()
@@ -695,6 +722,7 @@ async def qualify(hass, manager, history, request, client):
             "shared_samsung_generation": True, "matte_reuses_source": True, "track_title_reuses_source": True,
             "cross_profile_preview_denied": True, "offline_target_isolated": True,
             "late_model_after_session_end_denied": True, "admin_deletion_withdraws_management": True,
+            "settings_update_resumes_before_delivery_and_noop_preserves_live_job": True,
             "failed_cleanup_and_explicit_forget_anyway": True,
             "unknown_forget_survives_actual_sqlite_and_runtime_restart": True,
             "unknown_forget_requires_new_explicit_admin_decision": True,

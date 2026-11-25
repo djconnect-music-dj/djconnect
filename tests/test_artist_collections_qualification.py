@@ -9,7 +9,7 @@ import unittest
 class ArtistCollectionsQualificationTests(unittest.TestCase):
     def test_original_paired_http_offer_proof_matches_current_source(self):
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root / 'examples/client_contracts/artist_collections_v1/music-canvas-switchbot-rotation-20261125-setup-20261125-ark-202-454d9971.json').read_text())
+        proof = json.loads((root / 'examples/client_contracts/artist_collections_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-fb5c93a3.json').read_text())
         self.assertTrue(proof["source_before_after_equal"])
         self.assertEqual(len(proof["source_pins"]), 361)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():

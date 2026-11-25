@@ -119,8 +119,10 @@ def apply_update(state, owner, binding, data, now):
     prefs = patched(current["preferences"], data["patch"])
     need(all(x in state["devices"] and not state["devices"][x].get("forgetting")
              for x in prefs["selected_targets"]), "canvas_target_unavailable", 409)
-    result = {"revision": current["revision"] + 1, "preferences": prefs}
-    state["profiles"][owner] = deepcopy(result)
+    changed = prefs != current["preferences"]
+    result = {"revision": current["revision"] + int(changed), "preferences": prefs}
+    if changed:
+        state["profiles"][owner] = deepcopy(result)
     state["operations"][key] = dict(owner=owner, digest=fingerprint, result=deepcopy(result), expires=now+86400)
     return result
 
@@ -162,3 +164,8 @@ class Cadence:
 
     def mark(self, key, occurrence, now):
         self.completed[key] = (occurrence, now)
+
+    def release(self, key, attempt):
+        """Allow replacement of this attempt only before sending it to a device."""
+        if self.completed.get(key) == attempt:
+            self.completed.pop(key)
