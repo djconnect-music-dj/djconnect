@@ -406,6 +406,89 @@ class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
         async_call.assert_not_awaited()
 
 
+class CanvasTrackArtworkTests(unittest.IsolatedAsyncioTestCase):
+    async def test_new_track_and_presentation_change_generate_from_new_title(self):
+        import time
+        from custom_components.djconnect import music_canvas_runtime as canvas
+
+        owner, target = "owner", "frame"
+        state = fresh_state()
+        state["devices"][target] = {
+            "adapter": "switchbot", "state": "ready", "epoch": 0,
+            "screen": {"width": 320, "height": 480, "orientation": "portrait"},
+        }
+        config = profile(state, owner)
+        config["preferences"].update(selected_targets=[target], cadence="track")
+        broadcast = types.SimpleNamespace()
+        active = types.SimpleNamespace(session_id="session", runtime_state="active",
+                                       selected_mood="chill", broadcast=broadcast)
+        manager = types.SimpleNamespace(_history_source_contexts={}, _visual_ending=set(),
+                                        current_active=lambda _: active)
+        store = types.SimpleNamespace(authority_revision=0)
+
+        async def executor(action, *args):
+            return action(*args)
+
+        async def mutate(change, authorize):
+            self.assertTrue(authorize())
+            return change(state)
+
+        with tempfile.TemporaryDirectory() as directory, patch.object(canvas, "persistence_service"), \
+             patch.dict(sys.modules, {"custom_components.djconnect.profile_context":
+                 types.SimpleNamespace(profile_storage=lambda _: store)}):
+            hass = types.SimpleNamespace(
+                config=types.SimpleNamespace(path=lambda *_: directory),
+                services=types.SimpleNamespace(has_service=lambda *_: True),
+                data={"djconnect": {"session_runtime_manager": manager,
+                                    "music_canvas_asset_origin": "https://fixture.example"}},
+                async_add_executor_job=executor,
+            )
+            runtime = canvas.CanvasRuntime(hass)
+            runtime.revisions[owner] = config["revision"]
+            runtime.repository = types.SimpleNamespace(read=AsyncMock(return_value=state), mutate=mutate)
+            runtime.registry_art_current = lambda _: True
+            key = (owner, active.session_id, target)
+
+            async def play(item_id, title):
+                now = time.monotonic()
+                broadcast.passive_observation = (
+                    now, None, types.SimpleNamespace(item_id=item_id, title=title, state="playing"),
+                )
+                runtime.cadence.observed[key] = (digest([active.session_id, item_id]), now - 6)
+                await runtime.run(owner, active, config, state)
+
+            generate = AsyncMock(side_effect=[b"promise image", b"beginners image"])
+            cloud = AsyncMock(return_value={"state": "delivered_unknown"})
+            with patch.object(canvas.render, "generation_available", return_value=True), \
+                 patch.object(canvas.render, "generate", generate), \
+                 patch.object(canvas.render, "compose", side_effect=lambda raw, *_: raw + b" render"), \
+                 patch.object(canvas.adapters, "deliver_switchbot", cloud):
+                await play("first", "Promise")
+                first = state["devices"][target]["source_image"]
+                runtime.leases.clear()
+                config["preferences"]["presentation_overrides"][target] = {
+                    "matte": "contrast", "show_track_title": True,
+                }
+                await play("first", "Promise")
+                self.assertEqual(state["devices"][target]["source_image"], first)
+                self.assertEqual(generate.await_count, 1)
+
+                runtime.leases.clear()
+                config["preferences"]["presentation_overrides"][target]["matte"] = "matching"
+                await play("second", "Beginners")
+                self.assertEqual(generate.await_count, 2)
+                self.assertIn('"title": "Beginners"', generate.await_args.args[1])
+                self.assertNotEqual(state["devices"][target]["source_image"], first)
+                self.assertEqual(cloud.await_count, 3)
+
+                runtime.leases.clear()
+                config["preferences"]["cadence"] = "1800"
+                config["preferences"]["presentation_overrides"][target]["matte"] = "off"
+                await play("third", "One Day")
+                self.assertEqual(generate.await_count, 2)
+                self.assertEqual(cloud.await_count, 3)
+
+
 class CanvasDomainTests(unittest.TestCase):
     def test_presentation_is_per_screen_and_preserved_while_deselected(self):
         state = fresh_state()

@@ -412,6 +412,7 @@ class CanvasRuntime:
             started = None
         occurrence = digest([active.session_id,
             started.occurrence_id if started is not None else playback.item_id])
+        source_track = digest([occurrence, playback.title])
         source_context = deepcopy(manager._history_source_contexts.get(active.session_id))
         def scope_current(per_track=False):
             return (not self.stopped and storage.authority_revision == authority_revision
@@ -460,6 +461,7 @@ class CanvasRuntime:
             if isinstance(previous_presentation, list) and len(previous_presentation) == 2:
                 previous_presentation = [*previous_presentation, False]
             cached = device.get("source_image") if (device.get("preview_owner") == owner
+                and (device.get("provenance") or {}).get("source_track") == source_track
                 and previous_presentation != list(presentation)) else None
             if not cached and not self.cadence.due(key, occurrence, cadence, time.monotonic()):
                 continue
@@ -553,7 +555,8 @@ class CanvasRuntime:
                         # even if the acknowledgement or profile is withdrawn.
                         pending_attempts.pop(key, None)
                         try:
-                            await self.deliver(owner, config, active, target, device, filename, art, current_scope, source_file)
+                            await self.deliver(owner, config, active, target, device, filename, art, current_scope,
+                                               source_file, source_track=source_track)
                         except CanvasError as exc:
                             self.states[target] = exc.code
                         except Exception:
@@ -612,7 +615,8 @@ class CanvasRuntime:
 
         return await self.await_effect_completion(asyncio.create_task(cleanup_and_record()))
 
-    async def deliver(self, owner, config, active, target, device, filename, art, scope_current, source_file):
+    async def deliver(self, owner, config, active, target, device, filename, art, scope_current, source_file,
+                      *, source_track=None):
         async with self.effect_lock:
             current = await self.repository.read()
             def authorized():
@@ -677,7 +681,8 @@ class CanvasRuntime:
                 row["presentation"] = list(screen_presentation(config["preferences"], target, device))
                 row["provenance"] = {
                     "input": "bounded_confirmed_title_only", "external_attachments": False,
-                    "generated": True, "native_model_resolution_qualified": False}
+                    "generated": True, "native_model_resolution_qualified": False,
+                    "source_track": source_track}
                 return row
             async with self.asset_lock:
                 saved = await self.repository.mutate(commit, authorized)
