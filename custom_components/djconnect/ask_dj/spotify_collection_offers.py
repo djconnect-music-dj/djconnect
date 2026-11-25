@@ -14,6 +14,16 @@ def collection_request(text):
         value,
     ):
         return ("mix", "")
+    genre_mix = re.fullmatch(
+        r"(?:heb je (?:een )?|(?:do you have|can you suggest) (?:a |an )?)"
+        r"(?:spotify[- ]?)?(.{1,40}?)[- ]mix(?:es)?(?: voor me| for me)?",
+        value,
+    )
+    if genre_mix:
+        from . import _looks_like_genre_query
+        genre = genre_mix[1]
+        if _looks_like_genre_query("", genre):
+            return ("mix", genre)
     match = re.fullmatch(
         r"(?:heb je (?:spotify[- ]?)?(?:playlists|afspeellijsten) (?:van|met)"
         r"|do you have (?:spotify )?playlists (?:with|by|featuring)) (.{1,120})",
@@ -22,7 +32,7 @@ def collection_request(text):
     return ("artist", match[1]) if match else None
 
 
-async def collection_response(hass, runtime, kind, artist, *, turn):
+async def collection_response(hass, runtime, kind, subject, *, turn):
     from aiohttp import ClientError
     from ..spotify_backend import SpotifyBackend, SpotifyBackendError
     from . import _playlist_search_playback_actions
@@ -35,20 +45,22 @@ async def collection_response(hass, runtime, kind, artist, *, turn):
         await guard()
         backend = SpotifyBackend(hass, runtime)
         if kind == "mix":
-            candidates = await backend.search_playlists("mix", limit=10)
+            candidates = await backend.search_playlists(f"{subject} mix" if subject else "mix", limit=10)
             await guard()
+            genre_pattern = re.compile(rf"\b{re.escape(subject)}\b", re.I) if subject else None
             return [
                 item for item in candidates
                 if item.get("owner_id") == "spotify"
                 and re.search(r"\bmix(?:es)?\b", item.get("title", ""), re.I)
+                and (genre_pattern is None or genre_pattern.search(item.get("title", "")))
                 and re.fullmatch(r"spotify:playlist:[A-Za-z0-9]{22}", item.get("uri", ""))
             ]
-        identity = await backend.artist_profile(artist)
+        identity = await backend.artist_profile(subject)
         await guard()
         artist_id = identity.get("id")
         if not isinstance(artist_id, str) or not re.fullmatch(r"[A-Za-z0-9]{22}", artist_id):
             return []
-        candidates = await backend.search_playlists(artist, limit=10)
+        candidates = await backend.search_playlists(subject, limit=10)
         await guard()
         verified = {}
         checked = set()
