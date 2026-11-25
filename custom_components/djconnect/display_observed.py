@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 import hashlib
 import re
+from uuid import uuid4
 
 
 @dataclass(frozen=True, repr=False)
@@ -37,26 +38,34 @@ def capture(state, active, source_sample, media_identity, *, occurrence=None):
                    for value in (playback.title, playback.artist, playback.album))):
         return
     from .track_start_announcement import Occurrence
-    key = (occurrence.occurrence_id if type(occurrence) is Occurrence
-           and occurrence.item_id == playback.item_id else playback.item_id)
+    if type(occurrence) is not Occurrence or occurrence.item_id != playback.item_id:
+        occurrence = None
+    key = occurrence.occurrence_id if occurrence is not None else None
     now = state._clock()
     def current():
         return source_sample.witness.current(historical=True)
     for share in state._shares.values():
         if (share.owner.session_id != active.session_id or not share.owner.valid()
-                or share.deadline <= now or share.observed_key == key):
+                or share.deadline <= now):
+            continue
+        # The announcement occurrence is sent only on its start sample. Later
+        # polls of that recording belong to the same row unless playback repeats.
+        if (share.observed_item_id == playback.item_id
+                and (occurrence is None or not occurrence.repeated or share.observed_key == key)):
             continue
         deadline = min(share.deadline, source_sample.observed_monotonic + 1800)
         if deadline <= now or not current():
             continue
         observed_at = datetime.fromtimestamp(source_sample.observed_ms / 1000, UTC)
-        row = SharedObservation(key, playback.item_id, playback.title, playback.artist, playback.album,
+        entry_id = key or 'observed-' + uuid4().hex
+        row = SharedObservation(entry_id, playback.item_id, playback.title, playback.artist, playback.album,
             playback.source_url, observed_at.isoformat(),
             (observed_at + timedelta(seconds=deadline-source_sample.observed_monotonic)).isoformat(),
             deadline, current)
         share.observed_playback = tuple(item for item in share.observed_playback
             if item.deadline > now and item.source_current())[-11:] + (row,)
-        share.observed_key = key
+        share.observed_item_id = playback.item_id
+        share.observed_key = entry_id
 
 
 def public(share, state):

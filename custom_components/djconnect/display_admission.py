@@ -76,6 +76,7 @@ class _Share:
     dynamics: float = 0.5
     observed_playback: tuple = ()
     observed_key: str = ""
+    observed_item_id: str = ""
 
 
 @dataclass(slots=True, repr=False)
@@ -136,6 +137,7 @@ class DisplayAdmissionState:
         if share is not None:
             share.observed_playback = ()
             share.observed_key = ""
+            share.observed_item_id = ""
         if self._participation is not None:
             self._participation.revoke_share(share_id)
         for claim_id, claim in tuple(self._claims.items()):
