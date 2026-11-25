@@ -98,8 +98,14 @@ class CanvasRuntime:
 
     async def update(self, owner, binding, data, authorize):
         async with self.lock, self.effect_lock:
-            result = await self.repository.mutate(
-                lambda state: apply_update(state, owner, binding, data, time.time()), authorize)
+            def apply(state):
+                revision = profile(state, owner)["revision"]
+                result = apply_update(state, owner, binding, data, time.time())
+                return result, profile(state, owner)["revision"] != revision
+
+            result, changed = await self.repository.mutate(apply, authorize)
+            if not changed:
+                return result
             self.revisions[owner] = result["revision"]
             for target, claimant in tuple(self.claims.items()):
                 if claimant == owner:
@@ -483,6 +489,7 @@ class CanvasRuntime:
         if not groups:
             return
 
+        pending_attempts = {}
         try:
             for (width, height, cached, per_track), targets in groups.items():
                 def current_scope():
@@ -496,7 +503,9 @@ class CanvasRuntime:
                     self.states[target] = "preparing"
                     # At most one attempt per cadence, including unknown provider outcome.
                     if not cached:
-                        self.cadence.mark(key, occurrence, time.monotonic())
+                        attempt = (occurrence, time.monotonic())
+                        pending_attempts[key] = attempt
+                        self.cadence.mark(key, *attempt)
                 if cached:
                     raw = await self.hass.async_add_executor_job((self.asset_root/cached).read_bytes)
                 else:
@@ -531,7 +540,10 @@ class CanvasRuntime:
                 try:
                     async with self.asset_lock:
                         await self.protocol(save)
-                    for target, device, _key in targets:
+                    for target, device, key in targets:
+                        # Once delivery starts it may have had a physical effect,
+                        # even if the acknowledgement or profile is withdrawn.
+                        pending_attempts.pop(key, None)
                         try:
                             await self.deliver(owner, config, active, target, device, filename, art, current_scope, source_file)
                         except CanvasError as exc:
@@ -549,6 +561,10 @@ class CanvasRuntime:
             for targets in groups.values():
                 for target, _, _ in targets:
                     self.states[target] = exc.code if isinstance(exc, CanvasError) else "unavailable"
+        finally:
+            if self.revisions.get(owner) != config["revision"]:
+                for key, attempt in pending_attempts.items():
+                    self.cadence.release(key, attempt)
 
     async def observe_samsung(self, device, authorize):
         """Respect manual artwork until an admin explicitly reconnects Canvas."""
