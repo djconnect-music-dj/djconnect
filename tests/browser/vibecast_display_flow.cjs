@@ -288,6 +288,12 @@ async function main(engine) {
     snapshot(11,"next-recording","playing",undefined,{session,horizon});
     const horizonCard=page.locator("#horizon-card");
     await horizonCard.waitFor({state:"visible"});
+    const bottomRow=await page.locator(".renderer-footer").boundingBox();
+    for (const panel of [viewport,page.locator(".horizon-panel")]) {
+      const bounds=await panel.boundingBox();
+      const gap=bottomRow.y-bounds.y-bounds.height;
+      assert.ok(gap>=0 && gap<=12, `Panel is ${gap}px above the footer`);
+    }
     assert.equal(await horizonCard.locator("h2,h3,#horizon-notice").count(),0);
     assert.equal(await horizonCard.locator("#horizon-sections p").textContent(),horizon.sections[0].text);
     const horizonText=await horizonCard.locator("#horizon-sections p").elementHandle();
