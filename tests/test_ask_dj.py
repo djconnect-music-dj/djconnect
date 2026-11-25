@@ -6657,6 +6657,34 @@ class AskDjTest(unittest.TestCase):
         self.assertTrue(all(action["label"] == "Afspelen" for action in result["playback_actions"]))
         self.assertEqual(result["items"], result["playback_actions"])
 
+    def test_genre_mix_question_offers_a_verified_spotify_mix_without_playing(self) -> None:
+        runtime = make_runtime()
+        hass = types.SimpleNamespace(services=types.SimpleNamespace(), data={self.const.DOMAIN: {}})
+        trance = {"uri": "spotify:playlist:" + "A" * 22, "title": "Trance Mix", "owner_id": "spotify"}
+        backend = types.SimpleNamespace(search_playlists=AsyncMock(return_value=[
+            {**trance, "uri": "spotify:playlist:" + "B" * 22, "title": "Dance Mix"},
+            {**trance, "uri": "spotify:playlist:" + "C" * 22, "owner_id": "another-owner"},
+            trance,
+        ]))
+        with (
+            patch("aiohttp.ClientError", OSError, create=True),
+            patch("custom_components.djconnect.spotify_backend.SpotifyBackend", return_value=backend),
+            patch.object(self.ask_dj, "run_music_command", AsyncMock(
+                side_effect=AssertionError("Unexpected playback command")
+            )),
+        ):
+            result = asyncio.run(self.ask_operational(hass, runtime, {
+                "text": "heb je een trance mix",
+                "device_id": runtime.device_status["device_id"],
+                "client_type": "ios",
+                "language": "nl",
+            }))
+
+        backend.search_playlists.assert_awaited_once_with("trance mix", limit=10)
+        self.assertTrue(result["success"], result)
+        self.assertEqual(result["action"], "none")
+        self.assertEqual([action["uri"] for action in result["playback_actions"]], [trance["uri"]])
+
     def test_spotify_collection_questions_offer_only_verified_choices(self) -> None:
         runtime = make_runtime()
         hass = types.SimpleNamespace(services=types.SimpleNamespace(), data={self.const.DOMAIN: {}})
