@@ -367,9 +367,15 @@ async def qualify(hass, manager, history, request, client):
             begun.set()
             await release.wait()
             return fixture_image.getvalue()
+        # Supply a distinct producer observation for this scenario so prior
+        # per-track Canvas attempts cannot satisfy the new generation.
+        assert await manager.async_update_playback_projection(
+            owner_profile_id="profile-a", session_id=session.session_id, state="playing",
+            media_identity="session-end-generation", title="Session end generation",
+            artist="Fixture", duration_ms=240000, position_ms=1000)
         await runtime.tick()
         await runtime.jobs["profile-a"]
-        await asyncio.sleep(5.1)  # Stable new track after the transition scenarios.
+        await asyncio.sleep(5.1)  # Let the new observation pass the stable-track debounce.
         runtime.cadence.completed = {k: (v[0], 0) for k, v in runtime.cadence.completed.items()}
         with patch.object(render, "generate", delayed):
             await runtime.tick()
