@@ -413,7 +413,6 @@
   }
   function clearLiveStatus(){
     renderReceiverBrand(false);
-    e("live-indicator").hidden=true;
     if(guestCounter){guestCounter.hidden=true;guestCounter.textContent="";guestCounter.removeAttribute("aria-label");}
     for(const [node,timer] of reactionTimers){window.clearTimeout(timer);node.remove();}
     reactionTimers.clear();seenReactions.clear();
@@ -459,7 +458,6 @@
     const enabled=detail.live_enabled===true;
     if(enabled)renderReceiverBrand(true);
     else clearLiveStatus();
-    e("live-indicator").hidden=!enabled;
     if(!guestCounter){
       guestCounter=document.createElement("span");guestCounter.id="live-guest-count";
       document.querySelector(".session-status").appendChild(guestCounter);
@@ -467,7 +465,10 @@
     const count=Number.isInteger(detail.guest_count) && detail.guest_count>=0 && detail.guest_count<=64 ? detail.guest_count : 0;
     guestCounter.hidden=!enabled;
     const labels={en:"Connected guests",nl:"Verbonden gasten",de:"Verbundene Gäste",fr:"Invités connectés",es:"Invitados conectados"};
-    guestCounter.textContent="👥 "+count;guestCounter.setAttribute("aria-label",(labels[root.lang] || labels.en)+": "+count);
+    const guestIcon=document.createElement("span");
+    guestIcon.className="live-guest-icon";guestIcon.textContent="👥";guestIcon.setAttribute("aria-hidden","true");
+    guestCounter.replaceChildren(guestIcon,String(count));
+    guestCounter.setAttribute("aria-label",(labels[root.lang] || labels.en)+": "+count);
     const view=confirmedDisplayView(detail.view);
     if(view!==projection.view){
       projection.view=view;
