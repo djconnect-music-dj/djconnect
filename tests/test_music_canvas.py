@@ -600,6 +600,22 @@ class CanvasDomainTests(unittest.TestCase):
         self.assertEqual(_outline_colors(sample, (10, 80, 90, 95)), (black, white))
         self.assertEqual(_outline_colors(sample, (10, 50, 90, 65)), (white, black))
 
+    def test_off_fills_the_screen_without_a_matte_in_every_composition(self):
+        from PIL import Image
+
+        source = io.BytesIO()
+        artwork = Image.new("RGB", (640, 480), (200, 30, 20))
+        artwork.paste((20, 30, 200), (0, 240, 640, 480))
+        artwork.save(source, "PNG")
+        for width, height in ((320, 480), (640, 360), (640, 480)):
+            for composition in ("central", "free", "full"):
+                with self.subTest(size=(width, height), composition=composition):
+                    data = compose(source.getvalue(), width, height, composition, "off")
+                    with Image.open(io.BytesIO(data)) as image:
+                        for x in (0, width-1):
+                            self.assertGreater(image.getpixel((x, 0))[0], 180)
+                            self.assertGreater(image.getpixel((x, height-1))[2], 180)
+
     def test_composition_all_nine_variants_portrait_landscape_and_no_stretch(self):
         from PIL import Image
         source = io.BytesIO()

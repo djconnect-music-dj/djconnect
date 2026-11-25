@@ -111,7 +111,7 @@ def _draw_title(canvas, image, position, matte, background, title):
 
 
 def compose(content, width, height, composition, matte, track_title=None):
-    """Never stretch/crop a source. Compose native canvas outside HA's eventloop."""
+    """Compose to the screen's aspect ratio without stretching the source."""
     from PIL import Image, ImageOps, ImageStat
     need(isinstance(content, bytes) and 0 < len(content) <= MAX_IMAGE, "canvas_image_invalid", 503)
     need(256 <= width <= 8192 and 256 <= height <= 8192 and width*height <= 34_000_000,
@@ -121,17 +121,21 @@ def compose(content, width, height, composition, matte, track_title=None):
         image = ImageOps.exif_transpose(original).convert("RGB")
         palette = tuple(int(v) for v in ImageStat.Stat(image.resize((1, 1))).mean)
         background = (12, 12, 12) if matte == "contrast" else palette
-        margin = int(min(width, height)*0.055) if matte != "off" else 0
-        inner = (width-2*margin, height-2*margin)
-        # Full uses the largest uncropped image; central/free preserve breathing room.
-        scale = 1 if composition == "full" else 0.86 if composition == "central" else 0.9
-        fitted = ImageOps.contain(image, (int(inner[0]*scale), int(inner[1]*scale)),
-                                  Image.Resampling.LANCZOS)
-        canvas = Image.new("RGB", (width, height), background)
-        x, y = (width-fitted.width)//2, (height-fitted.height)//2
-        if composition == "free":
-            x = margin + int((inner[0]-fitted.width)*0.38)
-        canvas.paste(fitted, (x, y))
+        if matte == "off":
+            # Containing the image leaves a border whenever the aspect ratios differ.
+            canvas = fitted = ImageOps.fit(image, (width, height), Image.Resampling.LANCZOS)
+            x = y = 0
+        else:
+            margin = int(min(width, height)*0.055)
+            inner = (width-2*margin, height-2*margin)
+            scale = 1 if composition == "full" else 0.86 if composition == "central" else 0.9
+            fitted = ImageOps.contain(image, (int(inner[0]*scale), int(inner[1]*scale)),
+                                      Image.Resampling.LANCZOS)
+            canvas = Image.new("RGB", (width, height), background)
+            x, y = (width-fitted.width)//2, (height-fitted.height)//2
+            if composition == "free":
+                x = margin + int((inner[0]-fitted.width)*0.38)
+            canvas.paste(fitted, (x, y))
         if track_title:
             title = " ".join(track_title.split())
             if title:
