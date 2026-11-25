@@ -16,7 +16,7 @@ sys.modules.setdefault("custom_components.djconnect", package)
 
 from custom_components.djconnect.music_canvas import (  # noqa: E402
     CanvasError, Cadence, apply_update, fresh_state, profile, reserve_forget,
-    digest, finish_forget, validate_request,
+    digest, finish_forget, screen_presentation, validate_request,
 )
 from custom_components.djconnect.music_canvas_adapters import discover, samsung_action  # noqa: E402
 from custom_components.djconnect.music_canvas_render import art_prompt, compose  # noqa: E402
@@ -407,16 +407,38 @@ class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
 
 
 class CanvasDomainTests(unittest.TestCase):
+    def test_presentation_is_per_screen_and_preserved_while_deselected(self):
+        state = fresh_state()
+        state["devices"] = {"frame": {"adapter": "switchbot"}, "tv": {"adapter": "samsung"}}
+        legacy = apply_update(state, "owner", "scope", update(matte="contrast", show_track_title=True), 1)
+        prefs = legacy["preferences"]
+        self.assertEqual(screen_presentation(prefs, "frame", state["devices"]["frame"]), ("central", "off", False))
+        self.assertEqual(screen_presentation(prefs, "tv", state["devices"]["tv"]), ("central", "contrast", True))
+
+        override = {"matte": "matching", "show_track_title": False}
+        data = update(legacy["revision"], presentation_overrides={"tv": override})
+        validate_request("update", data)
+        saved = apply_update(state, "owner", "scope", data, 2)
+        self.assertEqual(saved["preferences"]["selected_targets"], [])
+        self.assertEqual(screen_presentation(saved["preferences"], "tv", state["devices"]["tv"]),
+                         ("central", "matching", False))
+        with self.assertRaises(CanvasError):
+            apply_update(state, "owner", "scope", update(saved["revision"],
+                         presentation_overrides={"unknown": override}), 3)
+        finish_forget(state, "tv")
+        self.assertEqual(profile(state, "owner")["preferences"]["presentation_overrides"], {})
+        self.assertEqual(profile(state, "owner")["revision"], saved["revision"] + 1)
+
     def test_actual_ha_proof_binds_current_source_and_closes_no_physical_claim(self):
         import hashlib
         import json
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/music-canvas-resume-settings-20261125-actual-ha.json").read_text())
+        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/discover-canvas-screen-20261125-actual-ha.json").read_text())
         self.assertEqual(len(proof["source_pins"]), 361)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), expected, name)
         self.assertTrue(proof["source_before_after_equal"])
-        matrix = json.loads((root/"docs/verification/music-canvas-resume-settings-actual-ha-matrix-20261125.json").read_text())
+        matrix = json.loads((root/"docs/verification/discover-canvas-screen-actual-ha-matrix-20261125.json").read_text())
         self.assertEqual(matrix["source_pins"], proof["source_pins"])
         self.assertTrue(matrix["source_before_after_equal"])
         self.assertEqual(len(matrix["results"]), 54)

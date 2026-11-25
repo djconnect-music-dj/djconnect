@@ -32,7 +32,7 @@ class QuestionContinuityTests(unittest.IsolatedAsyncioTestCase):
                 / "examples/client_contracts/ask_dj_question_continuity_v1/actual-ha-current-live-impression-20261119-requested-moments-20261120.json"
             ).read_text()
         )
-        current = json.loads((root / 'examples/client_contracts/ask_dj_question_continuity_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-e51ce05a.json').read_text())
+        current = json.loads((root / 'examples/client_contracts/ask_dj_question_continuity_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-93b3c30f.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
         self.assertEqual(current['harness'], proof['harness'])
         self.assertEqual(current['harness_sha256'], proof['harness_sha256'])

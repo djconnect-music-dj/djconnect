@@ -11,7 +11,8 @@ CADENCES = ("track", "900", "1800", "3600")
 COMPOSITIONS = ("central", "free", "full")
 MATTES = ("off", "matching", "contrast")
 DEFAULTS = dict(enabled=False, selected_targets=[], composition="central",
-                matte="off", cadence="1800", cadence_overrides={}, show_track_title=False)
+                matte="off", cadence="1800", cadence_overrides={}, show_track_title=False,
+                presentation_overrides={})
 IDENTITY = {"contract_version", "device_id", "client_type"}
 FIELDS = {
     "read": set(),
@@ -82,6 +83,7 @@ def patched(current, patch):
     need(type(patch) is dict and bool(patch) and set(patch) <= set(DEFAULTS))
     result = {**deepcopy(current), **deepcopy(patch)}
     result.setdefault("show_track_title", False)
+    result.setdefault("presentation_overrides", {})
     need(type(result["enabled"]) is bool and type(result["show_track_title"]) is bool)
     targets = result["selected_targets"]
     need(type(targets) is list and len(targets) <= 16 and len(set(targets)) == len(targets)
@@ -91,7 +93,20 @@ def patched(current, patch):
     overrides = result["cadence_overrides"]
     need(type(overrides) is dict and set(overrides) <= set(targets)
          and all(x in CADENCES for x in overrides.values()))
+    presentation = result["presentation_overrides"]
+    need(type(presentation) is dict and len(presentation) <= 64)
+    for target, style in presentation.items():
+        need(identifier(target) and type(style) is dict and set(style) == {"matte", "show_track_title"}
+             and style["matte"] in MATTES and type(style["show_track_title"]) is bool)
     return result
+
+
+def screen_presentation(prefs, target, device):
+    """Keep legacy defaults on TVs and leave photo frames borderless by default."""
+    style = prefs.get("presentation_overrides", {}).get(target)
+    if style is None:
+        style = {"matte": "off", "show_track_title": False} if device["adapter"] == "switchbot" else prefs
+    return prefs["composition"], style["matte"], style.get("show_track_title", False)
 
 
 def fresh_state():
@@ -101,6 +116,7 @@ def fresh_state():
 def profile(state, owner):
     result = deepcopy(state["profiles"].get(owner, {"revision": 0, "preferences": DEFAULTS}))
     result["preferences"].setdefault("show_track_title", False)
+    result["preferences"].setdefault("presentation_overrides", {})
     return result
 
 
@@ -119,6 +135,7 @@ def apply_update(state, owner, binding, data, now):
     prefs = patched(current["preferences"], data["patch"])
     need(all(x in state["devices"] and not state["devices"][x].get("forgetting")
              for x in prefs["selected_targets"]), "canvas_target_unavailable", 409)
+    need(set(prefs["presentation_overrides"]) <= state["devices"].keys(), "canvas_target_unavailable", 409)
     changed = prefs != current["preferences"]
     result = {"revision": current["revision"] + int(changed), "preferences": prefs}
     if changed:
@@ -139,9 +156,12 @@ def finish_forget(state, target):
     state["devices"].pop(target, None)
     for item in state["profiles"].values():
         prefs = item["preferences"]
-        if target in prefs["selected_targets"]:
+        selected = target in prefs["selected_targets"]
+        style = prefs.get("presentation_overrides", {}).pop(target, None)
+        if selected:
             prefs["selected_targets"].remove(target)
             prefs["cadence_overrides"].pop(target, None)
+        if selected or style is not None:
             item["revision"] += 1
 
 

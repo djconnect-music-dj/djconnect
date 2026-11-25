@@ -73,13 +73,18 @@ fields and return private no-store responses. Every request has
 Preferences: enabled=false, selected_targets=[], composition=central,
 matte=off, cadence=1800; composition central/free/full, matte off/matching/contrast,
 cadence track/900/1800/3600 applies to all selected screens in the Profile.
-The optional v1 preference `show_track_title` defaults to false for existing
-Profiles. Core adds the confirmed playback title to the rendered artwork only
+The v1 preference `presentation_overrides` stores `matte` and
+`show_track_title` for each configured screen ID. A screen without an entry
+inherits the previous Profile-wide values for Samsung and uses matte off and
+title false for SwitchBot. Overrides remain when a screen is deselected and are
+removed when its registration is forgotten. Core adds the confirmed playback
+title to the rendered artwork only
 when enabled. With a matte it adjusts the dominant artwork color for contrast
 and centers the title in the bottom matte band. Without a matte it chooses
 white-on-black or black-on-white outlined text based on the artwork immediately
 behind the title. Changing the toggle
-can recompose the current Profile's cached image without a new provider request.
+or matte setting can recompose the current Profile's cached source for that
+screen without a new provider request.
 The v1 compatibility field `cadence_overrides` accepts selected stable IDs
 only. Core schedules every screen using the shared `cadence` value.
 Screen dimensions and orientation carry provenance; unknown values remain unknown.

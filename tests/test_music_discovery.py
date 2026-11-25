@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import types
 import unittest
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from tests.test_http_voice_helpers import install_http_stubs
 
@@ -371,6 +371,22 @@ class MusicDiscoveryTests(unittest.TestCase):
         result = asyncio.run(music_discovery._new_music_section(self.hass, self.runtime, profile))
         self.assertEqual([item["uri"] for item in result["items"]], ["spotify:track:new"])
         self.assertIn("spotify_catalog", result["items"][0]["reason_sources"])
+
+    def test_stale_top_artwork_refreshes_even_when_recently_played_is_fresh(self) -> None:
+        memory = self.runtime.memory
+        memory.async_listening_profile = AsyncMock(return_value={"artwork_reference_version": 1})
+        memory.async_recent_profile_is_fresh = AsyncMock(return_value=True)
+        memory.listening_profile_fresh = False
+        profile = {"top_tracks_by_range": {}, "top_artists_by_range": {}}
+        with patch.object(music_discovery, "run_music_command", new_callable=AsyncMock) as command:
+            command.return_value = {"profile": profile}
+            refreshed = asyncio.run(music_discovery._refresh_recently_played_if_stale(
+                self.hass, self.runtime, _payload(), user_id="ha-user-1"))
+
+        self.assertTrue(refreshed)
+        command.assert_awaited_once_with(self.hass, self.runtime, "listening_profile")
+        self.assertEqual(memory.updated_profiles, [profile])
+        memory.async_recent_profile_is_fresh.assert_not_awaited()
 
     def test_feed_refreshes_stale_recently_played_from_backend_history(self) -> None:
         calls = []

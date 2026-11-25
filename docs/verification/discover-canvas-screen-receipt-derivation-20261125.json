@@ -1,0 +1,669 @@
+{
+  "mode": "write",
+  "source_before_after_equal": true,
+  "product_files": 361,
+  "all54_executions_success": true,
+  "bindings": [
+    {
+      "test": "test_artist_collections_qualification.ArtistCollectionsQualificationTests.test_original_paired_http_offer_proof_matches_current_source",
+      "predecessor": "examples/client_contracts/artist_collections_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-fb5c93a3.json",
+      "predecessor_sha256": "c7ca12d26127ba889cad7783216fef4a50a107d934ff7554daabe447b4ce0eca",
+      "current": "examples/client_contracts/artist_collections_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-4b2bbbd7.json",
+      "current_sha256": "2f3872ca49e692e1e33aad63967753e0d852125b003814f188a21e56fd7bc774",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_ask_dj_recording_production.RecordingProductionTests.test_current_actual_ha_receipt_binds_all_products_without_quality_or_native_claim",
+      "predecessor": "examples/client_contracts/ask_dj_recording_production_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-01599eb0.json",
+      "predecessor_sha256": "ef83c122ab3e5b3743b45f02fb2c7d73b516500afc14c58f46ba881ebac9957f",
+      "current": "examples/client_contracts/ask_dj_recording_production_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-a0b379db.json",
+      "current_sha256": "22b148d467b6d5076c2ea03be57cf350ca0a7ba1577ae46649a9484c092b788e",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_bulletin_manual_speech_contract.BulletinManualSpeechContractTests.test_actual_paired_manual_use_denial_and_withdrawal_join_current_source",
+      "predecessor": "examples/client_contracts/bulletin_manual_speech_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-b4d1dd98.json",
+      "predecessor_sha256": "09d0f6d4ac49ed854f8b75a5896448dd902de72611cbea306de91c3556de9d56",
+      "current": "examples/client_contracts/bulletin_manual_speech_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-42f7aa8f.json",
+      "current_sha256": "d5f1242523425557d3bf6ba9d73ca5d57d8d429d7c2a679d6bd0afca8568c5c7",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_for_you_late_confirmation_contract.ForYouLateConfirmationContractTests.test_original_source_sample_confirms_same_mix_without_second_dispatch",
+      "predecessor": "examples/client_contracts/for_you_late_confirmation_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-0933ac63.json",
+      "predecessor_sha256": "4dad4eb7a3cb2f4be0ab3c85a297166dfaeefd6432564e0136c28ad33d5a4e86",
+      "current": "examples/client_contracts/for_you_late_confirmation_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-4df63b4b.json",
+      "current_sha256": "d04a5f2bdf277727517bdea9eb66f222898e6b95f54a3975043c14728a6db949",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_installation_management.ManagementGrammarTests.test_original_actual_HA_receipt_binds_current_source_and_boundaries",
+      "predecessor": "examples/client_contracts/installation_management_preparation_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-4ba3bddb.json",
+      "predecessor_sha256": "afebc56e37cec974f2df8eeb00fc88dcb8d4ed4d0511a6826d7406c0105c5f39",
+      "current": "examples/client_contracts/installation_management_preparation_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-f386f34a.json",
+      "current_sha256": "fa96cc7db05a0041b3526afc3bcc5e4b0210109ca1ce376c994e63cb407ab607",
+      "field_provenance": {
+        "actual_HA_auth_users_tokens_middleware": "actual raw field",
+        "cases": "actual raw field",
+        "classification": "actual raw field",
+        "native_or_push_acceptance": "actual raw field",
+        "provider_or_device_effect": "actual raw field",
+        "real_service_key_or_custody_effect": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_live_impression.LiveImpressionTest.test_tracked_actual_ha_http_receipt_binds_final_source_and_declared_fixture_scope",
+      "predecessor": "examples/client_contracts/live_impression_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-839a7fa4.json",
+      "predecessor_sha256": "f15989e5abab7b14c110373891e70cc06304edca35c554ba65bb0f269f62d654",
+      "current": "examples/client_contracts/live_impression_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-bab8e573.json",
+      "current_sha256": "1a45b66e5a0d737658a24566c21b4cd9a0a81498dd23b877270918ba62fca27a",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "raw_selected_file_count": "actual raw selected-file count",
+        "raw_selected_product_count": "actual raw selected-product count",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_passive_field_expiry_contract.PassiveFieldExpiryContractTests.test_actual_original_frame_survives_only_shorter_field_expiry",
+      "predecessor": "examples/client_contracts/passive_field_expiry_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-c99daca3.json",
+      "predecessor_sha256": "e75f8012aee7356cae8b6ffd4cd6f060cbdede8566bb092eaba2c316e3cf2220",
+      "current": "examples/client_contracts/passive_field_expiry_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-12d1668a.json",
+      "current_sha256": "67ac4cba54de5155aa452f97f2029ad6cb6fdfb938e71c96ca83a30a4d6d3d17",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_profile_spotify_reconnect_qualification.ProfileSpotifyReconnectQualificationTests.test_current_source_has_profile_owned_callback_and_shared_caller_proof",
+      "predecessor": "examples/client_contracts/profile_spotify_reconnect_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-31977e54.json",
+      "predecessor_sha256": "6f948b6ad822397acb42d78737e61b0212378d974f425f63bfcb0db3bdea69ac",
+      "current": "examples/client_contracts/profile_spotify_reconnect_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-943ecae7.json",
+      "current_sha256": "be7549e11e6956bb1b00a4200a06aac1142950c585a576b9a60a5a6bee08d56c",
+      "field_provenance": {
+        "canonical_view_probe": "actual independent authority-view probe",
+        "harness_pins": "actual executed current harness/helper map",
+        "native_installed_acceptance": "explicit unexecuted provider/device boundary",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_session_first_play.FirstPlayWireEvidenceTests.test_current_for_you_source_and_frozen_legacy_first_play_evidence_are_distinct",
+      "predecessor": "examples/client_contracts/session_for_you_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-833207a8.json",
+      "predecessor_sha256": "5aa7704c5d6c66b5358584fcda3d814a24a4c4a9bd482bc3ddeb534d9f3dbaf5",
+      "current": "examples/client_contracts/session_for_you_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-43f37882.json",
+      "current_sha256": "71746bf343b91407f68023538da1f8824ededb760ff5063ed5ee0569f1f6def3",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_spotify_volume_action_errors.SpotifyVolumeActionErrorTests.test_actual_paired_ha_volume_receipt_binds_the_current_product_and_verifier",
+      "predecessor": "examples/client_contracts/spotify_volume_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-e1363ec1.json",
+      "predecessor_sha256": "4e55f72da060c87b0c83ce34c076d20c0b78c89683ea0e97308b8923f1f4283e",
+      "current": "examples/client_contracts/spotify_volume_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-05868eeb.json",
+      "current_sha256": "c11527978ff0f41e42c4386027d2c9c1e3e174ebba71df0eb2775df00cb9a291",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_ask_dj_band_story.BandStoryActualHAEvidenceTests.test_current_source_and_original_ha_receipt_are_exact_and_not_editorial_acceptance",
+      "predecessor": "examples/client_contracts/band_members_story_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-1201884a.json",
+      "predecessor_sha256": "a21396267a510a2c4bcbc36f050f04b754c82b1ac84374558597012040317c05",
+      "current": "examples/client_contracts/band_members_story_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-a77a2caa.json",
+      "current_sha256": "e155c450d5fc759af2f20b49c5a01882d58ca6b610cab459ed4d7179459428f6",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_ask_dj_question_continuity.QuestionContinuityTests.test_current_actual_ha_proof_keeps_all_dates_choices_and_conflicts_bound",
+      "predecessor": "examples/client_contracts/ask_dj_question_continuity_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-e51ce05a.json",
+      "predecessor_sha256": "574f4c872c60c82a942987ad522dcb1d6ace51decc6d3192feffbef67fab7a54",
+      "current": "examples/client_contracts/ask_dj_question_continuity_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-93b3c30f.json",
+      "current_sha256": "e112fa528d7e2fac1c0afcd596ca2fb3d60a8df0acc727638bb983e46e45d45f",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_history_deletion_api.PairedHistoryDeleteTests.test_actual_ha_wire_fixture_binds_current_source_without_claiming_installation",
+      "predecessor": "examples/client_contracts/session_conversation_history/music-canvas-resume-settings-20261125-rotation-20261125-setu-61e9f756.json",
+      "predecessor_sha256": "34e3c1cd3bb355d47abb23707adb7fedc91745ded8ee86191d63810de52f590c",
+      "current": "examples/client_contracts/session_conversation_history/discover-canvas-screen-20261125-tings-20261125-rotatio-26854a9b.json",
+      "current_sha256": "ec11ae95527caf5b864f12d038156d5181e82ed54b8adc358766b853617a7a94",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_installation_once_journal.OriginalActualOnceProofTests.test_current_HA_originals_and_parent_missing_journal_remain_exact",
+      "predecessor": "examples/client_contracts/installation_once_metadata_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-0529d5eb.json",
+      "predecessor_sha256": "96755e5eac21347245e573f08997140d442922d076dd849d3ce0a9c6b9cae720",
+      "current": "examples/client_contracts/installation_once_metadata_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-18761b7d.json",
+      "current_sha256": "f58652e27c7fa8a246e19926e8a3cc7dcdac716b62de90db4f281d89f750bb00",
+      "field_provenance": {
+        "actual_key_or_sign_effect": "actual raw field",
+        "cases": "actual raw field",
+        "current_harness_sha256": "executed harness bytes",
+        "preceding_installation_codec_cases": "actual raw field",
+        "preceding_source_origin_cases": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_installation_principal_data.InstallationPrincipalDataTests.test_actual_HA_original_codec_and_same_final_harness_parent_RED_remain_exact",
+      "predecessor": "examples/client_contracts/installation_principal_data_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-f5a30838.json",
+      "predecessor_sha256": "8b0e71c279faa358a939ccdeefb0ec7bf0d32c4ab5ef9719e0e35eeff195e067",
+      "current": "examples/client_contracts/installation_principal_data_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-d60fe26a.json",
+      "current_sha256": "bea115e30931a0806f9c942c8b164ad1f79d10ad42b8bf2b2c12c3628b677d1d",
+      "field_provenance": {
+        "cases": "actual raw field",
+        "preceding_source_origin_cases": "actual raw field",
+        "registry_CAS_or_once_or_signer_qualification": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_passive_observation_contract.PassiveObservationContractTests.test_original_grant_frames_and_nonrenewing_reads_match_current_source",
+      "predecessor": "examples/client_contracts/passive_observation_sequence_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-bdb05cf0.json",
+      "predecessor_sha256": "0f8a4205e32df74f2f2620551a74ba6fdd51874fffe87f43adf7e066d3ed3566",
+      "current": "examples/client_contracts/passive_observation_sequence_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-2160925f.json",
+      "current_sha256": "a62e07584b23abd4a9f91c0504469c8f6caf93253b1010226074e4b2133be1c0",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_persona_story_actual_ha.PersonaStoryActualHATest.test_current_source_and_verifiers_are_bound_to_the_original_actual_ha_trace",
+      "predecessor": "examples/client_contracts/personal_dj_artist_story_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-6f81ab44.json",
+      "predecessor_sha256": "b55b478e0a62c8535fffdc8c652bf6291779325cc576fe7c1060d232de2f102d",
+      "current": "examples/client_contracts/personal_dj_artist_story_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-2dbec7c0.json",
+      "current_sha256": "cf974cb639da4af271ddcf59303be1bc606c64454af25af52beb1489157d28ec",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_settings_confirmation.SettingsConfirmationTests.test_actual_ha_fixture_pins_source_and_declares_native_install_boundary",
+      "predecessor": "examples/client_contracts/settings_confirmation_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-4de12645.json",
+      "predecessor_sha256": "ce2d6323b246956ced2281a48d9ff999646761115acb88877a71293c29d40757",
+      "current": "examples/client_contracts/settings_confirmation_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-7f12becf.json",
+      "current_sha256": "b4b98c521a9d1f6a9e10f53f478b0e074d8903e84812d5f266a7c427a26c7f18",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_surface_push_context_v3.OriginalClockActualHAProofTests.test_new_v3_actual_fixture_matches_current_product_and_harness",
+      "predecessor": "examples/client_contracts/surface_push_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-2b5673a2.json",
+      "predecessor_sha256": "ac1eadec9a6e19a8fd9ada6a3b49c4405ee1862f4c3dc27833cea1f4eb31fb44",
+      "current": "examples/client_contracts/surface_push_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-fe264f14.json",
+      "current_sha256": "94023526df424d9b3d715a0668ebca67766f1ea573b21f02492ce592ce2b5895",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_surface_source_origin.SourceOriginActualProofTests.test_current_source_joins_original_actual_HA_and_same_harness_parent_failure",
+      "predecessor": "examples/client_contracts/source_origin_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-867b51f7.json",
+      "predecessor_sha256": "0dadcc07a6254369841afb44172642974fc8702652cfa0c575645c76bc45fa2b",
+      "current": "examples/client_contracts/source_origin_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-b6bfe9a4.json",
+      "current_sha256": "821368fc32aa94af0f2481325ac2b8547bcdda46bd9a91db12660e65c2690313",
+      "field_provenance": {
+        "af201_native_mapping": "actual raw field",
+        "cases": "actual raw field",
+        "installed_native_provider": "actual raw field",
+        "source_origin_DATA_only": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_ask_dj_help_live_observation.HelpObservationTests.test_original_actual_ha_wire_binds_all_current_products_without_native_claim",
+      "predecessor": "examples/client_contracts/ask_dj_help_context_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-3ac57b49.json",
+      "predecessor_sha256": "5c2f3269b051c4e4ecc0fa1877daf06958bb2f9bddae23296dc4911569c54fb5",
+      "current": "examples/client_contracts/ask_dj_help_context_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-541ab0a3.json",
+      "current_sha256": "a679ce6088e62cb568f17f0033e67b0bb014d879c92c632e2b4ee689694bd441",
+      "field_provenance": {
+        "cases": "actual raw field",
+        "external_provider_calls": "actual raw field",
+        "installed_native_audio_or_physical_acceptance": "actual raw field",
+        "model_calls": "actual raw field",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_hashes": "entire361 candidate product manifest verified before and after actual executions",
+        "status": "actual raw field"
+      }
+    },
+    {
+      "test": "test_current_metadata_history_qualification.CurrentMetadataHistoryQualificationTests.test_current_source_has_real_paired_cross_device_store_proof",
+      "predecessor": "examples/client_contracts/current_metadata_history_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-f937c0d3.json",
+      "predecessor_sha256": "4862a31cbf5b69e7649d99f01eff2f0a61472925a0e4c7bd3d692a8575fad8ec",
+      "current": "examples/client_contracts/current_metadata_history_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-1aae9579.json",
+      "current_sha256": "5abccb3758651cad54288fe5ecd5428794854a4c36e22f8a5e028f02c30c042b",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_for_you_refresh_contract.ForYouRefreshContractTests.test_original_ha_fixture_matches_the_current_producer_and_harness",
+      "predecessor": "examples/client_contracts/session_for_you_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-87425e89.json",
+      "predecessor_sha256": "ec34ec0edd228ebe36b8f68b5cd025aa05283f38d78acfde6584a134592beb68",
+      "current": "examples/client_contracts/session_for_you_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-59b91717.json",
+      "current_sha256": "5a302d8527bf6f6c7cdefa9800b0164d506ce104f6d395bb9b0976fb20e70461",
+      "field_provenance": {
+        "cases": "same named actual case subset",
+        "examples": "actual extension.refresh_examples",
+        "fixture_only": "declared network-none synthetic fixture inputs",
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "installed_native_audible_apns": "actual extension.native_installed_acceptance",
+        "real_model_calls": "actual extension.model_provider_calls",
+        "real_provider_calls": "actual extension.real_provider_calls",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions",
+        "source_unchanged": "actual raw field"
+      }
+    },
+    {
+      "test": "test_for_you_refresh_contract.ForYouRefreshContractTests.test_output_readback_proof_is_exact_and_keeps_unconfirmed_effects_closed",
+      "predecessor": "examples/client_contracts/session_for_you_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-4d82d003.json",
+      "predecessor_sha256": "858f6526d3e4b51b50f0c1e68b1a4717ff863ccb17d9832af1db978d48cf1149",
+      "current": "examples/client_contracts/session_for_you_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-ec933933.json",
+      "current_sha256": "cb404d29579a32b7b7ccb43f52255867e24bc69b4507a0c1c41e28556e5f4545",
+      "field_provenance": {
+        "cases": "same named actual case subset",
+        "examples": "actual extension.output_readback_examples",
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "installed_native_audible_apns": "actual extension.native_installed_acceptance",
+        "real_model_calls": "actual extension.model_provider_calls",
+        "real_provider_calls": "actual extension.real_provider_calls",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions",
+        "source_unchanged": "actual raw field"
+      }
+    },
+    {
+      "test": "test_passive_progress_qualification.PassiveProgressQualificationTests.test_actual_http_receipt_is_bound_to_current_source_and_harnesses",
+      "predecessor": "examples/client_contracts/passive_progress_v3/music-canvas-resume-settings-20261125-rotation-20261125-setu-d5aada94.json",
+      "predecessor_sha256": "11a683b6a18141653f3835de9e587671febce953587d12f742ff65ae85ef5621",
+      "current": "examples/client_contracts/passive_progress_v3/discover-canvas-screen-20261125-tings-20261125-rotatio-5bbd2f04.json",
+      "current_sha256": "18ae8ddc06534126c7516ab9f9c2f0be61df1a32e425664160583b7f54744fc2",
+      "field_provenance": {
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_queue_forecast.QueueProjectionTests.test_actual_ha_receipt_pins_current_source_and_declares_visible_acceptance_open",
+      "predecessor": "examples/client_contracts/session_forecast_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-8b6727bb.json",
+      "predecessor_sha256": "1fdc8a218b7040c5137cf5b1e8d49c309a415fa56449c60d5bd0e3acfdcf4f5c",
+      "current": "examples/client_contracts/session_forecast_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-737badf2.json",
+      "current_sha256": "80c70d977391a5dc515b730208e2420372fc6a5439d7e7cc7c4278ef257329a0",
+      "field_provenance": {
+        "HA_dev_writes": "actual raw field",
+        "cases": "actual raw field",
+        "native_acceptance": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "stale_results": "actual raw field",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_session_private_catalogue_qualification.SessionPrivateCatalogueQualificationTests.test_actual_original_session_wire_omits_partial_history_objects",
+      "predecessor": "examples/client_contracts/session_private_catalogue_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-c3e9cd24.json",
+      "predecessor_sha256": "7a6f2ace06115581a266b6d7716155dd4c6cd4fb035c38c9ed5ad8d528f907bd",
+      "current": "examples/client_contracts/session_private_catalogue_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-ebcd39df.json",
+      "current_sha256": "6cdc54757b8fb7a28539e33cafc6f1ecee0a9492bbf81bf3349c9e005df71246",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_surface_widget_adoption.WidgetActualHAContractTests.test_original_actual_ha_widget_source_join_preserves_closed_acceptance_boundary",
+      "predecessor": "examples/client_contracts/surface_push_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-2b5673a2.json",
+      "predecessor_sha256": "ac1eadec9a6e19a8fd9ada6a3b49c4405ee1862f4c3dc27833cea1f4eb31fb44",
+      "current": "examples/client_contracts/surface_push_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-fe264f14.json",
+      "current_sha256": "94023526df424d9b3d715a0668ebca67766f1ea573b21f02492ce592ce2b5895",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_visual_director_contract.VisualDirectorContractTests.test_actual_registered_wire_pins_current_producer_and_declares_boundary",
+      "predecessor": "examples/client_contracts/vibescape_visual_director_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-2fbf790e.json",
+      "predecessor_sha256": "a4955c1cb333e63a6d657c2bf9383e6937174798eeb7fdf0afd61e809864c186",
+      "current": "examples/client_contracts/vibescape_visual_director_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-e4c793f4.json",
+      "current_sha256": "5e19443bdd7c4563011f8c768f7ecce36f4125f1c80e4e22af03de942b3864fc",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_ask_dj_recent_presentation.RecentDisplayHistoryTests.test_current_actual_ha_original_receipt_matches_display_and_all_products",
+      "predecessor": "examples/client_contracts/ask_dj_recent_list_presentation_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-ba76e006.json",
+      "predecessor_sha256": "b4d25ec85488ead49b44ca6dca35e70c583413cfb294690cc4e18327a303fd9b",
+      "current": "examples/client_contracts/ask_dj_recent_list_presentation_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-cf3994cb.json",
+      "current_sha256": "44ac9e207b01c95be610e229562d729ea04463f2e023cc08f69bfe1008c46fc2",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_bulletin_contract.BulletinWireContractTests.test_actual_wire_pins_current_source_and_original_admissions_without_native_claim",
+      "predecessor": "examples/client_contracts/dj_bulletin_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-1bf1a608.json",
+      "predecessor_sha256": "2dc01167d2f2946f90ce05d7f8db1fcfbfde7a83060341b88e9502e6925f5981",
+      "current": "examples/client_contracts/dj_bulletin_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-2518c0e7.json",
+      "current_sha256": "144ec77d397dddd07f804f63904c96cdac82cdd550f8674813c64789ce9efe46",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_content_deletion_api.PairedContentDeleteTests.test_actual_wire_fixture_source_and_receipt_bindings",
+      "predecessor": "examples/client_contracts/session_conversation_history/music-canvas-resume-settings-20261125-rotation-20261125-setu-1aacd2af.json",
+      "predecessor_sha256": "f70418bd7ef5a15d68211e3acc1b033065732419b80500d38ed2fb4a671c2765",
+      "current": "examples/client_contracts/session_conversation_history/discover-canvas-screen-20261125-tings-20261125-rotatio-38a00d33.json",
+      "current_sha256": "567934b79766a25402a5044ec7816cc0f538539a4e98a025a4c7472d822792f6",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_current_track_insight.CurrentTrackInsightTests.test_actual_ha_current_fixture_binds_current_source_without_install_or_model_claim",
+      "predecessor": "examples/client_contracts/track_insight/music-canvas-resume-settings-20261125-rotation-20261125-setu-b3153d8e.json",
+      "predecessor_sha256": "c45e2229d823cc099b0f08498644dea5bac288fb407d2699a9e53d4697dd647f",
+      "current": "examples/client_contracts/track_insight/discover-canvas-screen-20261125-tings-20261125-rotatio-40634f4e.json",
+      "current_sha256": "db3268b995258905191fa15f0a25ded22a039e4732fe14d4187d8038e8b28496",
+      "field_provenance": {
+        "cases": "actual raw field",
+        "harness_sha256": "executed harness bytes",
+        "installed": "actual raw field",
+        "model_provider_calls": "actual raw field",
+        "model_reply_fixture_calls": "actual raw field",
+        "native": "actual raw field",
+        "qualification": "actual raw field",
+        "source_files_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "source_unchanged": "actual raw field"
+      }
+    },
+    {
+      "test": "test_direct_rich_actual_ha.DirectRichOriginalActualHATests.test_actual_host_wake_HTTP_Broadcast_SQL_originals_bind_current_source",
+      "predecessor": "examples/client_contracts/direct_rich_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-8466b31f.json",
+      "predecessor_sha256": "96fc5831e8902de952518faaf168e1dc0447a83077c9b780538480fd4b521bd7",
+      "current": "examples/client_contracts/direct_rich_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-1c5a2b2d.json",
+      "current_sha256": "5833f8ad6a09206a8e40bef5603b95d0ecdbba37bef5d1fa29d195e42a0a5fee",
+      "field_provenance": {
+        "actual_operator_enrollment_native_clock_or_APNs_GO": "actual raw field",
+        "host_wake_runtime": "actual raw field",
+        "schema_version": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "status": "actual raw field"
+      }
+    },
+    {
+      "test": "test_direct_rich_actual_ha.DirectRichOriginalActualHATests.test_original_actual_HTTP_SQL_and_asset_proof_matches_entire_current_product",
+      "predecessor": "examples/client_contracts/direct_rich_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-153ed026.json",
+      "predecessor_sha256": "789bad852ddae80b5f61b699a2f7c3d24e2bb9280ef69e90a217bf244a278cf2",
+      "current": "examples/client_contracts/direct_rich_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-7bc93282.json",
+      "current_sha256": "e786bc37b2346100d3586c07a5455375f6f3336aa8d1f9afc55e774c006f812e",
+      "field_provenance": {
+        "actual_operator_enrollment_native_clock_or_APNs_GO": "actual raw field",
+        "cases": "actual raw field",
+        "classification": "actual raw field",
+        "current_harness_sha256": "executed harness bytes",
+        "ha_credentials_issued": "actual raw field",
+        "host_wake_management": "actual raw field",
+        "model_calls": "actual raw field",
+        "ordinary_pairing": "actual raw field",
+        "original_prepared_covers": "actual raw field",
+        "read_reissues": "actual raw field",
+        "schema_version": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "status": "actual raw field"
+      }
+    },
+    {
+      "test": "test_discovery_context_qualification.DiscoveryContextQualificationTests.test_current_source_has_actual_original_card_transport_and_diagnosis_evidence",
+      "predecessor": "examples/client_contracts/discovery_context_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-98c9df87.json",
+      "predecessor_sha256": "1bf1d4b6357ae68ad00f55cde7a77f933d14e68d06b5b0276b3d5b2d401d8503",
+      "current": "examples/client_contracts/discovery_context_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-4f3ec323.json",
+      "current_sha256": "11b15edfe8e58158ac94ce8180b5eb82f9bb7c709eb620a6b323e1cf6bc52736",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "native_installed_acceptance": "explicit unexecuted provider/device boundary",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_installation_custody_once.CustodyOriginalHaProofTests.test_actual_HA_original_source_and_harness_remain_exact_metadata_only",
+      "predecessor": "examples/client_contracts/installation_custody_once_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-2215a6c3.json",
+      "predecessor_sha256": "b39e1d827598ae33cd3b42b474bab8a3a3f649f901f2b3791ac284bac714b37a",
+      "current": "examples/client_contracts/installation_custody_once_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-eaba864b.json",
+      "current_sha256": "e88c5aeed9dc978e525efb3f19ad6badaa7e3ab12984f4ac45b5b97b4f8cfae7",
+      "field_provenance": {
+        "actual_key_generation_signing_registry_provider_or_native_effect": "actual raw field",
+        "cases": "actual raw field",
+        "preceding_installation_once_cases": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_music_announcement_contract.AnnouncementContractTests.test_current_producer_and_manual_replay_match_original_actual_ha",
+      "predecessor": "examples/client_contracts/music_announcement_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-a835dd36.json",
+      "predecessor_sha256": "b9d0d99d4c2fd9a7d46b332b0f20b4d851de54ba1f5042e31b3f14cf4fd7ab89",
+      "current": "examples/client_contracts/music_announcement_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-7be5d1a9.json",
+      "current_sha256": "ae3b4974907ad417523083037afb0d48f0b931db964f2a8a4fd10ac5a3f95419",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_music_dna_artwork.MusicDNAArtworkTest.test_actual_ha_fixture_binds_current_producer_and_original_clocks",
+      "predecessor": "examples/client_contracts/music_dna_artwork_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-fc61a5be.json",
+      "predecessor_sha256": "5341733e67d40c1f384523e995b5267edd1f1e7c14d2b16adf0678ce9b93e9e8",
+      "current": "examples/client_contracts/music_dna_artwork_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-0ce6d26a.json",
+      "current_sha256": "91591d8bee0dfc4b8011eb7b22cefeaeb1ba5666f8d22b956791faee8cfea192",
+      "field_provenance": {
+        "cases": "actual raw field",
+        "installed": "actual raw field",
+        "integration_source_hashes": "entire361 candidate product manifest verified before and after actual executions",
+        "live_spotify": "actual raw field",
+        "music_dna_exact_album": "actual raw field",
+        "music_dna_profile": "actual raw field",
+        "native": "actual raw field"
+      }
+    },
+    {
+      "test": "test_passive_retained_qualification.PassiveRetainedQualificationTests.test_current_receipt_binds_original_purpose_and_all_product_bytes",
+      "predecessor": "examples/client_contracts/passive_retained_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-4590402d.json",
+      "predecessor_sha256": "c2a90105cd550a825fff09cf26bda21942711c5c8be372ef22ac56916b8d4b77",
+      "current": "examples/client_contracts/passive_retained_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-8284a87c.json",
+      "current_sha256": "cf347f42b716d4f3d4a92a92abdaaaf3cce46c40a5702a6eb0de69720d0a5a27",
+      "field_provenance": {
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_requested_moments.RequestedMomentsTest.test_actual_verified_https_gate_binds_exact_current_source_and_declared_scope",
+      "predecessor": "examples/client_contracts/requested_moments_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-30152463.json",
+      "predecessor_sha256": "7c6dffd40d1d8afc1b9f3b52df0a57e14f8705d0ea1e78b0ac2d8fecd1eb8059",
+      "current": "examples/client_contracts/requested_moments_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-2eda088c.json",
+      "current_sha256": "6c6c086c66dbefa913b9b485bf33eb401299ebe8d82679ec3e3020865feab296",
+      "field_provenance": {
+        "editorial_acceptance": "explicit unqualified editorial boundary",
+        "harness_pins": "actual executed current harness/helper map",
+        "installed": "explicit unexecuted provider/device boundary",
+        "live_model": "explicit unexecuted provider/device boundary",
+        "native": "explicit unexecuted provider/device boundary",
+        "raw_receipt_sha256": "canonical actual raw receipt without trailing newline",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_session_start_dna.OriginalDnaHTTPContractTests.test_actual_cached_offer_keeps_original_committed_basis_and_lease",
+      "predecessor": "examples/client_contracts/for_you_original_dna_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-658587c9.json",
+      "predecessor_sha256": "e090bfc5e342e23df33cd79ac283ddb315e65a9f5416663b31376304cab26c7d",
+      "current": "examples/client_contracts/for_you_original_dna_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-1d6ca402.json",
+      "current_sha256": "99d638ae43d62f2c8f065131e3c4cfd81d299ead03a38d538d514baee7d99089",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_spotify_scope_qualification.SpotifyScopeQualificationTests.test_actual_callback_configflow_refresh_and_store_bind_current_source",
+      "predecessor": "examples/client_contracts/spotify_scope_evidence_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-331e71e2.json",
+      "predecessor_sha256": "de54ab825ac2ab33725375e955f479326aa8d706656b118fe1e19a5811c6285c",
+      "current": "examples/client_contracts/spotify_scope_evidence_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-8aeffed5.json",
+      "current_sha256": "8ea2a783f390ddae270e8653e158d047197a62d1cbbaf8e6f713bbbb42238dc5",
+      "field_provenance": {
+        "native_installed_acceptance": "explicit unexecuted provider/device boundary",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_surface_registration.PassiveRegistrationTests.test_actual_HA_fixture_joins_exact_product_and_closed_acceptance",
+      "predecessor": "examples/client_contracts/passive_surface_registration_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-00d324b4.json",
+      "predecessor_sha256": "af9f60e6b7c956ef300e984ae0abbd93aa13814ba790368a61d597524fb84a55",
+      "current": "examples/client_contracts/passive_surface_registration_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-4421a09d.json",
+      "current_sha256": "f19653f7eec94f28a343752d539abd2ec5d2688b58b46ef6255cdc811bc5e97c",
+      "field_provenance": {
+        "actual_temporary_entry_rotation_failed_await_ABA_stays_retired": "actual raw field",
+        "cases": "actual raw field",
+        "external_provider_calls": "actual raw field",
+        "model_calls": "actual raw field",
+        "positive_purpose_commit_native_installed_provider": "actual raw field",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_hashes": "entire361 candidate product manifest verified before and after actual executions",
+        "status": "actual raw field"
+      }
+    },
+    {
+      "test": "test_music_origin.MusicOriginActualHAProofTest.test_actual_origin_and_freeform_receipt_bind_current_source",
+      "predecessor": "examples/client_contracts/music_origin_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-dfe67107.json",
+      "predecessor_sha256": "1bd05ecf5bccea8d17dd2d9754917e596b05ec30a37bf08ef3e1eafd8d626081",
+      "current": "examples/client_contracts/music_origin_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-9056bdd5.json",
+      "current_sha256": "60f05b23cee2ec882b2ee5f9046ca24ab65e58648a22f94dfba1012394a269b6",
+      "field_provenance": {
+        "editorial": "explicit unqualified editorial boundary",
+        "harness_pins": "actual executed current harness/helper map",
+        "installed": "explicit unexecuted provider/device boundary",
+        "raw_receipt_sha256": "canonical actual raw receipt without trailing newline",
+        "real_provider": "explicit unexecuted provider/device boundary",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    }
+  ]
+}

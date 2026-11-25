@@ -8,7 +8,7 @@ import unittest
 class SpotifyScopeQualificationTests(unittest.TestCase):
     def test_actual_callback_configflow_refresh_and_store_bind_current_source(self):
         root=Path(__file__).resolve().parents[1]
-        proof=json.loads((root/'examples/client_contracts/spotify_scope_evidence_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-331e71e2.json').read_text())
+        proof=json.loads((root/'examples/client_contracts/spotify_scope_evidence_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-8aeffed5.json').read_text())
         receipt=proof['receipt']
         self.assertTrue(proof['source_before_after_equal'])
         self.assertTrue(receipt['source_unchanged'])
