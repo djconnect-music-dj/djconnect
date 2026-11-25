@@ -818,12 +818,13 @@
     e("horizon-preview-artist").textContent=visible ? track.artist : "";
     e("horizon-preview-text").textContent=visible ? preview.text : "";
     const source=e("horizon-preview-source"), image=e("horizon-preview-art");
+    const artwork=e("horizon-preview-artwork");
     const cover=visible && preview.artwork && displayArtwork.get(preview.artwork.reference);
     if (cover && cover.item_id===track.item_id) {
       if(image.getAttribute("src")!==cover.url)image.src=cover.url;
-      image.hidden=false;
+      artwork.hidden=false;
     } else {
-      image.hidden=true;
+      artwork.hidden=true;
       image.removeAttribute("src");
     }
     if (!visible) {
