@@ -1,5 +1,7 @@
 """B adapter unit chain with normal request helpers; not live HA proof."""
 import asyncio
+from dataclasses import replace
+from datetime import datetime, timezone
 import importlib
 from io import BytesIO
 import secrets
@@ -471,6 +473,58 @@ class DisplayServiceTests(unittest.IsolatedAsyncioTestCase):
         })
         with self.assertRaises(self.module.DisplayAdmissionError):
             await self.call("artwork", other | {"reference": second["reference"]}, headers=other_headers)
+
+    async def test_upcoming_artwork_read_is_bound_to_the_live_horizon_preview(self):
+        from custom_components.djconnect.display_delivery import DisplayArtwork
+        from custom_components.djconnect.horizon_preview import project
+
+        payload = (await self.admitted()).payload
+        binding = {key: payload[key] for key in ("issuer_epoch", "display_id")}
+        headers = {"Authorization": "Bearer " + payload["grant_token"]}
+        state = self.manager._display_admission
+        display = state._displays[binding["display_id"]]
+        share = state._shares[display.share_id]
+        active = self.fixture.active
+        await self.manager.async_update_playback_projection(owner_profile_id="profile-a", session_id=active.session_id,
+            state="playing", media_identity="spotify:track:" + "A" * 22, title="Playing",
+            duration_ms=180_000, position_ms=160_000)
+        broadcast = active.broadcast
+        forecast = broadcast.forecast
+        playback = broadcast.state.playback
+        deadline = forecast.clock() + 10
+        wall = forecast.wall_clock() + 10
+        expires = datetime.fromtimestamp(wall, timezone.utc).isoformat()
+        source_url = "https://open.spotify.com/track/" + "B" * 22
+        upcoming = {"title": "Upcoming", "artist": "Next artist", "source_url": source_url,
+                    "current_item_id": playback.item_id, "expires_at": expires}
+        forecast.accept_queue({"deadline": deadline, "wall_deadline": wall,
+            "items": [{"title": "Upcoming", "artist": "Next artist", "genres": []}]},
+            playback.item_id, lambda: True)
+        playing = replace(playback, up_next=tuple(upcoming.items()))
+        broadcast.state = replace(broadcast.state, playback=playing)
+        preview = project(broadcast)
+        self.assertIsNotNone(preview)
+        broadcast.display_horizon_artwork = DisplayArtwork("nonce", preview["track"]["item_id"], source_url,
+            b"prepared cover", "image/png", state._clock()+10, expires, 0, "", lambda: True,
+            frozenset({(share.share_id, share.generation)}), lambda: True)
+
+        snapshot = await self.call("snapshot", binding, headers=headers)
+        try:
+            reference = snapshot.payload["snapshot"]["horizon_preview"]["artwork"]["reference"]
+        finally:
+            snapshot.complete()
+        media = await self.call("artwork", binding | {"reference": reference}, headers=headers)
+        try:
+            self.assertEqual(media.media, (b"prepared cover", "image/png"))
+            media.release()
+            broadcast.state = replace(broadcast.state, playback=replace(playing, state="paused"))
+            with self.assertRaises(self.module.DisplayAdmissionError):
+                media.release()
+        finally:
+            media.complete()
+        with self.assertRaises(self.module.DisplayAdmissionError) as withdrawn:
+            await self.call("artwork", binding | {"reference": reference}, headers=headers)
+        self.assertEqual(withdrawn.exception.status, 404)
 
     async def test_simultaneous_snapshot_reserves_before_projection_until_body_completes(self):
         result = await self.admitted()

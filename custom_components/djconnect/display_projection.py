@@ -49,6 +49,23 @@ def _shared_horizon(broadcast, *, locale=None):
                                           mood=_label(current.selected_mood))
 
 
+def _shared_horizon_preview(active, display, state, locale):
+    from .display_delivery import artwork_descriptor
+    from .horizon_preview import project
+
+    preview = project(active.broadcast, locale=locale)
+    if preview is None:
+        return None
+    track = preview["track"]
+    # Only the one qualified recording is shareable, with no owner artwork URL.
+    result = {key: preview[key] for key in ("current_item_id", "text", "expires_at")}
+    result["track"] = {key: track[key] for key in ("item_id", "title", "artist", "source_url")}
+    artwork = artwork_descriptor(active, display, state, horizon_preview=preview)
+    if artwork is not None:
+        result["artwork"] = artwork
+    return result
+
+
 def _release_moment_deadlines(moment, boundary, current_ids, flow):
     deadlines = []
     if moment.moment_id in current_ids:
@@ -131,6 +148,9 @@ def projection_release_guard(active, authority, state, snapshot):
         if not _release_artwork_current(active, authority, state, snapshot, flow, artwork_descriptor):
             return False
         if "horizon" in snapshot and _shared_horizon(broadcast, locale=snapshot["session"]["locale"]) != snapshot["horizon"]:
+            return False
+        if "horizon_preview" in snapshot and _shared_horizon_preview(
+                active, authority, state, snapshot["session"]["locale"]) != snapshot["horizon_preview"]:
             return False
         from .guest_live import view
         share = state._shares.get(authority.share_id)
@@ -290,6 +310,10 @@ def _decorate_shared_snapshot(result, active, authority, state, broadcast, curre
     horizon = _shared_horizon(broadcast, locale=result["session"]["locale"])
     if horizon is not None:
         result["horizon"] = horizon
+    if result["view"]["mode"] == "flow":
+        preview = _shared_horizon_preview(active, authority, state, result["session"]["locale"])
+        if preview is not None:
+            result["horizon_preview"] = preview
     from .display_delivery import artwork_descriptor
     for item in [*result["shared_flow"], *result['observed_playback']]:
         flow_artwork = artwork_descriptor(active, authority, state, flow_item_id=item["playback_item_id"] or "")

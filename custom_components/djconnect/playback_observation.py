@@ -53,6 +53,8 @@ class _SpotifyObservationSession:
     display_artwork_task: asyncio.Task[Any] | None = None
     display_artwork_attempt: tuple[str, str, int] | None = None
     display_artwork_retry: float = 0
+    display_horizon_artwork_task: asyncio.Task[Any] | None = None
+    display_horizon_artwork_retry: float = 0
     enrichment_media_identity: str = ""
     unavailable: bool = False
     command_revision: int = 0
@@ -171,11 +173,13 @@ class PlaybackObservationManager:
             with suppress(asyncio.CancelledError):
                 await observed.forecast_art_task
         observed.forecast_art_task = None
-        if observed.display_artwork_task is not None:
-            observed.display_artwork_task.cancel()
-            with suppress(asyncio.CancelledError):
-                await observed.display_artwork_task
-            observed.display_artwork_task = None
+        for task in (observed.display_artwork_task, observed.display_horizon_artwork_task):
+            if task is not None:
+                task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await task
+        observed.display_artwork_task = None
+        observed.display_horizon_artwork_task = None
         observed.enrichment_media_identity = ""
 
     async def async_stop_runtime(self, integration_runtime: Any) -> None:
@@ -495,6 +499,8 @@ class PlaybackObservationManager:
                 media_identity=result.media_identity, target_name=getattr(result, 'target_name', ''),
                 preview=preview, authority=queue_authority,
             )
+            from .display_delivery import schedule_horizon_artwork
+            schedule_horizon_artwork(self._hass, manager, observed, queue_authority)
         if not result.is_playing or not result.media_identity:
             previous = observed.enrichment_task
             if previous is not None and previous is not asyncio.current_task() and not previous.done():

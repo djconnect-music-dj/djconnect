@@ -79,10 +79,14 @@ def validate(plan, previous_validator):
           and receipt.get("automatic_dispatch") is receipt.get("consumer_writes") is False,
           "software scope and open acceptance")
     retained = receipt.get("retained_files", [])
-    archived_document = "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md"
+    archived_inputs = {
+        "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
+        "docs/technical/VIBECAST_GUEST_PARTICIPATION_V1.md",
+        "tests/browser/vibecast_display_flow.cjs",
+    }
     check(len(retained) == len(FILES) and {row.get("path") for row in retained} == FILES
           and all(sha(SNAPSHOTS / row["path"]) == row.get("previous_sha256")
-                  and sha((BASELINE_ARCHIVE if row["path"] == archived_document else ROOT) / row["path"])
+                  and sha((BASELINE_ARCHIVE if row["path"] in archived_inputs else ROOT) / row["path"])
                   == row.get("current_sha256") for row in retained),
           "current and historical documents and harness")
     evidence = receipt.get("evidence", {})
@@ -102,13 +106,13 @@ def validate(plan, previous_validator):
     current = {str(path.relative_to(ROOT)): sha(path)
                for path in (ROOT / "custom_components/djconnect").rglob("*")
                if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"}
-    successor = ROOT / "docs/verification/vibecast-live-tv-layout-actual-ha-matrix-20261124.json"
+    successor = ROOT / "docs/verification/vibecast-party-actual-ha-matrix-20261125.json"
     successor_matrix = json.loads(successor.read_bytes())
     successor_rows = successor_matrix["results"]
     check(current == successor_matrix["source_pins"]
-          == json.loads((ROOT / "docs/verification/vibecast-live-tv-layout-product-manifest-20261124.json").read_bytes())
+          == json.loads((ROOT / "docs/verification/vibecast-party-product-manifest-20261125.json").read_bytes())
           and successor_matrix["source_before_after_equal"] is True
-          and len(current) == 359 and len(successor_rows) == 54
+          and len(current) == 361 and len(successor_rows) == 54
           and all(row["exit_code"] == 0 and sha(ROOT / row["harness"]) == row["harness_sha256"]
                   for row in successor_rows), "current Music Canvas exact-source HA requalification")
     proof = loaded["qualification"]
@@ -155,7 +159,7 @@ def validate(plan, previous_validator):
     browser = loaded["browser"]
     check(browser.get("source_pins") == actual and browser.get("result") == "PASS"
           and browser.get("harness") == "tests/browser/vibecast_display_flow.cjs"
-          and browser.get("harness_sha256") == sha(ROOT / "tests/browser/vibecast_display_flow.cjs")
+          and browser.get("harness_sha256") == sha(BASELINE_ARCHIVE / "tests/browser/vibecast_display_flow.cjs")
           and browser.get("engines") == ["chromium", "webkit"]
           and set(browser.get("logs_sha256", {})) == {"chromium", "webkit"},
           "maintained two-engine renderer scenarios")

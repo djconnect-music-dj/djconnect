@@ -17,6 +17,7 @@ INVITATION_SECONDS = 120
 GUEST_LEASE_SECONDS = 60
 MAX_GUESTS = 64
 MAX_INVITATIONS = 32
+MANUAL_CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 MAX_VOICE_ENDPOINTS = 32
 MODEL_CALLS_PER_GUEST = 8
 MODEL_CALLS_PER_SHARE = 32
@@ -61,6 +62,7 @@ class _Invitation:
     share_id: str
     generation: str
     deadline: float
+    manual_code_hash: str
 
 
 @dataclass(slots=True, repr=False)
@@ -215,10 +217,16 @@ class GuestAdmissionState:
         if len(self._invitations) >= MAX_INVITATIONS:
             raise DisplayAdmissionError('guest_capacity', 429)
         identifier, secret = secrets.token_urlsafe(24), secrets.token_urlsafe(32)
+        while True:
+            code = ''.join(secrets.choice(MANUAL_CODE_ALPHABET) for _ in range(12))
+            code_hash = _hash(code)
+            if all(item.manual_code_hash != code_hash for item in self._invitations.values()):
+                break
         deadline = min(share.deadline, self.display._clock() + INVITATION_SECONDS)
         self._invitations[identifier] = _Invitation(identifier, _hash(secret), share_id,
-                                                  participation.generation, deadline)
+                                                  participation.generation, deadline, code_hash)
         return {'invitation_id': identifier, 'invitation_secret': secret,
+                'manual_code': '-'.join(code[index:index+4] for index in range(0, 12, 4)),
                 'issuer_epoch': self.display.issuer_epoch,
                 'expires_in': max(0, deadline - self.display._clock())}
 
@@ -232,18 +240,33 @@ class GuestAdmissionState:
         self._qr_invites[share_id] = result
         return dict(result)
 
-    def redeem(self, *, invitation_id, invitation_secret, issuer_epoch, source):
+    def _count_attempt(self, source):
         self.prune()
         source_key = _hash(str(source)[:128])
         count, deadline = self._attempts.get(source_key, (0, self.display._clock() + 60))
         if count >= 10 or (source_key not in self._attempts and len(self._attempts) >= 256):
             raise DisplayAdmissionError('guest_rate_limited', 429)
         self._attempts[source_key] = count + 1, deadline
+
+    def redeem(self, *, invitation_id, invitation_secret, issuer_epoch, source):
+        self._count_attempt(source)
         invite = self._invitations.get(invitation_id)
         if (not isinstance(issuer_epoch, str) or not secrets.compare_digest(issuer_epoch, self.display.issuer_epoch)
                 or invite is None or not isinstance(invitation_secret, str)
                 or not secrets.compare_digest(invite.secret_hash, _hash(invitation_secret))):
             raise DisplayAdmissionError('guest_invitation_invalid', 401)
+        return self._consume_invitation(invite)
+
+    def redeem_code(self, *, code, source):
+        self._count_attempt(source)
+        code_hash = _hash(code)
+        invite = next((item for item in self._invitations.values()
+                       if secrets.compare_digest(item.manual_code_hash, code_hash)), None)
+        if invite is None:
+            raise DisplayAdmissionError('guest_invitation_invalid', 401)
+        return self._consume_invitation(invite)
+
+    def _consume_invitation(self, invite):
         share, participation = self._share(invite.share_id)
         if invite.generation != participation.generation:
             raise DisplayAdmissionError('guest_invitation_invalid', 401)
@@ -252,7 +275,7 @@ class GuestAdmissionState:
         identifier, secret = secrets.token_urlsafe(24), 'djcg_' + secrets.token_urlsafe(32)
         grant = GuestGrant(identifier, share.share_id, participation.generation, 'browser', _hash(secret),
                            min(share.deadline, self.display._clock() + GUEST_LEASE_SECONDS))
-        del self._invitations[invitation_id]  # A lost response never issues another grant.
+        del self._invitations[invite.invitation_id]  # A lost response never issues another grant.
         self._qr_invites.pop(invite.share_id, None)
         self._guests[identifier] = grant
         return {**self.public(grant), 'guest_token': secret, 'issuer_epoch': self.display.issuer_epoch}

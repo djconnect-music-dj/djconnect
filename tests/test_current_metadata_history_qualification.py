@@ -11,11 +11,11 @@ class CurrentMetadataHistoryQualificationTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads(
             (
-                root / 'examples/client_contracts/current_metadata_history_v1/vibecast-live-tv-layout-20261124-0261124-20261124-02611-3568dc5b.json'
+                root / 'examples/client_contracts/current_metadata_history_v1/vibecast-party-20261125--20261124-0261124-2026-03aa5abf.json'
             ).read_text()
         )
         self.assertTrue(proof["source_before_after_equal"])
-        self.assertEqual(len(proof["source_pins"]), 359)
+        self.assertEqual(len(proof["source_pins"]), 361)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root / name).read_bytes()).hexdigest(), expected, name)
         receipt = proof["receipt"]

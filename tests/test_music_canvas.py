@@ -31,6 +31,48 @@ def update(revision=0, **patch):
 
 
 class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
+    async def test_confirmed_cleanup_releases_upload_slot_and_records_selected_art(self):
+        from custom_components.djconnect.music_canvas_runtime import CanvasRuntime
+
+        device = {"id": "frame", "epoch": 3, "owned_content": ["old", "latest"]}
+        state = {"devices": {"frame": {**device, "owned_content": ["old", "latest"]}}}
+
+        async def mutate(commit, authorize):
+            self.assertTrue(authorize())
+            return commit(state)
+
+        runtime = CanvasRuntime.__new__(CanvasRuntime)
+        runtime.effect_lock = asyncio.Lock()
+        runtime.repository = types.SimpleNamespace(mutate=mutate)
+        runtime.protocol = AsyncMock(return_value={"deleted": True})
+        async with runtime.effect_lock:
+            recovered = await runtime.reconcile_samsung_uploads(device, lambda: True)
+        cleanup = runtime.protocol.await_args.args[0]
+        self.assertEqual(cleanup.keywords, {"content_id": "old", "displayed_content_id": "latest"})
+        self.assertEqual(recovered["owned_content"], ["latest"])
+        self.assertEqual(recovered["last_selected_content"], "latest")
+        self.assertEqual(device["owned_content"], ["old", "latest"])
+
+    def test_cleanup_requires_the_latest_owned_art_to_still_be_visible(self):
+        current = {"content_id": "latest"}
+        deleted = []
+        art = types.SimpleNamespace(
+            get_artmode=lambda: "on",
+            get_current=lambda: current,
+            delete=lambda content_id: deleted.append(content_id) is None,
+            close=lambda: None,
+        )
+        module = types.SimpleNamespace(SamsungTVWS=lambda *_args, **_kw: types.SimpleNamespace(art=lambda: art))
+        device = {"host": "192.0.2.55", "token": "fixture", "owned_content": ["old", "latest"]}
+        with patch.dict(sys.modules, {"samsungtvws": module}):
+            self.assertEqual(samsung_action(device, "cleanup", content_id="old", displayed_content_id="latest"),
+                             {"deleted": True})
+            for selected in ("old", "owner-art"):
+                current["content_id"] = selected
+                with self.assertRaises(CanvasError):
+                    samsung_action(device, "cleanup", content_id="old", displayed_content_id="latest")
+        self.assertEqual(deleted, ["old"])
+
     def test_tokenless_art_requires_explicit_registry_binding_and_pinned_peer(self):
         events = []
         certificate = b"declared-tv-certificate"
@@ -208,12 +250,12 @@ class CanvasDomainTests(unittest.TestCase):
         import hashlib
         import json
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/vibecast-live-tv-layout-20261124-actual-ha.json").read_text())
-        self.assertEqual(len(proof["source_pins"]), 359)
+        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/vibecast-party-20261125-actual-ha.json").read_text())
+        self.assertEqual(len(proof["source_pins"]), 361)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), expected, name)
         self.assertTrue(proof["source_before_after_equal"])
-        matrix = json.loads((root/"docs/verification/vibecast-live-tv-layout-actual-ha-matrix-20261124.json").read_text())
+        matrix = json.loads((root/"docs/verification/vibecast-party-actual-ha-matrix-20261125.json").read_text())
         self.assertEqual(matrix["source_pins"], proof["source_pins"])
         self.assertTrue(matrix["source_before_after_equal"])
         self.assertEqual(len(matrix["results"]), 54)
@@ -264,7 +306,7 @@ class CanvasDomainTests(unittest.TestCase):
         self.assertTrue(profile(state, "alice")["preferences"]["enabled"])
 
     def test_closed_contract_identity_and_invalid_choice(self):
-        for request in (update(enabled="yes"), {**update(enabled=True), "profile_id": "bob"},
+        for request in (update(enabled="yes"), update(show_track_title=1), {**update(enabled=True), "profile_id": "bob"},
                         update(cadence="60"), update(cadence_overrides={"unselected": "900"}),
                         {**update(enabled=True), "contract_version": True}):
             with self.assertRaises(CanvasError):
@@ -314,6 +356,47 @@ class CanvasDomainTests(unittest.TestCase):
         self.assertNotIn("winter", prompt)
         self.assertNotIn("weather", prompt)
         self.assertNotIn("artwork_url", prompt)
+
+    def test_track_title_is_opt_in_for_existing_profiles(self):
+        state = fresh_state()
+        apply_update(state, "alice", "binding", update(enabled=True), 100)
+        state["profiles"]["alice"]["preferences"].pop("show_track_title")
+        self.assertIs(profile(state, "alice")["preferences"]["show_track_title"], False)
+        result = apply_update(state, "alice", "binding", update(1, show_track_title=True), 101)
+        self.assertIs(result["preferences"]["show_track_title"], True)
+        self.assertIs(profile(state, "alice")["preferences"]["show_track_title"], True)
+
+    def test_title_is_centered_over_the_artwork_or_in_the_bottom_matte(self):
+        from PIL import Image, ImageChops
+        from custom_components.djconnect.music_canvas_render import _luminance, _title_color
+
+        source = io.BytesIO()
+        palette = (221, 174, 144)
+        Image.new("RGB", (800, 450), palette).save(source, "PNG")
+        for matte, min_y, expected_center_y in (("off", 396, 419), ("matching", 418, 438), ("contrast", 418, 438)):
+            with self.subTest(matte=matte):
+                baseline = compose(source.getvalue(), 800, 450, "full", matte)
+                titled = compose(source.getvalue(), 800, 450, "full", matte, "Breathe")
+                with Image.open(io.BytesIO(baseline)) as before, Image.open(io.BytesIO(titled)) as after:
+                    left, top, right, bottom = ImageChops.difference(before, after).getbbox()
+                self.assertGreaterEqual(top, min_y)
+                self.assertAlmostEqual((left + right) / 2, 400, delta=8)
+                self.assertAlmostEqual((top + bottom) / 2, expected_center_y, delta=8)
+        ink = _title_color(palette, palette)
+        self.assertGreater(ink[0], ink[2])
+        self.assertGreaterEqual((_luminance(palette) + .05) / (_luminance(ink) + .05), 4.5)
+
+    def test_title_colors_follow_the_local_background_and_dominant_artwork(self):
+        from PIL import Image
+        from custom_components.djconnect.music_canvas_render import _dominant_color, _outline_colors
+
+        dark, light = (34, 22, 28), (242, 231, 212)
+        sample = Image.new("RGB", (100, 100), dark)
+        sample.paste(light, (0, 75, 100, 100))
+        self.assertEqual(_dominant_color(sample), dark)
+        white, black = (255, 255, 255), (0, 0, 0)
+        self.assertEqual(_outline_colors(sample, (10, 80, 90, 95)), (black, white))
+        self.assertEqual(_outline_colors(sample, (10, 50, 90, 65)), (white, black))
 
     def test_composition_all_nine_variants_portrait_landscape_and_no_stretch(self):
         from PIL import Image

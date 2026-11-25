@@ -392,6 +392,8 @@ class CanvasRuntime:
         storage = profile_storage(self.hass)
         authority_revision = storage.authority_revision
         prefs = config["preferences"]
+        show_title = prefs.get("show_track_title", False)
+        presentation = [prefs["composition"], prefs["matte"], show_title]
         sample = active.broadcast.passive_observation
         if not sample or time.monotonic()-sample[0] > 30 or sample[2].state != "playing":
             return
@@ -414,6 +416,7 @@ class CanvasRuntime:
                     and active.broadcast.passive_observation[2].state == "playing"
                     and (not per_track or active.broadcast.passive_observation[2].item_id == playback.item_id)
                     and time.monotonic()-active.broadcast.passive_observation[0] <= 30)
+        cadence = prefs["cadence"]
         groups = {}
         for target in prefs["selected_targets"]:
             device = state["devices"].get(target)
@@ -443,10 +446,12 @@ class CanvasRuntime:
                 if sum(v["target"] == target for v in self.leases.values()) >= 2 or len(self.leases) >= 32:
                     self.states[target] = "waiting_screen"
                     continue
-            cadence = prefs["cadence_overrides"].get(target, prefs["cadence"])
             key = (owner, active.session_id, target)
+            previous_presentation = device.get("presentation")
+            if isinstance(previous_presentation, list) and len(previous_presentation) == 2:
+                previous_presentation = [*previous_presentation, False]
             cached = device.get("source_image") if (device.get("preview_owner") == owner
-                and device.get("presentation") != [prefs["composition"], prefs["matte"]]) else None
+                and previous_presentation != presentation) else None
             if not cached and not self.cadence.due(key, occurrence, cadence, time.monotonic()):
                 continue
             if device["adapter"] == "samsung":
@@ -458,7 +463,13 @@ class CanvasRuntime:
                         row = current["devices"].get(target)
                         need(scope_current(cadence == "track") and row and row["epoch"] == device["epoch"]
                              and not row.get("forgetting"), "canvas_context_changed", 409)
-                        await self.observe_samsung(device, lambda: scope_current(cadence == "track"))
+                        def authorized():
+                            return scope_current(cadence == "track") and self.registry_art_current(row)
+
+                        if len(row["owned_content"]) == 2:
+                            device = await self.reconcile_samsung_uploads(row, authorized)
+                        else:
+                            await self.observe_samsung(row, authorized)
                 except asyncio.CancelledError:
                     raise
                 except Exception as exc:
@@ -499,7 +510,8 @@ class CanvasRuntime:
                         raw = await render.generate(self.hass, prompt)
                 need(current_scope(), "canvas_context_changed", 409)
                 art = await self.hass.async_add_executor_job(
-                    render.compose, raw, width, height, prefs["composition"], prefs["matte"])
+                    render.compose, raw, width, height, prefs["composition"], prefs["matte"],
+                    playback.title if show_title else None)
                 filename = hashlib.sha256(art).hexdigest()+".jpg"
                 source_file = cached or hashlib.sha256(raw).hexdigest()+".jpg"
                 self.inflight_files.add(filename)
@@ -548,6 +560,31 @@ class CanvasRuntime:
             await self.repository.mutate(
                 lambda state: state["devices"][device["id"]].update(manual_takeover=True), authorize)
             raise CanvasError("canvas_manual_takeover", 409)
+
+    async def reconcile_samsung_uploads(self, device, authorize):
+        """Retire an older owned upload after the TV confirms the latest one."""
+        import functools
+        previous, latest = device["owned_content"]
+        need(authorize(), "canvas_context_changed", 409)
+
+        async def cleanup_and_record():
+            need(authorize(), "canvas_context_changed", 409)
+            result = await self.protocol(functools.partial(
+                adapters.samsung_action, device, "cleanup", content_id=previous, displayed_content_id=latest))
+            need(result["deleted"], "canvas_cleanup_required", 409)
+
+            def record(state):
+                row = state["devices"].get(device["id"])
+                need(row and row["epoch"] == device["epoch"] and row["owned_content"] == [previous, latest]
+                     and not row.get("forgetting"), "canvas_context_changed", 409)
+                row["owned_content"].remove(previous)
+                row["last_selected_content"] = latest
+                row["cleanup_supported"] = True
+                return deepcopy(row)
+
+            return await self.repository.mutate(record, self.effect_lock.locked)
+
+        return await self.await_effect_completion(asyncio.create_task(cleanup_and_record()))
 
     async def deliver(self, owner, config, active, target, device, filename, art, scope_current, source_file):
         async with self.effect_lock:
@@ -619,7 +656,8 @@ class CanvasRuntime:
                 state["devices"][target]["preview_owner"] = owner
                 state["devices"][target]["source_image"] = source_file
                 state["devices"][target]["presentation"] = [
-                    config["preferences"]["composition"], config["preferences"]["matte"]]
+                    config["preferences"]["composition"], config["preferences"]["matte"],
+                    config["preferences"].get("show_track_title", False)]
                 state["devices"][target]["provenance"] = {
                     "input": "bounded_confirmed_title_only", "external_attachments": False,
                     "generated": True, "native_model_resolution_qualified": False}

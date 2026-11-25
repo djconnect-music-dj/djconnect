@@ -20,7 +20,7 @@ async function main(engine) {
     page = await browser.newPage({viewport:{width:1280,height:720},reducedMotion:"reduce",locale:"en-US",timezoneId:"Europe/Amsterdam"});
     page.on("pageerror",error=>console.error("Renderer page error:",error.message));
     page.setDefaultTimeout(5000);
-    let socket;
+    let socket, allowAdmission=true;
     const artworkReads=[];
     await page.route(origin+"/**",route=>{
       const endpoint = new URL(route.request().url()).pathname.split("/").pop();
@@ -30,19 +30,14 @@ async function main(engine) {
       if(endpoint==="artwork") {
         artworkReads.push(route.request().postDataJSON().reference);
         assert.equal(route.request().headers().authorization,"Bearer "+grant);
-        assert.ok(["a".repeat(64),"b".repeat(64)].includes(route.request().postDataJSON().reference));
+        assert.ok(["a","b","c"].map(value=>value.repeat(64)).includes(route.request().postDataJSON().reference));
         return route.fulfill({body:cover,contentType:"image/png",
           headers:{"Content-Length":String(cover.length)}});
       }
       if(endpoint==="focus")return route.fulfill({json:{success:true,focused_moment_id:null,expires_in:0}});
-      if(endpoint==="presentation") {
-        const request=route.request().postDataJSON();
-        assert.deepEqual(request,{contract_version:1,issuer_epoch:"epoch",display_id:"display",mode:"vibescape"});
-        assert.equal(route.request().headers().authorization,"Bearer "+grant);
-        return route.fulfill({json:{success:true,view:{mode:request.mode,revision:4,dynamics:.5}}});
-      }
       if(endpoint==="invitation")return route.fulfill({status:403,json:{success:false,error:"guest_share_unavailable"}});
       assert.equal(endpoint,"collect");
+      if(!allowAdmission)return route.fulfill({json:{success:true,state:"pending"}});
       return route.fulfill({json:{success:true,state:"admitted",...binding,grant_token:grant,lease_expires_in:60,
         capabilities:{owner_controls:false,session_end:false}}});
     });
@@ -82,6 +77,15 @@ async function main(engine) {
       document.querySelector("#handoff")?.textContent.includes("Connecting")).catch(()=>{});
     for(let i=0;!socket && i<50;i++) await new Promise(resolve=>setTimeout(resolve,50));
     assert.ok(socket);
+    const waitingBrand=page.locator(".waiting-brand");
+    await waitingBrand.waitFor({state:"visible"});
+    snapshot(0,"","idle",{title:"",artist:"",album:"",duration_ms:null,position_ms:null},{
+      view:{mode:"flow",dynamics:.5},artwork:null
+    });
+    await page.waitForFunction(()=>document.querySelector("#title").textContent==="Waiting for music");
+    await waitingBrand.waitFor({state:"hidden"});
+    assert.equal(await page.locator("#handoff").isVisible(),false);
+    assert.equal(await page.locator("#display-view-status").textContent(),"Flow");
     snapshot(8, "current", "playing", undefined, {
       session_presentation:{mood:"chill",persona:"home_dj",presence:"presenter"},
       artwork:null
@@ -89,17 +93,27 @@ async function main(engine) {
     const languagePicker = page.locator("#display-language");
     const moodIcon = page.locator("#session-mood-icon");
     await moodIcon.waitFor();
-    const languageBox = await languagePicker.boundingBox(), moodBox = await moodIcon.boundingBox();
-    assert.ok(languageBox && moodBox && languageBox.x + languageBox.width <= moodBox.x);
-    assert.ok(languageBox.y < moodBox.y + moodBox.height && moodBox.y < languageBox.y + languageBox.height);
-    assert.equal(await languagePicker.evaluate(element=>getComputedStyle(element).color), "rgb(255, 255, 255)");
-    assert.match(await languagePicker.evaluate(element=>getComputedStyle(element).backgroundColor), /^rgba\(0, 0, 0, 0\.22\)$/);
+    await languagePicker.waitFor({state:"hidden"});
+    const modeStatus=page.locator("#display-view-status");
+    assert.equal(await modeStatus.textContent(),"Flow");
     assert.equal(await page.locator(".session-status .spotlight-avatar").count(), 0);
     for (const [name,label] of [["mood","Mood: Chill"],["persona","DJ character: Home DJ"],["presence","DJ presence: Presenter"]]) {
       const icon = page.locator("#session-"+name+"-icon");
       assert.equal(await icon.locator("title").textContent(), label);
       assert.equal(await icon.getAttribute("aria-label"), label);
     }
+    snapshot(8,"current","playing",undefined,{
+      session_presentation:{mood:"groove",persona:"home_dj",presence:"presenter"},artwork:null
+    });
+    const sessionToast=page.locator("#session-change-popup");
+    await sessionToast.waitFor({state:"visible"});
+    assert.equal(await sessionToast.locator("span").textContent(),"Session updated");
+    const toastBox=await sessionToast.boundingBox(), footerBox=await page.locator(".renderer-footer").boundingBox();
+    const {width,height}=page.viewportSize();
+    assert.ok(toastBox && footerBox && toastBox.y+toastBox.height<=footerBox.y);
+    assert.ok(toastBox.y>height-80 && toastBox.height<40 && toastBox.width<220);
+    assert.ok(Math.abs(toastBox.x+toastBox.width/2-width/2)<1);
+    assert.equal(await sessionToast.evaluate(node=>getComputedStyle(node).pointerEvents),"none");
     const viewport=page.locator("#flow-viewport"), rows=page.locator("#flow-cards > .flow-card");
     const placeholder = page.locator("#artwork-placeholder"), title = page.locator("#title");
     await placeholder.waitFor();
@@ -282,6 +296,28 @@ async function main(engine) {
     assert.equal(await page.locator("#renderer-build-label").textContent(),"Versión de VibeCast");
     assert.equal(await rows.first().locator(".flow-kind").textContent(),"Álbum");
     assert.equal(await rows.first().locator("p").textContent(),cards[10].content);
+    const horizonPreview={current_item_id:"next-recording",expires_at:new Date(Date.now()+3000).toISOString(),
+      text:"A continuación en el programa: “Upcoming recording” de Next artist.",
+      track:{item_id:"upcoming",title:"Upcoming recording",artist:"Next artist",source_url:previousTrack},
+      artwork:{item_id:"upcoming",reference:"c".repeat(64),expires_at:new Date(Date.now()+6000).toISOString()}};
+    const previewCard=page.locator("#horizon-preview");
+    snapshot(11,"next-recording","playing",undefined,{session,horizon,horizon_preview:horizonPreview});
+    await previewCard.waitFor({state:"visible"});
+    const previewCover=previewCard.locator("#horizon-preview-art");
+    await previewCover.waitFor({state:"visible"});
+    assert.match(await previewCover.getAttribute("src"),/^blob:/);
+    assert.equal(await previewCard.locator("h2").textContent(),"A continuación");
+    assert.equal(await previewCard.locator("strong").textContent(),"Upcoming recording");
+    assert.equal(await previewCard.locator("#horizon-preview-text").textContent(),horizonPreview.text);
+    assert.equal(await previewCard.locator("a img").getAttribute("alt"),"Spotify");
+    assert.equal(await rows.getByText("Upcoming recording").count(),0);
+    await previewCard.waitFor({state:"hidden"});
+    assert.equal(await previewCover.getAttribute("src"),null);
+    const freshPreview={...horizonPreview,expires_at:new Date(Date.now()+10000).toISOString()};
+    snapshot(11,"next-recording","playing",undefined,{session,horizon_preview:freshPreview});
+    await previewCard.waitFor({state:"visible"});
+    snapshot(11,"different-recording","playing",undefined,{session,horizon_preview:freshPreview});
+    await previewCard.waitFor({state:"hidden"});
     snapshot(11,"next-recording","playing",undefined,{session,
       horizon:{...horizon,valid_until:new Date(Date.now()-1000).toISOString()}});
     await horizonCard.waitFor({state:"hidden"});
@@ -292,11 +328,20 @@ async function main(engine) {
       "djconnect-live-status",{detail:{live_enabled:true,guest_count:3,...detail}})),detail);
     const view=dynamics=>({mode:"vibescape",mood:"groove",persona:"radio_dj",dynamics});
     await liveStatus({view:view(0)});
+    const receiverBrand=page.locator("#receiver-brand-label");
+    assert.equal(await receiverBrand.textContent(),"VibeCast Party");
+    assert.equal((await page.locator("#live-indicator").innerText()).trim(),"");
     assert.equal(await page.locator(".session-panels").evaluate(node=>getComputedStyle(node).display),"none");
     const firstScene=await page.locator("#vibescape-scene").evaluate(node=>node.toDataURL());
     await liveStatus({view:view(1)});
     const secondScene=await page.locator("#vibescape-scene").evaluate(node=>node.toDataURL());
     assert.notEqual(firstScene,secondScene,"Confirmed dynamics must affect the scene even with reduced motion");
+    const frames=new Set();
+    for(const persona of ["home_dj","radio_dj","club_dj","festival_dj"]){
+      await liveStatus({view:{...view(.5),persona}});
+      frames.add(await page.locator("#vibescape-scene").evaluate(node=>node.toDataURL()));
+    }
+    assert.equal(frames.size,4,"DJ characters must render four distinct scenes under the same mood");
     await liveStatus({view:{...view(.5),mode:"flow"}});
     await viewport.waitFor({state:"visible"});
     assert.equal(await page.locator("#time").textContent(),"1:00 / 4:00");
@@ -316,24 +361,25 @@ async function main(engine) {
     await liveStatus({reactions:[reaction]});
     assert.equal(await page.locator(".live-reaction").count(),1);
     await liveStatus({live_enabled:false,reactions:[]});
+    assert.equal(await receiverBrand.textContent(),"DJConnect VibeCast");
     assert.equal(await page.locator(".live-reaction").count(),0);
     assert.equal(await page.locator("#live-guest-count").isHidden(),true);
     await viewport.waitFor({state:"visible"});
     await liveStatus({reactions:[reaction]});
     assert.equal(await page.locator(".live-reaction").count(),1);
+    const presentation={session,session_presentation:{mood:"groove",persona:"radio_dj",presence:"presenter"}};
+    snapshot(11,"next-recording","playing",undefined,{...presentation,view:{...view(.5),mode:"flow",revision:3}});
+    await page.waitForFunction(()=>document.querySelector("#display-view-status").textContent==="Flow");
+    const [statusBox,moodBox]=await Promise.all([modeStatus,moodIcon].map(control=>control.boundingBox()));
+    assert.ok(statusBox && moodBox && statusBox.x+statusBox.width<=moodBox.x);
+    assert.ok(statusBox.y < moodBox.y + moodBox.height && moodBox.y < statusBox.y + statusBox.height);
+    assert.equal(await page.getByRole("button",{name:/^(Flow|VibeScape)$/}).count(),0);
+    snapshot(11,"next-recording","playing",undefined,{...presentation,view:{...view(.5),revision:4}});
+    await page.waitForFunction(()=>document.querySelector("#display-view-status").textContent==="VibeScape");
     await liveStatus({view:{...view(.5),mode:"flow",revision:3}});
-    const flowMode=page.getByRole("button",{name:"Flow",exact:true});
-    const sceneMode=page.getByRole("button",{name:"VibeScape",exact:true});
-    const [flowModeBox,clockBox,sceneModeBox]=await Promise.all(
-      [flowMode,page.locator("#clock"),sceneMode].map(control=>control.boundingBox()));
-    assert.ok(flowModeBox && clockBox && sceneModeBox);
-    assert.ok(flowModeBox.x+flowModeBox.width <= clockBox.x && clockBox.x+clockBox.width <= sceneModeBox.x);
-    await sceneMode.click();
-    await page.waitForFunction(()=>document.querySelector("#display-view-vibescape").getAttribute("aria-pressed")==="true");
-    await liveStatus({view:{...view(.5),mode:"flow",revision:3}});
-    assert.equal(await sceneMode.getAttribute("aria-pressed"),"true");
+    assert.equal(await modeStatus.textContent(),"VibeScape");
     await liveStatus({view:{...view(.5),mode:"flow",revision:5}});
-    assert.equal(await flowMode.getAttribute("aria-pressed"),"true");
+    assert.equal(await modeStatus.textContent(),"Flow");
     const returnToLive=page.getByRole("button",{name:"Volver al directo"});
     await page.clock.install();
     await viewport.hover();
@@ -348,11 +394,17 @@ async function main(engine) {
     assert.equal(await atEdge(),true);
 
     await page.evaluate(()=>window.dispatchEvent(new Event("djconnect-display-clear")));
+    await liveStatus({});
+    assert.equal(await receiverBrand.textContent(),"DJConnect VibeCast");
     assert.equal(await page.locator("#live-guest-count").textContent(),"");
     assert.equal(await page.locator("#live-guest-count").isHidden(),true);
     assert.equal(await page.locator(".live-reaction").count(),0);
+    allowAdmission=false;
     socket.close({code:1008});
     await viewport.waitFor({state:"hidden"});
+    await modeStatus.waitFor({state:"hidden"});
+    await waitingBrand.waitFor({state:"visible"});
+    await languagePicker.waitFor({state:"visible"});
     assert.equal(await rows.count(),0);
     await albumCover.waitFor({state:"hidden"});
     assert.equal(await albumCover.getAttribute("src"),null);

@@ -134,7 +134,7 @@ class DisplayArtwork:
                 and self.playback_current())
 
 
-def qualified_artwork(active, display, state, *, flow_item_id=None):
+def qualified_artwork(active, display, state, *, flow_item_id=None, horizon_preview=None):
     """Resolve prepared media within the current display and source authority."""
     if active is None or active.session_id != display.owner.session_id:
         return None
@@ -145,7 +145,14 @@ def qualified_artwork(active, display, state, *, flow_item_id=None):
             or active.broadcast.state.runtime_state != "active"
             or not display.owner.valid() or not share.owner.valid()):
         return None
-    if flow_item_id is None:
+    if horizon_preview is not None:
+        asset = getattr(active.broadcast, "display_horizon_artwork", None)
+        track = horizon_preview["track"]
+        if (asset is None or now >= asset.deadline or not asset.playback_current()
+                or asset.item_id != track["item_id"] or asset.source_url != track["source_url"]
+                or (share.share_id, share.generation) not in asset.shares):
+            return None
+    elif flow_item_id is None:
         asset = getattr(active.broadcast, "display_artwork", None)
         if asset is None or not asset.current(active, now):
             return None
@@ -156,14 +163,16 @@ def qualified_artwork(active, display, state, *, flow_item_id=None):
             return None
     binding = (state.issuer_epoch, display.display_id, share.share_id,
                str(share.generation), active.session_id, asset.item_id, asset.nonce)
-    if flow_item_id is not None:
+    if horizon_preview is not None:
+        binding += ("horizon", horizon_preview["preview_id"])
+    elif flow_item_id is not None:
         binding += ("flow",)
     reference = hashlib.sha256(":".join(binding).encode()).hexdigest()
     return reference, asset
 
 
-def artwork_descriptor(active, display, state, *, flow_item_id=None):
-    found = qualified_artwork(active, display, state, flow_item_id=flow_item_id)
+def artwork_descriptor(active, display, state, *, flow_item_id=None, horizon_preview=None):
+    found = qualified_artwork(active, display, state, flow_item_id=flow_item_id, horizon_preview=horizon_preview)
     if found is None:
         return None
     reference, asset = found
@@ -173,21 +182,67 @@ def artwork_descriptor(active, display, state, *, flow_item_id=None):
     return result
 
 
+def _admitted_shares(state, session_id):
+    now = state._clock()
+    return {(share.share_id, share.generation) for display in state._displays.values()
+            if display.owner.session_id == session_id and (share := state._shares.get(display.share_id)) is not None
+            and now < min(display.lease_deadline, share.deadline)
+            and display.owner.valid() and share.owner.valid()}
+
+
+def schedule_horizon_artwork(hass, manager, observed, source_current):
+    from .horizon_preview import project
+
+    state = manager._display_admission
+    active = manager.current_active(observed.owner_profile_id)
+    if active is None or active.session_id != observed.session_id:
+        return
+    broadcast = active.broadcast
+    preview = project(broadcast)
+    if preview is None:
+        broadcast.display_horizon_artwork = None
+        return
+    shares = _admitted_shares(state, active.session_id)
+    if not shares:
+        return
+    track = preview["track"]
+    proxy = track.get("artwork_url", "")
+    url = image_proxy_target(hass, proxy.rsplit("/", 1)[-1]) if proxy else None
+    if not safe_cdn_url(url):
+        return
+
+    def still_current():
+        current = manager.current_active(observed.owner_profile_id)
+        if (current is None or current.session_id != observed.session_id or current.broadcast is not broadcast
+                or observed.unavailable or not source_current()):
+            return False
+        latest = project(broadcast)
+        return (latest is not None and latest["preview_id"] == preview["preview_id"]
+                and latest["track"].get("artwork_url") == proxy)
+
+    now = state._clock()
+    existing = getattr(broadcast, "display_horizon_artwork", None)
+    if (existing is not None and existing.item_id == track["item_id"] and existing.playback_current()
+            and existing.deadline > now + 5 and shares <= existing.shares):
+        return
+    task = observed.display_horizon_artwork_task
+    if (task is not None and not task.done()) or observed.display_horizon_artwork_retry > now:
+        return
+    observed.display_horizon_artwork_retry = now + 5
+    ttl = datetime.fromisoformat(preview["expires_at"]).timestamp() - broadcast.forecast.wall_clock()
+    observed.display_horizon_artwork_task = hass.async_create_task(_prepare_artwork(
+        hass, state, broadcast, track["item_id"], track["source_url"], url, still_current,
+        source_current, lambda: shares & _admitted_shares(state, active.session_id), now,
+        horizon_deadline=now + ttl))
+
+
 def schedule_artwork(hass, manager, observed, result, source_sample, *, occurrence=None):
     """Start bounded preparation from a normal observation, never a display read."""
     state = manager._display_admission
     active = manager.current_active(observed.owner_profile_id)
 
     def admitted_shares():
-        now = state._clock()
-        shares = set()
-        for display in state._displays.values():
-            share = state._shares.get(display.share_id)
-            if (display.owner.session_id == observed.session_id and share is not None
-                    and now < min(display.lease_deadline, share.deadline)
-                    and display.owner.valid() and share.owner.valid()):
-                shares.add((share.share_id, share.generation))
-        return shares
+        return _admitted_shares(state, observed.session_id)
 
     if active is None or active.session_id != observed.session_id:
         return
@@ -242,7 +297,7 @@ def schedule_artwork(hass, manager, observed, result, source_sample, *, occurren
 
 
 async def _prepare_artwork(hass, state, broadcast, item_id, source_url, url, current,
-                           source_current, admitted_shares, observed_at):
+                           source_current, admitted_shares, observed_at, *, horizon_deadline=None):
     from aiohttp import ClientTimeout
     from homeassistant.helpers.aiohttp_client import async_get_clientsession
     from .image_proxy import session_images
@@ -250,6 +305,8 @@ async def _prepare_artwork(hass, state, broadcast, item_id, source_url, url, cur
 
     deadline = observed_at + DISPLAY_ARTWORK_LIFETIME
     flow_deadline = observed_at + FLOW_ARTWORK_LIFETIME
+    if horizon_deadline is not None:
+        deadline = flow_deadline = min(deadline, horizon_deadline)
     try:
         if not current() or not admitted_shares():
             return
@@ -269,7 +326,8 @@ async def _prepare_artwork(hass, state, broadcast, item_id, source_url, url, cur
             now = state._clock()
             if witness is not None and current() and shares and now < deadline:
                 wall = datetime.now(timezone.utc)
-                previous = getattr(broadcast, "display_artwork", None)
+                slot = "display_artwork" if horizon_deadline is None else "display_horizon_artwork"
+                previous = getattr(broadcast, slot, None)
                 # Refreshing a genuinely re-read, identical qualified cover is
                 # not a new image. Preserve its reference without reusing an
                 # old observation, owner/source grant or deadline.
@@ -282,7 +340,9 @@ async def _prepare_artwork(hass, state, broadcast, item_id, source_url, url, cur
                     (wall + timedelta(seconds=deadline-now)).isoformat(), flow_deadline,
                     (wall + timedelta(seconds=flow_deadline-now)).isoformat(),
                     source_current, frozenset(shares), current)
-                broadcast.display_artwork = asset
+                setattr(broadcast, slot, asset)
+                if horizon_deadline is not None:
+                    return
                 retained = getattr(broadcast, "display_flow_artwork", {})
                 retained = {key: value for key, value in retained.items()
                             if key != item_id and value.flow_deadline > now and value.source_current()}

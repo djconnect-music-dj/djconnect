@@ -59,6 +59,7 @@ window.DJCDisplayHost=function(transport){
     if(handoff && !panel.hidden)show(...handoff);
   }
   listen(selector,"change",()=>{
+    if(selector.hidden){selector.value=effectiveLocale;return;}
     if(!validLocale(selector.value))return;
     preference=selector.value;
     if(!cast){
@@ -116,7 +117,7 @@ window.DJCDisplayHost=function(transport){
     publishArtwork();
   }
   const participationLabels={en:"Scan to join the music conversation",nl:"Scan om mee te praten over de muziek",de:"Scannen und über die Musik mitreden",fr:"Scanne pour parler de la musique",es:"Escanea para hablar de la música"};
-  let guestPanel=null,guestQR=null,guestPollGeneration=-1,guestQRDeadline=0;
+  let guestPanel=null,guestQR=null,guestManual=null,guestCode=null,guestAddress=null,guestPollGeneration=-1,guestQRDeadline=0;
   let sharedPhoto=null,sharedPhotoWanted=null,failedSharedPhotoRevision=null;
   function clearSharedPhoto(){
     sharedPhotoWanted=null;
@@ -148,10 +149,15 @@ window.DJCDisplayHost=function(transport){
     }catch(_){if(sharedPhoto===pending){failedSharedPhotoRevision=focus.focus_revision;clearSharedPhoto();}}
     finally{clearTimeout(timeout);requests.delete(controller);}
   }
+  function hideGuestInvitation(){
+    if(!guestPanel)return;
+    guestPanel.hidden=true;guestQR.removeAttribute("src");
+    guestCode.textContent="";guestAddress.textContent="";guestManual.hidden=true;
+  }
   function clearParticipation(){
     failedSharedPhotoRevision=null;clearSharedPhoto();
     guestQRDeadline=0;
-    if(guestPanel){guestPanel.hidden=true;guestQR.removeAttribute("src");}
+    hideGuestInvitation();
     window.dispatchEvent(new CustomEvent("djconnect-shared-focus",{detail:{focused_moment_id:null}}));
   }
   async function participationPost(action, fields={}){
@@ -166,14 +172,6 @@ window.DJCDisplayHost=function(transport){
     }finally{clearTimeout(timeout);requests.delete(controller);}
   }
   listen(window,"djconnect-display-return",()=>{if(!expired())void participationPost("return").catch(()=>{});});
-  listen(window,"djconnect-display-view-select",async ({detail:mode})=>{
-    const g=generation;
-    let view=null;
-    if(!expired() && (mode==="flow" || mode==="vibescape")){
-      try{view=(await participationPost("presentation",{mode})).view || null;}catch(_){}
-    }
-    if(g===generation && !expired())window.dispatchEvent(new CustomEvent("djconnect-display-view-result",{detail:view}));
-  });
   async function participationPoll(g){
     if(g!==generation || expired())return;
     const started=now();
@@ -189,13 +187,25 @@ window.DJCDisplayHost=function(transport){
       if(!guestPanel){
         guestPanel=document.createElement("aside");guestPanel.className="guest-participation";
         guestQR=document.createElement("img");guestQR.width=128;guestQR.height=128;
-        guestPanel.append(guestQR);document.body.append(guestPanel);
+        guestManual=document.createElement("div");guestManual.className="guest-manual-entry";guestManual.hidden=true;
+        guestCode=document.createElement("strong");guestAddress=document.createElement("span");
+        guestManual.append(guestCode,guestAddress);
+        guestPanel.append(guestManual,guestQR);document.body.append(guestPanel);
       }
+      let manualAddress="";
+      if(/^[2-9A-HJ-NP-Z]{4}(?:-[2-9A-HJ-NP-Z]{4}){2}$/.test(invitation.manual_code)){
+        try{
+          const address=new URL(invitation.manual_origin);
+          if(address.protocol==="https:" && address.origin===invitation.manual_origin)manualAddress=address.host;
+        }catch(_){}
+      }
+      guestCode.textContent=manualAddress?invitation.manual_code:"";
+      guestAddress.textContent=manualAddress;guestManual.hidden=!manualAddress;
       guestQR.alt=participationLabels[effectiveLocale]||participationLabels.en;
       if(guestQR.getAttribute("src")!==invitation.qr_data_uri)guestQR.src=invitation.qr_data_uri;
       guestQRDeadline=started+invitation.expires_in*1000;guestPanel.hidden=now()>=guestQRDeadline;
-      later(()=>{if(guestPanel && now()>=guestQRDeadline){guestPanel.hidden=true;guestQR.removeAttribute("src");}},Math.max(1,guestQRDeadline-now()));
-    }catch(_){if(g===generation && guestPanel){guestPanel.hidden=true;guestQR.removeAttribute("src");}}
+      later(()=>{if(now()>=guestQRDeadline)hideGuestInvitation();},Math.max(1,guestQRDeadline-now()));
+    }catch(_){if(g===generation)hideGuestInvitation();}
     finally{if(g===generation && !expired())later(()=>participationPoll(g),3000);}
   }
   function updateArtwork(snapshot){
@@ -208,6 +218,10 @@ window.DJCDisplayHost=function(transport){
       if(!existing || existing.until<until)wanted.set(cover.reference,{...cover,until});
     }
     add(snapshot.artwork,snapshot.playback?.item_id);
+    const preview=snapshot.horizon_preview;
+    if(preview && snapshot.playback?.state==="playing" && preview.current_item_id===snapshot.playback.item_id){
+      add(preview.artwork,preview.track?.item_id,Date.parse(preview.expires_at));
+    }
     if(Array.isArray(snapshot.shared_flow)){
       for(const item of snapshot.shared_flow.slice(-12).reverse()){
         if(item)add(item.artwork,item.playback_item_id,Date.parse(item.flow_expires_at));
@@ -332,7 +346,7 @@ window.DJCDisplayHost=function(transport){
     void fetch(displayURL("cancel"),{method:"POST",credentials:"omit",cache:"no-store",
       redirect:"error",keepalive:true,headers:{"Content-Type":"application/json"},body}).catch(()=>{});
   }
-  function terminal(message){if(cast)stop();else{cancelWork();releaseClaim();grant=null;lease=0;}show(message,"",!cast);notify("onTerminal",message);}
+  function terminal(message){if(cast)stop();else{cancelWork();releaseClaim();grant=null;lease=0;selector.hidden=false;}show(message,"",!cast);notify("onTerminal",message);}
   async function post(action,body,bearer=""){
     const controller=new AbortController(), started=now();requests.add(controller);
     // Bounds the whole browser DNS/TLS/request path, distinct from HA's fixed
@@ -418,6 +432,7 @@ window.DJCDisplayHost=function(transport){
           || !(value.lease_expires_in>0 && value.lease_expires_in<=60) || !value.capabilities || value.capabilities.owner_controls!==false
           || value.capabilities.session_end!==false)throw new Error("contract");
       grant=value;claim=null;
+      selector.hidden=true;
       lease=started+value.lease_expires_in*1000;sequence=0;connectionGeneration=0;
       if(expired())return terminal("expired");
       notify("onAdmitted",{issuer_epoch:value.issuer_epoch,display_id:value.display_id,
@@ -435,7 +450,7 @@ window.DJCDisplayHost=function(transport){
     stopped=false;selectLocale("");cancelWork();
     // The server decides when the original window ends, even if our timer fires early.
     if(claimCanResume)claim=null;else releaseClaim();
-    grant=null;lease=0;const g=generation;
+    grant=null;lease=0;selector.hidden=false;const g=generation;
     if(location.protocol!=="https:" || location.search || location.hash || !crypto.getRandomValues)return show("unavailable","",true);
     show("approve",null);
     try{
@@ -471,7 +486,7 @@ window.DJCDisplayHost=function(transport){
     }
     stopped=true;selectLocale("");cancelWork();
     if(preserveClaim && claimCanResume)claim=null;else releaseClaim();
-    grant=null;lease=0;panel.hidden=true;panel.textContent="";
+    grant=null;lease=0;selector.hidden=false;panel.hidden=true;panel.textContent="";
   }
   listen(window,"pagehide",()=>stop(true));
   listen(window,"djconnect-host-stop",()=>stop());

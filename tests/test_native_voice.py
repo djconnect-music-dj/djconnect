@@ -280,13 +280,13 @@ class NativeVoiceActualHAEvidenceTest(unittest.TestCase):
         import json
         from pathlib import Path
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root/'examples/client_contracts/ha_native_voice_v1/vibecast-live-tv-layout-20261124-personal-regression.json').read_text())
+        proof = json.loads((root/'examples/client_contracts/ha_native_voice_v1/vibecast-party-20261125-personal-regression.json').read_text())
         self.assertTrue(proof['source_before_after_equal'])
         actual = {str(path.relative_to(root)):hashlib.sha256(path.read_bytes()).hexdigest()
                   for path in (root/'custom_components/djconnect').rglob('*')
                   if path.is_file() and '__pycache__' not in path.parts and path.suffix != '.pyc'}
         self.assertEqual(proof['source_pins'], actual)
-        self.assertEqual(len(actual), 359)
+        self.assertEqual(len(actual), 361)
         for path, digest in proof['harness_pins'].items():
             self.assertEqual(hashlib.sha256((root/path).read_bytes()).hexdigest(), digest)
         self.assertEqual(len(proof['executions']), 2)

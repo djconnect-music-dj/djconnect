@@ -9,9 +9,9 @@ import unittest
 class SessionPrivateCatalogueQualificationTests(unittest.TestCase):
     def test_actual_original_session_wire_omits_partial_history_objects(self):
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root / 'examples/client_contracts/session_private_catalogue_v1/vibecast-live-tv-layout-20261124-0261124-20261124-02611-33ef26d3.json').read_text())
+        proof = json.loads((root / 'examples/client_contracts/session_private_catalogue_v1/vibecast-party-20261125--20261124-0261124-2026-d3b66608.json').read_text())
         self.assertTrue(proof["source_before_after_equal"])
-        self.assertEqual(len(proof["source_pins"]), 359)
+        self.assertEqual(len(proof["source_pins"]), 361)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root / name).read_bytes()).hexdigest(), expected, name)
         receipt = proof["receipt"]

@@ -15,8 +15,8 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-PRODUCT_MANIFEST = 'docs/verification/vibecast-live-tv-layout-product-manifest-20261124.json'
-PRODUCT_FILE_COUNT = 359
+PRODUCT_MANIFEST = 'docs/verification/vibecast-party-product-manifest-20261125.json'
+PRODUCT_FILE_COUNT = 361
 sys.path.insert(0, str(ROOT))
 from tools.verification.run_help_catalogue_qualification_20261023 import (  # noqa: E402
     IMAGE, container_absent, product_hashes, profile_source_hashes as historical_profile_source_hashes, write_json,

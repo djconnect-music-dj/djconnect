@@ -53,7 +53,8 @@ async function run(name,engine){
   if(endpoint==='focus')return respond({success:true,contract_version:1,focused_moment_id:null,expires_in:0,live_enabled:true,guest_count:0});
   if(endpoint==='invitation'){
    const svg='<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="128" height="128" fill="white"/><path d="M8 8h32v32H8zM88 8h32v32H88zM8 88h32v32H8z" fill="black"/></svg>';
-   return respond({success:true,contract_version:1,invitation_id:'declared-render-only-fixture',expires_in:30,qr_data_uri:'data:image/svg+xml;base64,'+Buffer.from(svg).toString('base64')});
+   return respond({success:true,contract_version:1,invitation_id:'declared-render-only-fixture',expires_in:30,
+    manual_code:'ABCD-EFGH-JKLM',manual_origin:ha,qr_data_uri:'data:image/svg+xml;base64,'+Buffer.from(svg).toString('base64')});
   }
   if(endpoint==='leave'){leaveCalls++;return respond({success:true,contract_version:1});}
   throw new Error('Unexpected endpoint '+endpoint);
@@ -62,7 +63,11 @@ async function run(name,engine){
   const auth=JSON.parse(raw);assert.equal(auth.grant_token,grant);assert.equal(auth.display_id,binding.display_id);
   ws.send(JSON.stringify({type:'snapshot',contract_version:1,connection_generation:3,snapshot:{contract_version:1,...binding,
    session:{session_id:binding.session_id,runtime_state:'active',locale:'nl'},session_presentation:{mood:'calm',persona:'relaxed',presence:'soft'},
-   playback:{state:'playing',item_id:'declared-fixture-track',title:'Declared fixture recording',artist:'Declared fixture performer',duration_ms:240000,position_ms:60000},
+   view:{mode:'flow',revision:0,dynamics:.5},
+   playback:{state:'playing',item_id:'declared-fixture-track',title:'Declared fixture recording',artist:'Declared fixture performer',duration_ms:240000,position_ms:210000},
+   horizon_preview:{current_item_id:'declared-fixture-track',expires_at:new Date(Date.now()+20000).toISOString(),
+    text:'Hierna staat het volgende nummer klaar.',track:{item_id:'declared-next',title:'Declared next recording',
+     artist:'Declared next performer',source_url:'https://open.spotify.com/track/'+'A'.repeat(22)}},
    shared_flow:[{moment_id:'declared-fixture-moment',type:'track',content:'Declared software renderer contribution.',playback_item_id:'declared-fixture-track',flow_expires_at:new Date(Date.now()+30000).toISOString(),display_expires_at:new Date(Date.now()-1000).toISOString()}],dj_moments:[]}}));
  });});
  try{
@@ -90,19 +95,30 @@ async function run(name,engine){
   await page.waitForFunction(()=>window.__cafSent.some(x=>x.data.kind==='vibecast_display_claim'));
   await page.locator('#handoff .handoff-code strong').waitFor();
   await verifyIdleLayout(true);
+  const languagePicker=page.locator('#display-language');
+  await languagePicker.selectOption('nl');
   assert.equal(claimCalls,1);assert.equal(approved,false);
   assert.equal(await page.evaluate(()=>window.__cafSent.some(x=>x.data.state==='presenting')),false);
   approved=true;
   await page.waitForFunction(()=>window.__cafSent.some(x=>x.data.state==='presenting'));
   assert.equal(await page.locator('#title').textContent(),'Declared fixture recording');
-  await page.locator('#display-language').selectOption('en');
+  const horizonPreview=page.locator('.horizon-panel #horizon-preview');
+  await horizonPreview.waitFor({state:'visible'});
+  assert.equal(await horizonPreview.locator('h2').textContent(),'Hierna');
+  assert.equal(await horizonPreview.locator('strong').textContent(),'Declared next recording');
+  assert.equal(await page.locator('#display-view-status').textContent(),'Flow');
+  assert.equal(await languagePicker.isVisible(),false);
   assert.equal(await page.evaluate(()=>window.__castStorageAccesses),0);
   await page.locator('#flow-cards .flow-card').waitFor();await page.locator('.guest-participation img').waitFor();
-  assert.equal(await page.locator('.receiver-brand #live-indicator').innerText(),'LIVE');
+  assert.equal(await page.locator('#receiver-brand-label').innerText(),'VibeCast Party');
+  assert.equal((await page.locator('#live-indicator').innerText()).trim(),'');
   assert.equal(await page.locator('#live-indicator svg').evaluate(icon=>getComputedStyle(icon).stroke),'rgb(255, 255, 255)');
   assert.equal(await page.locator('.session-status #state').isVisible(),false);
-  assert.equal(await page.locator('.guest-participation').innerText(),'');
-  const qr=await page.locator('.guest-participation').boundingBox();
+  assert.equal(await page.locator('.guest-manual-entry strong').innerText(),'ABCD-EFGH-JKLM');
+  assert.equal(await page.locator('.guest-manual-entry span').innerText(),'ha.example.net');
+  const qr=await page.locator('.guest-participation img').boundingBox();
+  const code=await page.locator('.guest-manual-entry').boundingBox();
+  assert.ok(code.x+code.width<qr.x);
   const footer=await page.locator('.renderer-footer').boundingBox();
   assert.ok(qr.x+qr.width>page.viewportSize().width-40 && qr.y+qr.height>footer.y-30);
   assert.ok(qr.y+qr.height<=footer.y,'Guest QR must stay above the footer');
@@ -118,7 +134,10 @@ async function run(name,engine){
   await page.evaluate(data=>window.__cafReceive(data),{kind:'vibecast_display_stop',version:1,handoff_id:id});
   await page.waitForFunction(()=>document.querySelector('#title').textContent!=='Declared fixture recording');
   assert.equal(await page.locator('#live-indicator').isVisible(),false);
+  assert.equal(await page.locator('#receiver-brand-label').innerText(),'DJConnect VibeCast');
+  assert.equal(await horizonPreview.isVisible(),false);
   assert.equal(await page.locator('.guest-participation').isVisible(),false);
+  assert.equal(await page.locator('.guest-manual-entry strong').textContent(),'');
   for(let i=0;leaveCalls===0&&i<50;i++)await new Promise(resolve=>setTimeout(resolve,20));
   assert.equal(leaveCalls,1);assert.equal(claimCalls,1);assert.deepEqual(errors,[]);
   return{engine:name,claim_calls:claimCalls,collect_calls:collectCalls,leave_calls:leaveCalls,preflights,actual_route_paths:[...new Set(calls)],page_errors:errors,passed:true};
