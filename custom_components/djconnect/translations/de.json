@@ -1862,6 +1862,28 @@
         }
       }
     },
+    "music_canvas_switchbot_setup": {
+      "name": "SwitchBot-Rahmen einrichten",
+      "description": "Lege die Auflösung und Ausrichtung eines bereits in SwitchBot Cloud eingerichteten AI Art Frame fest.",
+      "fields": {
+        "device_id": {
+          "name": "SwitchBot-Rahmen",
+          "description": "Wähle einen bereits in Home Assistant eingerichteten AI Art Frame."
+        },
+        "width": {
+          "name": "Breite in Pixeln",
+          "description": "Gib die Bildschirmbreite in Pixeln ein."
+        },
+        "height": {
+          "name": "Höhe in Pixeln",
+          "description": "Gib die Bildschirmhöhe in Pixeln ein."
+        },
+        "orientation": {
+          "name": "Bildschirmausrichtung",
+          "description": "Wähle aus, wie der Rahmen montiert ist."
+        }
+      }
+    },
     "music_canvas_asset_access": {
       "name": "Music Canvas temporärer Bildzugriff",
       "description": "Externen HTTPS-Ursprung für zeitlich begrenzte Bilddownloads einrichten. Erfordert einen Home Assistant-Administrator.",
@@ -1874,6 +1896,12 @@
     }
   },
   "exceptions": {
+    "canvas_ha_switchbot_target_unavailable": {
+      "message": "Dieser SwitchBot-Rahmen ist in Music Canvas nicht verfügbar."
+    },
+    "canvas_ha_switchbot_setup_incomplete": {
+      "message": "Die Einrichtung konnte nicht bestätigt werden. Prüfe den Rahmen und die eingegebenen Maße."
+    },
     "canvas_ha_samsung_target_unavailable": {
       "message": "Dieser Samsung-Fernseher ist in Music Canvas nicht verfügbar."
     },

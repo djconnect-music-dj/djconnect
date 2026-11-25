@@ -1862,6 +1862,28 @@
         }
       }
     },
+    "music_canvas_switchbot_setup": {
+      "name": "Set up a SwitchBot frame",
+      "description": "Set the dimensions and orientation of an AI Art Frame already added to SwitchBot Cloud.",
+      "fields": {
+        "device_id": {
+          "name": "SwitchBot frame",
+          "description": "Choose an AI Art Frame already added to Home Assistant."
+        },
+        "width": {
+          "name": "Width in pixels",
+          "description": "Enter the panel width in pixels."
+        },
+        "height": {
+          "name": "Height in pixels",
+          "description": "Enter the panel height in pixels."
+        },
+        "orientation": {
+          "name": "Screen orientation",
+          "description": "Choose how the frame is mounted."
+        }
+      }
+    },
     "music_canvas_asset_access": {
       "name": "Music Canvas temporary image access",
       "description": "Explicitly configure the external HTTPS origin for short-lived, file-scoped frame downloads. Requires a Home Assistant administrator.",
@@ -1874,6 +1896,12 @@
     }
   },
   "exceptions": {
+    "canvas_ha_switchbot_target_unavailable": {
+      "message": "This SwitchBot frame is unavailable in Music Canvas."
+    },
+    "canvas_ha_switchbot_setup_incomplete": {
+      "message": "Screen setup could not be confirmed. Check the frame and the dimensions you entered."
+    },
     "canvas_ha_samsung_target_unavailable": {
       "message": "This Samsung TV is unavailable in Music Canvas."
     },

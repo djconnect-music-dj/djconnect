@@ -244,18 +244,81 @@ class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
                 await setup(call)
         runtime.manage.assert_awaited_once()
 
+    async def test_ha_admin_can_configure_switchbot_portrait_without_uploading(self):
+        entry = types.SimpleNamespace(domain="switchbot_cloud", state=types.SimpleNamespace(value="loaded"))
+        device = types.SimpleNamespace(id="frame", model="AI Art Frame", identifiers={("switchbot_cloud", "frame")},
+                                       config_entries={"cloud"}, name_by_user=None, name="Frame")
+        user = types.SimpleNamespace(id="owner", is_active=True, is_admin=True, system_generated=False)
+        registered = {"adapter": "switchbot", "ha_device_id": device.id, "state": "needs_setup", "screen": {}}
+        handlers = {}
+        async_call = AsyncMock()
+
+        class ServiceValidationError(Exception):
+            def __init__(self, *, translation_domain, translation_key):
+                super().__init__(translation_key)
+
+        async def read(authorize):
+            self.assertTrue(authorize())
+            return {"devices": {"switchbot:frame": registered}}
+
+        async def manage(kind, _owner, _binding, data, authorize):
+            self.assertEqual(kind, "setup")
+            self.assertEqual(data["target_id"], "switchbot:frame")
+            self.assertEqual(data["screen"], {"width": 1200, "height": 1600, "orientation": "portrait"})
+            self.assertTrue(authorize())
+            entry.state.value = "not_loaded"
+            self.assertFalse(authorize())
+            entry.state.value = "loaded"
+            registered.update(state="ready", screen=data["screen"])
+            return {"state": "confirmed"}
+
+        runtime = types.SimpleNamespace(stopped=False, repository=types.SimpleNamespace(read=read),
+                                        manage=AsyncMock(side_effect=manage))
+        hass = types.SimpleNamespace(data={"djconnect": {"music_canvas": runtime}},
+            config_entries=types.SimpleNamespace(async_get_entry={"cloud": entry}.get),
+            services=types.SimpleNamespace(async_register=lambda _domain, name, run, **_: handlers.update({name: run}),
+                                           async_call=async_call),
+            auth=types.SimpleNamespace(_store=types.SimpleNamespace(_users={user.id: user}),
+                                       async_get_user=AsyncMock(return_value=user)))
+        modules = {
+            "homeassistant.components.http": types.SimpleNamespace(HomeAssistantView=object),
+            "homeassistant.exceptions": types.SimpleNamespace(ServiceValidationError=ServiceValidationError),
+            "homeassistant.helpers": types.SimpleNamespace(device_registry=types.SimpleNamespace(
+                async_get=lambda _: types.SimpleNamespace(async_get={device.id: device}.get))),
+            "voluptuous": types.SimpleNamespace(Schema=dict, Required=str, All=lambda *items: items,
+                                               Range=lambda **bounds: bounds, In=tuple),
+        }
+        with patch.dict(sys.modules, modules):
+            from custom_components.djconnect.music_canvas_http import register_switchbot_setup
+            register_switchbot_setup(hass)
+            setup = handlers["music_canvas_switchbot_setup"]
+            call = types.SimpleNamespace(context=types.SimpleNamespace(user_id=user.id), data={
+                "device_id": device.id, "width": 1600, "height": 1200, "orientation": "portrait"})
+            await setup(call)
+            await setup(call)
+            with self.assertRaisesRegex(ServiceValidationError, "canvas_ha_switchbot_setup_incomplete"):
+                await setup(types.SimpleNamespace(context=call.context, data={**call.data, "width": 800}))
+            entry.state.value = "not_loaded"
+            with self.assertRaisesRegex(ServiceValidationError, "canvas_ha_switchbot_target_unavailable"):
+                await setup(call)
+            user.is_admin = False
+            with self.assertRaisesRegex(ServiceValidationError, "canvas_admin_required"):
+                await setup(call)
+        runtime.manage.assert_awaited_once()
+        async_call.assert_not_awaited()
+
 
 class CanvasDomainTests(unittest.TestCase):
     def test_actual_ha_proof_binds_current_source_and_closes_no_physical_claim(self):
         import hashlib
         import json
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/vibecast-active-party-mark-20261125-actual-ha.json").read_text())
+        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/music-canvas-switchbot-setup-20261125-actual-ha.json").read_text())
         self.assertEqual(len(proof["source_pins"]), 361)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), expected, name)
         self.assertTrue(proof["source_before_after_equal"])
-        matrix = json.loads((root/"docs/verification/vibecast-active-party-mark-actual-ha-matrix-20261125.json").read_text())
+        matrix = json.loads((root/"docs/verification/music-canvas-switchbot-setup-actual-ha-matrix-20261125.json").read_text())
         self.assertEqual(matrix["source_pins"], proof["source_pins"])
         self.assertTrue(matrix["source_before_after_equal"])
         self.assertEqual(len(matrix["results"]), 54)
@@ -264,6 +327,7 @@ class CanvasDomainTests(unittest.TestCase):
             self.assertEqual(hashlib.sha256((root/row["harness"]).read_bytes()).hexdigest(), row["harness_sha256"])
         actual = proof["receipt"]["extension"]
         for field in ("actual_sqlite", "paired_tls", "native_switchbot_schema",
+                      "ha_admin_sets_switchbot_portrait_geometry_without_profile_grant_or_upload",
                       "ha_admin_pairs_exact_registered_samsung_without_profile_authority_change",
                       "tokenless_art_registration_pins_tls_and_requires_loaded_entry",
                       "ha_options_flow_pairs_registered_samsung_with_live_admin",

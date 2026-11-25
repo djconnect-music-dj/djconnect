@@ -268,3 +268,69 @@ def register_samsung_setup(hass):
             vol.Optional("orientation"): vol.In(("landscape", "portrait")),
             vol.Optional("recover_pending_upload"): bool,
         }))
+
+
+def register_switchbot_setup(hass):
+    """Configure a discovered AI Art Frame as a current Home Assistant administrator."""
+    import voluptuous as vol
+    from homeassistant.exceptions import ServiceValidationError
+    from homeassistant.helpers import device_registry as dr
+    from .music_canvas_adapters import switchbot_device_target
+
+    async def setup_switchbot(call):
+        user = await hass.auth.async_get_user(call.context.user_id) if call.context.user_id else None
+        try:
+            need(user and current_admin(hass, user), "canvas_admin_required", 403)
+            runtime = hass.data.get("djconnect", {}).get(KEY)
+            need(runtime is not None and not runtime.stopped, "canvas_unavailable", 503)
+            registry = dr.async_get(hass)
+            device_id = call.data["device_id"]
+            device = registry.async_get(device_id)
+            target = switchbot_device_target(hass, device)
+            need(target is not None, "canvas_ha_switchbot_target_unavailable", 404)
+
+            def authorize():
+                return (current_admin(hass, user) and not runtime.stopped
+                        and hass.data.get("djconnect", {}).get(KEY) is runtime
+                        and registry.async_get(device_id) is device
+                        and switchbot_device_target(hass, device) is not None)
+
+            state = await runtime.repository.read(authorize)
+            registered = state["devices"].get(target["id"])
+            need(registered and registered["adapter"] == "switchbot"
+                 and registered["ha_device_id"] == device_id, "canvas_ha_switchbot_target_unavailable", 404)
+            screen = {key: call.data[key] for key in ("width", "height", "orientation")}
+            validate_screen(screen)
+            width, height = sorted((screen["width"], screen["height"]),
+                                   reverse=screen["orientation"] == "landscape")
+            screen.update(width=width, height=height)
+            known = registered["screen"]
+            need(all(known.get(key, value) == value for key, value in screen.items()),
+                 "canvas_ha_switchbot_setup_incomplete", 409)
+            missing = {key: value for key, value in screen.items() if key not in known}
+            if registered["state"] == "ready" and not missing and not registered.get("forgetting"):
+                return
+            owner = digest(["canvas_ha_admin", user.id])
+            result = await runtime.manage("setup", owner, digest([owner, device_id]), {
+                "operation_id": str(uuid4()), "target_id": target["id"], "screen": missing,
+            }, authorize)
+            need(result["state"] == "confirmed", "canvas_ha_switchbot_setup_incomplete", 409)
+        except PermissionError:
+            raise ServiceValidationError(translation_domain="djconnect",
+                                         translation_key="canvas_admin_required") from None
+        except CanvasError as error:
+            if error.code == "unauthorized":
+                key = "canvas_admin_required"
+            elif error.code in {"canvas_admin_required", "canvas_unavailable", "canvas_ha_switchbot_target_unavailable"}:
+                key = error.code
+            else:
+                key = "canvas_ha_switchbot_setup_incomplete"
+            raise ServiceValidationError(translation_domain="djconnect", translation_key=key) from None
+
+    hass.services.async_register("djconnect", "music_canvas_switchbot_setup", setup_switchbot,
+        schema=vol.Schema({
+            vol.Required("device_id"): str,
+            vol.Required("width"): vol.All(int, vol.Range(min=256, max=8192)),
+            vol.Required("height"): vol.All(int, vol.Range(min=256, max=8192)),
+            vol.Required("orientation"): vol.In(("landscape", "portrait")),
+        }))

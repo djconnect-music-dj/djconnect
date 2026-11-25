@@ -1862,6 +1862,28 @@
         }
       }
     },
+    "music_canvas_switchbot_setup": {
+      "name": "SwitchBot-fotolijst instellen",
+      "description": "Stel de afmetingen en stand in van een AI Art Frame dat al in SwitchBot Cloud is toegevoegd.",
+      "fields": {
+        "device_id": {
+          "name": "SwitchBot-fotolijst",
+          "description": "Kies een AI Art Frame dat al aan Home Assistant is toegevoegd."
+        },
+        "width": {
+          "name": "Breedte in pixels",
+          "description": "Vul de breedte van het scherm in pixels in."
+        },
+        "height": {
+          "name": "Hoogte in pixels",
+          "description": "Vul de hoogte van het scherm in pixels in."
+        },
+        "orientation": {
+          "name": "Schermstand",
+          "description": "Kies hoe de fotolijst is opgehangen."
+        }
+      }
+    },
     "music_canvas_asset_access": {
       "name": "Music Canvas tijdelijke beeldtoegang",
       "description": "Stel expliciet de externe HTTPS-origin in voor tijdelijke toegang tot één kunstbestand per frame. Vereist een Home Assistant-beheerder.",
@@ -1874,6 +1896,12 @@
     }
   },
   "exceptions": {
+    "canvas_ha_switchbot_target_unavailable": {
+      "message": "Deze SwitchBot-fotolijst is niet beschikbaar in Music Canvas."
+    },
+    "canvas_ha_switchbot_setup_incomplete": {
+      "message": "De schermconfiguratie kon niet worden bevestigd. Controleer de fotolijst en de ingevoerde afmetingen."
+    },
     "canvas_ha_samsung_target_unavailable": {
       "message": "Deze Samsung-tv is niet beschikbaar in Music Canvas."
     },

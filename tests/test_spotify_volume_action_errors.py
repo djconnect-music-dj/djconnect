@@ -193,7 +193,7 @@ class SpotifyVolumeActionErrorTests(unittest.TestCase):
         import hashlib
         from pathlib import Path
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root / 'examples/client_contracts/spotify_volume_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-b0a7d2fd.json').read_text())
+        proof = json.loads((root / 'examples/client_contracts/spotify_volume_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---7ea3f0d1.json').read_text())
         self.assertTrue(proof['source_before_after_equal'])
         self.assertTrue(proof['receipt']['source_unchanged'])
         self.assertEqual(len(proof['source_pins']), 361)
