@@ -153,9 +153,17 @@ def samsung_action(device, action, *, content=None, content_id=None, displayed_c
             if displayed_content_id is not None:
                 need(displayed_content_id != content_id and displayed_content_id in device["owned_content"],
                      "canvas_content_not_owned", 403)
+                available = art.available()
                 shown = art.get_current()
                 need(isinstance(shown, dict) and shown.get("content_id") == displayed_content_id,
                      "canvas_cleanup_required", 409)
+                if isinstance(available, list) and all(
+                    isinstance(row, dict) and isinstance(row.get("content_id"), str) and row["content_id"]
+                    for row in available
+                ):
+                    available_ids = {row["content_id"] for row in available}
+                    if displayed_content_id in available_ids and content_id not in available_ids:
+                        return {"deleted": True}  # Confirmed absent after an earlier cleanup.
             return {"deleted": art.delete(content_id) is True}
         if action == "observe":
             return {"current": art.get_current()}

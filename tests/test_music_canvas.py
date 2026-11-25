@@ -157,6 +157,7 @@ class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
         art = types.SimpleNamespace(
             get_artmode=lambda: "on",
             get_current=lambda: current,
+            available=lambda: [{"content_id": cid} for cid in ("old", "latest")],
             delete=lambda content_id: deleted.append(content_id) is None,
             close=lambda: None,
         )
@@ -170,6 +171,26 @@ class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
                 with self.assertRaises(CanvasError):
                     samsung_action(device, "cleanup", content_id="old", displayed_content_id="latest")
         self.assertEqual(deleted, ["old"])
+
+    def test_cleanup_recovers_an_owned_upload_already_missing_from_the_tv(self):
+        art = types.SimpleNamespace(
+            get_artmode=lambda: "on",
+            get_current=lambda: {"content_id": "latest"},
+            available=Mock(return_value=[{"content_id": "latest"}, {"content_id": "personal"}]),
+            delete=Mock(return_value=False),
+            close=lambda: None,
+        )
+        module = types.SimpleNamespace(SamsungTVWS=lambda *_args, **_kw: types.SimpleNamespace(art=lambda: art))
+        device = {"host": "192.0.2.55", "token": "fixture", "owned_content": ["old", "latest"]}
+        with patch.dict(sys.modules, {"samsungtvws": module}):
+            self.assertEqual(samsung_action(device, "cleanup", content_id="old", displayed_content_id="latest"),
+                             {"deleted": True})
+            art.delete.assert_not_called()
+            for incomplete in ([], [{"content_id": "latest"}, {}]):
+                art.available.return_value = incomplete
+                self.assertEqual(samsung_action(device, "cleanup", content_id="old", displayed_content_id="latest"),
+                                 {"deleted": False})
+            self.assertEqual([call.args for call in art.delete.call_args_list], [("old",), ("old",)])
 
     def test_tokenless_art_requires_explicit_registry_binding_and_pinned_peer(self):
         events = []
