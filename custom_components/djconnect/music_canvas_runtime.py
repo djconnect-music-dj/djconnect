@@ -11,7 +11,7 @@ import time
 
 from .music_canvas import (
     Cadence, CanvasError, apply_update, digest, finish_forget, need, profile, reserve_forget, screen_cadence,
-    screen_presentation,
+    DEFAULT_MATTE_SIZE, screen_matte_size, screen_presentation,
 )
 from .persistence import persistence_service
 from .persistence.music_canvas import CanvasRepository
@@ -96,7 +96,7 @@ class CanvasRuntime:
                 "forgetting": device.get("forgetting") is True,
             })
         return {**result, "targets": devices, "image_generation_available": render.generation_available(self.hass),
-                "per_screen_composition_and_cadence": True}
+                "per_screen_composition_and_cadence": True, "per_screen_matte_size": True}
 
     async def update(self, owner, binding, data, authorize):
         async with self.lock, self.effect_lock:
@@ -272,7 +272,7 @@ class CanvasRuntime:
                 state["operations"] = {k: v for k, v in state["operations"].items() if v.get("owner") != owner}
                 for device in state["devices"].values():
                     if device.get("preview_owner") == owner:
-                        for key in ("preview", "preview_owner", "source_image", "presentation", "provenance"):
+                        for key in ("preview", "preview_owner", "source_image", "presentation", "preview_matte_size", "provenance"):
                             device.pop(key, None)
             await self.repository.mutate(purge, lambda: not self.stopped)
             await self.cleanup_assets()
@@ -455,12 +455,14 @@ class CanvasRuntime:
                     continue
             key = (owner, active.session_id, target)
             presentation = screen_presentation(prefs, target, device)
+            matte_size = screen_matte_size(prefs, target, presentation[1])
             cadence = screen_cadence(prefs, target)
             previous_presentation = device.get("presentation")
             if isinstance(previous_presentation, list) and len(previous_presentation) == 2:
                 previous_presentation = [*previous_presentation, False]
             cached = device.get("source_image") if (device.get("preview_owner") == owner
-                and previous_presentation != list(presentation)) else None
+                and (previous_presentation != list(presentation)
+                     or device.get("preview_matte_size", DEFAULT_MATTE_SIZE) != matte_size)) else None
             if not cached and not self.cadence.due(key, occurrence, cadence, time.monotonic()):
                 continue
             if device["adapter"] == "samsung":
@@ -486,7 +488,7 @@ class CanvasRuntime:
                     self.states[target] = exc.code if isinstance(exc, CanvasError) else "unavailable"
                     continue
             self.claims[target] = owner
-            groups.setdefault((screen["width"], screen["height"], cached, cadence == "track", presentation),
+            groups.setdefault((screen["width"], screen["height"], cached, cadence == "track", presentation, matte_size),
                               []).append((target, device, key))
         if not groups:
             return
@@ -494,7 +496,7 @@ class CanvasRuntime:
         pending_attempts = {}
         generated = {}
         try:
-            for (width, height, cached, per_track, presentation), targets in groups.items():
+            for (width, height, cached, per_track, presentation, matte_size), targets in groups.items():
                 composition, matte, show_title = presentation
                 def current_scope():
                     return scope_current(per_track)
@@ -530,7 +532,7 @@ class CanvasRuntime:
                 need(current_scope(), "canvas_context_changed", 409)
                 art = await self.hass.async_add_executor_job(
                     render.compose, raw, width, height, composition, matte,
-                    playback.title if show_title else None)
+                    playback.title if show_title else None, matte_size)
                 filename = hashlib.sha256(art).hexdigest()+".jpg"
                 source_file = cached or hashlib.sha256(raw).hexdigest()+".jpg"
                 self.inflight_files.add(filename)
@@ -674,7 +676,9 @@ class CanvasRuntime:
                 row["preview"] = filename
                 row["preview_owner"] = owner
                 row["source_image"] = source_file
-                row["presentation"] = list(screen_presentation(config["preferences"], target, device))
+                presentation = screen_presentation(config["preferences"], target, device)
+                row["presentation"] = list(presentation)
+                row["preview_matte_size"] = screen_matte_size(config["preferences"], target, presentation[1])
                 row["provenance"] = {
                     "input": "bounded_confirmed_title_only", "external_attachments": False,
                     "generated": True, "native_model_resolution_qualified": False}

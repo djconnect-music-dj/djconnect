@@ -4,7 +4,7 @@ import io
 import json
 from pathlib import Path
 
-from .music_canvas import need
+from .music_canvas import DEFAULT_MATTE_SIZE, need
 
 MAX_IMAGE = 24 * 1024 * 1024
 TITLE_FONT = Path(__file__).with_name("music_canvas_assets") / "InterVariable.ttf"
@@ -110,7 +110,10 @@ def _draw_title(canvas, image, position, matte, background, title):
     draw.text((text_x, text_y), title, font=font, fill=fill, stroke_width=stroke, stroke_fill=outline)
 
 
-def compose(content, width, height, composition, matte, track_title=None):
+MATTE_FRACTIONS = {"small": 0.03, "medium": 0.055, "large": 0.09}
+
+
+def compose(content, width, height, composition, matte, track_title=None, matte_size=DEFAULT_MATTE_SIZE):
     """Never stretch/crop a source. Compose native canvas outside HA's eventloop."""
     from PIL import Image, ImageOps, ImageStat
     need(isinstance(content, bytes) and 0 < len(content) <= MAX_IMAGE, "canvas_image_invalid", 503)
@@ -121,7 +124,7 @@ def compose(content, width, height, composition, matte, track_title=None):
         image = ImageOps.exif_transpose(original).convert("RGB")
         palette = tuple(int(v) for v in ImageStat.Stat(image.resize((1, 1))).mean)
         background = (12, 12, 12) if matte == "contrast" else palette
-        margin = int(min(width, height)*0.055) if matte != "off" else 0
+        margin = int(min(width, height) * MATTE_FRACTIONS[matte_size]) if matte != "off" else 0
         inner = (width-2*margin, height-2*margin)
         # Full uses the largest uncropped image; central/free preserve breathing room.
         scale = 1 if composition == "full" else 0.86 if composition == "central" else 0.9

@@ -10,6 +10,8 @@ VERSION = 1
 CADENCES = ("track", "900", "1800", "3600")
 COMPOSITIONS = ("central", "free", "full")
 MATTES = ("off", "matching", "contrast")
+MATTE_SIZES = ("small", "medium", "large")
+DEFAULT_MATTE_SIZE = "medium"
 DEFAULTS = dict(enabled=False, selected_targets=[], composition="central",
                 matte="off", cadence="1800", cadence_overrides={}, show_track_title=False,
                 presentation_overrides={})
@@ -98,9 +100,10 @@ def patched(current, patch):
     prior_presentation = current.get("presentation_overrides", {})
     for target, style in presentation.items():
         need(identifier(target) and type(style) is dict
-             and {"matte", "show_track_title"} <= set(style) <= {"matte", "show_track_title", "composition", "cadence"}
+             and {"matte", "show_track_title"} <= set(style) <= {"matte", "show_track_title", "composition", "cadence", "matte_size"}
              and style["matte"] in MATTES and type(style["show_track_title"]) is bool)
         need("composition" not in style or style["composition"] in COMPOSITIONS)
+        need(style.get("matte_size", DEFAULT_MATTE_SIZE) in MATTE_SIZES)
         need("cadence" not in style or style["cadence"] in CADENCES)
         presentation[target] = {**prior_presentation.get(target, {}), **style}
     return result
@@ -112,6 +115,12 @@ def screen_presentation(prefs, target, device):
     if style is None:
         style = {"matte": "off", "show_track_title": False} if device["adapter"] == "switchbot" else prefs
     return style.get("composition", prefs["composition"]), style["matte"], style.get("show_track_title", False)
+
+
+def screen_matte_size(prefs, target, matte):
+    if matte == "off":
+        return DEFAULT_MATTE_SIZE
+    return prefs.get("presentation_overrides", {}).get(target, {}).get("matte_size", DEFAULT_MATTE_SIZE)
 
 
 def screen_cadence(prefs, target):

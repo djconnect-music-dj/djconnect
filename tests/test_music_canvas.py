@@ -16,7 +16,7 @@ sys.modules.setdefault("custom_components.djconnect", package)
 
 from custom_components.djconnect.music_canvas import (  # noqa: E402
     CanvasError, Cadence, apply_update, fresh_state, profile, reserve_forget,
-    digest, finish_forget, screen_cadence, screen_presentation, validate_request,
+    digest, finish_forget, screen_cadence, screen_matte_size, screen_presentation, validate_request,
 )
 from custom_components.djconnect.music_canvas_adapters import discover, samsung_action  # noqa: E402
 from custom_components.djconnect.music_canvas_render import art_prompt, compose  # noqa: E402
@@ -436,6 +436,42 @@ class CanvasDomainTests(unittest.TestCase):
         finish_forget(state, "tv")
         self.assertEqual(profile(state, "owner")["preferences"]["presentation_overrides"], {})
         self.assertEqual(profile(state, "owner")["revision"], preserved["revision"] + 1)
+
+    def test_matte_size_is_per_screen_and_survives_turning_the_mat_off(self):
+        state = fresh_state()
+        state["devices"] = {"frame": {"adapter": "switchbot"}, "tv": {"adapter": "samsung"}}
+        style = {"matte": "matching", "show_track_title": False}
+        initial = apply_update(state, "owner", "scope", update(presentation_overrides={
+            "frame": {**style, "matte_size": "small"},
+            "tv": {**style, "matte_size": "large"},
+        }), 1)
+        prefs = initial["preferences"]
+        self.assertEqual(screen_matte_size(prefs, "frame", "matching"), "small")
+        self.assertEqual(screen_matte_size(prefs, "tv", "matching"), "large")
+        self.assertEqual(screen_matte_size(prefs, "legacy", "matching"), "medium")
+        self.assertEqual(screen_matte_size(prefs, "tv", "off"), "medium")
+        legacy_edit = update(initial["revision"], presentation_overrides={"tv": {**style, "matte": "off"}})
+        saved = apply_update(state, "owner", "scope", legacy_edit, 2)
+        self.assertEqual(saved["preferences"]["presentation_overrides"]["tv"]["matte_size"], "large")
+        with self.assertRaises(CanvasError):
+            validate_request("update", update(presentation_overrides={"tv": {**style, "matte_size": "extra"}}))
+
+    def test_matte_size_changes_border_and_preserves_default_pixels(self):
+        from PIL import Image
+
+        source = io.BytesIO()
+        Image.new("RGB", (800, 450), "white").save(source, "PNG")
+        args = (source.getvalue(), 800, 450, "full", "contrast")
+        self.assertEqual(compose(*args), compose(*args, matte_size="medium"))
+        for size, expected in (("small", (250, 250, 250)), ("medium", (12, 12, 12)), ("large", (12, 12, 12))):
+            with self.subTest(size=size):
+                with Image.open(io.BytesIO(compose(*args, matte_size=size))) as image:
+                    pixel = image.getpixel((400, 19))
+                    self.assertTrue(all(abs(channel-value) < 10 for channel, value in zip(pixel, expected)))
+        with Image.open(io.BytesIO(compose(*args, matte_size="large"))) as image:
+            self.assertLess(max(image.getpixel((400, 34))), 30)
+        with Image.open(io.BytesIO(compose(*args, matte_size="medium"))) as image:
+            self.assertGreater(min(image.getpixel((400, 34))), 240)
 
     def test_actual_ha_proof_binds_current_source_and_closes_no_physical_claim(self):
         import hashlib
