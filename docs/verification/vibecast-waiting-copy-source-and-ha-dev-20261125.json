@@ -1,0 +1,17 @@
+{
+  "merged_source": "5c60de3e90f417456d83b25e8ab11c85d029f953",
+  "verified_files": 361,
+  "artifact_sha256": "4ddd2ece90150bb64b312b1d4457e9d69fccf993dd82b9628c162c4bf76aec58",
+  "ha_dev_http": 200,
+  "old_code_label_present": false,
+  "installed_utc": "2026-11-25T08:11:01.290401+00:00",
+  "preserved_backup_files": 359,
+  "source_pr": 1693,
+  "reviewed_source": "305474aa1d1014978cbfd5982a7a8d7862da3bff",
+  "main_ci_run": 45572244295,
+  "owner_authorization_run": 45572031330,
+  "artifact_run": 45573317477,
+  "isolated_ha_executions": 55,
+  "physical_tv_acceptance": "OPEN",
+  "switchbot_display_acceptance": "OPEN"
+}
