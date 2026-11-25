@@ -1862,6 +1862,25 @@
         }
       }
     },
+    "music_canvas_switchbot_setup": {
+      "name": "Configurar un marco SwitchBot",
+      "description": "Configura las dimensiones y la orientación de un AI Art Frame ya añadido a SwitchBot Cloud.",
+      "fields": {
+        "device_id": {
+          "name": "Marco SwitchBot",
+          "description": "Elige un AI Art Frame ya añadido a Home Assistant."
+        },
+        "width": {
+          "name": "Anchura en píxeles"
+        },
+        "height": {
+          "name": "Altura en píxeles"
+        },
+        "orientation": {
+          "name": "Orientación de la pantalla"
+        }
+      }
+    },
     "music_canvas_asset_access": {
       "name": "Music Canvas acceso temporal a imágenes",
       "description": "Configura el origen HTTPS externo para descargar obras de forma temporal. Requiere un administrador de Home Assistant.",
@@ -1874,6 +1893,12 @@
     }
   },
   "exceptions": {
+    "canvas_ha_switchbot_target_unavailable": {
+      "message": "Este marco SwitchBot no está disponible en Music Canvas."
+    },
+    "canvas_ha_switchbot_setup_incomplete": {
+      "message": "No se pudo confirmar la configuración. Comprueba el marco y las dimensiones introducidas."
+    },
     "canvas_ha_samsung_target_unavailable": {
       "message": "Este televisor Samsung no está disponible en Music Canvas."
     },

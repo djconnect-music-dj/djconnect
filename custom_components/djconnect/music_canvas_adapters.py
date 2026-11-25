@@ -40,6 +40,21 @@ def samsung_entry_target(entry):
     return _samsung_target("uuid:" + str(uid), str(address), entry.title)
 
 
+def switchbot_device_target(hass, device):
+    if device is None or device.model != "AI Art Frame" or not any(
+        domain == "switchbot_cloud" for domain, _ in device.identifiers
+    ):
+        return None
+    for entry_id in device.config_entries:
+        entry = hass.config_entries.async_get_entry(entry_id)
+        if entry and entry.domain == "switchbot_cloud" and entry.state.value == "loaded":
+            key = "switchbot:" + device.id
+            return dict(id=key, name=device.name_by_user or device.name or "SwitchBot",
+                        adapter="switchbot", ha_device_id=device.id,
+                        state="needs_setup", screen={}, epoch=0, owned_content=[])
+    return None
+
+
 async def discover(hass):
     """Read shared HA registries/SSDP cache only, never perform a LAN scan."""
     from homeassistant.helpers import device_registry as dr
@@ -52,13 +67,9 @@ async def discover(hass):
             for device in dr.async_entries_for_config_entry(registry, entry.entry_id):
                 cloud_devices[device.id] = device
     for device in cloud_devices.values():
-        entries = [hass.config_entries.async_get_entry(x) for x in device.config_entries]
-        loaded = any(x and x.domain == "switchbot_cloud" and x.state.value == "loaded" for x in entries)
-        if loaded and device.model == "AI Art Frame" and any(x[0] == "switchbot_cloud" for x in device.identifiers):
-            key = "switchbot:" + device.id
-            targets[key] = dict(id=key, name=device.name_by_user or device.name or "SwitchBot",
-                                adapter="switchbot", ha_device_id=device.id,
-                                state="needs_setup", screen={}, epoch=0, owned_content=[])
+        target = switchbot_device_target(hass, device)
+        if target:
+            targets[target["id"]] = target
     samsung_hosts = set()
     for search_target in SAMSUNG_SSDP_TARGETS:
         for info in await async_get_discovery_info_by_st(hass, search_target):

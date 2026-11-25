@@ -1875,6 +1875,42 @@ music_canvas_samsung_setup:
             - portrait
           translation_key: canvas_screen_orientation
 
+music_canvas_switchbot_setup:
+  name: Set up a SwitchBot frame
+  description: Set the dimensions and orientation of an AI Art Frame already added to SwitchBot Cloud.
+  fields:
+    device_id:
+      name: SwitchBot frame
+      required: true
+      selector:
+        device:
+          integration: switchbot_cloud
+    width:
+      name: Width in pixels
+      required: true
+      selector:
+        number:
+          min: 256
+          max: 8192
+          mode: box
+    height:
+      name: Height in pixels
+      required: true
+      selector:
+        number:
+          min: 256
+          max: 8192
+          mode: box
+    orientation:
+      name: Screen orientation
+      required: true
+      selector:
+        select:
+          options:
+            - landscape
+            - portrait
+          translation_key: canvas_screen_orientation
+
 music_canvas_asset_access:
   fields:
     https_origin:

@@ -416,7 +416,41 @@ async def qualify(hass, manager, history, request, client):
         from homeassistant.core import Context
         from homeassistant.exceptions import ServiceValidationError
         from homeassistant.helpers import device_registry as dr
-        from custom_components.djconnect.music_canvas_http import register_samsung_setup
+        from custom_components.djconnect.music_canvas_http import register_samsung_setup, register_switchbot_setup
+        register_switchbot_setup(hass)
+        cloud_entry = SimpleNamespace(entry_id="synthetic-switchbot-cloud", domain="switchbot_cloud",
+                                      state=SimpleNamespace(value="loaded"))
+        frame = SimpleNamespace(id="switchbot-fixture-ha", model="AI Art Frame", name="SwitchBot Portrait",
+                                name_by_user=None, config_entries={cloud_entry.entry_id},
+                                identifiers={("switchbot_cloud", "synthetic-art-frame")})
+        entry_lookup = hass.config_entries.async_get_entry
+        with patch.object(dr, "async_get", return_value=SimpleNamespace(
+                       async_get=lambda key: frame if key == frame.id else None)), \
+             patch.object(type(hass.config_entries), "async_get_entry", lambda self, key:
+                       cloud_entry if key == cloud_entry.entry_id else entry_lookup(key)):
+            frame_target = adapters.switchbot_device_target(hass, frame)
+            frame_key = frame_target["id"]
+            await runtime.repository.mutate(lambda s: s["devices"].update({frame_key: frame_target}), lambda: True)
+            old_canvas = await runtime.repository.read()
+            fields = {"device_id": frame.id, "width": 1200, "height": 1600, "orientation": "portrait"}
+            try:
+                await hass.services.async_call("djconnect", "music_canvas_switchbot_setup", fields,
+                                              blocking=True, context=Context())
+                raise AssertionError("A setup without a HA administrator was accepted")
+            except ServiceValidationError as exc:
+                assert exc.translation_key == "canvas_admin_required"
+            for _ in range(2):
+                await hass.services.async_call("djconnect", "music_canvas_switchbot_setup", fields,
+                                              blocking=True, context=Context(user_id=owner.id))
+            new_canvas = await runtime.repository.read()
+            assert new_canvas["profiles"] == old_canvas["profiles"]
+            assert len(new_canvas["operations"]) == len(old_canvas["operations"]) + 1
+            configured = new_canvas["devices"][frame_key]
+            assert configured["state"] == "ready" and configured["screen"] == {
+                "width": 1200, "height": 1600, "orientation": "portrait", "provenance": "explicit_setup"}
+            assert configured["owned_content"] == [] and "token" not in configured
+            assert owner.id not in storage.household.shared.ha_user_profile_ids
+            assert len(deliveries) == before_end
         register_samsung_setup(hass)
         fixture_entry = SimpleNamespace(entry_id="synthetic-ha-tv", domain="samsungtv", title="TV fixture",
             data={"host": "192.0.2.55", "token": "separate-ha-remote-token"}, unique_id=str(uuid.uuid4()),
@@ -648,6 +682,7 @@ async def qualify(hass, manager, history, request, client):
             "withdrawal_records_acknowledged_upload_without_selecting_it": True,
             "requests": calls, "actual_sqlite": True, "paired_tls": True,
             "native_switchbot_schema": True, "samsung_upload_select_separate": True,
+            "ha_admin_sets_switchbot_portrait_geometry_without_profile_grant_or_upload": True,
             "samsung_off_no_upload": True, "synthetic_image_generations": len(generations),
             "shared_samsung_generation": True, "matte_reuses_source": True, "track_title_reuses_source": True,
             "cross_profile_preview_denied": True, "offline_target_isolated": True,
