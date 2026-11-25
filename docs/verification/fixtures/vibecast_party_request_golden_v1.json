@@ -1,0 +1,28 @@
+{
+  "catalogue": [
+    {"id": "J", "title": "Promise", "artist": "HAEVN"},
+    {"id": "K", "title": "Beginners", "artist": "HAEVN"},
+    {"id": "L", "title": "Hello", "artist": "Adele"},
+    {"id": "M", "title": "Hello", "artist": "Lionel Richie"},
+    {"id": "N", "title": "Hallelujah", "artist": "Jeff Buckley"},
+    {"id": "O", "title": "Hallelujah (Live)", "artist": "Jeff Buckley"}
+  ],
+  "scenarios": [
+    {"id": "nl-direct", "language": "nl", "prompt": "Speel Promise van HAEVN", "expected": "proposal", "recording": "J"},
+    {"id": "nl-polite", "language": "nl", "prompt": "Kun je Promise van HAEVN draaien?", "expected": "proposal", "recording": "J"},
+    {"id": "nl-request-noun", "language": "nl", "prompt": "Ik wil graag Promise van HAEVN aanvragen", "expected": "proposal", "recording": "J"},
+    {"id": "nl-casual", "language": "nl", "prompt": "Doe maar Promise van HAEVN", "expected": "proposal", "recording": "J"},
+    {"id": "nl-queue", "language": "nl", "prompt": "Zet Promise van HAEVN in de wachtrij", "expected": "proposal", "recording": "J"},
+    {"id": "nl-bare-title-artist", "language": "nl", "prompt": "Promise van HAEVN", "expected": "clarify_or_offer"},
+    {"id": "nl-two-artists", "language": "nl", "prompt": "Speel Hello", "expected": "choices", "choices": ["L", "M"], "follow_up": {"prompt": "Adele", "expected": "proposal_or_choices", "recording": "L"}},
+    {"id": "nl-two-versions", "language": "nl", "prompt": "Speel Hallelujah van Jeff Buckley", "expected": "choices", "choices": ["N", "O"], "follow_up": {"select": "O", "expected": "proposal", "recording": "O", "approve": true}},
+    {"id": "nl-explicit-live", "language": "nl", "prompt": "Speel de liveversie van Hallelujah van Jeff Buckley", "expected": "proposal_or_choices", "recording": "O"},
+    {"id": "nl-artist-only", "language": "nl", "prompt": "Speel iets van HAEVN", "expected": "choices", "choices": ["J", "K"]},
+    {"id": "nl-missing-title", "language": "nl", "prompt": "Ik wil een verzoeknummer aanvragen", "expected": "clarification"},
+    {"id": "nl-no-match", "language": "nl", "prompt": "Speel Verdwenen Testtitel van Onbekende Testartiest", "expected": "clarification"},
+    {"id": "en-polite", "language": "en", "prompt": "Could you play Promise by HAEVN?", "expected": "proposal", "recording": "J"},
+    {"id": "nl-informational", "language": "nl", "prompt": "Welk nummer speelt er nu?", "expected": "information"},
+    {"id": "nl-typed-ordinal", "language": "nl", "prompt": "Speel Hallelujah van Jeff Buckley", "expected": "choices", "choices": ["N", "O"], "follow_up": {"prompt": "De eerste", "expected": "proposal", "recording": "N"}},
+    {"id": "nl-auto-queue", "language": "nl", "policy": "auto_queue", "prompt": "Speel Promise van HAEVN", "expected": "queued", "recording": "J"}
+  ]
+}
