@@ -393,7 +393,12 @@ main { height:auto; min-width:0 }
 
 /* The admitted Session display keeps playback separate from its scrolling Flow. */
 .shared-flow[hidden], .flow-live[hidden], .session-panels[hidden] { display:none }
-.shared-flow-live main { padding-block-end:clamp(1rem,3vh,2.25rem); gap:clamp(.7rem,1.5vh,1.25rem) }
+.shared-flow-live main {
+  grid-template-rows:auto minmax(0,1fr);
+  padding-block-end:clamp(.35rem,.8vh,.6rem);
+  gap:clamp(.7rem,1.5vh,1.25rem);
+}
+.shared-flow-live main > footer { display:none }
 .shared-flow-live .stage {
   display:grid;
   grid-template-columns:minmax(0,1fr);
@@ -567,8 +572,8 @@ main { height:auto; min-width:0 }
   .horizon-panel:not(:has(> article:not([hidden]))) { display:none }
 }
 .flow-viewport { height:100%; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; overflow-anchor:none;
-  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 calc(100% - 2.5rem),transparent 100%);
-  mask-image:linear-gradient(to bottom,#000 0%,#000 calc(100% - 2.5rem),transparent 100%) }
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 calc(100% - .6rem),transparent 100%);
+  mask-image:linear-gradient(to bottom,#000 0%,#000 calc(100% - .6rem),transparent 100%) }
 .flow-viewport:focus-visible { outline:none }
 .flow-viewport:focus-visible::before {
   content:""; position:absolute; inset:.9rem auto auto .12rem; height:1.2rem;
