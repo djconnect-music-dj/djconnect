@@ -409,6 +409,7 @@
     const label=e("receiver-brand-label");
     const title=partyEnabled ? "VibeCast Party" : "DJConnect VibeCast";
     if(label.textContent!==title)label.textContent=title;
+    document.body.classList.toggle("receiver-mark-is-party",partyEnabled);
   }
   function clearLiveStatus(){
     renderReceiverBrand(false);
