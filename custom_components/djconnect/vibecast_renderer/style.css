@@ -467,6 +467,17 @@ main { height:auto; min-width:0 }
 .shared-flow-live .waiting-brand, .shared-flow-live .cards { display:none }
 .shared-flow-live .session-panels { grid-area:2 / 1 }
 .session-panels { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:clamp(.65rem,2vw,1.5rem); min-height:0 }
+@media (min-width:800px) {
+  .shared-flow-live:not(.vibescape-mode) .stage:has(.horizon-panel > article:not([hidden])) {
+    grid-template-columns:minmax(0,2fr) minmax(0,1fr);
+    column-gap:clamp(.65rem,2vw,1.5rem);
+  }
+  .shared-flow-live:not(.vibescape-mode) .session-panels:not([hidden]):has(.horizon-panel > article:not([hidden])) {
+    display:contents;
+  }
+  .session-panels:has(.horizon-panel > article:not([hidden])) > .shared-flow { grid-area:2 / 1 }
+  .session-panels:has(.horizon-panel > article:not([hidden])) > .horizon-panel { grid-area:1 / 2 / 3 }
+}
 .shared-flow-live.display-spotlight .flow-viewport,
 .shared-flow-live.display-spotlight .flow-live { opacity:0; visibility:hidden }
 .shared-flow-live.display-spotlight .shared-flow .cards {
@@ -521,8 +532,10 @@ main { height:auto; min-width:0 }
 }
 .shared-flow { display:grid; grid-template:minmax(0,1fr) / minmax(0,1fr); min-height:0; position:relative; font-family:system-ui,-apple-system,sans-serif }
 .shared-flow .flow-viewport { grid-area:1 / 1 }
-.horizon-panel { min-height:0; overflow:auto; scrollbar-width:none; padding:0 .55rem .75rem }
-.horizon-panel::-webkit-scrollbar { display:none }
+.horizon-panel { display:flex; flex-direction:column; min-height:0; overflow:hidden; padding:0 .55rem }
+.horizon-panel > article { min-height:0; overflow:auto; scrollbar-width:none }
+.horizon-panel > article::-webkit-scrollbar { display:none }
+#horizon-card:not([hidden]),#horizon-preview:not([hidden]):has(+ #horizon-card[hidden]) { flex:1 1 auto }
 .horizon-banner {
   margin-bottom:.85em; padding:clamp(.25rem,1vw,.55rem);
   border:1px solid #ffffff40; border-radius:1rem;

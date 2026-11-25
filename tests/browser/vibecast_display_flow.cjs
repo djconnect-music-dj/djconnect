@@ -294,6 +294,12 @@ async function main(engine) {
       const gap=bottomRow.y-bounds.y-bounds.height;
       assert.ok(gap>=0 && gap<=12, `Panel is ${gap}px above the footer`);
     }
+    const nowPlayingBounds=await page.locator(".now-playing .artwork-card").boundingBox();
+    const progressBounds=await page.locator("#progress").boundingBox();
+    const horizonBounds=await horizonCard.boundingBox();
+    assert.ok(Math.abs(horizonBounds.y-nowPlayingBounds.y)<=1);
+    assert.ok(progressBounds.x+progressBounds.width<horizonBounds.x);
+    assert.ok(Math.abs(bottomRow.y-horizonBounds.y-horizonBounds.height)<=12);
     assert.equal(await horizonCard.locator("h2,h3,#horizon-notice").count(),0);
     assert.equal(await horizonCard.locator("#horizon-sections p").textContent(),horizon.sections[0].text);
     const horizonText=await horizonCard.locator("#horizon-sections p").elementHandle();
