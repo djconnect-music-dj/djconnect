@@ -9,7 +9,7 @@ class DirectRichOriginalActualHATests(unittest.TestCase):
     def test_actual_host_wake_HTTP_Broadcast_SQL_originals_bind_current_source(self):
         root = Path(__file__).resolve().parents[1]
         value = json.loads((root / 'examples/client_contracts/direct_rich_v1/actual-ha-host-wake-runtime-live-impression-20261119-requested-moments-20261120.json').read_bytes())
-        receipt = json.loads((root / 'examples/client_contracts/direct_rich_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-1c5a2b2d.json').read_bytes())
+        receipt = json.loads((root / 'examples/client_contracts/direct_rich_v1/canvas-all-screen-settings-20261125-20261125-tings-2026112-552020ea.json').read_bytes())
         self.assertEqual(receipt['status'], 'PASS')
         self.assertEqual(receipt['schema_version'], 23)
         self.assertFalse(receipt['actual_operator_enrollment_native_clock_or_APNs_GO'])
@@ -32,7 +32,7 @@ class DirectRichOriginalActualHATests(unittest.TestCase):
     def test_original_actual_HTTP_SQL_and_asset_proof_matches_entire_current_product(self):
         root = Path(__file__).resolve().parents[1]
         value = json.loads((root / 'examples/client_contracts/direct_rich_v1/actual-ha-original-purpose-and-assets-live-impression-20261119-requested-moments-20261120.json').read_bytes())
-        receipt = json.loads((root / 'examples/client_contracts/direct_rich_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-7bc93282.json').read_bytes())
+        receipt = json.loads((root / 'examples/client_contracts/direct_rich_v1/canvas-all-screen-settings-20261125-20261125-tings-2026112-a5befbce.json').read_bytes())
         self.assertEqual(value['classification'], 'ACTUAL_ISOLATED_HA_DIRECT_RICH_SOURCE_ONLY')
         self.assertEqual(receipt['classification'], 'DIRECT_RICH_ACTUAL_ISOLATED_HA_SOURCE_ONLY')
         self.assertEqual(receipt['status'], 'PASS')

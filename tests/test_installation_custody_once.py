@@ -24,7 +24,7 @@ class CustodyOriginalHaProofTests(unittest.TestCase):
     def test_actual_HA_original_source_and_harness_remain_exact_metadata_only(self):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads((root / "examples/client_contracts/installation_custody_once_v1/actual-ha-custody-metadata-live-impression-20261119-requested-moments-20261120.json").read_text())
-        raw = json.loads((root / 'examples/client_contracts/installation_custody_once_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-eaba864b.json').read_text())
+        raw = json.loads((root / 'examples/client_contracts/installation_custody_once_v1/canvas-all-screen-settings-20261125-20261125-tings-2026112-32b1b53d.json').read_text())
         self.assertEqual(raw["state"], "PASS")
         self.assertEqual(len(raw["cases"]), 4)
         self.assertEqual(len(raw["preceding_installation_once_cases"]), 8)
