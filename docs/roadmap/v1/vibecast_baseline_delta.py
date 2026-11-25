@@ -81,6 +81,7 @@ def validate(plan, previous_validator):
           "software scope and open acceptance")
     retained = receipt.get("retained_files", [])
     archived_inputs = {
+        "SYNC_PROMPTS.md",
         "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
         "docs/technical/VIBECAST_GUEST_PARTICIPATION_V1.md",
         "tests/browser/vibecast_display_flow.cjs",
@@ -107,11 +108,11 @@ def validate(plan, previous_validator):
     current = {str(path.relative_to(ROOT)): sha(path)
                for path in (ROOT / "custom_components/djconnect").rglob("*")
                if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"}
-    successor = ROOT / "docs/verification/music-canvas-resume-settings-actual-ha-matrix-20261125.json"
+    successor = ROOT / "docs/verification/discover-canvas-screen-actual-ha-matrix-20261125.json"
     successor_matrix = json.loads(successor.read_bytes())
     successor_rows = successor_matrix["results"]
     check(current == successor_matrix["source_pins"]
-          == json.loads((ROOT / "docs/verification/music-canvas-resume-settings-product-manifest-20261125.json").read_bytes())
+          == json.loads((ROOT / "docs/verification/discover-canvas-screen-product-manifest-20261125.json").read_bytes())
           and successor_matrix["source_before_after_equal"] is True
           and len(current) == 361 and len(successor_rows) == 54
           and all(row["exit_code"] == 0 and sha(ROOT / row["harness"]) == row["harness_sha256"]

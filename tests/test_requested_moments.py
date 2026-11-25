@@ -1580,7 +1580,7 @@ class RequestedMomentsTest(unittest.IsolatedAsyncioTestCase):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads(
             (
-                root / 'examples/client_contracts/requested_moments_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-30152463.json'
+                root / 'examples/client_contracts/requested_moments_v1/discover-canvas-screen-20261125-tings-20261125-rotatio-2eda088c.json'
             ).read_text()
         )
         self.assertTrue(proof["source_before_after_equal"])
