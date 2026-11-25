@@ -126,6 +126,7 @@ progress { width:100%; height:.35rem; accent-color:var(--accent) }
 .spotify-source[hidden],.moment-source[hidden] { display:none }
 .spotify-source img { width:120px; height:auto }
 .moment-source { display:block; margin-top:.8rem; color:#ddd9ec; font-size:clamp(.9rem,1.5vw,1.15rem); text-decoration:underline }
+.moment-source img { display:block; width:clamp(4rem,8vw,6rem); max-width:100%; height:auto }
 .moment-research-sources[hidden] { display:none }
 .moment-research-sources a { display:block; margin-top:.4rem; color:#ddd9ec; font-size:clamp(.8rem,1.2vw,1rem) }
 /* Owner refinements: fixed safe regions, artwork-led atmosphere and readable controls. */
@@ -839,7 +840,7 @@ main { height:auto; min-width:0 }
 </aside>
 </div></section><footer><section id="up-next" class="up-next" hidden><img id="next-art" alt=""><div><span id="next-label" class="up-next-label"></span><strong id="next-title"></strong><span id="next-artist"></span></div></section><progress id="progress" max="1" value="0" hidden></progress><div class="meta"><span id="time"></span></div></footer></main>
 <footer class="renderer-footer">
-  <span id="renderer-build"><span id="renderer-build-label">VibeCast versie</span> 4.1.0 (bb40f890)</span>
+  <span id="renderer-build"><span id="renderer-build-label">VibeCast versie</span> 4.1.0 (5fc8a683)</span>
   <a href="https://djconnect.dev/" rel="noreferrer">
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m9 15 6-6m-5 0h5v5"/></svg>
     djconnect.dev
@@ -1528,9 +1529,19 @@ main { height:auto; min-width:0 }
     e("moment").textContent = card.type === "dj_bulletin" ? "" : card.summary;
     const source=card.attribution;
     const safeSource=source && ({Spotify:"https://open.spotify.com/",MusicBrainz:"https://musicbrainz.org/",Wikidata:"https://www.wikidata.org/wiki/"}[source.provider]) && String(source.url || "").startsWith({Spotify:"https://open.spotify.com/",MusicBrainz:"https://musicbrainz.org/",Wikidata:"https://www.wikidata.org/wiki/"}[source.provider]);
-    e("moment-source").hidden=!safeSource;
-    e("moment-source").textContent=safeSource ? source.provider : "";
-    if (safeSource) e("moment-source").href=source.url; else e("moment-source").removeAttribute("href");
+    const sourceLink=e("moment-source");
+    const spotifyLogo=safeSource && card.type==="music_announcement" && source.provider==="Spotify"
+      ? e("spotify-source").querySelector("img") : null;
+    sourceLink.hidden=!safeSource;
+    if (spotifyLogo) {
+      if (!sourceLink.firstElementChild) {
+        sourceLink.textContent="";
+        sourceLink.appendChild(spotifyLogo.cloneNode());
+      }
+    } else {
+      sourceLink.textContent=safeSource ? source.provider : "";
+    }
+    if (safeSource) sourceLink.href=source.url; else sourceLink.removeAttribute("href");
     const researchSources=e("moment-research-sources");
     if (researchSources) {
       clearChildren(researchSources);
@@ -1538,7 +1549,7 @@ main { height:auto; min-width:0 }
       const valid=citations.length > 0;
       researchSources.hidden=!valid;
       if (valid) {
-        e("moment-source").hidden=true;
+        sourceLink.hidden=true;
         for (const citation of citations) {
           const link=document.createElement("a");
           const provider=citation.provider === "Artist website" ? (artistWebsiteLabels[root.lang] || artistWebsiteLabels.en) : citation.provider;
