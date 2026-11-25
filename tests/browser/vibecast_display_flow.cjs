@@ -355,6 +355,7 @@ async function main(engine) {
     await liveStatus({view:view(0)});
     const receiverBrand=page.locator("#receiver-brand-label");
     assert.equal(await receiverBrand.textContent(),"VibeCast Party");
+    assert.equal(await page.locator("#receiver-brand-label + #live-guest-count").count(),1);
     assert.equal(await page.locator("#live-indicator, #sharing-hand").count(),0);
     assert.equal(await page.locator(".session-panels").evaluate(node=>getComputedStyle(node).display),"none");
     const firstScene=await page.locator("#vibescape-scene").evaluate(node=>node.toDataURL());

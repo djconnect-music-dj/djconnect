@@ -271,7 +271,6 @@ progress { height:.7rem; border-radius:1rem; overflow:hidden }
 
 /* Shared VibeCast connect treatment: the receiver retains its actual host states. */
 .receiver-brand { display:flex; align-items:center; gap:.65rem; color:#f4f5ff; letter-spacing:-.02em; text-transform:none; font-size:1.1rem; font-weight:700 }
-.receiver-mark-group { display:inline-flex; flex:none; align-items:center; gap:clamp(.35rem,1vw,.65rem) }
 .receiver-mark { display:block; flex:none; color:#fff }
 .receiver-mark-party,
 .receiver-mark-is-party .receiver-mark-waveform { display:none }

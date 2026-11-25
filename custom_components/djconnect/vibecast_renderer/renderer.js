@@ -460,7 +460,7 @@
     else clearLiveStatus();
     if(!guestCounter){
       guestCounter=document.createElement("span");guestCounter.id="live-guest-count";
-      e("receiver-mark-group").appendChild(guestCounter);
+      e("receiver-brand-label").after(guestCounter);
     }
     const count=Number.isInteger(detail.guest_count) && detail.guest_count>=0 && detail.guest_count<=64 ? detail.guest_count : 0;
     guestCounter.hidden=!enabled;
