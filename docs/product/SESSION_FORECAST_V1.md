@@ -293,7 +293,10 @@ actual contiguous next three to five Spotify tracks, stopping after at least
 three when the observed durations cover roughly fifteen minutes, with an
 absolute maximum of five. A shorter valid prefix remains shorter. An episode,
 unknown identity or incomplete metadata ends the prefix; Core never skips it,
-pads the queue or searches for replacements. Artist genres are optional exact-ID
+pads the queue or searches for replacements. Like the ordinary queue view,
+Horizon shows identical adjacent Spotify rows once. The observed positions
+still count toward the time window, and repeats separated by another track
+remain visible. Artist genres are optional exact-ID
 Spotify artist metadata, not measurements of a recording's sound, BPM, energy
 or emotional trajectory. Missing genres remain missing.
 

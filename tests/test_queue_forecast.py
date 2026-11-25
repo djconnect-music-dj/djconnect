@@ -65,6 +65,34 @@ class QueueBackendTests(unittest.TestCase):
             self.assertNotIn('Actual 3', repr(partial))
         asyncio.run(scenario())
 
+    def test_horizon_compacts_only_identical_adjacent_queue_rows(self):
+        async def scenario():
+            runtime = types.SimpleNamespace(config={}, backend_cache={})
+            backend = self.backend.SpotifyBackend(object(), runtime)
+            current = 'spotify:track:' + 'A' * 22
+            vegas = {'type': 'track', 'uri': 'spotify:track:' + 'V' * 22, 'name': 'Vegas',
+                     'artists': [{'name': 'Steve Brian'}, {'name': 'Vlad Varel'}],
+                     'album': {'name': 'March 2014'}, 'duration_ms': 200000}
+            other = {**vegas, 'uri': 'spotify:track:' + 'B' * 22, 'name': 'Another recording'}
+            queue = [vegas] * 3
+
+            async def request(method, path):
+                self.assertEqual((method, path), ('GET', '/me/player/queue'))
+                return {'currently_playing': {'uri': current}, 'queue': queue}
+
+            backend._request = request
+            result = await backend.async_observe_forecast_queue(current)
+            self.assertEqual([item['title'] for item in result['items']], ['Vegas'])
+            self.assertEqual(result['up_next']['title'], 'Vegas')
+            self.assertEqual(result['_announcement_candidates'], [{'uri': vegas['uri']}] * 3)
+
+            queue.extend([other, vegas])
+            result = await backend.async_observe_forecast_queue(current, observation_key='changed')
+            self.assertEqual([item['title'] for item in result['items']],
+                             ['Vegas', 'Another recording', 'Vegas'])
+
+        asyncio.run(scenario())
+
     def test_queue_artist_failure_keeps_real_tracks_without_genre_invention(self):
         async def scenario():
             runtime = types.SimpleNamespace(config={}, backend_cache={})
@@ -136,10 +164,11 @@ class QueueProjectionTests(unittest.TestCase):
 
     def test_actual_ha_receipt_pins_current_source_and_declares_visible_acceptance_open(self):
         root = Path(__file__).resolve().parents[1]
-        fixture = json.loads((root/'examples/client_contracts/session_forecast_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--9c140be1.json').read_text())
+        fixture = json.loads((root/'examples/client_contracts/session_forecast_v1/vibecast-horizon-queue-duplicates-20261125.json').read_text())
         import hashlib
         self.assertEqual(fixture['state'], 'PASS')
         self.assertEqual(len(fixture['cases']), 20)
+        self.assertEqual(fixture['duplicate_queue'], {'HTTP': 200, 'visible_count': 1})
         self.assertEqual({r['locale'] for r in fixture['cases']}, {'en','nl','de','fr','es'})
         self.assertTrue(all(r['late_queue_discarded'] for r in fixture['stale_results']))
         self.assertFalse(fixture['HA_dev_writes'])

@@ -849,7 +849,8 @@ class SpotifyBackend:
             items = []
             announcement_candidates = []
             duration = 0
-            for track in raw["queue"][:5]:
+            previous = None
+            for position, track in enumerate(raw["queue"][:5], start=1):
                 if not isinstance(track, dict) or track.get("type") != "track":
                     break  # Never skip an unknown position and imply adjacency.
                 uri = track.get("uri")
@@ -860,14 +861,19 @@ class SpotifyBackend:
                     break
                 if len(announcement_candidates) < 3:
                     announcement_candidates.append({'uri': uri})
-                artist_ids = [a["id"] for a in (track.get("artists") or [])[:4]
-                              if isinstance(a, dict) and _looks_like_spotify_id(a.get("id", ""))]
-                items.append({"title": item["title"], "artist": item["artist"],
-                              "artist_ids": artist_ids, "genres": [], "image_url": item.get("image_url", "")})
                 ms = item.get("duration_ms")
+                signature = (uri, item["title"], item["artist"], item.get("album"), ms)
+                # Match the queue UI's adjacent-row compaction. Timing and
+                # the playback announcement still use the original positions.
+                if signature != previous:
+                    artist_ids = [a["id"] for a in (track.get("artists") or [])[:4]
+                                  if isinstance(a, dict) and _looks_like_spotify_id(a.get("id", ""))]
+                    items.append({"title": item["title"], "artist": item["artist"],
+                                  "artist_ids": artist_ids, "genres": [], "image_url": item.get("image_url", "")})
+                previous = signature
                 if type(ms) is int and 0 < ms <= 3600000:
                     duration += ms
-                if len(items) >= 3 and duration >= 900000:
+                if position >= 3 and duration >= 900000:
                     break
             return {"current_uri": current.get("uri"), "items": items,
                     "_announcement_candidates": announcement_candidates,
