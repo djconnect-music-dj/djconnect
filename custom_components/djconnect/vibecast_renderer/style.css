@@ -55,7 +55,7 @@ header { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); g
 #vibescape-scene { position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none }
 #vibescape-scene[hidden],#live-guest-count[hidden] { display:none }
 .vibescape-mode .session-panels { display:none }
-#live-guest-count { white-space:nowrap; font-size:clamp(.85rem,1.7vw,1.2rem); letter-spacing:normal }
+#live-guest-count { white-space:nowrap; color:#d9d4e9; font-size:clamp(.85rem,1.7vw,1.2rem); font-weight:400; letter-spacing:normal }
 #live-indicator { display:inline-flex; flex:none; align-items:center; gap:.4em; color:#fff; white-space:nowrap }
 #live-indicator[hidden],.guest-participation[hidden] { display:none }
 #live-indicator svg { width:1.3em; height:1.3em; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round }
@@ -272,6 +272,7 @@ progress { height:.7rem; border-radius:1rem; overflow:hidden }
 
 /* Shared VibeCast connect treatment: the receiver retains its actual host states. */
 .receiver-brand { display:flex; align-items:center; gap:.65rem; color:#f4f5ff; letter-spacing:-.02em; text-transform:none; font-size:1.1rem; font-weight:700 }
+.receiver-mark-group { display:inline-flex; flex:none; align-items:center; gap:clamp(.35rem,1vw,.65rem) }
 .receiver-mark { display:block; flex:none; color:#fff }
 .receiver-mark-party,
 .receiver-mark-is-party .receiver-mark-waveform { display:none }

@@ -50,7 +50,7 @@ async function run(name,engine){
   }
   if(endpoint==='cancel')return respond({success:true,contract_version:1});
   assert.equal(request.headers().authorization,'Bearer '+grant);
-  if(endpoint==='focus')return respond({success:true,contract_version:1,focused_moment_id:null,expires_in:0,live_enabled:true,guest_count:0});
+  if(endpoint==='focus')return respond({success:true,contract_version:1,focused_moment_id:null,expires_in:0,live_enabled:true,guest_count:1});
   if(endpoint==='invitation'){
    const svg='<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="128" height="128" fill="white"/><path d="M8 8h32v32H8zM88 8h32v32H88zM8 88h32v32H8z" fill="black"/></svg>';
    return respond({success:true,contract_version:1,invitation_id:'declared-render-only-fixture',expires_in:30,
@@ -111,6 +111,16 @@ async function run(name,engine){
   assert.equal(await page.evaluate(()=>window.__castStorageAccesses),0);
   await page.locator('#flow-cards .flow-card').waitFor();await page.locator('.guest-participation img').waitFor();
   assert.equal(await page.locator('#receiver-brand-label').innerText(),'VibeCast Party');
+  const guestCount=page.locator('#live-guest-count');
+  assert.equal(await guestCount.getAttribute('aria-label'),'Verbonden gasten: 1');
+  for(const [width,height] of [[1920,1080],[390,844]]){
+   await page.setViewportSize({width,height});
+   const avatar=await page.locator('#receiver-mark').boundingBox(), counter=await guestCount.boundingBox();
+   assert.ok(avatar.x+avatar.width<=counter.x && counter.x-(avatar.x+avatar.width)<16);
+   assert.ok(counter.y<avatar.y+avatar.height && avatar.y<counter.y+counter.height);
+   assert.equal(await page.locator('.session-status #live-guest-count').count(),0);
+  }
+  await page.setViewportSize({width:1920,height:1080});
   assert.equal((await page.locator('#live-indicator').innerText()).trim(),'');
   assert.equal(await page.locator('#live-indicator svg').evaluate(icon=>getComputedStyle(icon).stroke),'rgb(255, 255, 255)');
   assert.equal(await page.locator('.session-status #state').isVisible(),false);
@@ -135,6 +145,7 @@ async function run(name,engine){
   await page.waitForFunction(()=>document.querySelector('#title').textContent!=='Declared fixture recording');
   assert.equal(await page.locator('#live-indicator').isVisible(),false);
   assert.equal(await page.locator('#receiver-brand-label').innerText(),'DJConnect VibeCast');
+  assert.equal(await guestCount.isVisible(),false);
   assert.equal(await horizonPreview.isVisible(),false);
   assert.equal(await page.locator('.guest-participation').isVisible(),false);
   assert.equal(await page.locator('.guest-manual-entry strong').textContent(),'');

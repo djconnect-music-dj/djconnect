@@ -462,7 +462,7 @@
     e("live-indicator").hidden=!enabled;
     if(!guestCounter){
       guestCounter=document.createElement("span");guestCounter.id="live-guest-count";
-      document.querySelector(".session-status").appendChild(guestCounter);
+      e("receiver-mark-group").appendChild(guestCounter);
     }
     const count=Number.isInteger(detail.guest_count) && detail.guest_count>=0 && detail.guest_count<=64 ? detail.guest_count : 0;
     guestCounter.hidden=!enabled;
