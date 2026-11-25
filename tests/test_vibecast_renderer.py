@@ -61,7 +61,7 @@ class VibeCastRendererTest(unittest.TestCase):
                 removeChild(child){{const i=this.children.indexOf(child);assert(i>=0);this.children.splice(i,1);return child}},
                 appendChild(child){{this.children.push(child)}}}});
               const elements=new Map();
-              for(const id of ['spotify-source','moment-source','moment-research-sources','clock','end-session','up-next','next-art','next-label','next-title','next-artist','state','live-indicator','artwork-card','artwork','mood','title','artist','moment','progress','album','time']) elements.set(id,make());
+              for(const id of ['spotify-source','moment-source','moment-research-sources','clock','end-session','up-next','next-art','next-label','next-title','next-artist','state','receiver-brand-label','live-indicator','artwork-card','artwork','mood','title','artist','moment','progress','album','time']) elements.set(id,make());
               const listeners=new Map(),sockets=[];class WS{{constructor(){{sockets.push(this)}}close(){{}}}}
               const context={{URL,URLSearchParams,JSON,Math,Number,Array,Object,String,encodeURIComponent,navigator:{{language:'nl'}},
                 document:{{createElement:make,body:{{classList:{{toggle:()=>{{}}}}}},documentElement:{{style:{{setProperty:()=>{{}}}}}},
@@ -151,7 +151,7 @@ class VibeCastRendererTest(unittest.TestCase):
             import assert from "node:assert/strict"; import fs from "node:fs"; import vm from "node:vm";
             const page = fs.readFileSync({json.dumps(str(PAGE))}, "utf8"); const script = page.match(/<script>([\\s\\S]*?)<\\/script>/)[1];
             const make = () => ({{textContent:"",hidden:false,src:"",alt:"",max:0,value:0,setAttribute:()=>{{}},removeAttribute:()=>{{}},addEventListener:()=>{{}}}}), elements = new Map();
-            for (const id of ["spotify-source","moment-source","clock","end-session","up-next","next-art","next-label","next-title","next-artist","state","live-indicator","artwork-card","artwork","mood","title","artist","moment","progress","album","time"]) elements.set(id, make());
+            for (const id of ["spotify-source","moment-source","clock","end-session","up-next","next-art","next-label","next-title","next-artist","state","receiver-brand-label","live-indicator","artwork-card","artwork","mood","title","artist","moment","progress","album","time"]) elements.set(id, make());
             const styles = new Map(), sockets = []; class WS {{ constructor(url) {{ this.url=url; sockets.push(this); }} close() {{ if(this.onclose) this.onclose(); }} }}
             const context = {{ URLSearchParams,JSON,Math,Number,Array,Object,String,encodeURIComponent,navigator:{{language:"nl-NL"}},document:{{body:{{classList:{{toggle:()=>{{}}}}}},documentElement:{{style:{{setProperty:(k,v)=>styles.set(k,v)}}}},querySelector:()=>null,getElementById:id=>elements.get(id)}},window:{{location:{{protocol:"https:",host:"receiver.test",search:"?session_id=session-1&broadcast_token=token-1"}},setTimeout:()=>1,addEventListener:()=>{{}}}},WebSocket:WS }};
             vm.runInNewContext(script, context); assert.equal(sockets[0].url,"wss://receiver.test/api/djconnect/v1/session/broadcast/ws/session-1?broadcast_token=token-1"); sockets[0].onopen();
@@ -178,7 +178,7 @@ class VibeCastRendererTest(unittest.TestCase):
             const page = fs.readFileSync({json.dumps(str(PAGE))}, "utf8");
             const script = page.match(/<script>([\\s\\S]*?)<\\/script>/)[1];
             const make=()=>({{textContent:"",hidden:false,src:"",alt:"",max:0,value:0,setAttribute:()=>{{}},removeAttribute:()=>{{}},addEventListener:()=>{{}}}}), elements=new Map();
-            for(const id of ["spotify-source","moment-source","clock","end-session","up-next","next-art","next-label","next-title","next-artist","state","live-indicator","artwork-card","artwork","mood","title","artist","moment","progress","album","time"]) elements.set(id,make());
+            for(const id of ["spotify-source","moment-source","clock","end-session","up-next","next-art","next-label","next-title","next-artist","state","receiver-brand-label","live-indicator","artwork-card","artwork","mood","title","artist","moment","progress","album","time"]) elements.set(id,make());
             const styles=new Map(),sockets=[],timers=[];
             class WS {{constructor(url){{this.url=url;sockets.push(this)}}close(){{if(this.onclose)this.onclose()}}}}
             const window={{location:{{protocol:"https:",host:"receiver.test",search:"?session_id=s&broadcast_token=t"}},
@@ -215,7 +215,7 @@ class VibeCastRendererTest(unittest.TestCase):
             const scripts = [...page.matchAll(/<script>([\\s\\S]*?)<\\/script>/g)].map(match => match[1]);
             assert.equal(scripts.length, 2);
             const make = () => ({{textContent:"",hidden:false,src:"",alt:"",max:0,value:0,setAttribute:()=>{{}},removeAttribute:()=>{{}},addEventListener:()=>{{}},append(...children){{this.children=[...(this.children || []),...children];}}}});
-            const elements = new Map(); for(const id of ["spotify-source","moment-source","clock","end-session","up-next","next-art","next-label","next-title","next-artist","state","live-indicator","artwork-card","artwork","mood","title","artist","moment","progress","album","time","handoff"]) elements.set(id,make());
+            const elements = new Map(); for(const id of ["spotify-source","moment-source","clock","end-session","up-next","next-art","next-label","next-title","next-artist","state","receiver-brand-label","live-indicator","artwork-card","artwork","mood","title","artist","moment","progress","album","time","handoff"]) elements.set(id,make());
             const listeners = new Map(), timers = [], calls = [], sockets = [];
             class WS {{ constructor(url) {{ this.url=url; sockets.push(this); }} close() {{}} }}
             class Event {{ constructor(type, options) {{ this.type=type; this.detail=options.detail; }} }}

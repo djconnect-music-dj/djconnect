@@ -12,11 +12,11 @@ class PersonaStoryActualHATest(unittest.TestCase):
 
     def test_current_source_and_verifiers_are_bound_to_the_original_actual_ha_trace(self):
         root, receipt = self.fixture()
-        current = json.loads((root / 'examples/client_contracts/personal_dj_artist_story_v1/vibecast-live-tv-layout-20261124-0261124-20261124-02611-09f2cd44.json').read_text())
+        current = json.loads((root / 'examples/client_contracts/personal_dj_artist_story_v1/vibecast-party-20261125--20261124-0261124-2026-9ce70848.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
         self.assertEqual(current['harness'], receipt['harness'])
         self.assertEqual(current['harness_sha256'], receipt['harness_sha256'])
-        self.assertEqual(len(current['source_pins']), 359)
+        self.assertEqual(len(current['source_pins']), 361)
         for name, digest in {**current['source_pins'], **current['receipt']['source_files_sha256'],
                              receipt['harness']: receipt['harness_sha256']}.items():
             self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), digest, name)

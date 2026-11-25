@@ -11,7 +11,7 @@ class DiscoveryContextQualificationTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         p = json.loads(
             (
-                root / 'examples/client_contracts/discovery_context_v1/vibecast-live-tv-layout-20261124-0261124-20261124-02611-5b5440ab.json'
+                root / 'examples/client_contracts/discovery_context_v1/vibecast-party-20261125--20261124-0261124-2026-76351ba1.json'
             ).read_text()
         )
         r = p["receipt"]
@@ -20,7 +20,7 @@ class DiscoveryContextQualificationTests(unittest.TestCase):
         self.assertTrue(r["actual_home_assistant"])
         self.assertTrue(r["ordinary_pairing"])
         self.assertTrue(r["aiohttp_default_retry_client"])
-        self.assertEqual(len(p["source_pins"]), 359)
+        self.assertEqual(len(p["source_pins"]), 361)
         for name, expected in {**p["source_pins"], **p["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root / name).read_bytes()).hexdigest(), expected, name)
         self.assertEqual(len(r["cases"]), 14)
