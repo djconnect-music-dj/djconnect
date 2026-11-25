@@ -65,9 +65,10 @@ class CanvasSwitchBotRotationTests(unittest.IsolatedAsyncioTestCase):
                 request = Mock(side_effect=contexts)
                 session = types.SimpleNamespace(request=request)
                 with patch("custom_components.djconnect.music_canvas_adapters.switchbot_art_client",
-                           return_value=(client, registered["deviceId"])), patch(
-                    "homeassistant.helpers.aiohttp_client.async_get_clientsession", return_value=session,
-                ):
+                           return_value=(client, registered["deviceId"])), patch.dict(sys.modules, {
+                    "homeassistant.helpers.aiohttp_client": types.SimpleNamespace(
+                        async_get_clientsession=lambda _: session),
+                }):
                     delivery = deliver_switchbot_with_rotation(
                         object(), {"ha_device_id": "fixture"}, "https://ha.example/one", lambda: True)
                     if succeeds:
