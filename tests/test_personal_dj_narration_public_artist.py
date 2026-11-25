@@ -1881,6 +1881,23 @@ class PublicArtistNarrationTest(unittest.IsolatedAsyncioTestCase):
                     'artist/00000000-0000-0000-0000-000000000005'),{})
                 self.assertEqual(len(calls),before)
 
+    async def test_catalog_source_backoff_does_not_block_the_other_provider(self):
+        from custom_components.djconnect.session_facts import SessionFactsResolver
+
+        musicbrainz = "https://musicbrainz.org/ws/2/artist/test"
+        wikidata = "https://www.wikidata.org/w/api.php"
+        for failing, healthy in ((wikidata, musicbrainz), (musicbrainz, wikidata)):
+            with self.subTest(failing=failing):
+                boundary, _, calls, state = self.source_http_fixture()
+                resolver = SessionFactsResolver(object())
+                with boundary:
+                    state.status = 503
+                    await resolver._get("artist/test", wikidata=failing == wikidata)
+                    state.status = 200
+                    await resolver._get("artist/test", wikidata=failing == wikidata)
+                    await resolver._get("artist/test", wikidata=healthy == wikidata)
+                self.assertEqual([url for _, url in calls], [failing, healthy])
+
     async def test_rate_waiting_public_guard_cannot_be_overtaken_by_catalog_dispatch(self):
         from custom_components.djconnect.session_facts import SessionFactsResolver
         boundary,session,calls,state = self.source_http_fixture()
