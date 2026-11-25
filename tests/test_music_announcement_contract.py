@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class AnnouncementContractTests(unittest.TestCase):
     def test_current_producer_and_manual_replay_match_original_actual_ha(self):
-        record = json.loads((ROOT/'examples/client_contracts/music_announcement_v1/vibecast-waiting-copy-20261125---20261124-0261124-202-a11812d2.json').read_text())
+        record = json.loads((ROOT/'examples/client_contracts/music_announcement_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-dd16ee08.json').read_text())
         self.assertTrue(record['source_before_after_equal'])
         self.assertEqual(len(record['source_pins']), 361)
         for name, digest in record['source_pins'].items():
