@@ -42,11 +42,11 @@ def _flow_deadline(boundary, expires_at):
     ).total_seconds()
 
 
-def _shared_horizon(broadcast, *, locale=None):
+def _shared_horizon(broadcast, *, locale=None, include_queue=False):
     current = broadcast.state
     return broadcast.forecast.shared_text(current.playback, locale=locale or current.locale,
                                           persona=_label(current.dj_persona),
-                                          mood=_label(current.selected_mood))
+                                          mood=_label(current.selected_mood), include_queue=include_queue)
 
 
 def _shared_horizon_preview(active, display, state, locale):
@@ -147,7 +147,8 @@ def projection_release_guard(active, authority, state, snapshot):
             return False
         if not _release_artwork_current(active, authority, state, snapshot, flow, artwork_descriptor):
             return False
-        if "horizon" in snapshot and _shared_horizon(broadcast, locale=snapshot["session"]["locale"]) != snapshot["horizon"]:
+        if "horizon" in snapshot and _shared_horizon(
+                broadcast, locale=snapshot["session"]["locale"], include_queue=True) != snapshot["horizon"]:
             return False
         if "horizon_preview" in snapshot and _shared_horizon_preview(
                 active, authority, state, snapshot["session"]["locale"]) != snapshot["horizon_preview"]:
@@ -307,7 +308,7 @@ def _decorate_shared_snapshot(result, active, authority, state, broadcast, curre
     result["view"] = view(state._shares[authority.share_id], active)
     from .display_observed import public as public_observations
     result['observed_playback'] = public_observations(state._shares[authority.share_id], state)
-    horizon = _shared_horizon(broadcast, locale=result["session"]["locale"])
+    horizon = _shared_horizon(broadcast, locale=result["session"]["locale"], include_queue=True)
     if horizon is not None:
         result["horizon"] = horizon
     if result["view"]["mode"] == "flow":

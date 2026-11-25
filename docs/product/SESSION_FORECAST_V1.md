@@ -314,10 +314,14 @@ at thirty seconds; neither a poll/cache read nor localized projection renews it.
 The accepted narrative deadline is capped by that original deadline and current
 playback observation. Changed source, owner, Session, output, command generation,
 current recording, revocation or expiry rejects/withdraws late content. HTTP and
-Broadcast reads remain pure. Queue narrative is owner-only: shared display projections
-retain their prior current-context narrative without queue names or genres;
-this extension grants no background/widget/external display rights. Missing/expired queue falls back to the existing
-honest current-context Forecast rather than a fictional future.
+Broadcast reads remain pure. The original queue narrative was owner-only.
+The November 25 VibeCast display correction also permits the existing authored
+queue text in Horizon on actively approved VibeCast displays. It uses the
+same accepted current item, queue authority and original expiry as the owner
+Forecast. The display receives only localized section titles and text. Guest
+chat, ordinary shared snapshots and background or widget surfaces retain their
+existing audience limits. Missing or expired queue data cannot produce new
+upcoming claims.
 
 Local source validation: 3168 tests PASS (seven existing skips), Ruff and eight
 isolated actual-HA HTTP harnesses PASS on all241 product files. See
