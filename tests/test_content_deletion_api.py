@@ -352,7 +352,7 @@ class PairedContentDeleteTests(unittest.IsolatedAsyncioTestCase):
         from pathlib import Path
         root = Path(__file__).resolve().parents[1]
         fixture = json.loads((root/'examples/client_contracts/session_conversation_history/content-deletion-v1-core-consolidation-20261022-live-impression-20261119-requested-moments-20261120.json').read_text())
-        current = json.loads((root / 'examples/client_contracts/session_conversation_history/music-canvas-switchbot-rotation-20261125-setup-20261125-ark-202-77b70ed0.json').read_text())
+        current = json.loads((root / 'examples/client_contracts/session_conversation_history/music-canvas-resume-settings-20261125-rotation-20261125-setu-1aacd2af.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
         self.assertEqual(len(current['source_pins']), 361)
         self.assertEqual(hashlib.sha256((root / current['harness']).read_bytes()).hexdigest(), current['harness_sha256'])

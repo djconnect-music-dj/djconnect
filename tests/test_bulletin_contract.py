@@ -12,7 +12,7 @@ class BulletinWireContractTests(unittest.TestCase):
         wire = json.loads((ROOT / "examples/client_contracts/dj_bulletin_v1/actual-ha-wire-live-impression-20261119-requested-moments-20261120.json").read_text())
         self.assertEqual(wire["schema_version"], 1)
         self.assertEqual(wire["ha_sdk_version"], "2026.10.0")
-        current = json.loads((ROOT / 'examples/client_contracts/dj_bulletin_v1/music-canvas-switchbot-rotation-20261125-setup-20261125-ark-202-85c2ef7d.json').read_text())
+        current = json.loads((ROOT / 'examples/client_contracts/dj_bulletin_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-1bf1a608.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
         self.assertEqual(len(current['source_pins']), 361)
         self.assertEqual(hashlib.sha256((ROOT / current['harness']).read_bytes()).hexdigest(), current['harness_sha256'])

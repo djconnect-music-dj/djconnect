@@ -281,7 +281,7 @@ class BandStoryActualHAEvidenceTests(unittest.TestCase):
         import hashlib
         root = Path(__file__).resolve().parents[1]
         proof = json.loads((root / "examples/client_contracts/band_members_story_v1/actual-ha-current-live-impression-20261119-requested-moments-20261120.json").read_text())
-        current = json.loads((root / 'examples/client_contracts/band_members_story_v1/music-canvas-switchbot-rotation-20261125-setup-20261125-ark-202-44ef9805.json').read_text())
+        current = json.loads((root / 'examples/client_contracts/band_members_story_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-1201884a.json').read_text())
         self.assertTrue(current['source_before_after_equal'])
         self.assertEqual(current['harness'], proof['harness'])
         self.assertEqual(current['harness_sha256'], proof['harness_sha256'])

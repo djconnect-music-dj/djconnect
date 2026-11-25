@@ -33,7 +33,7 @@ class SourceOriginActualProofTests(unittest.TestCase):
     def test_current_source_joins_original_actual_HA_and_same_harness_parent_failure(self):
         root = Path(__file__).resolve().parents[1]
         receipt = json.loads((root / "examples/client_contracts/source_origin_v1/actual-ha-source-origin-data-live-impression-20261119-requested-moments-20261120.json").read_text())
-        current = json.loads((root / 'examples/client_contracts/source_origin_v1/music-canvas-switchbot-rotation-20261125-setup-20261125-ark-202-ae52f35a.json').read_text())
+        current = json.loads((root / 'examples/client_contracts/source_origin_v1/music-canvas-resume-settings-20261125-rotation-20261125-setu-867b51f7.json').read_text())
         self.assertEqual(current["state"], "PASS")
         self.assertEqual(len(current["cases"]), 19)
         self.assertEqual(len(current["source_sha256"]), 361)
