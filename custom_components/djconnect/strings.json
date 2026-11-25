@@ -1881,6 +1881,10 @@
         "orientation": {
           "name": "Screen orientation",
           "description": "Choose how the frame is mounted."
+        },
+        "replace_oldest": {
+          "name": "Automatically free space",
+          "description": "When the album is full, permanently delete the oldest image that is not displayed. This can delete your own photos."
         }
       }
     },

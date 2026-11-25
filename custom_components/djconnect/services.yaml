@@ -1910,6 +1910,11 @@ music_canvas_switchbot_setup:
             - landscape
             - portrait
           translation_key: canvas_screen_orientation
+    replace_oldest:
+      name: Automatically free space
+      description: When the album is full, permanently delete the oldest image that is not displayed. This can delete your own photos.
+      selector:
+        boolean:
 
 music_canvas_asset_access:
   fields:

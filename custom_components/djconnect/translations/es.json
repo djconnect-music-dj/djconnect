@@ -1881,6 +1881,10 @@
         "orientation": {
           "name": "Orientación de la pantalla",
           "description": "Elige la orientación en la que está colocado el marco."
+        },
+        "replace_oldest": {
+          "name": "Liberar espacio automáticamente",
+          "description": "Si el álbum está lleno, elimina definitivamente la imagen más antigua que no se esté mostrando. Puede ser una foto tuya."
         }
       }
     },

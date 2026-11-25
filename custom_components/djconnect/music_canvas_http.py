@@ -308,11 +308,14 @@ def register_switchbot_setup(hass):
             need(all(known.get(key, value) == value for key, value in screen.items()),
                  "canvas_ha_switchbot_setup_incomplete", 409)
             missing = {key: value for key, value in screen.items() if key not in known}
-            if registered["state"] == "ready" and not missing and not registered.get("forgetting"):
+            replace_oldest = call.data.get("replace_oldest")
+            changed = replace_oldest is not None and replace_oldest != registered.get("switchbot_replace_oldest", False)
+            if registered["state"] == "ready" and not missing and not changed and not registered.get("forgetting"):
                 return
             owner = digest(["canvas_ha_admin", user.id])
             result = await runtime.manage("setup", owner, digest([owner, device_id]), {
                 "operation_id": str(uuid4()), "target_id": target["id"], "screen": missing,
+                **({"switchbot_replace_oldest": replace_oldest} if changed else {}),
             }, authorize)
             need(result["state"] == "confirmed", "canvas_ha_switchbot_setup_incomplete", 409)
         except PermissionError:
@@ -333,4 +336,5 @@ def register_switchbot_setup(hass):
             vol.Required("width"): vol.All(int, vol.Range(min=256, max=8192)),
             vol.Required("height"): vol.All(int, vol.Range(min=256, max=8192)),
             vol.Required("orientation"): vol.In(("landscape", "portrait")),
+            vol.Optional("replace_oldest"): bool,
         }))

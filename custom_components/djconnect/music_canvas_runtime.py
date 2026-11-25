@@ -188,6 +188,8 @@ class CanvasRuntime:
                         updates["state"] = "ready"
                         updates["manual_takeover"] = False
                         updates["last_selected_content"] = None
+                        if device["adapter"] == "switchbot" and "switchbot_replace_oldest" in data:
+                            updates["switchbot_replace_oldest"] = data["switchbot_replace_oldest"]
                     else:
                         remaining = False
                         if data["cleanup_remote"]:
@@ -628,42 +630,44 @@ class CanvasRuntime:
                 need(authorized(), "canvas_context_changed", 409)
                 result = await self.protocol(
                     functools.partial(adapters.samsung_action, device, "select", content_id=content_id))
+                need(authorized(), "canvas_context_changed", 409)
                 observed = "displayed" if result["displayed"] else "delivered_unknown"
-                if result["displayed"]:
-                    for previous in device["owned_content"]:
-                        need(authorized(), "canvas_context_changed", 409)
-                        cleanup = await self.protocol(functools.partial(
-                            adapters.samsung_action, device, "cleanup", content_id=previous))
-                        if cleanup["deleted"]:
-                            def remove(state, previous=previous):
-                                state["devices"][target]["owned_content"].remove(previous)
-                                state["devices"][target]["cleanup_supported"] = True
-                            await self.repository.mutate(remove, authorized)
             else:
                 origin = self.hass.data["djconnect"].get("music_canvas_asset_origin")
                 need(type(origin) is str and origin.startswith("https://"), "canvas_public_asset_required", 503)
                 lease = secrets.token_urlsafe(32)
                 self.leases[lease] = dict(target=target, file=filename, expires=time.time()+900,
                     epoch=device["epoch"], owner=owner, revision=config["revision"], session_id=active.session_id)
-                result = await adapters.deliver_switchbot(self.hass, device,
+                delivery = adapters.deliver_switchbot(self.hass, current["devices"][target],
                     origin.rstrip("/")+"/api/djconnect/music_canvas/asset/"+lease, authorized)
+                result = await self.await_effect_completion(asyncio.create_task(delivery))
                 observed = result["state"]
             def commit(state):
                 need(authorized(), "canvas_context_changed", 409)
+                row = state["devices"][target]
                 if device["adapter"] == "samsung" and observed == "displayed":
-                    state["devices"][target]["last_selected_content"] = content_id
-                state["devices"][target]["preview"] = filename
-                state["devices"][target]["preview_owner"] = owner
-                state["devices"][target]["source_image"] = source_file
-                state["devices"][target]["presentation"] = [
+                    row["last_selected_content"] = content_id
+                row["preview"] = filename
+                row["preview_owner"] = owner
+                row["source_image"] = source_file
+                row["presentation"] = [
                     config["preferences"]["composition"], config["preferences"]["matte"],
                     config["preferences"].get("show_track_title", False)]
-                state["devices"][target]["provenance"] = {
+                row["provenance"] = {
                     "input": "bounded_confirmed_title_only", "external_attachments": False,
                     "generated": True, "native_model_resolution_qualified": False}
+                return row
             async with self.asset_lock:
-                await self.repository.mutate(commit, authorized)
+                saved = await self.repository.mutate(commit, authorized)
             self.states[target] = observed
+            if (device["adapter"] == "samsung" and observed == "displayed"
+                    and len(saved["owned_content"]) == 2 and authorized()):
+                try:
+                    await self.reconcile_samsung_uploads(saved, authorized)
+                except Exception:
+                    # Keep the verified selection. The next eligible run
+                    # reconciles these two owned uploads before adding another.
+                    self.next_probe[target] = time.monotonic() + 30
 
 
 async def setup(hass):

@@ -1881,6 +1881,10 @@
         "orientation": {
           "name": "Orientation de l’écran",
           "description": "Choisissez l’orientation dans laquelle le cadre est installé."
+        },
+        "replace_oldest": {
+          "name": "Libérer de la place automatiquement",
+          "description": "Si l’album est plein, supprime définitivement l’image la plus ancienne qui n’est pas affichée. Il peut s’agir de l’une de vos photos."
         }
       }
     },

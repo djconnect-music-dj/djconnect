@@ -7,7 +7,7 @@ import sys
 import tempfile
 import types
 import unittest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
 package = types.ModuleType("custom_components.djconnect")
@@ -30,7 +30,105 @@ def update(revision=0, **patch):
                 operation_id=str(uuid4()), expected_revision=revision, patch=patch)
 
 
+class CanvasSwitchBotRotationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_rotation_requires_full_album_static_mode_and_confirmed_delete(self):
+        from custom_components.djconnect.music_canvas_adapters import deliver_switchbot_with_rotation
+
+        full = {"statusCode": 190, "message":
+                "rpc error: code = Unknown desc = code=7301 message=image count limit reached: 10 (max=10 for W1130000)"}
+        registered = dict(deviceId="ABCDEF123456", deviceType="AI Art Frame",
+                          displayMode=0, imageUrl="https://asset.example/photo.jpg")
+        static = {"statusCode": 100, "body": registered}
+        slideshow = {"statusCode": 100, "body": {**registered, "displayMode": 1}}
+        deleted = {"statusCode": 100, "body": {"deletedImageIndex": 17, "remainingCount": 9}}
+        no_delete = {"statusCode": 100, "body": {"deletedImageIndex": 0, "remainingCount": 9}}
+        ok = {"statusCode": 100}
+        unrecognized = {"statusCode": 190, "message": "frame unavailable"}
+        cases = [
+            ([ok], ["uploadImage"], True),
+            ([full, static, deleted, ok], ["uploadImage", None, "deleteImage", "uploadImage"], True),
+            ([full, static, deleted, full], ["uploadImage", None, "deleteImage", "uploadImage"], False),
+            ([full, slideshow], ["uploadImage", None], False),
+            ([full, static, no_delete], ["uploadImage", None, "deleteImage"], False),
+            ([unrecognized], ["uploadImage"], False),
+        ]
+        for replies, commands, succeeds in cases:
+            with self.subTest(commands=commands, succeeds=succeeds):
+                signer = Mock(return_value={"signed": "fixture"})
+                client = types.SimpleNamespace(token="existing", secret="existing", make_headers=signer)
+                contexts = []
+                for reply in replies:
+                    response = types.SimpleNamespace(status=200, json=AsyncMock(return_value=reply))
+                    context = AsyncMock()
+                    context.__aenter__.return_value = response
+                    contexts.append(context)
+                request = Mock(side_effect=contexts)
+                session = types.SimpleNamespace(request=request)
+                with patch("custom_components.djconnect.music_canvas_adapters.switchbot_art_client",
+                           return_value=(client, registered["deviceId"])), patch.dict(sys.modules, {
+                    "homeassistant.helpers.aiohttp_client": types.SimpleNamespace(
+                        async_get_clientsession=lambda _: session),
+                }):
+                    delivery = deliver_switchbot_with_rotation(
+                        object(), {"ha_device_id": "fixture"}, "https://ha.example/one", lambda: True)
+                    if succeeds:
+                        await delivery
+                    else:
+                        with self.assertRaises(CanvasError):
+                            await delivery
+                payloads = [call.kwargs["json"] for call in request.call_args_list]
+                self.assertEqual([p["command"] if p else None for p in payloads], commands)
+                for call in request.call_args_list:
+                    self.assertTrue(call.args[1].startswith("https://api.switch-bot.com/"))
+                    self.assertFalse(call.kwargs["allow_redirects"])
+                self.assertEqual(signer.call_count, len(commands))
+                self.assertTrue(all(p["parameter"] == "oldest" for p in payloads
+                                    if p and p["command"] == "deleteImage"))
+
+
 class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
+    async def test_confirmed_display_survives_cleanup_failure(self):
+        from copy import deepcopy
+        from custom_components.djconnect.music_canvas_runtime import CanvasRuntime
+
+        device = {"id": "frame", "adapter": "samsung", "epoch": 3, "owned_content": ["old"]}
+        state = fresh_state()
+        state["devices"]["frame"] = deepcopy(device)
+        config = profile(state, "owner")
+
+        async def mutate(commit, authorize):
+            self.assertTrue(authorize())
+            return deepcopy(commit(state))
+
+        async def protocol(action):
+            operation = action.args[1]
+            if operation == "observe":
+                return {"current": {"content_id": "old"}}
+            if operation == "upload":
+                return {"content_id": "latest"}
+            if operation == "select":
+                return {"displayed": True}
+            self.assertEqual(operation, "cleanup")
+            self.assertEqual(action.keywords, {"content_id": "old", "displayed_content_id": "latest"})
+            self.assertEqual(state["devices"]["frame"]["last_selected_content"], "latest")
+            raise CanvasError("canvas_cleanup_required", 409)
+
+        runtime = CanvasRuntime.__new__(CanvasRuntime)
+        runtime.effect_lock = asyncio.Lock()
+        runtime.asset_lock = asyncio.Lock()
+        runtime.repository = types.SimpleNamespace(read=AsyncMock(return_value=deepcopy(state)), mutate=mutate)
+        runtime.registry_art_current = lambda _: True
+        runtime.protocol = protocol
+        runtime.states = {}
+        runtime.next_probe = {}
+        await runtime.deliver("owner", config, None, "frame", device, "art.jpg", b"art",
+                              lambda: True, "source.jpg")
+
+        self.assertEqual(state["devices"]["frame"]["last_selected_content"], "latest")
+        self.assertEqual(state["devices"]["frame"]["owned_content"], ["old", "latest"])
+        self.assertEqual(runtime.states["frame"], "displayed")
+        self.assertIn("frame", runtime.next_probe)
+
     async def test_confirmed_cleanup_releases_upload_slot_and_records_selected_art(self):
         from custom_components.djconnect.music_canvas_runtime import CanvasRuntime
 
@@ -285,7 +383,7 @@ class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
             "homeassistant.exceptions": types.SimpleNamespace(ServiceValidationError=ServiceValidationError),
             "homeassistant.helpers": types.SimpleNamespace(device_registry=types.SimpleNamespace(
                 async_get=lambda _: types.SimpleNamespace(async_get={device.id: device}.get))),
-            "voluptuous": types.SimpleNamespace(Schema=dict, Required=str, All=lambda *items: items,
+            "voluptuous": types.SimpleNamespace(Schema=dict, Required=str, Optional=str, All=lambda *items: items,
                                                Range=lambda **bounds: bounds, In=tuple),
         }
         with patch.dict(sys.modules, modules):
@@ -313,12 +411,12 @@ class CanvasDomainTests(unittest.TestCase):
         import hashlib
         import json
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/music-canvas-switchbot-setup-20261125-actual-ha.json").read_text())
+        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/music-canvas-switchbot-rotation-20261125-actual-ha.json").read_text())
         self.assertEqual(len(proof["source_pins"]), 361)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), expected, name)
         self.assertTrue(proof["source_before_after_equal"])
-        matrix = json.loads((root/"docs/verification/music-canvas-switchbot-setup-actual-ha-matrix-20261125.json").read_text())
+        matrix = json.loads((root/"docs/verification/music-canvas-switchbot-rotation-actual-ha-matrix-20261125.json").read_text())
         self.assertEqual(matrix["source_pins"], proof["source_pins"])
         self.assertTrue(matrix["source_before_after_equal"])
         self.assertEqual(len(matrix["results"]), 54)
