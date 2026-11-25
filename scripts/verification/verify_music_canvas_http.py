@@ -449,6 +449,13 @@ async def qualify(hass, manager, history, request, client):
             assert configured["state"] == "ready" and configured["screen"] == {
                 "width": 1200, "height": 1600, "orientation": "portrait", "provenance": "explicit_setup"}
             assert configured["owned_content"] == [] and "token" not in configured
+            assert not configured.get("switchbot_replace_oldest", False)
+            for enabled in (True, False):
+                await hass.services.async_call("djconnect", "music_canvas_switchbot_setup",
+                    {**fields, "replace_oldest": enabled}, blocking=True, context=Context(user_id=owner.id))
+                updated = await runtime.repository.read()
+                assert updated["devices"][frame_key]["switchbot_replace_oldest"] is enabled
+                assert updated["profiles"] == old_canvas["profiles"]
             assert owner.id not in storage.household.shared.ha_user_profile_ids
             assert len(deliveries) == before_end
         register_samsung_setup(hass)
@@ -683,6 +690,7 @@ async def qualify(hass, manager, history, request, client):
             "requests": calls, "actual_sqlite": True, "paired_tls": True,
             "native_switchbot_schema": True, "samsung_upload_select_separate": True,
             "ha_admin_sets_switchbot_portrait_geometry_without_profile_grant_or_upload": True,
+            "ha_admin_can_enable_and_disable_switchbot_rotation_without_upload": True,
             "samsung_off_no_upload": True, "synthetic_image_generations": len(generations),
             "shared_samsung_generation": True, "matte_reuses_source": True, "track_title_reuses_source": True,
             "cross_profile_preview_denied": True, "offline_target_isolated": True,

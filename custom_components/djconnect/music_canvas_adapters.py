@@ -3,10 +3,13 @@ from __future__ import annotations
 from hashlib import sha256
 from html import unescape
 from ipaddress import ip_address
+import re
 from urllib.parse import urlsplit
 from uuid import UUID
 
 from .music_canvas import CanvasError, digest, need
+
+_SWITCHBOT_FRAME_LIMIT = re.compile(r"\bcode=7301\s+message=image count limit reached:")
 
 
 # Prefer the original target to preserve existing Canvas IDs whenever advertised.
@@ -169,7 +172,89 @@ async def deliver_switchbot(hass, device, image_url, authorize):
     need(parts.scheme == "https" and bool(parts.hostname) and not parts.username
          and not parts.password and not parts.fragment, "canvas_public_asset_required", 503)
     need(authorize(), "canvas_context_changed", 409)
-    await hass.services.async_call("switchbot_cloud", "upload_art_frame_image",
-        {"device_id": [device["ha_device_id"]], "image_url": image_url}, blocking=True)
+    if device.get("switchbot_replace_oldest") is True:
+        await deliver_switchbot_with_rotation(hass, device, image_url, authorize)
+    else:
+        await hass.services.async_call("switchbot_cloud", "upload_art_frame_image",
+            {"device_id": [device["ha_device_id"]], "image_url": image_url}, blocking=True)
     # Irrevocable submitted cloud action can still complete after withdrawal.
     return {"state": "delivered_unknown", "displayed": False}
+
+
+def switchbot_art_client(hass, ha_device_id):
+    """Resolve the loaded native client for exactly this registered frame."""
+    from homeassistant.helpers import device_registry as dr
+
+    device = dr.async_get(hass).async_get(ha_device_id)
+    if device is None or device.model != "AI Art Frame":
+        return None
+    ids = [identifier for domain, identifier in device.identifiers
+           if domain == "switchbot_cloud" and re.fullmatch(r"[0-9A-Fa-f]{12}", identifier)]
+    if len(ids) != 1:
+        return None
+    clients = []
+    for entry_id in device.config_entries:
+        entry = hass.config_entries.async_get_entry(entry_id)
+        if entry and entry.domain == "switchbot_cloud" and entry.state.value == "loaded":
+            if client := getattr(getattr(entry, "runtime_data", None), "api", None):
+                clients.append(client)
+    return (clients[0], ids[0]) if len(clients) == 1 else None
+
+
+async def deliver_switchbot_with_rotation(hass, device, image_url, authorize):
+    """Inspect only the official API reply that the native upload action hides."""
+    import asyncio
+    from aiohttp import ClientError
+    from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
+    ha_device_id = device["ha_device_id"]
+    binding = switchbot_art_client(hass, ha_device_id)
+    need(binding is not None, "canvas_switchbot_setup_required", 503)
+    client, cloud_device_id = binding
+    session = async_get_clientsession(hass)
+    endpoint = f"https://api.switch-bot.com/v1.1/devices/{cloud_device_id}"
+
+    async def request(path, command=None, parameter=None):
+        current = switchbot_art_client(hass, ha_device_id)
+        need(authorize() and current and current[0] is client and current[1] == cloud_device_id,
+             "canvas_context_changed", 409)
+        payload = None if command is None else {
+            "commandType": "command", "command": command, "parameter": parameter,
+        }
+        try:
+            # Authenticate only to SwitchBot using the loaded integration's
+            # signer. Nothing from the config entry is copied into Canvas.
+            async with asyncio.timeout(15):
+                async with session.request("GET" if payload is None else "POST", endpoint + path,
+                        json=payload, headers=client.make_headers(client.token, client.secret),
+                        allow_redirects=False) as response:
+                    need(response.status == 200, "canvas_target_unavailable", 503)
+                    data = await response.json()
+        except (ClientError, TimeoutError, ValueError):
+            raise CanvasError("canvas_target_unavailable", 503) from None
+        need(isinstance(data, dict), "canvas_target_unavailable", 503)
+        return data
+
+    parameters = {"imageUrl": image_url}
+    uploaded = await request("/commands", "uploadImage", parameters)
+    if uploaded.get("statusCode") == 100:
+        return
+    message = uploaded.get("message")
+    need(uploaded.get("statusCode") == 190 and isinstance(message, str)
+         and _SWITCHBOT_FRAME_LIMIT.search(message), "canvas_target_unavailable", 503)
+
+    status = await request("/status")
+    current = status.get("body")
+    need(status.get("statusCode") == 100 and isinstance(current, dict)
+         and current.get("deviceId") == cloud_device_id and current.get("deviceType") == "AI Art Frame"
+         and type(current.get("displayMode")) is int and current["displayMode"] == 0
+         and isinstance(current.get("imageUrl"), str) and current["imageUrl"],
+         "canvas_cleanup_required", 409)
+    deleted = await request("/commands", "deleteImage", "oldest")
+    receipt = deleted.get("body")
+    need(deleted.get("statusCode") == 100 and isinstance(receipt, dict)
+         and type(receipt.get("deletedImageIndex")) is int and receipt["deletedImageIndex"] > 0
+         and type(receipt.get("remainingCount")) is int and receipt["remainingCount"] >= 1,
+         "canvas_cleanup_required", 409)
+    retried = await request("/commands", "uploadImage", parameters)
+    need(retried.get("statusCode") == 100, "canvas_target_unavailable", 503)

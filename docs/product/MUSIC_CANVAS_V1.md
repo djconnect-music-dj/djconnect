@@ -139,11 +139,13 @@ Minimaal: ontdek/koppel/probe profiel; upload; selecteer kunst; lees daadwerkeli
 
 Uploaden en selecteren bewust scheiden. Onderzoek ook of upload zelf kan wekken; ‘show=false’ of alleen een guard bij selecteren mag geen valse no-wakegarantie geven. Geen HDMI-/audio-/volume-/speakerwijzigingen. Kwalificeer echte modellen/firmwares en librarygedrag; simulatie bewijst geen 2025/2026-hardwarecompatibiliteit.
 
-## 9. SwitchBot-adapter v1: uitsluitend bestaande native HA-cloudroute
+## 9. SwitchBot-adapter v1: bestaande HA-cloudkoppeling
 
 Alleen apparaten aanbieden uit de door de gebruiker **al ingestelde relevante SwitchBot Cloud-integratie**, met benodigde native uploadactie/capability. Bluetooth-only discovery is geen bewijs van deze route. Geen SwitchBot-accountlogin, BLE-upload, reverse-engineering, eigen cloudprotocol of automatische installatie van de integratie vanuit Music Canvas.
 
 Gebruik de daadwerkelijk aanwezige `switchbot_cloud.upload_art_frame_image`-actie en het schema van de gebruikte HA-versie; verifieer bij pickup de exacte parameters/identitymapping. Core selecteert bestaande registry-apparaten, Apple krijgt generieke doelen.
+
+Een HA-beheerder kan per geregistreerde fotolijst automatisch ruimte vrijmaken inschakelen. Standaard blijft dit uit. Alleen met deze instelling gebruikt Core de officiële SwitchBot OpenAPI met de signer van de reeds geladen HA-cloudkoppeling. De normale HA-uploadactie geeft geen bruikbare albumlimiet terug. Core bewaart geen SwitchBot-inloggegevens en stuurt de ondertekening uitsluitend naar de officiële SwitchBot-host. Alleen een expliciete albumlimietfout 7301 leidt tot een statuscontrole. Als SwitchBot een statisch getoonde afbeelding bevestigt, mag Core één keer de oudste niet-getoonde afbeelding permanent verwijderen. Dat kan een eigen foto zijn. Na een bevestigde verwijdering volgt één uploadpoging, zonder tweede verwijdering. Een onbekende fout of een diavoorstelling leidt niet tot verwijdering. Vergeten blijft een afzonderlijke actie.
 
 Native cloudupload kan een vanaf SwitchBot bereikbare afbeeldings-URL nodig hebben. Gebruik een beperkte, tijdelijke HTTPS-assettoegang via een geschikte bestaande/expliciet ingerichte voorziening; alleen het bedoelde bestand, beperkte geldigheid, geen HA-token in URL/logs, geen algemene openbare `/www`-kunstcollectie, geen veronderstelde LAN-URL/cloudbereikbaarheid. Als geen geschikte route bestaat: expliciete setupblokkade, niet heimelijk een publiek endpoint of proxy aanmaken. Geen alternatieve Base64-route in deze v1.
 
