@@ -1,5 +1,7 @@
 """One Core dialogue with separate ephemeral guest rights and deny-by-default reads."""
 from copy import deepcopy
+from dataclasses import replace
+from hashlib import sha256
 import importlib
 import unittest
 from unittest.mock import AsyncMock, patch
@@ -121,6 +123,30 @@ class GuestConversationTests(unittest.IsolatedAsyncioTestCase):
         result = await self.guest.exchange(self.actor, self.payload('What is playing now?'))
         self.assertIsInstance(result['text'], str)
         self.assertFalse(result['history_persisted'])
+
+    async def test_guest_can_identify_the_current_artist_from_shared_playback(self):
+        broadcast = self.actor.active.broadcast
+        binding = {key: self.joined[key] for key in ('issuer_epoch', 'guest_id')}
+        headers = {'Authorization': 'Bearer ' + self.joined['guest_token']}
+        recording = 'A' * 22
+        item_id = sha256(('spotify:track:' + recording).encode()).hexdigest()[:24]
+        for index, source_url in enumerate(('https://open.spotify.com/track/' + recording, '')):
+            with self.subTest(source_url=source_url):
+                broadcast.state = replace(broadcast.state, playback=replace(
+                    broadcast.state.playback, state='playing', item_id=item_id,
+                    title='Toxic', artist='Scala & Kolacny Brothers', source_url=source_url))
+                response = await self.fixture.call('ask', {
+                    **binding, 'client_message_id': f'artist-{index}', 'thread_id': 'guest-thread',
+                    'text': 'Wie zijn dit', 'language': 'nl',
+                }, headers=headers)
+                response.release()
+                self.assertTrue(response.payload['success'])
+                self.assertEqual(response.payload['text'], 'Dit is Scala & Kolacny Brothers, met Toxic.')
+                self.assertFalse(response.payload['history_persisted'])
+        broadcast.state = replace(broadcast.state, playback=replace(
+            broadcast.state.playback, item_id='next-track'))
+        with self.assertRaises(self.guest.DisplayAdmissionError):
+            response.release()
 
     async def test_original_common_delivery_fence_survives_dto_mapping_and_rejects_late_frame_reset(self):
         reply = AsyncMock(return_value={'success':True,'text':'Public answer.'})
