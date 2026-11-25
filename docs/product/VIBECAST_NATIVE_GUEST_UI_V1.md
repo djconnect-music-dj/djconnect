@@ -35,7 +35,7 @@ The public QR points to `https://vibecast.tv/join` with a URL-encoded fragment:
 
 The landing transfers that same fragment to `djconnect://join#...` only after an
 explicit Open app action. The native app requires explicit Join confirmation
-before redeeming. No PIN. The fragment contains an existing one-time invitation,
+before redeeming. The fragment contains an existing one-time invitation,
 never a guest/display/owner bearer. No extra origin authority is invented.
 Consumers accept only the closed field set, v1, bounded identifiers and a plain
 HTTPS origin without userinfo, path beyond `/`, query or fragment. They erase
@@ -46,6 +46,13 @@ invitation_secret; reject duplicates, unknown fields and malformed encoding.
 The fragment is at most 2048 characters, ha_url at most 1024. Existing producer
 identifiers are base64url ASCII `[A-Za-z0-9_-]`: epoch43, invitation_id32,
 invitation_secret43 characters. No secret prefix is added.
+
+The native scanner accepts the same canonical public QR URL directly. On macOS,
+the guest can instead type the host and 12-character code shown next to the Live
+QR and explicitly confirm Join. The code is an alternate representation of the
+same one-time invitation. Core issues it from 60 random bits, applies the same
+origin and attempt budget, and consumes both representations together. The app
+posts it directly to that HTTPS installation via `participation/redeem-code`.
 
 Reuse the current 120-second invitation lifetime. QR changes subtly every two
 minutes; ordinary snapshots do not rotate it. Redemption remains single-use,

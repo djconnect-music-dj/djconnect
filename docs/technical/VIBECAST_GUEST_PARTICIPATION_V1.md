@@ -35,7 +35,7 @@ HA's existing administrator-protected OptionsFlow supplies installation-admin pa
 `/api/djconnect/v1/participation/` is a closed version1 HTTPS/same-origin namespace. Every POST has `contract_version: 1`; owner actions use the existing real paired `identity`, `session_id`, `share_id` and paired Authorization header. Guest actions use the separately redeemed `guest_id`, `issuer_epoch` and `Bearer djcg_…`. Display-only actions use their original `display_id`, `issuer_epoch` and `Bearer djcd_…`. Tokens are not interchangeable; no query/cookie/CORS authority exists.
 
 - Owner: `owner/context`, `owner/configure`, `owner/invite`, `owner/remove`, `owner/voice`, `owner/unbind-voice`, `owner/requests`, `owner/decide`.
-- Guest admission: `redeem` with the single-use invitation triple; `renew` with sequenced renewal; `leave`; safe `context`.
+- Guest admission: `redeem` with the single-use invitation triple or `redeem-code` with the 12-character TV code. Both consume the same invitation and share the admission rate limit. `renew` uses sequenced renewal, followed by `leave` and safe `context` as needed.
 - One conversation: `ask` with text/client message/thread/language and optional original shared Moment ID. `request` uses that same application owner and its frozen `choice_action` IDs; it exposes proposals only. `request/status`, `focus` and `return` retain the same original guest/share scope.
 - Read-only display extension: `display/invitation`, `display/focus`, `display/return`, `display/focus-photo`. The existing B snapshot contract is unchanged. No owner command or microphone permission is added to the TV.
 

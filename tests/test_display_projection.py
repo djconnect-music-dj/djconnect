@@ -98,6 +98,44 @@ class DisplayProjectionTests(unittest.TestCase):
         self.assertFalse(guard())
         self.assertEqual(self.snapshot()['dj_moments'], [])
 
+    def test_shared_upcoming_card_follows_queue_deadline_and_current_playback(self):
+        self.prepared()
+        broadcast = self.session.broadcast
+        forecast = broadcast.forecast
+        forecast.clock = lambda: 101
+        forecast.wall_clock = lambda: 1_800_000_000
+        playback = broadcast.state.playback
+        next_url = "https://open.spotify.com/track/" + "N" * 22
+        upcoming = {"title": "Next recording", "artist": "Next artist", "source_url": next_url,
+                    "artwork_url": "/api/djconnect/v1/image_proxy/owner-asset",
+                    "current_item_id": playback.item_id, "expires_at": "2027-01-15T08:00:20+00:00"}
+        forecast.accept_queue({"items": [{"title": upcoming["title"], "artist": upcoming["artist"],
+                                         "genres": []}, {"title": "Another song", "artist": "Private", "genres": []}],
+                               "deadline": 120, "wall_deadline": 1_800_000_015}, playback.item_id, lambda: True)
+        playing = replace(playback, state="playing", duration_ms=180_000, position_ms=160_000,
+                          up_next=tuple(upcoming.items()))
+        broadcast.state = replace(broadcast.state, playback=playing)
+        snapshot = self.snapshot()
+        preview = snapshot["horizon_preview"]
+        self.assertEqual(preview["track"]["title"], "Next recording")
+        self.assertEqual(preview["track"]["source_url"], next_url)
+        self.assertEqual(preview["current_item_id"], playback.item_id)
+        self.assertEqual(datetime.fromisoformat(preview["expires_at"]).timestamp(), 1_800_000_015)
+        self.assertNotIn("owner-asset", json.dumps(preview))
+        self.assertNotIn("Another song", json.dumps(preview))
+        guard = self.projection.projection_release_guard(self.session, self.display, self.state, snapshot)
+        with patch("time.monotonic", return_value=101):
+            self.assertTrue(guard())
+            for changed in (replace(playing, state="paused"), replace(playing, position_ms=1),
+                            replace(playing, item_id="new-recording")):
+                broadcast.state = replace(broadcast.state, playback=changed)
+                self.assertNotIn("horizon_preview", self.snapshot())
+                self.assertFalse(guard())
+            broadcast.state = replace(broadcast.state, playback=playing)
+            forecast.wall_clock = lambda: 1_800_000_015
+            self.assertFalse(guard())
+            self.assertNotIn("horizon_preview", self.snapshot())
+
     def test_published_shared_fact_text_and_attribution_unchanged_no_private_fields(self):
         moment = self.prepared()
         before = moment.as_dict()

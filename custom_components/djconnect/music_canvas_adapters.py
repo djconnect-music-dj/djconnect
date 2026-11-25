@@ -97,7 +97,7 @@ def _art_peer_sha256(art):
     return sha256(certificate).hexdigest()
 
 
-def samsung_action(device, action, *, content=None, content_id=None):
+def samsung_action(device, action, *, content=None, content_id=None, displayed_content_id=None):
     """Blocking protocol library is confined to an executor and one connection."""
     from samsungtvws import SamsungTVWS
     remote = SamsungTVWS(device["host"], port=8002, token=device.get("token"),
@@ -136,6 +136,12 @@ def samsung_action(device, action, *, content=None, content_id=None):
             return {"displayed": isinstance(observed, dict) and observed.get("content_id") == content_id}
         if action == "cleanup":
             need(content_id in device.get("owned_content", []), "canvas_content_not_owned", 403)
+            if displayed_content_id is not None:
+                need(displayed_content_id != content_id and displayed_content_id in device["owned_content"],
+                     "canvas_content_not_owned", 403)
+                shown = art.get_current()
+                need(isinstance(shown, dict) and shown.get("content_id") == displayed_content_id,
+                     "canvas_cleanup_required", 409)
             return {"deleted": art.delete(content_id) is True}
         if action == "observe":
             return {"current": art.get_current()}

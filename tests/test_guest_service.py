@@ -63,6 +63,19 @@ class GuestServiceTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(self.module.DisplayAdmissionError):
             await self.call('context', binding, headers={'Authorization':'Bearer '+self.admitted.payload['grant_token']})
 
+    async def test_guest_code_and_qr_share_a_single_admission(self):
+        await self.enable()
+        invite = (await self.call('owner/invite')).payload
+        code = {'code': invite['manual_code'].replace('-', '')}
+        qr = {key: invite[key] for key in ('issuer_epoch', 'invitation_id', 'invitation_secret')}
+        with self.assertRaises(self.module.DisplayAdmissionError):
+            await self.call('redeem-code', code, headers={}, origins=['https://foreign.example'])
+        grant = (await self.call('redeem-code', code, headers={})).payload
+        self.assertFalse(grant['capabilities']['owner_controls'])
+        for action, payload in (('redeem-code', code), ('redeem', qr)):
+            with self.assertRaises(self.module.DisplayAdmissionError):
+                await self.call(action, payload, headers={})
+
     async def test_withdrawal_after_response_preparation_rejects_original_release(self):
         joined = await self.join()
         await self.call('owner/configure', {'policy':{'information':False,'requests':'disabled','max_pending':3}})

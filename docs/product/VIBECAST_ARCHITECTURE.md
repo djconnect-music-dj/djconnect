@@ -51,6 +51,12 @@ implementation/acceptance is pending; the completed baseline below stays
 historical and its evidence is not upgraded by the new code. Older source
 qualification flags and generic Broadcast permissions remain unchanged.
 
+In TV Flow, Horizon can show the temporary Up next card during the last
+45 seconds of playback. It uses the same qualified first queue item and expiry
+as the native preview. The display receives only that recording, its narration
+and an optional Share-scoped artwork reference. A track change, loss of queue
+authority or expiry withdraws the preview.
+
 ## Status
 
 Canonical product positioning and implementation boundary. The active

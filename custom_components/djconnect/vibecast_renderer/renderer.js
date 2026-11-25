@@ -50,6 +50,7 @@
   let placementCount=0, lastPlacedKey="";
   let playbackItem = "", current = null, previous = null, lastShownAt = -Infinity, lastArtwork = "", lastSequence = 0, snapshotSequence = 0, fieldSequences = {};
   const firstSeen = new Map();
+  const waitingMusicLabels={en:"Waiting for music",nl:"Wachten op muziek",de:"Warten auf Musik",fr:"En attente de musique",es:"Esperando música"};
   const previousSourceLabels={en:"MusicBrainz · earlier recording",nl:"MusicBrainz · eerdere opname",de:"MusicBrainz · frühere Aufnahme",fr:"MusicBrainz · enregistrement précédent",es:"MusicBrainz · grabación anterior"};
   const nextLabels={en:"Up next",nl:"Hierna",de:"Als Nächstes",fr:"À suivre",es:"A continuación"};
   const buildLabels={en:"VibeCast version",nl:"VibeCast versie",de:"VibeCast-Version",fr:"Version de VibeCast",es:"Versión de VibeCast"};
@@ -75,28 +76,23 @@
   let sceneCanvas=null, sceneFrame=0, sceneLastFrame=0;
   const scenePalettes={chill:["#4da3ff","#7b61ff","#d184ff"],groove:["#06c7ad","#169bc8","#10b981"],
     energy:["#ddff00","#00b8ff","#39ff78"],party:["#ff287f","#aa38f5","#f43dce"]};
-  let displayViewRevision=-1, displayViewPending=false;
-  const displayViewModes=["flow","vibescape"];
-  function adoptDisplayView(view){
-    if(!view || !displayViewModes.includes(view.mode))return;
+  let displayViewRevision=-1;
+  function confirmedDisplayView(view){
+    if(!view || (view.mode!=="flow" && view.mode!=="vibescape"))return projection.view;
     if(Number.isSafeInteger(view.revision)){
-      if(view.revision<displayViewRevision)return;
+      if(view.revision<displayViewRevision)return projection.view;
       displayViewRevision=view.revision;
-    }else if(displayViewRevision>=0)return;
-    projection.view=view;
-    renderDisplayViewButtons();
-    renderScene();
+    }else if(displayViewRevision>=0)return projection.view;
+    return view;
   }
-  function renderDisplayViewButtons(){
+  function renderDisplayViewStatus(){
     if(!displayHost)return;
-    const available=snapshotAccepted && !ended && displayViewRevision>=0;
-    for(const mode of displayViewModes){
-      const button=e("display-view-"+mode);
-      if(!button)continue;
-      button.hidden=!available;
-      button.disabled=displayViewPending;
-      button.setAttribute("aria-pressed",String(!!projection.view && projection.view.mode===mode));
-    }
+    const status=e("display-view-status");
+    if(!status)return;
+    const view=snapshotAccepted && !ended && projection.view;
+    const label=view ? (view.mode==="vibescape" ? "VibeScape" : "Flow") : "";
+    if(status.textContent!==label)status.textContent=label;
+    status.hidden=!label;
   }
   function sceneActive(){return snapshotAccepted && !ended && projection.view && projection.view.mode==="vibescape";}
   function hideScene(){
@@ -105,45 +101,286 @@
     if(sceneFrame)window.cancelAnimationFrame(sceneFrame);
     sceneFrame=0;
   }
+  const vibeScapeScenes = (() => {
+    const tau = Math.PI * 2;
+    const homeOrbs = [
+      [.18, -.48, .29, .94, -.4, .8],
+      [-.11, -.23, .24, .86, .6, 1.7],
+      [.14, .04, .166, .85, -.35, 2.8],
+      [-.31, .57, .34, .82, -.5, 3.3],
+      [.27, -.21, .047, .88, .5, 4.1],
+      [-.31, .12, .038, .87, -.4, 4.8],
+      [.28, .36, .072, .86, .2, 5.9],
+    ];
+
+    function gradient(ctx, x1, y1, x2, y2, stops) {
+      const paint = ctx.createLinearGradient(x1, y1, x2, y2);
+      for (const [offset, color] of stops) paint.addColorStop(offset, color);
+      return paint;
+    }
+
+    function orb(ctx, x, y, radius, shape, rotation, colors, metal) {
+      const [primary, secondary, accent] = colors;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+      ctx.scale(radius, radius * shape);
+      ctx.beginPath();
+      ctx.arc(0, 0, 1, 0, tau);
+      ctx.clip();
+      const body = ctx.createRadialGradient(-.32, -.42, .05, 0, 0, 1.03);
+      body.addColorStop(0, metal ? "#d5dedd" : "#087969");
+      body.addColorStop(.44, metal ? "#586365" : "#103743");
+      body.addColorStop(.84, "#0b191e");
+      body.addColorStop(1, metal ? "#c9d4d4" : primary + "d4");
+      ctx.fillStyle = body;
+      ctx.fillRect(-1, -1, 2, 2);
+
+      ctx.globalCompositeOperation = "screen";
+      for (const [hx, hy, opacity, tint] of [
+        [-.42, -.35, "bd", primary], [.47, .08, "d0", secondary], [.16, -.76, "8a", accent],
+      ]) {
+        ctx.save();
+        ctx.translate(hx, hy);
+        ctx.rotate(-.55);
+        ctx.scale(1, .45);
+        const light = ctx.createRadialGradient(0, 0, 0, 0, 0, .62);
+        light.addColorStop(0, tint + opacity);
+        light.addColorStop(1, tint + "00");
+        ctx.fillStyle = light;
+        ctx.fillRect(-.62, -.62, 1.24, 1.24);
+        ctx.restore();
+      }
+      for (const [angle, thickness, tint] of [[1.05, .095, primary], [-.72, .065, secondary]]) {
+        ctx.beginPath();
+        ctx.ellipse(0, 0, .98, .46, angle, 0, Math.PI);
+        ctx.strokeStyle = tint + "48";
+        ctx.lineWidth = thickness * 1.7;
+        ctx.stroke();
+        ctx.strokeStyle = tint + "d4";
+        ctx.lineWidth = thickness;
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function home(ctx, aspect, t, dynamics, colors) {
+      const [primary, secondary, accent] = colors;
+      const waves = gradient(ctx, -aspect / 2, 0, aspect / 2, 0,
+        [[0, accent], [.48, primary], [1, secondary]]);
+      ctx.strokeStyle = waves;
+      for (let lane = 0; lane < 23; lane++) {
+        ctx.beginPath();
+        for (let point = 0; point <= 75; point++) {
+          const x = (point / 75 - .5) * aspect;
+          const wave = Math.sin(x * 5.3 + t) * .12 + Math.sin(x * 10.2 - t * .55) * .047;
+          const y = .11 + lane * .018 + wave * (.65 + dynamics * .6);
+          if (point === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.globalAlpha = .09 + Math.sin(lane / 22 * Math.PI) * .46;
+        ctx.lineWidth = .0016;
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      for (const [x, y, radius, shape, rotation, phase] of homeOrbs) {
+        const drift = .036 + dynamics * .044;
+        orb(ctx, x + Math.sin(t * .67 + phase) * drift, y + Math.cos(t * .53 + phase) * drift,
+          radius * (.96 + dynamics * .1), shape + Math.sin(t + phase) * .075,
+          rotation + Math.sin(t * .75 + phase) * .38, colors, false);
+      }
+    }
+
+    function chrome(ctx, length, colors) {
+      const [primary, secondary] = colors;
+      return gradient(ctx, -length, -length * .38, length, length * .55,
+        [[0, "#263032"], [.15, "#a1acad"], [.29, primary], [.38, "#e4e9e5"],
+          [.54, secondary], [.68, "#323c40"], [.84, "#cbd5cc"], [1, "#273034"]]);
+    }
+
+    function disk(ctx, x, y, radius, tilt, rotation, colors) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+      const edge = chrome(ctx, radius, colors);
+      ctx.fillStyle = edge;
+      ctx.beginPath();
+      ctx.ellipse(.003, .019, radius + .004, radius * tilt + .004, 0, 0, tau);
+      ctx.fill();
+      ctx.fillStyle = gradient(ctx, -radius, -radius * .3, radius, radius * .14,
+        [[0, "#273032"], [.25, "#1b262b"], [.42, colors[1] + "b8"], [.52, colors[1]],
+          [.63, "#293940"], [.86, "#202729"], [1, "#464d4c"]]);
+      ctx.strokeStyle = edge;
+      ctx.lineWidth = .003;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, radius, radius * tilt, 0, 0, tau);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function orbit(ctx, radius, tilt, rotation, start, colors) {
+      ctx.save();
+      ctx.rotate(rotation);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, radius, radius * tilt, 0, start, start + 4.9);
+      ctx.strokeStyle = "#293335";
+      ctx.lineWidth = .022;
+      ctx.stroke();
+      ctx.strokeStyle = chrome(ctx, radius, colors);
+      ctx.lineWidth = .014;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function radio(ctx, aspect, t, dynamics, colors) {
+      const amplitude = .14 + .3 * dynamics;
+      ctx.translate(.018, .016);
+      orbit(ctx, .455, .62, .85 + Math.sin(t * .57) * amplitude, .6 + t * .3, colors);
+      disk(ctx, .18, -.105, .191, .39 + Math.sin(t + .9) * amplitude * .4, -.25 + t * .19, colors);
+      disk(ctx, -.13, -.19, .294, .55 + Math.sin(t * .79 + .3) * amplitude * .43, .55 + t * .22, colors);
+      orbit(ctx, .423, .76, -.48 + Math.cos(t * .53) * amplitude, 2.65 - t * .45, colors);
+      disk(ctx, .235, .198, .212, .57 + Math.cos(t * .93) * amplitude * .35, .71 - t * .25, colors);
+      orbit(ctx, .43, .23, -.99 + Math.sin(t * .45) * amplitude, 1.1 - t * .21, colors);
+      orb(ctx, .49 + Math.sin(t) * .064, -.09 + Math.cos(t * .73) * .05, .06, .96, t, colors, true);
+      orb(ctx, -.39 + Math.cos(t) * .042, .18, .033, .97, -t, colors, true);
+    }
+
+    function box(ctx, x, y, width, height, depth, yaw, roll, colors) {
+      const [primary, secondary, accent] = colors;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(roll);
+      const cosine = Math.cos(yaw), sine = Math.sin(yaw);
+      const vertices = [];
+      for (const z of [-depth / 2, depth / 2]) {
+        for (const [px, py] of [[-width/2,-height/2],[width/2,-height/2],
+          [width/2,height/2],[-width/2,height/2]]) {
+          const viewDepth = z * cosine - px * sine;
+          const scale = 1 / (1 - viewDepth * .36);
+          vertices.push([(px * cosine + z * sine) * scale, (py - viewDepth * .25) * scale, viewDepth]);
+        }
+      }
+      const faces = [[0,1,2,3],[4,5,6,7],[0,4,7,3],[1,5,6,2],[0,1,5,4],[2,3,7,6]];
+      faces.sort((a,b) => depthSum(a) - depthSum(b));
+      function depthSum(face) {
+        return face.reduce((total, vertex) => total + vertices[vertex][2], 0);
+      }
+      for (const [index, face] of faces.entries()) {
+        const [start, , end] = face.map(i => vertices[i]);
+        ctx.beginPath();
+        for (const [corner, i] of face.entries()) {
+          if (corner === 0) ctx.moveTo(vertices[i][0], vertices[i][1]);
+          else ctx.lineTo(vertices[i][0], vertices[i][1]);
+        }
+        ctx.closePath();
+        ctx.fillStyle = "#101916";
+        ctx.fill();
+        ctx.fillStyle = gradient(ctx, start[0], start[1], end[0], end[1],
+          [[0, accent + "a8"], [.11, "#222b25"], [.53, index === 4 ? secondary + "58" : primary + "55"],
+            [.91, "#0c1718"], [1, primary + "da"]]);
+        ctx.fill();
+        ctx.strokeStyle = gradient(ctx, start[0], start[1], end[0], end[1],
+          [[0, accent], [.5, "#273a36"], [1, primary]]);
+        ctx.lineWidth = .003;
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function club(ctx, aspect, t, dynamics, colors) {
+      const [primary, secondary, accent] = colors;
+      ctx.fillStyle = gradient(ctx, 0, .25, 0, .5,
+        [[0, primary + "1e"], [.84, secondary + "0a"], [1, "#030709"]]);
+      ctx.fillRect(-aspect / 2, .25, aspect, .25);
+      const swing = (.1 + dynamics * .44) * Math.sin(t * .76);
+      for (const [x, y, size, phase] of [[.24, -.07, .47, .7], [-.03, .12, .59, -.17], [.38, -.18, .33, .51]]) {
+        const angle = phase + Math.sin(t + x * 6) * (.12 + dynamics * .28);
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+        ctx.scale(1 - Math.abs(swing) * .35, 1);
+        ctx.strokeStyle = gradient(ctx, -size, size, size, -size,
+          [[0, primary], [.4, "#394a3c"], [.72, accent], [1, primary + "a8"]]);
+        ctx.lineWidth = .016;
+        ctx.strokeRect(-size / 2, -size * .56, size, size * 1.12);
+        ctx.strokeStyle = primary + "90";
+        ctx.lineWidth = .002;
+        ctx.strokeRect(-size / 2, -size * .56, size, size * 1.12);
+        ctx.restore();
+      }
+      for (let index = 0; index < 3; index++) {
+        box(ctx, -.13 + index * .13, -.1, .022, .34, .035, .4 + swing, .42 + swing, colors);
+      }
+      box(ctx, .01, -.36, .66, .056, .114, .45 + swing, -.13 + swing * .45, colors);
+      box(ctx, -.38, .078, .21, .77, .18, -.58 + swing, -.04 + swing * .2, colors);
+      box(ctx, .32, .22, .225, .4, .17, .47 - swing, .08 - swing * .24, colors);
+    }
+
+    function festival(ctx, aspect, t, dynamics, colors) {
+      const strands = 52, points = 74;
+      const pitch = 2.55 + dynamics * .22;
+      const radius = .21 + dynamics * .047;
+      ctx.globalCompositeOperation = "screen";
+      for (let layer = 0; layer < 2; layer++) {
+        for (let band = 0; band < colors.length; band++) {
+          ctx.fillStyle = colors[band] + (layer ? "e6" : "70");
+          ctx.beginPath();
+          for (let strand = band; strand < strands; strand += colors.length) {
+            const offset = strand / strands * tau;
+            for (let point = 1; point < points; point++) {
+              const height = point / points;
+              const angle = height * tau * pitch + offset + t * 1.7;
+              const wave = 1 + .24 * Math.sin(3 * angle - 2 * offset + t);
+              const depth = Math.sin(angle) * wave;
+              if (Number(depth > 0) !== layer) continue;
+              const taper = .44 + .56 * Math.pow(Math.sin(Math.PI * height), .65);
+              const glint = (strand * 11 + point * 17) % 109 === 0;
+              const size = (.00136 + .00047 * (1 + depth)) * taper * (glint ? 1.8 : 1);
+              const bend = (height - .5) * .24 + .038 * Math.sin(height * 10 - t * .4);
+              const x = Math.cos(angle) * radius * taper * wave + bend;
+              const y = (height - .49) * .94 + depth * (.067 + dynamics * .034);
+              ctx.rect(x - size, y - size, 2 * size, 2 * size);
+            }
+          }
+          ctx.fill();
+        }
+      }
+    }
+
+    const scenes = { home_dj: home, radio_dj: radio, club_dj: club, festival_dj: festival };
+    const backdrops = { home_dj: "#041315", radio_dj: "#0c1110", club_dj: "#0a1110", festival_dj: "#020505" };
+    return function drawVibeScape(ctx, width, height, settings, elapsed) {
+      const { persona, colors, dynamics, mood } = settings;
+      const unit = Math.min(height, width * .95);
+      const aspect = width / unit;
+      const speed = ({ chill: .66, energy: 1.16, party: 1.32 })[mood] || 1;
+      const time = elapsed * speed * (.19 + dynamics * .51);
+      ctx.save();
+      ctx.fillStyle = backdrops[persona] || backdrops.home_dj;
+      ctx.fillRect(0, 0, width, height);
+      ctx.translate(width / 2, height / 2);
+      ctx.scale(unit, unit);
+      (scenes[persona] || home)(ctx, aspect, time, dynamics, colors);
+      ctx.restore();
+    };
+  })();
   function drawScene(stamp=0){
     sceneFrame=0;
     if(!sceneActive() || document.hidden || !sceneCanvas)return;
     const still=reduceMotion();
     if(still || !document.body.classList.contains("vibescape-mode") || stamp-sceneLastFrame>=33){
       sceneLastFrame=stamp;
-      const width=Math.min(1280,window.innerWidth),height=Math.min(720,window.innerHeight);
+      const scale=Math.min(1,1280/window.innerWidth,720/window.innerHeight);
+      const width=Math.max(1,Math.round(window.innerWidth*scale));
+      const height=Math.max(1,Math.round(window.innerHeight*scale));
       if(sceneCanvas.width!==width || sceneCanvas.height!==height){sceneCanvas.width=width;sceneCanvas.height=height;}
       const ctx=sceneCanvas.getContext("2d");
       if(!ctx){hideScene();return;}
-      const settings=projection.view || {},colors=scenePalettes[settings.mood] || ["#3285ff","#843df5","#cb27f5"];
-      const persona=settings.persona,base={home_dj:.30,radio_dj:.24,club_dj:.20,festival_dj:.26}[persona] || .12;
-      const mood={chill:.6,energy:1.2,party:1.4}[settings.mood] || 1;
+      const settings=projection.view || {};
+      const colors=scenePalettes[settings.mood] || ["#3285ff","#843df5","#cb27f5"];
       const dynamics=Number.isFinite(settings.dynamics) ? Math.max(0,Math.min(1,settings.dynamics)) : .5;
-      const motion=.35+dynamics*1.3;
-      const time=still ? 0 : stamp*.0002*base*mood*motion;
-      ctx.fillStyle="#080b19";ctx.fillRect(0,0,width,height);
-      ctx.globalCompositeOperation="screen";
-      for(let i=0;i<7;i++){
-        const phase=time+i*Math.PI*2/7;
-        const x=width*(.5+(.18+.28*dynamics)*Math.sin(phase)),y=height*(.5+(.16+.24*dynamics)*Math.cos(phase*.8));
-        const glow=ctx.createRadialGradient(x,y,0,x,y,width*.43);
-        glow.addColorStop(0,colors[i%3]+"77");glow.addColorStop(1,colors[i%3]+"00");
-        ctx.fillStyle=glow;ctx.fillRect(0,0,width,height);
-        ctx.strokeStyle=colors[i%3]+"88";ctx.lineWidth=1.5;
-        ctx.beginPath();
-        if(persona==="club_dj"){
-          ctx.moveTo(width*.1,height*(.2+i*.1));ctx.lineTo(x,y);ctx.lineTo(width*.9,height*(.8-i*.08));
-        }else if(persona==="festival_dj"){
-          ctx.moveTo(width*.5,height*.72);ctx.lineTo(x+Math.sin(phase)*width*.3,y-height*.4);
-        }else if(persona==="radio_dj"){
-          ctx.ellipse(width*.5,height*.5,width*(.16+i*.035),height*(.12+i*.025),Math.sin(phase)*.3,0,Math.PI*2);
-        }else{
-          ctx.moveTo(0,height*(.3+i*.06));
-          ctx.bezierCurveTo(width*.3,y,width*.7,height-y,width,height*(.5+i*.04));
-        }
-        ctx.stroke();
-      }
-      ctx.globalCompositeOperation="source-over";
+      vibeScapeScenes(ctx,width,height,{persona:settings.persona,mood:settings.mood,colors,dynamics},still ? 0 : stamp/1000);
       sceneCanvas.hidden=false;
       document.body.classList.add("vibescape-mode");
     }
@@ -168,7 +405,13 @@
   const seenReactions=new Map();
   const reactionTimers=new Map();
   let guestCounter=null;
+  function renderReceiverBrand(partyEnabled){
+    const label=e("receiver-brand-label");
+    const title=partyEnabled ? "VibeCast Party" : "DJConnect VibeCast";
+    if(label.textContent!==title)label.textContent=title;
+  }
   function clearLiveStatus(){
+    renderReceiverBrand(false);
     e("live-indicator").hidden=true;
     if(guestCounter){guestCounter.hidden=true;guestCounter.textContent="";guestCounter.removeAttribute("aria-label");}
     for(const [node,timer] of reactionTimers){window.clearTimeout(timer);node.remove();}
@@ -211,9 +454,10 @@
     lastSessionPresentation=signature;
   }
   function renderLiveStatus(detail){
-    if(!displayHost || !detail)return;
+    if(!displayHost || !snapshotAccepted || ended || !detail)return;
     const enabled=detail.live_enabled===true;
-    if(!enabled)clearLiveStatus();
+    if(enabled)renderReceiverBrand(true);
+    else clearLiveStatus();
     e("live-indicator").hidden=!enabled;
     if(!guestCounter){
       guestCounter=document.createElement("span");guestCounter.id="live-guest-count";
@@ -223,7 +467,12 @@
     guestCounter.hidden=!enabled;
     const labels={en:"Connected guests",nl:"Verbonden gasten",de:"Verbundene Gäste",fr:"Invités connectés",es:"Invitados conectados"};
     guestCounter.textContent="👥 "+count;guestCounter.setAttribute("aria-label",(labels[root.lang] || labels.en)+": "+count);
-    adoptDisplayView(detail.view);
+    const view=confirmedDisplayView(detail.view);
+    if(view!==projection.view){
+      projection.view=view;
+      renderDisplayViewStatus();
+      renderScene();
+    }
     const now=Date.now();
     for(const [id,until] of seenReactions)if(until<=now)seenReactions.delete(id);
     if(!enabled)return;
@@ -549,10 +798,49 @@
     es:["Flujo de la sesión", "Volver al directo"]
   };
   let horizonExpiry, horizonContentKey;
+  let horizonPreviewExpiry;
+  function renderHorizonPreview(active) {
+    const card=e("horizon-preview");
+    if (!card) return;
+    window.clearTimeout(horizonPreviewExpiry);
+    const p=playback(), preview=active && !sceneActive() && projection.horizon_preview;
+    const track=preview && preview.track;
+    const expires=Date.parse(preview && preview.expires_at);
+    const visible=!!(track && p.state==="playing" && p.item_id && preview.current_item_id===p.item_id
+      && expires>Date.now() && typeof preview.text==="string" && preview.text
+      && typeof track.title==="string" && track.title && typeof track.artist==="string" && track.artist
+      && /^https:\/\/open\.spotify\.com\/track\/[A-Za-z0-9]{22}$/.test(track.source_url));
+    card.hidden=!visible;
+    e("horizon-preview-label").textContent=visible ? nextLabels[root.lang] || nextLabels.en : "";
+    e("horizon-preview-title").textContent=visible ? track.title : "";
+    e("horizon-preview-artist").textContent=visible ? track.artist : "";
+    e("horizon-preview-text").textContent=visible ? preview.text : "";
+    const source=e("horizon-preview-source"), image=e("horizon-preview-art");
+    const cover=visible && preview.artwork && displayArtwork.get(preview.artwork.reference);
+    if (cover && cover.item_id===track.item_id) {
+      if(image.getAttribute("src")!==cover.url)image.src=cover.url;
+      image.hidden=false;
+    } else {
+      image.hidden=true;
+      image.removeAttribute("src");
+    }
+    if (!visible) {
+      source.removeAttribute("href");
+      return;
+    }
+    card.dataset.mood=read(projection,["session","selected_mood"]) || "";
+    source.href=track.source_url;
+    if (!source.firstChild) {
+      const logo=e("spotify-source").querySelector("img");
+      if(logo)source.appendChild(logo.cloneNode());
+    }
+    horizonPreviewExpiry=window.setTimeout(()=>renderHorizonPreview(active),Math.max(0,expires-Date.now()));
+  }
   function renderHorizon(active) {
     const panels=e("session-panels"), card=e("horizon-card"), sections=e("horizon-sections");
     if (!panels || !card || !sections) return;
     panels.hidden=!active;
+    renderHorizonPreview(active);
     if (horizonExpiry) window.clearTimeout(horizonExpiry);
     const horizon=active && projection.horizon;
     const expires=Date.parse(horizon && horizon.valid_until);
@@ -843,16 +1131,17 @@
   }
   function render(animate=false) {
     const languageChanged=useLanguage(); updateClock();
-    e("state").hidden=displayHost && snapshotAccepted && !ended;
-    if (snapshotAccepted && !ended) e("state").textContent=text.live;
+    const sessionActive=snapshotAccepted && !ended;
+    e("state").hidden=sessionActive;
+    if (sessionActive) e("state").textContent=text.live;
     renderSessionIcons();
     renderSessionChange();
-    renderDisplayViewButtons();
+    renderDisplayViewStatus();
     renderScene();
     const p = playback(), mood = read(projection,["session","selected_mood"]);
-    document.body.classList.toggle("idle",!p.title);
+    document.body.classList.toggle("idle",!sessionActive && !p.title);
     e("mood").textContent = mood || text.ambient;
-    e("title").textContent = p.title || text.waiting;
+    e("title").textContent = p.title || (sessionActive ? waitingMusicLabels[root.lang] || waitingMusicLabels.en : text.waiting);
     e("artist").textContent = p.artist || "";
     e("album").textContent = p.album || "";
     const next=p.up_next;
@@ -972,9 +1261,10 @@
   function connect() {
     if (ended) return;
     snapshotAccepted=false; reportStatus("connecting");
+    e("state").hidden=false;
     e("state").textContent=text.connecting;
     const active = new WebSocket(url()); socket=active;
-    active.onopen=() => { if (active !== socket || ended) return; attempts=0; e("state").textContent=text.live; };
+    active.onopen=() => { if (active !== socket || ended) return; attempts=0; };
     active.onmessage=({data}) => {
       if (active !== socket || ended) return;
       try {
@@ -1016,7 +1306,7 @@
   function stopHost() {
     clearLiveStatus();
     clearSessionChange();
-    displayViewRevision=-1; displayViewPending=false;
+    displayViewRevision=-1;
     reportStatus("stopped","host_stop"); snapshotAccepted=false; statusGeneration=null;
     ended=true; broadcastToken=null;
     if (reconnectTimer) window.clearTimeout(reconnectTimer); reconnectTimer=undefined;
@@ -1046,20 +1336,6 @@
       window.addEventListener("djconnect-cast-legacy-mode",()=>{const wasDisplay=displayHost;stopHost();displayHost=false;if(wasDisplay)layoutDisplay(false);});
     }
     window.addEventListener("djconnect-live-status",({detail})=>renderLiveStatus(detail));
-    window.addEventListener("djconnect-display-view-result",({detail})=>{
-      displayViewPending=false;
-      adoptDisplayView(detail);
-      renderDisplayViewButtons();
-    });
-    for(const mode of displayViewModes){
-      const button=e("display-view-"+mode);
-      if(button)button.addEventListener("click",()=>{
-        if(button.hidden || displayViewPending || !projection.view || projection.view.mode===mode)return;
-        displayViewPending=true;
-        renderDisplayViewButtons();
-        window.dispatchEvent(new CustomEvent("djconnect-display-view-select",{detail:mode}));
-      });
-    }
     window.addEventListener("djconnect-display-locale",({detail}) => {
       displayLocale=typeof detail==="string" && /^(en|nl|de|fr|es)$/.test(detail) ? detail : "";
       const state=e("state");
@@ -1123,7 +1399,7 @@
       const labels=detail.session_presentation || {};
       sessionId=detail.session.session_id; ended=false; snapshotAccepted=true;
       if(focusedOverlay && !(detail.shared_flow||[]).concat(detail.dj_moments||[]).some(item=>item.moment_id===focusedMomentId))clearSharedFocus();
-      apply({...detail,view:projection.view,session:{...detail.session,selected_mood:labels.mood,dj_persona:labels.persona,selected_presence:labels.presence}});
+      apply({...detail,view:confirmedDisplayView(detail.view),session:{...detail.session,selected_mood:labels.mood,dj_persona:labels.persona,selected_presence:labels.presence}});
       e("state").textContent=text.live;
     });
   }

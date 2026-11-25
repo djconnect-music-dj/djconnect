@@ -11,7 +11,7 @@ CADENCES = ("track", "900", "1800", "3600")
 COMPOSITIONS = ("central", "free", "full")
 MATTES = ("off", "matching", "contrast")
 DEFAULTS = dict(enabled=False, selected_targets=[], composition="central",
-                matte="off", cadence="1800", cadence_overrides={})
+                matte="off", cadence="1800", cadence_overrides={}, show_track_title=False)
 IDENTITY = {"contract_version", "device_id", "client_type"}
 FIELDS = {
     "read": set(),
@@ -81,7 +81,8 @@ def validate_screen(screen):
 def patched(current, patch):
     need(type(patch) is dict and bool(patch) and set(patch) <= set(DEFAULTS))
     result = {**deepcopy(current), **deepcopy(patch)}
-    need(type(result["enabled"]) is bool)
+    result.setdefault("show_track_title", False)
+    need(type(result["enabled"]) is bool and type(result["show_track_title"]) is bool)
     targets = result["selected_targets"]
     need(type(targets) is list and len(targets) <= 16 and len(set(targets)) == len(targets)
          and all(identifier(x) for x in targets))
@@ -98,7 +99,9 @@ def fresh_state():
 
 
 def profile(state, owner):
-    return deepcopy(state["profiles"].get(owner, {"revision": 0, "preferences": DEFAULTS}))
+    result = deepcopy(state["profiles"].get(owner, {"revision": 0, "preferences": DEFAULTS}))
+    result["preferences"].setdefault("show_track_title", False)
+    return result
 
 
 def apply_update(state, owner, binding, data, now):

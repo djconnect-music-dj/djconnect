@@ -129,6 +129,8 @@ license; its full upstream license and source/archive SHA256 are preserved in
 `tools/branding/fonts/LICENSE.txt` and `PROVENANCE.md`. Official source:
 https://github.com/rsms/inter/releases/tag/v4.1. Outlined wordmarks are documents
 produced using the font; SVG image marks embed the owner-approved raster source.
+Music Canvas bundles the same unmodified font for rendering track titles in
+`custom_components/djconnect/music_canvas_assets/`, alongside its SIL license.
 
 The offline asset generator uses [Pillow13.0.0](https://pypi.org/project/pillow/13.0.0/)
 (MIT-CMU/HPND) and [fonttools4.67.0](https://pypi.org/project/fonttools/4.67.0/)

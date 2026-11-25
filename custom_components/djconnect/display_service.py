@@ -265,6 +265,7 @@ class DisplayAdmissionService:
     def _artwork(self, state, args):
         from .display_delivery import display_live_hub, qualified_artwork
         from .display_projection import projection_release_guard, shared_snapshot
+        from .horizon_preview import project
 
         reference = args.pop("reference")
         display = state.authorize(**args)
@@ -272,6 +273,7 @@ class DisplayAdmissionService:
         found = qualified_artwork(active, display, state)
         flow_item_id = None
         flow_guard = None
+        horizon = False
         if found is None or reference != found[0]:
             found = None
             for item_id in getattr(getattr(active, "broadcast", None), "display_flow_artwork", {}):
@@ -279,18 +281,27 @@ class DisplayAdmissionService:
                 if match is not None and match[0] == reference:
                     found, flow_item_id = match, item_id
                     break
+            if found is None and active is not None:
+                preview = project(active.broadcast)
+                match = qualified_artwork(active, display, state, horizon_preview=preview) if preview else None
+                if match is not None and match[0] == reference:
+                    found, horizon = match, True
             if found is None:
                 raise DisplayAdmissionError("display_artwork_unavailable", 404)
             snapshot = shared_snapshot(active, display, state)
             if not any(item.get("artwork", {}).get("reference") == reference
-                       for item in [*snapshot["shared_flow"], *snapshot.get('observed_playback', [])]):
+                       for item in [*snapshot["shared_flow"], *snapshot.get('observed_playback', []),
+                                    snapshot.get("horizon_preview", {})]):
                 raise DisplayAdmissionError("display_artwork_unavailable", 404)
             flow_guard = projection_release_guard(active, display, state, snapshot)
         asset = found[1]
 
         def guard():
             current = self.manager.current_active(display.owner.profile_id)
-            match = qualified_artwork(current, display, state, flow_item_id=flow_item_id)
+            preview = project(current.broadcast) if horizon and current is not None else None
+            if horizon and preview is None:
+                return False
+            match = qualified_artwork(current, display, state, flow_item_id=flow_item_id, horizon_preview=preview)
             return (match is not None and match[0] == reference and match[1] is asset
                     and (flow_guard is None or flow_guard()))
         complete = display_live_hub(self.manager).reserve_artwork(display.display_id)

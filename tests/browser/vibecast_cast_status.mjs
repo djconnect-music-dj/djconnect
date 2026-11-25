@@ -21,6 +21,21 @@ const handoff=(id='a'.repeat(32),session='session-a')=>({kind:'vibecast_handoff'
 const snapshot=(session='session-a',moments=[])=>({type:'snapshot',session_id:session,capabilities:{view_broadcast:true,owner_controls:false},snapshot:{schema_version:1,session:{session_id:session,locale:'en'},broadcast:{snapshot_watermark:1},playback:{title:'Private track title',item_id:'track'},dj_moments:moments}});
 const states=h=>h.sent.map(m=>m.data.state);
 test('CAF initializes namespace before start and installs listener only when ready',()=>{const h=harness();assert.equal(h.options.customNamespaces['urn:x-cast:com.djconnect.vibecast.v1'],'JSON');assert.deepEqual(h.sent,[]);h.ready();});
+test('the header shows connection status only outside an accepted session',()=>{
+ const h=harness();
+ h.ready();
+ h.message(handoff());
+ const state=h.elements.get('state');
+ const socket=h.sockets[0];
+ socket.onopen();
+ assert.equal(state.hidden,false);
+ assert.equal(state.textContent,'Connecting');
+ h.frame(socket,snapshot());
+ assert.equal(state.hidden,true);
+ h.frame(socket,{type:'event',data:{session_id:'session-a',delivery_sequence:2,event_type:'runtime_ended',payload:{}}});
+ assert.equal(state.hidden,false);
+ assert.equal(state.textContent,'Idle');
+});
 test('socket open is not HA acceptance; accepted Silence is active presentation',()=>{const h=harness();h.ready();h.message(handoff());assert.deepEqual(states(h),['receiver_ready','connecting']);h.sockets[0].onopen();assert.equal(states(h).includes('presenting'),false);h.frame(h.sockets[0],snapshot());assert.deepEqual(states(h).slice(-2),['snapshot_accepted','presenting']);assert.equal(h.sent.at(-1).data.presentation,'silence');for(const m of h.sent){assert.equal(m.id,'sender-a');assert.equal(m.data.handoff_id,'a'.repeat(32));assert.equal(m.data.session_id,'session-a');assert.equal(m.data.lease_ms,15000);assert.ok(!JSON.stringify(m).includes('synthetic-token'));assert.ok(!JSON.stringify(m).includes('Private track'));}});
 test('same-track updates report Moment and expiry reports Silence without losing readiness',()=>{const h=harness();h.ready();h.message(handoff());h.frame(h.sockets[0],snapshot('session-a',[{moment_id:'m',summary:'Private persona',playback_item_id:'track',created_at:new Date().toISOString(),presentation_intent:{maximum_duration_seconds:1}}]));assert.equal(h.sent.at(-1).data.presentation,'moment');assert.ok(!JSON.stringify(h.sent).includes('Private persona'));});
 test('wrong Session/incompatible/auth-error cannot report accepted snapshot',()=>{for(const mode of ['wrong','schema','auth']){const h=harness();h.ready();h.message(handoff());let frame=snapshot();if(mode==='wrong')frame.session_id='wrong';if(mode==='schema')frame.snapshot.schema_version=9;if(mode==='auth')frame={type:'error',error:'private-token-reason'};h.frame(h.sockets[0],frame);assert.equal(states(h).includes('snapshot_accepted'),false);if(mode!=='wrong')assert.equal(h.sent.at(-1).data.state,'error');}});

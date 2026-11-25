@@ -13,7 +13,8 @@
     "composition": "central",
     "matte": "off",
     "cadence": "1800",
-    "cadence_overrides": {}
+    "cadence_overrides": {},
+    "show_track_title": false
   },
   "targets": [
     {

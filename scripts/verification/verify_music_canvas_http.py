@@ -40,6 +40,7 @@ async def qualify(hass, manager, history, request, client):
         print(json.dumps({"canvas_exception_frames": trace_rows}))
     assert code == 200, first
     assert first["preferences"]["enabled"] is False and first["revision"] == 0
+    assert first["preferences"]["show_track_title"] is False
     assert first["can_manage_devices"] is False
     denied, code = await call("read", authorized=False)
     assert code == 401, denied
@@ -208,13 +209,17 @@ async def qualify(hass, manager, history, request, client):
         failing.add("samsung:fixture-a")
         latest, code = await call("read")
         changed, code = await call("update", dict(binding=binding, operation_id=str(uuid.uuid4()),
-            expected_revision=latest["revision"], patch={"matte": "contrast"}))
-        assert code == 200
+            expected_revision=latest["revision"], patch={"matte": "contrast", "show_track_title": True}))
+        assert code == 200 and changed["preferences"]["show_track_title"] is True
         await runtime.tick()
         await runtime.jobs["profile-a"]
         assert len(generations) == 2, "matte change regenerated instead of composing"
         assert runtime.states["samsung:fixture-a"] == "canvas_device_offline"
         assert runtime.states["samsung:fixture-b"] == "displayed", "one offline screen blocked another"
+        titled = (await runtime.repository.read())["devices"]["samsung:fixture-b"]
+        untitled = rendered["devices"]["samsung:fixture-b"]
+        assert titled["presentation"] == ["central", "contrast", True]
+        assert titled["preview"] != untitled["preview"] and titled["source_image"] == untitled["source_image"]
         failing.clear()
         runtime.next_probe.clear()  # Isolate later cases from the deliberate offline backoff.
         # A physically running executor retains its effect slot through repeated cancellation.
@@ -622,7 +627,7 @@ async def qualify(hass, manager, history, request, client):
             "requests": calls, "actual_sqlite": True, "paired_tls": True,
             "native_switchbot_schema": True, "samsung_upload_select_separate": True,
             "samsung_off_no_upload": True, "synthetic_image_generations": len(generations),
-            "shared_samsung_generation": True, "matte_reuses_source": True,
+            "shared_samsung_generation": True, "matte_reuses_source": True, "track_title_reuses_source": True,
             "cross_profile_preview_denied": True, "offline_target_isolated": True,
             "late_model_after_session_end_denied": True, "admin_deletion_withdraws_management": True,
             "failed_cleanup_and_explicit_forget_anyway": True,

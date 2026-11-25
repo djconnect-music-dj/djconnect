@@ -72,7 +72,16 @@ fields and return private no-store responses. Every request has
 
 Preferences: enabled=false, selected_targets=[], composition=central,
 matte=off, cadence=1800; composition central/free/full, matte off/matching/contrast,
-cadence track/900/1800/3600. cadence_overrides contains selected stable IDs only.
+cadence track/900/1800/3600 applies to all selected screens in the Profile.
+The optional v1 preference `show_track_title` defaults to false for existing
+Profiles. Core adds the confirmed playback title to the rendered artwork only
+when enabled. With a matte it adjusts the dominant artwork color for contrast
+and centers the title in the bottom matte band. Without a matte it chooses
+white-on-black or black-on-white outlined text based on the artwork immediately
+behind the title. Changing the toggle
+can recompose the current Profile's cached image without a new provider request.
+The v1 compatibility field `cadence_overrides` accepts selected stable IDs
+only. Core schedules every screen using the shared `cadence` value.
 Screen dimensions and orientation carry provenance; unknown values remain unknown.
 
 ## Runtime and safety
@@ -115,6 +124,9 @@ display evidence exists. A submitted cloud job cannot be recalled by forgetting.
 
 Keep only current previews and in-flight shared assets, bounded leases/retry,
 reference-aware cleanup and compact provenance/remote ownership. No gallery.
+When two Samsung uploads are recorded and a selection acknowledgement was
+missed, Core can recover capacity after the paired TV verifies the newest
+owned upload is on screen. It retires only the older Core-owned upload.
 Remote cleanup defaults off. Failed cleanup retains pairing until the user
 explicitly chooses allow_remaining_art; then remove local registration, selected
 references and leases, honestly reporting remaining art.
