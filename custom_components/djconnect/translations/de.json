@@ -1871,13 +1871,16 @@
           "description": "Wähle einen bereits in Home Assistant eingerichteten AI Art Frame."
         },
         "width": {
-          "name": "Breite in Pixeln"
+          "name": "Breite in Pixeln",
+          "description": "Gib die Bildschirmbreite in Pixeln ein."
         },
         "height": {
-          "name": "Höhe in Pixeln"
+          "name": "Höhe in Pixeln",
+          "description": "Gib die Bildschirmhöhe in Pixeln ein."
         },
         "orientation": {
-          "name": "Bildschirmausrichtung"
+          "name": "Bildschirmausrichtung",
+          "description": "Wähle aus, wie der Rahmen montiert ist."
         }
       }
     },

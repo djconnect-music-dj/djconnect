@@ -1871,13 +1871,16 @@
           "description": "Elige un AI Art Frame ya añadido a Home Assistant."
         },
         "width": {
-          "name": "Anchura en píxeles"
+          "name": "Anchura en píxeles",
+          "description": "Introduce la anchura de la pantalla en píxeles."
         },
         "height": {
-          "name": "Altura en píxeles"
+          "name": "Altura en píxeles",
+          "description": "Introduce la altura de la pantalla en píxeles."
         },
         "orientation": {
-          "name": "Orientación de la pantalla"
+          "name": "Orientación de la pantalla",
+          "description": "Elige la orientación en la que está colocado el marco."
         }
       }
     },

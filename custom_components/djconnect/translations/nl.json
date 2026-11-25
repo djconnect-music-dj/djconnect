@@ -1871,13 +1871,16 @@
           "description": "Kies een AI Art Frame dat al aan Home Assistant is toegevoegd."
         },
         "width": {
-          "name": "Breedte in pixels"
+          "name": "Breedte in pixels",
+          "description": "Vul de breedte van het scherm in pixels in."
         },
         "height": {
-          "name": "Hoogte in pixels"
+          "name": "Hoogte in pixels",
+          "description": "Vul de hoogte van het scherm in pixels in."
         },
         "orientation": {
-          "name": "Schermstand"
+          "name": "Schermstand",
+          "description": "Kies hoe de fotolijst is opgehangen."
         }
       }
     },

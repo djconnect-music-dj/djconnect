@@ -1871,13 +1871,16 @@
           "description": "Choisissez un AI Art Frame déjà ajouté à Home Assistant."
         },
         "width": {
-          "name": "Largeur en pixels"
+          "name": "Largeur en pixels",
+          "description": "Saisissez la largeur de l’écran en pixels."
         },
         "height": {
-          "name": "Hauteur en pixels"
+          "name": "Hauteur en pixels",
+          "description": "Saisissez la hauteur de l’écran en pixels."
         },
         "orientation": {
-          "name": "Orientation de l’écran"
+          "name": "Orientation de l’écran",
+          "description": "Choisissez l’orientation dans laquelle le cadre est installé."
         }
       }
     },
