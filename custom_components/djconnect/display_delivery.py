@@ -251,7 +251,16 @@ def schedule_artwork(hass, manager, observed, result, source_sample, *, occurren
     shares = admitted_shares()
     if not shares:
         active.broadcast.display_artwork = None
-        getattr(active.broadcast, "display_flow_artwork", {}).clear()
+        # A display can reconnect under the same share. Keep only covers
+        # that still belong to an active share and valid original source.
+        now = state._clock()
+        live_shares = {(share.share_id, share.generation) for share in state._shares.values()
+                       if share.owner.session_id == observed.session_id
+                       and now < share.deadline and share.owner.valid()}
+        retained = getattr(active.broadcast, "display_flow_artwork", {})
+        for item_id, asset in tuple(retained.items()):
+            if now >= asset.flow_deadline or not asset.shares & live_shares or not asset.source_current():
+                del retained[item_id]
         return
     if source_sample is None or not source_sample.current():
         return
@@ -307,6 +316,12 @@ async def _prepare_artwork(hass, state, broadcast, item_id, source_url, url, cur
     flow_deadline = observed_at + FLOW_ARTWORK_LIFETIME
     if horizon_deadline is not None:
         deadline = flow_deadline = min(deadline, horizon_deadline)
+
+    def can_finish():
+        if horizon_deadline is not None:
+            return current()
+        return state._clock() < flow_deadline and source_current()
+
     try:
         if not current() or not admitted_shares():
             return
@@ -314,36 +329,39 @@ async def _prepare_artwork(hass, state, broadcast, item_id, source_url, url, cur
             async with async_get_clientsession(hass).get(
                 url, allow_redirects=False, timeout=ClientTimeout(total=8)
             ) as response:
-                if response.status != 200 or not current():
+                if response.status != 200 or not can_finish():
                     return
                 body = bytearray()
                 async for chunk in response.content.iter_chunked(65536):
-                    if len(body) + len(chunk) > MAX_DISPLAY_ARTWORK_BYTES or not current():
+                    if len(body) + len(chunk) > MAX_DISPLAY_ARTWORK_BYTES or not can_finish():
                         return
                     body.extend(chunk)
             _, witness = await session_images(hass).decode(_decode_prepared, bytes(body))
             shares = admitted_shares()
             now = state._clock()
-            if witness is not None and current() and shares and now < deadline:
-                wall = datetime.now(timezone.utc)
-                slot = "display_artwork" if horizon_deadline is None else "display_horizon_artwork"
-                previous = getattr(broadcast, slot, None)
-                # Refreshing a genuinely re-read, identical qualified cover is
-                # not a new image. Preserve its reference without reusing an
-                # old observation, owner/source grant or deadline.
-                unchanged = (previous is not None and previous.item_id == item_id
-                    and previous.source_url == source_url and previous.source_current()
-                    and previous.mime == witness.mime and previous.body == witness.body)
-                asset = DisplayArtwork(
-                    previous.nonce if unchanged else secrets.token_hex(16),
-                    item_id, source_url, witness.body, witness.mime, deadline,
-                    (wall + timedelta(seconds=deadline-now)).isoformat(), flow_deadline,
-                    (wall + timedelta(seconds=flow_deadline-now)).isoformat(),
-                    source_current, frozenset(shares), current)
+            if witness is None or not shares or not can_finish():
+                return
+            current_eligible = now < deadline and current()
+            if horizon_deadline is not None and not current_eligible:
+                return
+            wall = datetime.now(timezone.utc)
+            slot = "display_artwork" if horizon_deadline is None else "display_horizon_artwork"
+            retained = getattr(broadcast, "display_flow_artwork", {})
+            previous = retained.get(item_id) if horizon_deadline is None else getattr(broadcast, slot, None)
+            # Preserve the reference for identical pixels that were re-read
+            # with a valid source. A new cover still gets its own reference.
+            unchanged = (previous is not None and previous.item_id == item_id and previous.source_url == source_url
+                and previous.source_current() and previous.mime == witness.mime
+                and previous.body == witness.body)
+            asset = DisplayArtwork(
+                previous.nonce if unchanged else secrets.token_hex(16),
+                item_id, source_url, witness.body, witness.mime, deadline,
+                (wall + timedelta(seconds=deadline-now)).isoformat(), flow_deadline,
+                (wall + timedelta(seconds=flow_deadline-now)).isoformat(),
+                source_current, frozenset(shares), current)
+            if current_eligible:
                 setattr(broadcast, slot, asset)
-                if horizon_deadline is not None:
-                    return
-                retained = getattr(broadcast, "display_flow_artwork", {})
+            if horizon_deadline is None:
                 retained = {key: value for key, value in retained.items()
                             if key != item_id and value.flow_deadline > now and value.source_current()}
                 retained[item_id] = asset

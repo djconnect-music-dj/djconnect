@@ -375,8 +375,10 @@ class DisplayServiceTests(unittest.IsolatedAsyncioTestCase):
     async def test_current_album_bytes_are_bound_to_one_display_and_track(self):
         from PIL import Image
         from homeassistant.helpers import aiohttp_client
-        from custom_components.djconnect.display_delivery import _prepare_artwork
+        from custom_components.djconnect.display_delivery import _prepare_artwork, schedule_artwork
+        from custom_components.djconnect.display_observed import capture
         from custom_components.djconnect.display_transport import _FencedResponse
+        from custom_components.djconnect.surface_status_samples import OriginalSample
         from custom_components.djconnect import image_proxy
 
         async def display_credentials(share=None):
@@ -391,7 +393,7 @@ class DisplayServiceTests(unittest.IsolatedAsyncioTestCase):
                 media_identity="spotify:track:" + identifier, title="Track", album="Album")
             return self.fixture.active.broadcast.state.playback
 
-        async def prepare(playback, color):
+        async def prepare(playback, color, *, after_first_chunk=None, source_current=lambda: True):
             buf = BytesIO()
             Image.new("RGB", (32, 32), color).save(buf, format="PNG")
             body = buf.getvalue()
@@ -399,6 +401,8 @@ class DisplayServiceTests(unittest.IsolatedAsyncioTestCase):
             class Content:
                 async def iter_chunked(self, _size):
                     yield body[:32]
+                    if after_first_chunk is not None:
+                        await after_first_chunk()
                     yield body[32:]
 
             class Response:
@@ -424,7 +428,7 @@ class DisplayServiceTests(unittest.IsolatedAsyncioTestCase):
                   patch.object(image_proxy, "session_images", return_value=SimpleNamespace(decode=decoder))):
                 await _prepare_artwork(hass, state, self.fixture.active.broadcast, playback.item_id,
                                playback.source_url, cdn,
-                               lambda: True, lambda: True,
+                               lambda: broadcast.state.playback.item_id == playback.item_id, source_current,
                                lambda: {(share.share_id, share.generation)}, state._clock())
             return body
 
@@ -437,6 +441,8 @@ class DisplayServiceTests(unittest.IsolatedAsyncioTestCase):
 
         binding, headers = await display_credentials()
         state = self.manager._display_admission
+        active = self.fixture.active
+        broadcast = active.broadcast
         share = state._shares[state._displays[binding["display_id"]].share_id]
         first_bytes = await prepare(await observe("A" * 22), "red")
         first = (await snapshot(binding, headers))["artwork"]
@@ -468,11 +474,50 @@ class DisplayServiceTests(unittest.IsolatedAsyncioTestCase):
                 media.release()
         finally:
             media.complete()
+        # A normal observation while the receiver reconnects must not empty
+        # the original share's retained art.
+        retained = dict(broadcast.display_flow_artwork)
+        schedule_artwork(self.fixture.hass, self.manager,
+                         SimpleNamespace(owner_profile_id="profile-a", session_id=active.session_id),
+                         SimpleNamespace(), None)
+        self.assertEqual(broadcast.display_flow_artwork, retained)
+        self.assertIn(playback.item_id, retained)
+
         other, other_headers = await display_credentials({
             "mode": "existing", "share_id": share.share_id, "share_generation": share.generation,
         })
         with self.assertRaises(self.module.DisplayAdmissionError):
             await self.call("artwork", other | {"reference": second["reference"]}, headers=other_headers)
+
+        third = await observe("C" * 22)
+        source_live = True
+
+        def source_current():
+            return source_live
+
+        witness = SimpleNamespace(current=lambda *args, **kwargs: source_current())
+        sample = OriginalSample(witness, 1795467000000, state._clock(), "playing", False, "fixture")
+        capture(state, active, sample, "spotify:track:" + "C" * 22)
+
+        async def switch_while_loading():
+            await observe("D" * 22)
+
+        third_bytes = await prepare(third, "green", after_first_chunk=switch_while_loading,
+                                    source_current=source_current)
+        projected = await snapshot(other, other_headers)
+        self.assertNotIn("artwork", projected)
+        self.assertEqual(projected["observed_playback"][0]["playback_item_id"], third.item_id)
+        retained_cover = projected["observed_playback"][0]["artwork"]
+        retained_media = await self.call("artwork", other | {"reference": retained_cover["reference"]},
+                                         headers=other_headers)
+        try:
+            self.assertEqual(retained_media.media, (third_bytes, "image/png"))
+            retained_media.release()
+            source_live = False
+            with self.assertRaises(self.module.DisplayAdmissionError):
+                retained_media.release()
+        finally:
+            retained_media.complete()
 
     async def test_upcoming_artwork_read_is_bound_to_the_live_horizon_preview(self):
         from custom_components.djconnect.display_delivery import DisplayArtwork
