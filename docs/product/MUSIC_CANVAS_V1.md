@@ -66,7 +66,7 @@ Dit is geen verplicht plakboek of vaste albumhoes-op-achtergrondpipeline. De eer
 
 **Compositie:** `Centraal · Vrij · Beeldvullend`. Dit zijn ruimtelijke richtingen, geen rustige/gemiddelde/intense varianten. Bij vrije generatieve kunst slaat Centraal op het focuspunt/kunstvlak, niet op een verplichte albumhoes. Native beeldverhouding behouden; geen vierkante bron ongedocumenteerd uitrekken tot 16:9.
 
-**Passe-partout:** één driewegkeuze `Uit · Passend · Contrasterend`. Passend = rustige tint passend bij compositie/palet; Contrasterend = bewust contrasterende neutrale rand, bijvoorbeeld zwart. Geen vaste dikte-/smal-/breed-keuze of aparte dikteslider; maatvoering volgt de compositie/het doelprofiel. Passe-partout rondom het werk, niet als crop/overlay over inhoud. Generieke compositor levert dit; native adaptermatte alleen indien equivalent en zonder dubbele rand.
+**Passe-partout:** één driewegkeuze `Uit · Passend · Contrasterend`. Passend = rustige tint passend bij compositie/palet; Contrasterend = bewust contrasterende neutrale rand, bijvoorbeeld zwart. Per scherm is bij Passend of Contrasterend de dikte instelbaar op Smal, Gemiddeld of Breed. Gemiddeld behoudt de bestaande standaarddikte. De keuze wordt bewaard als het passe-partout uit staat. Passe-partout rondom het werk, niet als crop/overlay over inhoud. Generieke compositor levert dit; native adaptermatte alleen indien equivalent en zonder dubbele rand.
 
 **Geen intensiteits-/dynamiekslider en geen extra artworkgrootte-slider in Music Canvas v1.** Bestaande lokale VibeScape-bediening blijft ongemoeid. Presentatie aanpassen mag niet onnodig een nieuwe modelgeneratie starten; passe-partout is waar mogelijk deterministische heropmaak.
 

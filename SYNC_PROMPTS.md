@@ -35,7 +35,10 @@ registered screen IDs to `matte` and `show_track_title`. When the read advertise
 from each screen row, independent of selection. Keep settings when a screen
 is deselected. Composition and interval inherit the previously saved values.
 Samsung also inherits the previous matte and title values, while SwitchBot
-starts with both options off.
+starts with both options off. When the read advertises `per_screen_matte_size`,
+a screen entry also accepts optional `matte_size` values `small`, `medium`, or
+`large`. Missing size retains the medium border. Keep the saved size when
+the mat is turned off and apply it again when a mat is selected.
 
 ## 2026-11-22 — Music Origin Moment v1 consumer contract
 
