@@ -9,7 +9,7 @@
       "predecessor": "examples/client_contracts/artist_collections_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-60c8ae6c.json",
       "predecessor_sha256": "f748bf4b93a8cc6b7314d3bea3744219432988ac43c1e76cf7c8b59b9475615b",
       "current": "examples/client_contracts/artist_collections_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---e36dfff0.json",
-      "current_sha256": "66a066d8b22adf574d1feb9bc61eec8ade2ca039dd1ad32647a69f8eb8ad59f5",
+      "current_sha256": "67803ef853ae2a148c772af9283d6820d1198f0fd5bd543a72350aa96d532394",
       "field_provenance": {
         "harness_pins": "actual executed current harness/helper map",
         "receipt": "actual new raw receipt",
@@ -22,7 +22,7 @@
       "predecessor": "examples/client_contracts/ask_dj_recording_production_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-8fb9e051.json",
       "predecessor_sha256": "91b1749e7912ed7bd236b7a6419e16323b655b42b4873a026f667c8f99b219fb",
       "current": "examples/client_contracts/ask_dj_recording_production_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---a6c15678.json",
-      "current_sha256": "b545affbdb36917ce8ad824882acd4cf5b7e523c635f51f7c2a5c827274b08bb",
+      "current_sha256": "80116b2f9e6f7c3ad742c507511d3dcc2f2fe4430303d5a07e70fbb5aa44a196",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -36,7 +36,7 @@
       "predecessor": "examples/client_contracts/bulletin_manual_speech_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-0269880e.json",
       "predecessor_sha256": "d71ff10b09f22f3779517f166bd254b7c32e6a5e557421dfae349ce524c64f1b",
       "current": "examples/client_contracts/bulletin_manual_speech_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---8bd5b955.json",
-      "current_sha256": "05e52853f0901d8390802c5b0a5e4e681ce4e25dcc9e22303085d3b650b7607e",
+      "current_sha256": "539e5a782e8a39c14ac7dc7f18f8dd6d9f9929b18d63607ecbf58123e70837d7",
       "field_provenance": {
         "harness_pins": "actual executed current harness/helper map",
         "receipt": "actual new raw receipt",
@@ -49,7 +49,7 @@
       "predecessor": "examples/client_contracts/for_you_late_confirmation_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-0e58051d.json",
       "predecessor_sha256": "754eba7f106c9b81ff66404f4c75c43a99e00d71f6851a5b9840d030b26ce30c",
       "current": "examples/client_contracts/for_you_late_confirmation_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---c82e2341.json",
-      "current_sha256": "6d5319758f53b064a4b77f06fa75ab94a9e001976302a925bc0c4d411478d8cf",
+      "current_sha256": "7c91d7f6e79b315ed06289af01bc58a718dec1752db6183d69168d15177d4ef0",
       "field_provenance": {
         "harness_pins": "actual executed current harness/helper map",
         "receipt": "actual new raw receipt",
@@ -62,7 +62,7 @@
       "predecessor": "examples/client_contracts/installation_management_preparation_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-971e640e.json",
       "predecessor_sha256": "bcc9f77da45e0dc3a5c5b872281e8ef825b29a2976f1ab3cb5d1248fa303e3c3",
       "current": "examples/client_contracts/installation_management_preparation_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---14386554.json",
-      "current_sha256": "a0fe107e58203887e1477b8962dcccb0d4947772f697ed13714c0ad7e2dc54b0",
+      "current_sha256": "9a06307b3f875c78969cfbfb3f350cf38390b1c7c24eca68cb40f7879de53bb3",
       "field_provenance": {
         "actual_HA_auth_users_tokens_middleware": "actual raw field",
         "cases": "actual raw field",
@@ -78,7 +78,7 @@
       "predecessor": "examples/client_contracts/live_impression_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-0dbdae73.json",
       "predecessor_sha256": "a58a8b3ac3210cad220d99a925bed0ebf9d02c053fb68f3a577236ffb1d2a9d1",
       "current": "examples/client_contracts/live_impression_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---d077c79a.json",
-      "current_sha256": "eaeeb72ed01bd0473a6c7157ba4b4132406a5b2ebc96ac20c3ee1db4f6ba814a",
+      "current_sha256": "41921f73b46f2bfce48f475729d1cb1d66b9cf9225cdb5eb99740f747d0d1629",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -94,7 +94,7 @@
       "predecessor": "examples/client_contracts/passive_field_expiry_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-1dae4a17.json",
       "predecessor_sha256": "ac965e3e23986dfc60f2aab2c1c3efb58f6e38210c6d756325f249469eb113ed",
       "current": "examples/client_contracts/passive_field_expiry_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---e1368abc.json",
-      "current_sha256": "b5a0614595d5e624146b72bf860e93ff33065faa6e9b03fa140cf4cc36b4f4af",
+      "current_sha256": "edb11a8946d559db702a2bde5cc6a536816c7820906a7d0f9163afc1f6a8f27e",
       "field_provenance": {
         "harness_pins": "actual executed current harness/helper map",
         "receipt": "actual new raw receipt",
@@ -107,7 +107,7 @@
       "predecessor": "examples/client_contracts/profile_spotify_reconnect_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-d2d71583.json",
       "predecessor_sha256": "3c1d72a6fa47cf2b8b3a06f1fe77017c22bff264051ee1f4d64f92985418d9a2",
       "current": "examples/client_contracts/profile_spotify_reconnect_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---53a7b5a0.json",
-      "current_sha256": "844961c6875f92b2e238e026ccaa8c528d32dab457c58022d8e72e56fbe81507",
+      "current_sha256": "d99f0c86494b4ad25a8642934a099035d3d43e8c5eb21e1a97f6b25761c62d04",
       "field_provenance": {
         "canonical_view_probe": "actual independent authority-view probe",
         "harness_pins": "actual executed current harness/helper map",
@@ -122,7 +122,7 @@
       "predecessor": "examples/client_contracts/session_for_you_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-787b7507.json",
       "predecessor_sha256": "1047ce9f002b2629dbdf744f9d1c80c9f9fff555299914c59739ce48e7d68b5f",
       "current": "examples/client_contracts/session_for_you_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---06de29ad.json",
-      "current_sha256": "a90f5809474c4a787fff2edf931307a22711989e2eaca1b70bc220bfb0c1d485",
+      "current_sha256": "709be3ee98a2358993a7900cfb8e99e53d7c05f5f6d9f74226948be2b71b6b3e",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -136,7 +136,7 @@
       "predecessor": "examples/client_contracts/spotify_volume_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-b0a7d2fd.json",
       "predecessor_sha256": "5d60eec2da1f2b7b9a354f1f7602ad46256a5171cba2f520c695d5ce728e79ff",
       "current": "examples/client_contracts/spotify_volume_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---7ea3f0d1.json",
-      "current_sha256": "b30cd4c02271f61713ddbb9b6cf98beb3957db79f7252e922197050631a98421",
+      "current_sha256": "fc83f4f21e9269593bd9e4f77f337b2cfd5390f4d7548a6df5ebf69e987d2c1c",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -150,7 +150,7 @@
       "predecessor": "examples/client_contracts/band_members_story_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-d97531b1.json",
       "predecessor_sha256": "cdd04ab1ba75cbcfa3b8503713c6f7cf2526dabb51c7bf4634a664d3172fdbe0",
       "current": "examples/client_contracts/band_members_story_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---8f1b0107.json",
-      "current_sha256": "2c6dfab287fa1c95a16b52c1866cb9a5807ea356bf41d57426913d810d5aa4c3",
+      "current_sha256": "a32cf9641af0601075212c58a710843cc32cbe0615ad5dafd5defdccadaacb76",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -164,7 +164,7 @@
       "predecessor": "examples/client_contracts/ask_dj_question_continuity_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-e9a6f2b9.json",
       "predecessor_sha256": "824b14d90f91b30fb0349c30bcfcb5665a0716a74e5d969d84a6b9802b3ff81c",
       "current": "examples/client_contracts/ask_dj_question_continuity_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---7a474aec.json",
-      "current_sha256": "f04a3d171896aa9338fc1252451b04cfe59e8cb4421e0d784177b8705c0da3a0",
+      "current_sha256": "764d543eddd8561c5e35a4b38eec980da8d0c3058da600ec4db0efc674859fbc",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -178,7 +178,7 @@
       "predecessor": "examples/client_contracts/session_conversation_history/vibecast-active-party-mark-20261125-0261125---20261124-026-c43438f1.json",
       "predecessor_sha256": "ed3e879dfadd0c1bf6e9d8a3efbb754e77906cd4836620fffb59571e76a25cf5",
       "current": "examples/client_contracts/session_conversation_history/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---d0aa3373.json",
-      "current_sha256": "4d9f6db40729009c44ec8860ebd8c3ca5c2921e48afb806127ec113e4d290ba0",
+      "current_sha256": "2369fbab522897ae3a215a6177e3a270598a5aa04e6d6a3c485bc47b975b0a88",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -192,7 +192,7 @@
       "predecessor": "examples/client_contracts/installation_once_metadata_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-49c2dc89.json",
       "predecessor_sha256": "b1fd7dd4959e2a55ccbc9ab46eb3d25709de9af3f761eab195953143120c437c",
       "current": "examples/client_contracts/installation_once_metadata_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---be4196aa.json",
-      "current_sha256": "f45d7571e0bc107ac5bf1e6ffaf50d2e76e0252d225d46af4b9860b655ef28fd",
+      "current_sha256": "e2fbaa678101eaf598adf4959692368e07cee9c766974d072fc29b48c25de4c0",
       "field_provenance": {
         "actual_key_or_sign_effect": "actual raw field",
         "cases": "actual raw field",
@@ -208,7 +208,7 @@
       "predecessor": "examples/client_contracts/installation_principal_data_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-82e2ff80.json",
       "predecessor_sha256": "955a4f1f76e9cc00e9521d3088eb14f0896a873d90beed9e44b5434581188cd8",
       "current": "examples/client_contracts/installation_principal_data_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---8597f675.json",
-      "current_sha256": "274bd2a650b3cda18aee9b70d9f1d29f40a055deeb799c5b81b51cb225439620",
+      "current_sha256": "4bf1a3ecab298861cde3eb6c5b84ee410e956faedf2d49975dba6d79bd6d1e68",
       "field_provenance": {
         "cases": "actual raw field",
         "preceding_source_origin_cases": "actual raw field",
@@ -222,7 +222,7 @@
       "predecessor": "examples/client_contracts/passive_observation_sequence_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-6fbcd6f1.json",
       "predecessor_sha256": "fc0dc34baa4a18dbec934c3038d53ee51d3f43dd9edcda237d19ec2973cba78e",
       "current": "examples/client_contracts/passive_observation_sequence_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---ae3a0c22.json",
-      "current_sha256": "30a42a79c45704116b7ffcaa94fd85949055a8c1048de4dfb26553621c5b9ad2",
+      "current_sha256": "5d7cd26c41646b538b547ebbf2b8216e7c28af99b05770424649ebbfefddaa01",
       "field_provenance": {
         "harness_pins": "actual executed current harness/helper map",
         "receipt": "actual new raw receipt",
@@ -235,7 +235,7 @@
       "predecessor": "examples/client_contracts/personal_dj_artist_story_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-30a04741.json",
       "predecessor_sha256": "c6a971408f6a97098feff0977d6ff91e12e4bfb2dc0a7fc72223d7d4a5173bb5",
       "current": "examples/client_contracts/personal_dj_artist_story_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---2af0df0e.json",
-      "current_sha256": "f91fc0d3333601a78683654d21be58e3e78f57374388debf4c86e81faa43ecb8",
+      "current_sha256": "8f8d282936b1868f029923f86f79985fd0f8cc7d835b4e7e1eea256c6eb4aa9b",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -249,7 +249,7 @@
       "predecessor": "examples/client_contracts/settings_confirmation_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-67652a2b.json",
       "predecessor_sha256": "138a6dffdcc88f65f17c57961684d5fe8f5018f602c87d82ed3fdd0166fcd352",
       "current": "examples/client_contracts/settings_confirmation_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---b8b0ac6e.json",
-      "current_sha256": "51017830ffbf8413d7da1a4b38286f5c78146213740b3dd11b2943320afbc1eb",
+      "current_sha256": "615910ab45d879344efeed560fbe894db62f7ba3a938d1f24c2c22da131b9961",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -263,7 +263,7 @@
       "predecessor": "examples/client_contracts/surface_push_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-61a8c3c8.json",
       "predecessor_sha256": "6914e22ef8ef7aa6c552e871f2cea5a1d774d3cc78afd6f3e5566f5d1eb94206",
       "current": "examples/client_contracts/surface_push_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---e61e3bc3.json",
-      "current_sha256": "41aad1151ffcbfef73bf4b1fb792b760260cf14454ecfb8794a4bfade6743935",
+      "current_sha256": "7e3059c776c9580fafd3d2e87e976e5de31a26b35428cd112d539d9b3d72b900",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -277,7 +277,7 @@
       "predecessor": "examples/client_contracts/source_origin_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-0ae40527.json",
       "predecessor_sha256": "9dc85b67cb3d722fa9ed4dafe88e0cf9987072744d5f064ed1ad1c064c75ee55",
       "current": "examples/client_contracts/source_origin_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---6e3cbac5.json",
-      "current_sha256": "aa1c6ffe3588ba87355098efd09c90f74a61a4f93ceb3783cdb82c0acccce910",
+      "current_sha256": "fff8ddb3bee3afcbfff43897ee692dcefdde3894353e6bda9f743ff7da89714c",
       "field_provenance": {
         "af201_native_mapping": "actual raw field",
         "cases": "actual raw field",
@@ -292,7 +292,7 @@
       "predecessor": "examples/client_contracts/ask_dj_help_context_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-ad1fce51.json",
       "predecessor_sha256": "e9fefcd0fd62f52f2770af8755209b510ec44eeacaba676e5556076100249383",
       "current": "examples/client_contracts/ask_dj_help_context_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---a4c75d0e.json",
-      "current_sha256": "e5f435f39ff899da6af462131bd6fe2a8c166df534d5de03e0a9322923554f2c",
+      "current_sha256": "8b498c1639e6753fbf159e81f7cfd5d71f4979d84eae5411024b65700fc371b4",
       "field_provenance": {
         "cases": "actual raw field",
         "external_provider_calls": "actual raw field",
@@ -308,7 +308,7 @@
       "predecessor": "examples/client_contracts/current_metadata_history_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-7f88b061.json",
       "predecessor_sha256": "51eaed3bd71e25391288b73bbe65b0347ef2d10d59d2cc023ac8deea960305ea",
       "current": "examples/client_contracts/current_metadata_history_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---da8eaa72.json",
-      "current_sha256": "786202d9c84c5ffaabaa9f565d97502bb24a21b9af9cd3b7778cfff9e25b8e57",
+      "current_sha256": "d160b061e79f8ff66dafd27f29f66d30d901efc8ea5a0b08edddad4e320748c8",
       "field_provenance": {
         "harness_pins": "actual executed current harness/helper map",
         "receipt": "actual new raw receipt",
@@ -321,7 +321,7 @@
       "predecessor": "examples/client_contracts/session_for_you_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-4f0ecb32.json",
       "predecessor_sha256": "166dae5206cfb90b7b158737321f86ee1b0b01cfa2b4b75a200e7c3ece1cf38a",
       "current": "examples/client_contracts/session_for_you_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---4ab725c9.json",
-      "current_sha256": "a9f58fae27da1d5d80191772309d4c7875b09f3448d987a654dcd2663672a854",
+      "current_sha256": "ff526f82079be2c7b91eb197d5aeb420ced9a637ee2bfd914bcb4369b6e765f0",
       "field_provenance": {
         "cases": "same named actual case subset",
         "examples": "actual extension.refresh_examples",
@@ -340,7 +340,7 @@
       "predecessor": "examples/client_contracts/session_for_you_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-eb6e0705.json",
       "predecessor_sha256": "120c416e045870cf3ddb65749ae5334371baa709c165a8a18e98d8af10ba2d26",
       "current": "examples/client_contracts/session_for_you_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---27425d4f.json",
-      "current_sha256": "f5ac584ee5812c2cb830e5e522a553ef99b8330209abf0261213ec66115c9ce7",
+      "current_sha256": "63502aaa672cf9f9dd5bb729f115450f2ff6ca00973d837481cf6e294c69b23c",
       "field_provenance": {
         "cases": "same named actual case subset",
         "examples": "actual extension.output_readback_examples",
@@ -358,7 +358,7 @@
       "predecessor": "examples/client_contracts/passive_progress_v3/vibecast-active-party-mark-20261125-0261125---20261124-026-c9cf3197.json",
       "predecessor_sha256": "622f3182e3e07bf24838903e3a50a1e578236f6f00ed112a520f5870e8f7639e",
       "current": "examples/client_contracts/passive_progress_v3/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---a63d9559.json",
-      "current_sha256": "46ab31aeb700c297cdda2b2c23f503f874fdd53605c5a53bd746b0a7fd61504c",
+      "current_sha256": "0595fc93f13ebe83dff34687266f19d5e85ebcb62740efca12f46e1c99e26834",
       "field_provenance": {
         "receipt": "actual new raw receipt",
         "source_before_after_equal": "full361 manifest comparison",
@@ -370,7 +370,7 @@
       "predecessor": "examples/client_contracts/session_forecast_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-2dcf94db.json",
       "predecessor_sha256": "1e359d88b8e6727cb396e56b351caf52d1e96c976e851af477a4fd8d54c908f5",
       "current": "examples/client_contracts/session_forecast_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---f0fd3862.json",
-      "current_sha256": "fb3ca802c38b3d4ad8d5804812039525d313a3ff578ac7cd89f95974f92a7779",
+      "current_sha256": "a4ca359749905ecb8c97069df4faac356648816b451dfcef0313cc02ee5214cc",
       "field_provenance": {
         "HA_dev_writes": "actual raw field",
         "cases": "actual raw field",
@@ -385,7 +385,7 @@
       "predecessor": "examples/client_contracts/session_private_catalogue_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-a9b49e9f.json",
       "predecessor_sha256": "b725a4e1d5ebcd9e2b32328996787fe21f98188128aac352f48c117db62e8cf4",
       "current": "examples/client_contracts/session_private_catalogue_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---1a098b25.json",
-      "current_sha256": "fd03785310bc3b4ab84e745f0bea070f87ab84dc41b14e7153f1b8588c501bc7",
+      "current_sha256": "eae0247aec33935f2ee31fd5e92989a1ed71ce48f082c003beb0204fb6b1b570",
       "field_provenance": {
         "harness_pins": "actual executed current harness/helper map",
         "receipt": "actual new raw receipt",
@@ -398,7 +398,7 @@
       "predecessor": "examples/client_contracts/surface_push_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-61a8c3c8.json",
       "predecessor_sha256": "6914e22ef8ef7aa6c552e871f2cea5a1d774d3cc78afd6f3e5566f5d1eb94206",
       "current": "examples/client_contracts/surface_push_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---e61e3bc3.json",
-      "current_sha256": "41aad1151ffcbfef73bf4b1fb792b760260cf14454ecfb8794a4bfade6743935",
+      "current_sha256": "7e3059c776c9580fafd3d2e87e976e5de31a26b35428cd112d539d9b3d72b900",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -412,7 +412,7 @@
       "predecessor": "examples/client_contracts/vibescape_visual_director_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-5ea1402e.json",
       "predecessor_sha256": "53fc69597ba0622e28bcfa16acbeca4e4a40de7d6018321c69a5f211e13b4870",
       "current": "examples/client_contracts/vibescape_visual_director_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---e93da5ae.json",
-      "current_sha256": "de3a06ad3c59e837bad1f00034038d31ab557d07391deb2a78fdd0e9fa423560",
+      "current_sha256": "2ff1e2637efa61fa776d4f2252ef0778f3810c6300364a85ef6ff2c54ea07cb2",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -426,7 +426,7 @@
       "predecessor": "examples/client_contracts/ask_dj_recent_list_presentation_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-a27ceb5e.json",
       "predecessor_sha256": "e27659977e2e03c73dedb10bff7442c64e34b16b9e45ccbf5b2b6ad84496d80a",
       "current": "examples/client_contracts/ask_dj_recent_list_presentation_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---1a0653f5.json",
-      "current_sha256": "3c016c2287b8961204d6261e57811d6ee7f8f5500fd22b49aac222fadd922cb4",
+      "current_sha256": "6b862852ac492ea0f71272a0a1f024d308220a08e2dc31fed0522d210c7e81db",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -440,7 +440,7 @@
       "predecessor": "examples/client_contracts/dj_bulletin_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-64a690c6.json",
       "predecessor_sha256": "531a044f0ec85d3355ecbcce8f8161ac515eb8728804f642a87a7757f14c915b",
       "current": "examples/client_contracts/dj_bulletin_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---2a2a709d.json",
-      "current_sha256": "e09caf38ba0e3739914f3635ee0136ab9cff735f24fc3b68ac14aefe05aaa628",
+      "current_sha256": "1c1240675a392bc70bea87eab9b7ff01cff242a7759a9d45554c459899305f9a",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -454,7 +454,7 @@
       "predecessor": "examples/client_contracts/session_conversation_history/vibecast-active-party-mark-20261125-0261125---20261124-026-7bc19fb4.json",
       "predecessor_sha256": "1128baa210a651117803ad164b0d58941d996e099680dc0a2603c41942ecebc0",
       "current": "examples/client_contracts/session_conversation_history/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---75f5037a.json",
-      "current_sha256": "98006f7e4636dbc6c45b3b2e5fcf110fd3cd8f4476310409b47c114c98854059",
+      "current_sha256": "f63789a7ec7e1a426fe3cdcc9b70ee9915dac82551c97cc4ffc50f6aea0409e0",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -468,7 +468,7 @@
       "predecessor": "examples/client_contracts/track_insight/vibecast-active-party-mark-20261125-0261125---20261124-026-fbe124b9.json",
       "predecessor_sha256": "c34ad77b90782e4991ffab40eb18762a5aa112a00fa8b5d6b8b17c2a6b760d11",
       "current": "examples/client_contracts/track_insight/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---51c04936.json",
-      "current_sha256": "8f50301570cf9e0aa12fc5d7c5219320f911a54e96c8b36cef2352be2ca8a402",
+      "current_sha256": "90061d3bfe76c948067731d664301b8e9a5421dc537a276a3c910468d2308618",
       "field_provenance": {
         "cases": "actual raw field",
         "harness_sha256": "executed harness bytes",
@@ -486,7 +486,7 @@
       "predecessor": "examples/client_contracts/direct_rich_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-cbaa82eb.json",
       "predecessor_sha256": "4d851daf9ffd2f8ef1d77184c2d8a25ec934265b032455538496a5142c53f744",
       "current": "examples/client_contracts/direct_rich_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---485f6e8a.json",
-      "current_sha256": "b62dfa56df8ad1975b4d807706ee25feb0e9b7308b35069d23dec434d01d9cdd",
+      "current_sha256": "34cde8f91623d5717661e6248a283b94c1cf3d8943ecf7e853a3627988948cfb",
       "field_provenance": {
         "actual_operator_enrollment_native_clock_or_APNs_GO": "actual raw field",
         "host_wake_runtime": "actual raw field",
@@ -500,7 +500,7 @@
       "predecessor": "examples/client_contracts/direct_rich_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-b92251d2.json",
       "predecessor_sha256": "6cfb1efb8dca8c857b45cae7aa19d100a201372921c307b65f114de338266f76",
       "current": "examples/client_contracts/direct_rich_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---1ed3161a.json",
-      "current_sha256": "04d8be96001fc8d9074c4de02a54b536bba6907bcf3af510935bf87fac1ae070",
+      "current_sha256": "eb22fd85a2aa78ef14b008f0e030a32d9683cd11e729c23ea12f0685adcf0f80",
       "field_provenance": {
         "actual_operator_enrollment_native_clock_or_APNs_GO": "actual raw field",
         "cases": "actual raw field",
@@ -522,7 +522,7 @@
       "predecessor": "examples/client_contracts/discovery_context_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-2fffb1ec.json",
       "predecessor_sha256": "63101db86357320f9f60f0315b641230b1aefd52df7b9df0cdf1b1d3843bc3d3",
       "current": "examples/client_contracts/discovery_context_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---9ac2607d.json",
-      "current_sha256": "15f96c1f83b583991afc7637ac60ccef8af693e2d7d82a4ae6c4cb615fb4cddd",
+      "current_sha256": "539b8a5ae28fd839763bd20e80c873da3666c01629a05f254f12c5be60827775",
       "field_provenance": {
         "harness_pins": "actual executed current harness/helper map",
         "native_installed_acceptance": "explicit unexecuted provider/device boundary",
@@ -536,7 +536,7 @@
       "predecessor": "examples/client_contracts/installation_custody_once_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-cd01ab2d.json",
       "predecessor_sha256": "a5980c60f01988e822e21b8c752a8c11d0b4aed7d522f9d6b4e54afa04f1040d",
       "current": "examples/client_contracts/installation_custody_once_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---3f266c98.json",
-      "current_sha256": "60a7790154b4e17c9b763c9a5d5665e98ec31ccc9c0786f975722ae1bf938171",
+      "current_sha256": "a581804277960f4cbcc76502ca55b6d68903bb7dee458fda67b102c278a1053f",
       "field_provenance": {
         "actual_key_generation_signing_registry_provider_or_native_effect": "actual raw field",
         "cases": "actual raw field",
@@ -550,7 +550,7 @@
       "predecessor": "examples/client_contracts/music_announcement_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-dd16ee08.json",
       "predecessor_sha256": "7f75fc8ea35af6e601dd6c509f6f18c43b9c7289222a21e29fd277dc7955fc28",
       "current": "examples/client_contracts/music_announcement_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---4ae49245.json",
-      "current_sha256": "f10e7efad5fa6b5d8d4f4f8a9a316f8ae9bdc1d4fdf8ce04c17b83e704601455",
+      "current_sha256": "19911a953a249da96fa1d2435b6d86efdbebf18d613d4476168a375e9998f769",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -564,7 +564,7 @@
       "predecessor": "examples/client_contracts/music_dna_artwork_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-15018ae6.json",
       "predecessor_sha256": "1b79872a9f48fb62734ea14a9398f7ec1eb063aff22a565e820fc188b29d3ab3",
       "current": "examples/client_contracts/music_dna_artwork_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---552dcccb.json",
-      "current_sha256": "fe54862dddad391c15616aa678fc70ec2412d85038fb0b2792d8fdfe006cf405",
+      "current_sha256": "bd8d32dbc724414e0f792dfd7233b47f600325dd541e41b3ff6a8db92b615a71",
       "field_provenance": {
         "cases": "actual raw field",
         "installed": "actual raw field",
@@ -580,7 +580,7 @@
       "predecessor": "examples/client_contracts/passive_retained_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-58b9a59e.json",
       "predecessor_sha256": "4c7ffaa97e34365b9a37631d47498d8a1e83bccc22a41ff556a1dc57524bd2de",
       "current": "examples/client_contracts/passive_retained_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---485b212d.json",
-      "current_sha256": "90755cabfd6d0d74768bfccf010f376cab3cf32fb657985fec97eb633cc4c6bd",
+      "current_sha256": "7df42fa0eacd11e67000ced0ec51cc6df2e454badfcf3b866a8bd251b38885be",
       "field_provenance": {
         "receipt": "actual new raw receipt",
         "source_before_after_equal": "full361 manifest comparison",
@@ -592,7 +592,7 @@
       "predecessor": "examples/client_contracts/requested_moments_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-1104b12b.json",
       "predecessor_sha256": "507fe9fbb38883c2bb5bc4aed906a2f28ee10ecf15429bafdf4adcc3edc9d8ec",
       "current": "examples/client_contracts/requested_moments_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---921baa21.json",
-      "current_sha256": "cefedf5c3bd8cfa453e4a016fde9d660eac0b49a920ac28ed9e891d8e5650ad1",
+      "current_sha256": "fbeaccb0d2bd4256a95a4ae3e03b8876d7b12737af9fe345c36d72ea1af3468d",
       "field_provenance": {
         "editorial_acceptance": "explicit unqualified editorial boundary",
         "harness_pins": "actual executed current harness/helper map",
@@ -610,7 +610,7 @@
       "predecessor": "examples/client_contracts/for_you_original_dna_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-5971da3c.json",
       "predecessor_sha256": "0e8ce33688253de70571dc0c4c28219f236d98e879062948c70d4cd98b6fdada",
       "current": "examples/client_contracts/for_you_original_dna_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---0e799802.json",
-      "current_sha256": "a3ffa086568bc116f1b7d706605b0e0fd155be28253ca119128e89c028f5bd68",
+      "current_sha256": "4ab9b5876d03343687caec51a2da78d62de059d04938ff3258674bc6a9f71ba7",
       "field_provenance": {
         "harness_pins": "actual executed current harness/helper map",
         "receipt": "actual new raw receipt",
@@ -623,7 +623,7 @@
       "predecessor": "examples/client_contracts/spotify_scope_evidence_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-80d4eb26.json",
       "predecessor_sha256": "0c886bc6307b4629065e1b80922694c862cc0954bd8943874a4b60bcd7e9145c",
       "current": "examples/client_contracts/spotify_scope_evidence_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---4f762f51.json",
-      "current_sha256": "b348f12097692d729c56e523a04c5aca6f28967baa5a4fbd7f362dfc3384261b",
+      "current_sha256": "1645a5338b7aec193579e2986da4a6c3f27dc9bcdc8d2a1d2c4ec8002bc6fd0e",
       "field_provenance": {
         "native_installed_acceptance": "explicit unexecuted provider/device boundary",
         "receipt": "actual new raw receipt",
@@ -636,7 +636,7 @@
       "predecessor": "examples/client_contracts/passive_surface_registration_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-6eaac19d.json",
       "predecessor_sha256": "74db1b22b0ac4ea8e0c7b4274990f5789f23c555d490e8bca61d8d3d5bfc3b28",
       "current": "examples/client_contracts/passive_surface_registration_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---e58d2ec5.json",
-      "current_sha256": "dc80e6b0b5d9a8bf235cb4641fd66cae1636ea75e0c28467906dd3f32580d8cc",
+      "current_sha256": "545eae0f250054e8196a5422fbb7cafaff067c260cf503b6685c9963fba298c8",
       "field_provenance": {
         "actual_temporary_entry_rotation_failed_await_ABA_stays_retired": "actual raw field",
         "cases": "actual raw field",
@@ -653,7 +653,7 @@
       "predecessor": "examples/client_contracts/music_origin_v1/vibecast-active-party-mark-20261125-0261125---20261124-026-1ed3d9aa.json",
       "predecessor_sha256": "d7e0de25ce3fbbc9dca7e40073dc536b6a2cf4c98724596ec23011763c5ce82d",
       "current": "examples/client_contracts/music_origin_v1/music-canvas-switchbot-setup-20261125-ark-20261125-0261125---e8d44d8a.json",
-      "current_sha256": "000701cbca2f7c1d9d6eece915a19b446e48e0ba6f424acfa66fc234948df899",
+      "current_sha256": "8f14fb783ed2ee809fe750113835478241bb7691811b218607ed329f10bbac4c",
       "field_provenance": {
         "editorial": "explicit unqualified editorial boundary",
         "harness_pins": "actual executed current harness/helper map",

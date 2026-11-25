@@ -60,8 +60,8 @@
             },
             "uri": "spotify:album:0000000000000000000000",
             "context_uri": "spotify:album:0000000000000000000000",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "0d1650ab439c96250c152adfdb956a67"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "91414a66274b74190bde858e0889945b"
           },
           {
             "id": "spotify:album:1111111111111111111111",
@@ -82,8 +82,8 @@
             },
             "uri": "spotify:album:1111111111111111111111",
             "context_uri": "spotify:album:1111111111111111111111",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "6cdfa5ec5f94a57f4cc9f6d71f5d07b9"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "3a8eed85f725cb0967e80029be408b11"
           },
           {
             "id": "spotify:album:2222222222222222222222",
@@ -104,8 +104,8 @@
             },
             "uri": "spotify:album:2222222222222222222222",
             "context_uri": "spotify:album:2222222222222222222222",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "662ff8d07bb77ad0aeadb53b225796bd"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "9108a18dbbf6484cffa5a2850db3fe0e"
           },
           {
             "id": "spotify:album:3333333333333333333333",
@@ -126,8 +126,8 @@
             },
             "uri": "spotify:album:3333333333333333333333",
             "context_uri": "spotify:album:3333333333333333333333",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "dba9b1edce4ba9bdea2a14022332e691"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "ba5b2bf200dd915c0c85ac3505b6a841"
           },
           {
             "id": "spotify:album:4444444444444444444444",
@@ -148,8 +148,8 @@
             },
             "uri": "spotify:album:4444444444444444444444",
             "context_uri": "spotify:album:4444444444444444444444",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "dff4f740c6c2f3ee2ff89f32ee6a9950"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "9ea538e1daa82df7652c089601975e47"
           },
           {
             "id": "spotify:playlist:0000000000000000000000",
@@ -170,8 +170,8 @@
             },
             "uri": "spotify:playlist:0000000000000000000000",
             "context_uri": "spotify:playlist:0000000000000000000000",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "653990eeac68b95a26e7b6cb26203881"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "bf085f11986f283fa963310d1fa08eb2"
           },
           {
             "id": "spotify:playlist:1111111111111111111111",
@@ -192,8 +192,8 @@
             },
             "uri": "spotify:playlist:1111111111111111111111",
             "context_uri": "spotify:playlist:1111111111111111111111",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "8cdc910e68d25aa7932ffdbdc1f8e551"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "bdf18aa63891b40b9ebebfbc7eaf970f"
           },
           {
             "id": "spotify:playlist:2222222222222222222222",
@@ -214,8 +214,8 @@
             },
             "uri": "spotify:playlist:2222222222222222222222",
             "context_uri": "spotify:playlist:2222222222222222222222",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "d46c8e997f8ba9c1b55c3a051285a383"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "a12d26f8b4fb8f0e622c981ebddac8fb"
           },
           {
             "id": "spotify:playlist:3333333333333333333333",
@@ -236,8 +236,8 @@
             },
             "uri": "spotify:playlist:3333333333333333333333",
             "context_uri": "spotify:playlist:3333333333333333333333",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "92a4ab3eba4890491428b31e4c9e9f0e"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "d18b073f4e72019abc720e8b9acfe06d"
           },
           {
             "id": "spotify:playlist:4444444444444444444444",
@@ -258,8 +258,8 @@
             },
             "uri": "spotify:playlist:4444444444444444444444",
             "context_uri": "spotify:playlist:4444444444444444444444",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "c4ac9e3be12f18bc7d5da937d9f5e039"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "e40bf62be6b8e42dff791fc11bea7e6c"
           }
         ],
         "confirmation_actions": [],
@@ -289,8 +289,8 @@
             },
             "uri": "spotify:album:0000000000000000000000",
             "context_uri": "spotify:album:0000000000000000000000",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "0d1650ab439c96250c152adfdb956a67"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "91414a66274b74190bde858e0889945b"
           },
           {
             "id": "spotify:album:1111111111111111111111",
@@ -311,8 +311,8 @@
             },
             "uri": "spotify:album:1111111111111111111111",
             "context_uri": "spotify:album:1111111111111111111111",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "6cdfa5ec5f94a57f4cc9f6d71f5d07b9"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "3a8eed85f725cb0967e80029be408b11"
           },
           {
             "id": "spotify:album:2222222222222222222222",
@@ -333,8 +333,8 @@
             },
             "uri": "spotify:album:2222222222222222222222",
             "context_uri": "spotify:album:2222222222222222222222",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "662ff8d07bb77ad0aeadb53b225796bd"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "9108a18dbbf6484cffa5a2850db3fe0e"
           },
           {
             "id": "spotify:album:3333333333333333333333",
@@ -355,8 +355,8 @@
             },
             "uri": "spotify:album:3333333333333333333333",
             "context_uri": "spotify:album:3333333333333333333333",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "dba9b1edce4ba9bdea2a14022332e691"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "ba5b2bf200dd915c0c85ac3505b6a841"
           },
           {
             "id": "spotify:album:4444444444444444444444",
@@ -377,8 +377,8 @@
             },
             "uri": "spotify:album:4444444444444444444444",
             "context_uri": "spotify:album:4444444444444444444444",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "dff4f740c6c2f3ee2ff89f32ee6a9950"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "9ea538e1daa82df7652c089601975e47"
           },
           {
             "id": "spotify:playlist:0000000000000000000000",
@@ -399,8 +399,8 @@
             },
             "uri": "spotify:playlist:0000000000000000000000",
             "context_uri": "spotify:playlist:0000000000000000000000",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "653990eeac68b95a26e7b6cb26203881"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "bf085f11986f283fa963310d1fa08eb2"
           },
           {
             "id": "spotify:playlist:1111111111111111111111",
@@ -421,8 +421,8 @@
             },
             "uri": "spotify:playlist:1111111111111111111111",
             "context_uri": "spotify:playlist:1111111111111111111111",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "8cdc910e68d25aa7932ffdbdc1f8e551"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "bdf18aa63891b40b9ebebfbc7eaf970f"
           },
           {
             "id": "spotify:playlist:2222222222222222222222",
@@ -443,8 +443,8 @@
             },
             "uri": "spotify:playlist:2222222222222222222222",
             "context_uri": "spotify:playlist:2222222222222222222222",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "d46c8e997f8ba9c1b55c3a051285a383"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "a12d26f8b4fb8f0e622c981ebddac8fb"
           },
           {
             "id": "spotify:playlist:3333333333333333333333",
@@ -465,8 +465,8 @@
             },
             "uri": "spotify:playlist:3333333333333333333333",
             "context_uri": "spotify:playlist:3333333333333333333333",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "92a4ab3eba4890491428b31e4c9e9f0e"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "d18b073f4e72019abc720e8b9acfe06d"
           },
           {
             "id": "spotify:playlist:4444444444444444444444",
@@ -487,8 +487,8 @@
             },
             "uri": "spotify:playlist:4444444444444444444444",
             "context_uri": "spotify:playlist:4444444444444444444444",
-            "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-            "action_id": "c4ac9e3be12f18bc7d5da937d9f5e039"
+            "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+            "action_id": "e40bf62be6b8e42dff791fc11bea7e6c"
           }
         ],
         "action": "none",
@@ -499,7 +499,7 @@
         },
         "result_set": {
           "schema_version": 1,
-          "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
+          "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
           "expires_in": 600.0,
           "items": [
             {
@@ -521,8 +521,8 @@
               },
               "uri": "spotify:album:0000000000000000000000",
               "context_uri": "spotify:album:0000000000000000000000",
-              "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-              "action_id": "0d1650ab439c96250c152adfdb956a67"
+              "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+              "action_id": "91414a66274b74190bde858e0889945b"
             },
             {
               "id": "spotify:album:1111111111111111111111",
@@ -543,8 +543,8 @@
               },
               "uri": "spotify:album:1111111111111111111111",
               "context_uri": "spotify:album:1111111111111111111111",
-              "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-              "action_id": "6cdfa5ec5f94a57f4cc9f6d71f5d07b9"
+              "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+              "action_id": "3a8eed85f725cb0967e80029be408b11"
             },
             {
               "id": "spotify:album:2222222222222222222222",
@@ -565,8 +565,8 @@
               },
               "uri": "spotify:album:2222222222222222222222",
               "context_uri": "spotify:album:2222222222222222222222",
-              "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-              "action_id": "662ff8d07bb77ad0aeadb53b225796bd"
+              "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+              "action_id": "9108a18dbbf6484cffa5a2850db3fe0e"
             },
             {
               "id": "spotify:album:3333333333333333333333",
@@ -587,8 +587,8 @@
               },
               "uri": "spotify:album:3333333333333333333333",
               "context_uri": "spotify:album:3333333333333333333333",
-              "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-              "action_id": "dba9b1edce4ba9bdea2a14022332e691"
+              "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+              "action_id": "ba5b2bf200dd915c0c85ac3505b6a841"
             },
             {
               "id": "spotify:album:4444444444444444444444",
@@ -609,8 +609,8 @@
               },
               "uri": "spotify:album:4444444444444444444444",
               "context_uri": "spotify:album:4444444444444444444444",
-              "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-              "action_id": "dff4f740c6c2f3ee2ff89f32ee6a9950"
+              "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+              "action_id": "9ea538e1daa82df7652c089601975e47"
             },
             {
               "id": "spotify:playlist:0000000000000000000000",
@@ -631,8 +631,8 @@
               },
               "uri": "spotify:playlist:0000000000000000000000",
               "context_uri": "spotify:playlist:0000000000000000000000",
-              "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-              "action_id": "653990eeac68b95a26e7b6cb26203881"
+              "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+              "action_id": "bf085f11986f283fa963310d1fa08eb2"
             },
             {
               "id": "spotify:playlist:1111111111111111111111",
@@ -653,8 +653,8 @@
               },
               "uri": "spotify:playlist:1111111111111111111111",
               "context_uri": "spotify:playlist:1111111111111111111111",
-              "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-              "action_id": "8cdc910e68d25aa7932ffdbdc1f8e551"
+              "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+              "action_id": "bdf18aa63891b40b9ebebfbc7eaf970f"
             },
             {
               "id": "spotify:playlist:2222222222222222222222",
@@ -675,8 +675,8 @@
               },
               "uri": "spotify:playlist:2222222222222222222222",
               "context_uri": "spotify:playlist:2222222222222222222222",
-              "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-              "action_id": "d46c8e997f8ba9c1b55c3a051285a383"
+              "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+              "action_id": "a12d26f8b4fb8f0e622c981ebddac8fb"
             },
             {
               "id": "spotify:playlist:3333333333333333333333",
@@ -697,8 +697,8 @@
               },
               "uri": "spotify:playlist:3333333333333333333333",
               "context_uri": "spotify:playlist:3333333333333333333333",
-              "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-              "action_id": "92a4ab3eba4890491428b31e4c9e9f0e"
+              "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+              "action_id": "d18b073f4e72019abc720e8b9acfe06d"
             },
             {
               "id": "spotify:playlist:4444444444444444444444",
@@ -719,8 +719,8 @@
               },
               "uri": "spotify:playlist:4444444444444444444444",
               "context_uri": "spotify:playlist:4444444444444444444444",
-              "result_set_id": "choices-0e1b0695807f423eaca0414b4c1adf75",
-              "action_id": "c4ac9e3be12f18bc7d5da937d9f5e039"
+              "result_set_id": "choices-e1505926c80545aa8fb08df3f5e4ead4",
+              "action_id": "e40bf62be6b8e42dff791fc11bea7e6c"
             }
           ]
         },
@@ -733,7 +733,7 @@
           "turn_id": "turn-5cadd105521b52a29ef6bb41b1b3f931",
           "thread_id": "default",
           "context": {
-            "session_id": "session-6aa4793acc404545905060ea41bf0feb"
+            "session_id": "session-eb5927da45ea42a0a9d2db9e1eedf6f4"
           },
           "entry_ids": [],
           "history_scope": "private_ephemeral",
@@ -760,7 +760,7 @@
           },
           "source_kind": "accepted_ask_dj",
           "source_id": "turn-5cadd105521b52a29ef6bb41b1b3f931",
-          "session_id": "session-6aa4793acc404545905060ea41bf0feb",
+          "session_id": "session-eb5927da45ea42a0a9d2db9e1eedf6f4",
           "text_revision": "d014b53f292988d9dc5dcabc",
           "presentation_revision": "d014b53f292988d9dc5dcabc",
           "persona": "home_dj",
@@ -782,7 +782,7 @@
             "ha_configured"
           ],
           "processor_qualification_required": true,
-          "expires_at": "2026-11-25T09:12:52.969123+00:00",
+          "expires_at": "2026-11-25T09:19:12.505026+00:00",
           "cache_policy": "private,no-store",
           "attribution": [
             {
@@ -830,8 +830,8 @@
             },
             "uri": "spotify:album:0000000000000000000000",
             "context_uri": "spotify:album:0000000000000000000000",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "b3879e115f4046dc12d62a825059792f"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "dbaf2f8fdbce2316ff73e492a471fa14"
           },
           {
             "id": "spotify:album:1111111111111111111111",
@@ -852,8 +852,8 @@
             },
             "uri": "spotify:album:1111111111111111111111",
             "context_uri": "spotify:album:1111111111111111111111",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "4c4e2d917db0cc304dcabedbe8286216"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "204e0e5066e01a40f8e57c73c44f3169"
           },
           {
             "id": "spotify:album:2222222222222222222222",
@@ -874,8 +874,8 @@
             },
             "uri": "spotify:album:2222222222222222222222",
             "context_uri": "spotify:album:2222222222222222222222",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "f90bbf05333fb9e8795130312a74129e"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "6e29404d598ccb809200c1a0069a4e65"
           },
           {
             "id": "spotify:album:3333333333333333333333",
@@ -896,8 +896,8 @@
             },
             "uri": "spotify:album:3333333333333333333333",
             "context_uri": "spotify:album:3333333333333333333333",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "5efaef925a6d3ac0750ed3aefeca3f80"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "fbc3c0e46f6991853b3c0efd0a9cd2aa"
           },
           {
             "id": "spotify:album:4444444444444444444444",
@@ -918,8 +918,8 @@
             },
             "uri": "spotify:album:4444444444444444444444",
             "context_uri": "spotify:album:4444444444444444444444",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "b939a21967b53179cba97f02e9c35b59"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "2c8c3059b853f0009c47b9c55d487025"
           },
           {
             "id": "spotify:playlist:0000000000000000000000",
@@ -940,8 +940,8 @@
             },
             "uri": "spotify:playlist:0000000000000000000000",
             "context_uri": "spotify:playlist:0000000000000000000000",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "3f9774e0e4d481c7fba4a58dff0a5bcf"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "5061d5bd90d9154e0e86f97ff47b7726"
           },
           {
             "id": "spotify:playlist:1111111111111111111111",
@@ -962,8 +962,8 @@
             },
             "uri": "spotify:playlist:1111111111111111111111",
             "context_uri": "spotify:playlist:1111111111111111111111",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "7aa9e3ff000c10ed1c3077a09e0310bc"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "a506707bdc06d0e0778bfac141a2b8d9"
           },
           {
             "id": "spotify:playlist:2222222222222222222222",
@@ -984,8 +984,8 @@
             },
             "uri": "spotify:playlist:2222222222222222222222",
             "context_uri": "spotify:playlist:2222222222222222222222",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "2c5a9de9de8fd13903664dcf687a6fae"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "7d62a6711e6169382c89c4d9e9e22d52"
           },
           {
             "id": "spotify:playlist:3333333333333333333333",
@@ -1006,8 +1006,8 @@
             },
             "uri": "spotify:playlist:3333333333333333333333",
             "context_uri": "spotify:playlist:3333333333333333333333",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "e6333559a9b9c3b77479c915b7505e60"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "ebfb289122c788c02ead64b14d969650"
           },
           {
             "id": "spotify:playlist:4444444444444444444444",
@@ -1028,8 +1028,8 @@
             },
             "uri": "spotify:playlist:4444444444444444444444",
             "context_uri": "spotify:playlist:4444444444444444444444",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "326412ec8b9c4a66213e7c761a188924"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "722228ba425ce5b861cc4111039d0584"
           }
         ],
         "confirmation_actions": [],
@@ -1059,8 +1059,8 @@
             },
             "uri": "spotify:album:0000000000000000000000",
             "context_uri": "spotify:album:0000000000000000000000",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "b3879e115f4046dc12d62a825059792f"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "dbaf2f8fdbce2316ff73e492a471fa14"
           },
           {
             "id": "spotify:album:1111111111111111111111",
@@ -1081,8 +1081,8 @@
             },
             "uri": "spotify:album:1111111111111111111111",
             "context_uri": "spotify:album:1111111111111111111111",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "4c4e2d917db0cc304dcabedbe8286216"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "204e0e5066e01a40f8e57c73c44f3169"
           },
           {
             "id": "spotify:album:2222222222222222222222",
@@ -1103,8 +1103,8 @@
             },
             "uri": "spotify:album:2222222222222222222222",
             "context_uri": "spotify:album:2222222222222222222222",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "f90bbf05333fb9e8795130312a74129e"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "6e29404d598ccb809200c1a0069a4e65"
           },
           {
             "id": "spotify:album:3333333333333333333333",
@@ -1125,8 +1125,8 @@
             },
             "uri": "spotify:album:3333333333333333333333",
             "context_uri": "spotify:album:3333333333333333333333",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "5efaef925a6d3ac0750ed3aefeca3f80"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "fbc3c0e46f6991853b3c0efd0a9cd2aa"
           },
           {
             "id": "spotify:album:4444444444444444444444",
@@ -1147,8 +1147,8 @@
             },
             "uri": "spotify:album:4444444444444444444444",
             "context_uri": "spotify:album:4444444444444444444444",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "b939a21967b53179cba97f02e9c35b59"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "2c8c3059b853f0009c47b9c55d487025"
           },
           {
             "id": "spotify:playlist:0000000000000000000000",
@@ -1169,8 +1169,8 @@
             },
             "uri": "spotify:playlist:0000000000000000000000",
             "context_uri": "spotify:playlist:0000000000000000000000",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "3f9774e0e4d481c7fba4a58dff0a5bcf"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "5061d5bd90d9154e0e86f97ff47b7726"
           },
           {
             "id": "spotify:playlist:1111111111111111111111",
@@ -1191,8 +1191,8 @@
             },
             "uri": "spotify:playlist:1111111111111111111111",
             "context_uri": "spotify:playlist:1111111111111111111111",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "7aa9e3ff000c10ed1c3077a09e0310bc"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "a506707bdc06d0e0778bfac141a2b8d9"
           },
           {
             "id": "spotify:playlist:2222222222222222222222",
@@ -1213,8 +1213,8 @@
             },
             "uri": "spotify:playlist:2222222222222222222222",
             "context_uri": "spotify:playlist:2222222222222222222222",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "2c5a9de9de8fd13903664dcf687a6fae"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "7d62a6711e6169382c89c4d9e9e22d52"
           },
           {
             "id": "spotify:playlist:3333333333333333333333",
@@ -1235,8 +1235,8 @@
             },
             "uri": "spotify:playlist:3333333333333333333333",
             "context_uri": "spotify:playlist:3333333333333333333333",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "e6333559a9b9c3b77479c915b7505e60"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "ebfb289122c788c02ead64b14d969650"
           },
           {
             "id": "spotify:playlist:4444444444444444444444",
@@ -1257,8 +1257,8 @@
             },
             "uri": "spotify:playlist:4444444444444444444444",
             "context_uri": "spotify:playlist:4444444444444444444444",
-            "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-            "action_id": "326412ec8b9c4a66213e7c761a188924"
+            "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+            "action_id": "722228ba425ce5b861cc4111039d0584"
           }
         ],
         "action": "none",
@@ -1269,7 +1269,7 @@
         },
         "result_set": {
           "schema_version": 1,
-          "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
+          "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
           "expires_in": 600.0,
           "items": [
             {
@@ -1291,8 +1291,8 @@
               },
               "uri": "spotify:album:0000000000000000000000",
               "context_uri": "spotify:album:0000000000000000000000",
-              "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-              "action_id": "b3879e115f4046dc12d62a825059792f"
+              "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+              "action_id": "dbaf2f8fdbce2316ff73e492a471fa14"
             },
             {
               "id": "spotify:album:1111111111111111111111",
@@ -1313,8 +1313,8 @@
               },
               "uri": "spotify:album:1111111111111111111111",
               "context_uri": "spotify:album:1111111111111111111111",
-              "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-              "action_id": "4c4e2d917db0cc304dcabedbe8286216"
+              "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+              "action_id": "204e0e5066e01a40f8e57c73c44f3169"
             },
             {
               "id": "spotify:album:2222222222222222222222",
@@ -1335,8 +1335,8 @@
               },
               "uri": "spotify:album:2222222222222222222222",
               "context_uri": "spotify:album:2222222222222222222222",
-              "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-              "action_id": "f90bbf05333fb9e8795130312a74129e"
+              "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+              "action_id": "6e29404d598ccb809200c1a0069a4e65"
             },
             {
               "id": "spotify:album:3333333333333333333333",
@@ -1357,8 +1357,8 @@
               },
               "uri": "spotify:album:3333333333333333333333",
               "context_uri": "spotify:album:3333333333333333333333",
-              "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-              "action_id": "5efaef925a6d3ac0750ed3aefeca3f80"
+              "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+              "action_id": "fbc3c0e46f6991853b3c0efd0a9cd2aa"
             },
             {
               "id": "spotify:album:4444444444444444444444",
@@ -1379,8 +1379,8 @@
               },
               "uri": "spotify:album:4444444444444444444444",
               "context_uri": "spotify:album:4444444444444444444444",
-              "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-              "action_id": "b939a21967b53179cba97f02e9c35b59"
+              "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+              "action_id": "2c8c3059b853f0009c47b9c55d487025"
             },
             {
               "id": "spotify:playlist:0000000000000000000000",
@@ -1401,8 +1401,8 @@
               },
               "uri": "spotify:playlist:0000000000000000000000",
               "context_uri": "spotify:playlist:0000000000000000000000",
-              "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-              "action_id": "3f9774e0e4d481c7fba4a58dff0a5bcf"
+              "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+              "action_id": "5061d5bd90d9154e0e86f97ff47b7726"
             },
             {
               "id": "spotify:playlist:1111111111111111111111",
@@ -1423,8 +1423,8 @@
               },
               "uri": "spotify:playlist:1111111111111111111111",
               "context_uri": "spotify:playlist:1111111111111111111111",
-              "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-              "action_id": "7aa9e3ff000c10ed1c3077a09e0310bc"
+              "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+              "action_id": "a506707bdc06d0e0778bfac141a2b8d9"
             },
             {
               "id": "spotify:playlist:2222222222222222222222",
@@ -1445,8 +1445,8 @@
               },
               "uri": "spotify:playlist:2222222222222222222222",
               "context_uri": "spotify:playlist:2222222222222222222222",
-              "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-              "action_id": "2c5a9de9de8fd13903664dcf687a6fae"
+              "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+              "action_id": "7d62a6711e6169382c89c4d9e9e22d52"
             },
             {
               "id": "spotify:playlist:3333333333333333333333",
@@ -1467,8 +1467,8 @@
               },
               "uri": "spotify:playlist:3333333333333333333333",
               "context_uri": "spotify:playlist:3333333333333333333333",
-              "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-              "action_id": "e6333559a9b9c3b77479c915b7505e60"
+              "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+              "action_id": "ebfb289122c788c02ead64b14d969650"
             },
             {
               "id": "spotify:playlist:4444444444444444444444",
@@ -1489,8 +1489,8 @@
               },
               "uri": "spotify:playlist:4444444444444444444444",
               "context_uri": "spotify:playlist:4444444444444444444444",
-              "result_set_id": "choices-e5a29a54d5c14cc58e77df3806771848",
-              "action_id": "326412ec8b9c4a66213e7c761a188924"
+              "result_set_id": "choices-5a74986e0a764818a4854d339e1d38df",
+              "action_id": "722228ba425ce5b861cc4111039d0584"
             }
           ]
         },
@@ -1503,7 +1503,7 @@
           "turn_id": "turn-dc9c2bb6aff65e428fc74f1dd1c7a316",
           "thread_id": "default",
           "context": {
-            "session_id": "session-6aa4793acc404545905060ea41bf0feb"
+            "session_id": "session-eb5927da45ea42a0a9d2db9e1eedf6f4"
           },
           "entry_ids": [],
           "history_scope": "private_ephemeral",
@@ -1530,7 +1530,7 @@
           },
           "source_kind": "accepted_ask_dj",
           "source_id": "turn-dc9c2bb6aff65e428fc74f1dd1c7a316",
-          "session_id": "session-6aa4793acc404545905060ea41bf0feb",
+          "session_id": "session-eb5927da45ea42a0a9d2db9e1eedf6f4",
           "text_revision": "56958540e91581ecb2039579",
           "presentation_revision": "56958540e91581ecb2039579",
           "persona": "home_dj",
@@ -1552,7 +1552,7 @@
             "ha_configured"
           ],
           "processor_qualification_required": true,
-          "expires_at": "2026-11-25T09:12:52.973811+00:00",
+          "expires_at": "2026-11-25T09:19:12.509752+00:00",
           "cache_policy": "private,no-store",
           "attribution": [
             {
@@ -1604,8 +1604,8 @@
             },
             "uri": "spotify:album:0000000000000000000000",
             "context_uri": "spotify:album:0000000000000000000000",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "2c2e7269dec37f0d7f0aa868ad3f8689"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "35d078d8d0ea84ae3796853cff662cce"
           },
           {
             "id": "spotify:album:1111111111111111111111",
@@ -1626,8 +1626,8 @@
             },
             "uri": "spotify:album:1111111111111111111111",
             "context_uri": "spotify:album:1111111111111111111111",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "d85ca99869f5285e057cca1211337da5"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "37a882a3e86d441e9e2651b4c38682b9"
           },
           {
             "id": "spotify:album:2222222222222222222222",
@@ -1648,8 +1648,8 @@
             },
             "uri": "spotify:album:2222222222222222222222",
             "context_uri": "spotify:album:2222222222222222222222",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "db0a5dd318d8026309d32ff1af4f89be"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "6de43e7b390e2a911803fb781447692f"
           },
           {
             "id": "spotify:album:3333333333333333333333",
@@ -1670,8 +1670,8 @@
             },
             "uri": "spotify:album:3333333333333333333333",
             "context_uri": "spotify:album:3333333333333333333333",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "177a50b99c66f5725fe188d0b1a5df0b"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "cef91b667591fa0ba2efe1a8d194d1c9"
           },
           {
             "id": "spotify:album:4444444444444444444444",
@@ -1692,8 +1692,8 @@
             },
             "uri": "spotify:album:4444444444444444444444",
             "context_uri": "spotify:album:4444444444444444444444",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "87a2d13700f81027594433841f0daecf"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "88d8ab80437a2f09ea13d0eeb023a7ba"
           },
           {
             "id": "spotify:playlist:0000000000000000000000",
@@ -1714,8 +1714,8 @@
             },
             "uri": "spotify:playlist:0000000000000000000000",
             "context_uri": "spotify:playlist:0000000000000000000000",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "5f0d12e356f7363928062e7afb0fc040"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "2d3776ef98874f89162e07c924ba118a"
           },
           {
             "id": "spotify:playlist:1111111111111111111111",
@@ -1736,8 +1736,8 @@
             },
             "uri": "spotify:playlist:1111111111111111111111",
             "context_uri": "spotify:playlist:1111111111111111111111",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "d0d0ae1cffe64476a13270c5f27a467a"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "b16454b44e8b7641337da862d3d78e4c"
           },
           {
             "id": "spotify:playlist:2222222222222222222222",
@@ -1758,8 +1758,8 @@
             },
             "uri": "spotify:playlist:2222222222222222222222",
             "context_uri": "spotify:playlist:2222222222222222222222",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "ace880d28db8539f9f7ddbb8f2bbde37"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "2e47ebc3b720a25972cb0ca66a10fbe2"
           },
           {
             "id": "spotify:playlist:3333333333333333333333",
@@ -1780,8 +1780,8 @@
             },
             "uri": "spotify:playlist:3333333333333333333333",
             "context_uri": "spotify:playlist:3333333333333333333333",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "d3d8b0e80de39346e6bb0c8a9e27a903"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "4bda5ed635d109d3acb26580600e4155"
           },
           {
             "id": "spotify:playlist:4444444444444444444444",
@@ -1802,8 +1802,8 @@
             },
             "uri": "spotify:playlist:4444444444444444444444",
             "context_uri": "spotify:playlist:4444444444444444444444",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "d6ceceb46624daf7a96ca75dd498a749"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "26225a69f13b46e44e787bf1472aa493"
           }
         ],
         "confirmation_actions": [],
@@ -1833,8 +1833,8 @@
             },
             "uri": "spotify:album:0000000000000000000000",
             "context_uri": "spotify:album:0000000000000000000000",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "2c2e7269dec37f0d7f0aa868ad3f8689"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "35d078d8d0ea84ae3796853cff662cce"
           },
           {
             "id": "spotify:album:1111111111111111111111",
@@ -1855,8 +1855,8 @@
             },
             "uri": "spotify:album:1111111111111111111111",
             "context_uri": "spotify:album:1111111111111111111111",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "d85ca99869f5285e057cca1211337da5"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "37a882a3e86d441e9e2651b4c38682b9"
           },
           {
             "id": "spotify:album:2222222222222222222222",
@@ -1877,8 +1877,8 @@
             },
             "uri": "spotify:album:2222222222222222222222",
             "context_uri": "spotify:album:2222222222222222222222",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "db0a5dd318d8026309d32ff1af4f89be"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "6de43e7b390e2a911803fb781447692f"
           },
           {
             "id": "spotify:album:3333333333333333333333",
@@ -1899,8 +1899,8 @@
             },
             "uri": "spotify:album:3333333333333333333333",
             "context_uri": "spotify:album:3333333333333333333333",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "177a50b99c66f5725fe188d0b1a5df0b"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "cef91b667591fa0ba2efe1a8d194d1c9"
           },
           {
             "id": "spotify:album:4444444444444444444444",
@@ -1921,8 +1921,8 @@
             },
             "uri": "spotify:album:4444444444444444444444",
             "context_uri": "spotify:album:4444444444444444444444",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "87a2d13700f81027594433841f0daecf"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "88d8ab80437a2f09ea13d0eeb023a7ba"
           },
           {
             "id": "spotify:playlist:0000000000000000000000",
@@ -1943,8 +1943,8 @@
             },
             "uri": "spotify:playlist:0000000000000000000000",
             "context_uri": "spotify:playlist:0000000000000000000000",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "5f0d12e356f7363928062e7afb0fc040"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "2d3776ef98874f89162e07c924ba118a"
           },
           {
             "id": "spotify:playlist:1111111111111111111111",
@@ -1965,8 +1965,8 @@
             },
             "uri": "spotify:playlist:1111111111111111111111",
             "context_uri": "spotify:playlist:1111111111111111111111",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "d0d0ae1cffe64476a13270c5f27a467a"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "b16454b44e8b7641337da862d3d78e4c"
           },
           {
             "id": "spotify:playlist:2222222222222222222222",
@@ -1987,8 +1987,8 @@
             },
             "uri": "spotify:playlist:2222222222222222222222",
             "context_uri": "spotify:playlist:2222222222222222222222",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "ace880d28db8539f9f7ddbb8f2bbde37"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "2e47ebc3b720a25972cb0ca66a10fbe2"
           },
           {
             "id": "spotify:playlist:3333333333333333333333",
@@ -2009,8 +2009,8 @@
             },
             "uri": "spotify:playlist:3333333333333333333333",
             "context_uri": "spotify:playlist:3333333333333333333333",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "d3d8b0e80de39346e6bb0c8a9e27a903"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "4bda5ed635d109d3acb26580600e4155"
           },
           {
             "id": "spotify:playlist:4444444444444444444444",
@@ -2031,8 +2031,8 @@
             },
             "uri": "spotify:playlist:4444444444444444444444",
             "context_uri": "spotify:playlist:4444444444444444444444",
-            "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-            "action_id": "d6ceceb46624daf7a96ca75dd498a749"
+            "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+            "action_id": "26225a69f13b46e44e787bf1472aa493"
           }
         ],
         "action": "none",
@@ -2043,7 +2043,7 @@
         },
         "result_set": {
           "schema_version": 1,
-          "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
+          "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
           "expires_in": 600.0,
           "items": [
             {
@@ -2065,8 +2065,8 @@
               },
               "uri": "spotify:album:0000000000000000000000",
               "context_uri": "spotify:album:0000000000000000000000",
-              "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-              "action_id": "2c2e7269dec37f0d7f0aa868ad3f8689"
+              "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+              "action_id": "35d078d8d0ea84ae3796853cff662cce"
             },
             {
               "id": "spotify:album:1111111111111111111111",
@@ -2087,8 +2087,8 @@
               },
               "uri": "spotify:album:1111111111111111111111",
               "context_uri": "spotify:album:1111111111111111111111",
-              "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-              "action_id": "d85ca99869f5285e057cca1211337da5"
+              "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+              "action_id": "37a882a3e86d441e9e2651b4c38682b9"
             },
             {
               "id": "spotify:album:2222222222222222222222",
@@ -2109,8 +2109,8 @@
               },
               "uri": "spotify:album:2222222222222222222222",
               "context_uri": "spotify:album:2222222222222222222222",
-              "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-              "action_id": "db0a5dd318d8026309d32ff1af4f89be"
+              "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+              "action_id": "6de43e7b390e2a911803fb781447692f"
             },
             {
               "id": "spotify:album:3333333333333333333333",
@@ -2131,8 +2131,8 @@
               },
               "uri": "spotify:album:3333333333333333333333",
               "context_uri": "spotify:album:3333333333333333333333",
-              "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-              "action_id": "177a50b99c66f5725fe188d0b1a5df0b"
+              "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+              "action_id": "cef91b667591fa0ba2efe1a8d194d1c9"
             },
             {
               "id": "spotify:album:4444444444444444444444",
@@ -2153,8 +2153,8 @@
               },
               "uri": "spotify:album:4444444444444444444444",
               "context_uri": "spotify:album:4444444444444444444444",
-              "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-              "action_id": "87a2d13700f81027594433841f0daecf"
+              "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+              "action_id": "88d8ab80437a2f09ea13d0eeb023a7ba"
             },
             {
               "id": "spotify:playlist:0000000000000000000000",
@@ -2175,8 +2175,8 @@
               },
               "uri": "spotify:playlist:0000000000000000000000",
               "context_uri": "spotify:playlist:0000000000000000000000",
-              "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-              "action_id": "5f0d12e356f7363928062e7afb0fc040"
+              "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+              "action_id": "2d3776ef98874f89162e07c924ba118a"
             },
             {
               "id": "spotify:playlist:1111111111111111111111",
@@ -2197,8 +2197,8 @@
               },
               "uri": "spotify:playlist:1111111111111111111111",
               "context_uri": "spotify:playlist:1111111111111111111111",
-              "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-              "action_id": "d0d0ae1cffe64476a13270c5f27a467a"
+              "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+              "action_id": "b16454b44e8b7641337da862d3d78e4c"
             },
             {
               "id": "spotify:playlist:2222222222222222222222",
@@ -2219,8 +2219,8 @@
               },
               "uri": "spotify:playlist:2222222222222222222222",
               "context_uri": "spotify:playlist:2222222222222222222222",
-              "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-              "action_id": "ace880d28db8539f9f7ddbb8f2bbde37"
+              "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+              "action_id": "2e47ebc3b720a25972cb0ca66a10fbe2"
             },
             {
               "id": "spotify:playlist:3333333333333333333333",
@@ -2241,8 +2241,8 @@
               },
               "uri": "spotify:playlist:3333333333333333333333",
               "context_uri": "spotify:playlist:3333333333333333333333",
-              "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-              "action_id": "d3d8b0e80de39346e6bb0c8a9e27a903"
+              "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+              "action_id": "4bda5ed635d109d3acb26580600e4155"
             },
             {
               "id": "spotify:playlist:4444444444444444444444",
@@ -2263,8 +2263,8 @@
               },
               "uri": "spotify:playlist:4444444444444444444444",
               "context_uri": "spotify:playlist:4444444444444444444444",
-              "result_set_id": "choices-508999b403ac4add91935797c0c80dae",
-              "action_id": "d6ceceb46624daf7a96ca75dd498a749"
+              "result_set_id": "choices-c184f57bc9b04f17864e79eb678b9995",
+              "action_id": "26225a69f13b46e44e787bf1472aa493"
             }
           ]
         },
@@ -2324,7 +2324,7 @@
             "ha_configured"
           ],
           "processor_qualification_required": true,
-          "expires_at": "2026-11-25T09:12:52.989870+00:00",
+          "expires_at": "2026-11-25T09:19:12.525402+00:00",
           "cache_policy": "private,no-store",
           "attribution": [
             {
@@ -2372,8 +2372,8 @@
             },
             "uri": "spotify:album:0000000000000000000000",
             "context_uri": "spotify:album:0000000000000000000000",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "ca2042e9b0354670bc152a63e50320e6"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "50dffce8794dbedea21ebac3f7ea71e4"
           },
           {
             "id": "spotify:album:1111111111111111111111",
@@ -2394,8 +2394,8 @@
             },
             "uri": "spotify:album:1111111111111111111111",
             "context_uri": "spotify:album:1111111111111111111111",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "00ba0570aa95966db7addfb1bec7c650"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "29a6b51a51aa64f5f66f1f6b77e3a1a1"
           },
           {
             "id": "spotify:album:2222222222222222222222",
@@ -2416,8 +2416,8 @@
             },
             "uri": "spotify:album:2222222222222222222222",
             "context_uri": "spotify:album:2222222222222222222222",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "25a6917e315537dc18dc85864ede98e3"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "5c3318a4bb0ff1c1b41cc2bf3fce6654"
           },
           {
             "id": "spotify:album:3333333333333333333333",
@@ -2438,8 +2438,8 @@
             },
             "uri": "spotify:album:3333333333333333333333",
             "context_uri": "spotify:album:3333333333333333333333",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "cd4c6bea9122a9ad646310ef9b7e1ece"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "ea482d0fa4663ab4470a93307192d1ec"
           },
           {
             "id": "spotify:album:4444444444444444444444",
@@ -2460,8 +2460,8 @@
             },
             "uri": "spotify:album:4444444444444444444444",
             "context_uri": "spotify:album:4444444444444444444444",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "9a13af7b916ee147f9c7ad4e211f102e"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "4de655b2f4c1080aab7983595a798354"
           },
           {
             "id": "spotify:playlist:0000000000000000000000",
@@ -2482,8 +2482,8 @@
             },
             "uri": "spotify:playlist:0000000000000000000000",
             "context_uri": "spotify:playlist:0000000000000000000000",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "2470e63c9117e78a929d335c66c87876"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "10115ba9db35724b6330fdb5aee427f8"
           },
           {
             "id": "spotify:playlist:1111111111111111111111",
@@ -2504,8 +2504,8 @@
             },
             "uri": "spotify:playlist:1111111111111111111111",
             "context_uri": "spotify:playlist:1111111111111111111111",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "1a44cf61d6ca374d8a30049d7c4c2b13"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "6ac7f749843464b426f4071a424e8367"
           },
           {
             "id": "spotify:playlist:2222222222222222222222",
@@ -2526,8 +2526,8 @@
             },
             "uri": "spotify:playlist:2222222222222222222222",
             "context_uri": "spotify:playlist:2222222222222222222222",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "690f39bf2fac7b0da3a7406b53cb9844"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "0634e922a908380518ee21d76de4e629"
           },
           {
             "id": "spotify:playlist:3333333333333333333333",
@@ -2548,8 +2548,8 @@
             },
             "uri": "spotify:playlist:3333333333333333333333",
             "context_uri": "spotify:playlist:3333333333333333333333",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "7c834ef25910921e96723c41ac2f91f0"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "2b1b4535141c9ec191cc9ac1dcacd152"
           },
           {
             "id": "spotify:playlist:4444444444444444444444",
@@ -2570,8 +2570,8 @@
             },
             "uri": "spotify:playlist:4444444444444444444444",
             "context_uri": "spotify:playlist:4444444444444444444444",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "c141718b97df9f742ddbd2cab3293916"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "21f33b827aaec2b62513698daf007260"
           }
         ],
         "confirmation_actions": [],
@@ -2601,8 +2601,8 @@
             },
             "uri": "spotify:album:0000000000000000000000",
             "context_uri": "spotify:album:0000000000000000000000",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "ca2042e9b0354670bc152a63e50320e6"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "50dffce8794dbedea21ebac3f7ea71e4"
           },
           {
             "id": "spotify:album:1111111111111111111111",
@@ -2623,8 +2623,8 @@
             },
             "uri": "spotify:album:1111111111111111111111",
             "context_uri": "spotify:album:1111111111111111111111",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "00ba0570aa95966db7addfb1bec7c650"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "29a6b51a51aa64f5f66f1f6b77e3a1a1"
           },
           {
             "id": "spotify:album:2222222222222222222222",
@@ -2645,8 +2645,8 @@
             },
             "uri": "spotify:album:2222222222222222222222",
             "context_uri": "spotify:album:2222222222222222222222",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "25a6917e315537dc18dc85864ede98e3"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "5c3318a4bb0ff1c1b41cc2bf3fce6654"
           },
           {
             "id": "spotify:album:3333333333333333333333",
@@ -2667,8 +2667,8 @@
             },
             "uri": "spotify:album:3333333333333333333333",
             "context_uri": "spotify:album:3333333333333333333333",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "cd4c6bea9122a9ad646310ef9b7e1ece"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "ea482d0fa4663ab4470a93307192d1ec"
           },
           {
             "id": "spotify:album:4444444444444444444444",
@@ -2689,8 +2689,8 @@
             },
             "uri": "spotify:album:4444444444444444444444",
             "context_uri": "spotify:album:4444444444444444444444",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "9a13af7b916ee147f9c7ad4e211f102e"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "4de655b2f4c1080aab7983595a798354"
           },
           {
             "id": "spotify:playlist:0000000000000000000000",
@@ -2711,8 +2711,8 @@
             },
             "uri": "spotify:playlist:0000000000000000000000",
             "context_uri": "spotify:playlist:0000000000000000000000",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "2470e63c9117e78a929d335c66c87876"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "10115ba9db35724b6330fdb5aee427f8"
           },
           {
             "id": "spotify:playlist:1111111111111111111111",
@@ -2733,8 +2733,8 @@
             },
             "uri": "spotify:playlist:1111111111111111111111",
             "context_uri": "spotify:playlist:1111111111111111111111",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "1a44cf61d6ca374d8a30049d7c4c2b13"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "6ac7f749843464b426f4071a424e8367"
           },
           {
             "id": "spotify:playlist:2222222222222222222222",
@@ -2755,8 +2755,8 @@
             },
             "uri": "spotify:playlist:2222222222222222222222",
             "context_uri": "spotify:playlist:2222222222222222222222",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "690f39bf2fac7b0da3a7406b53cb9844"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "0634e922a908380518ee21d76de4e629"
           },
           {
             "id": "spotify:playlist:3333333333333333333333",
@@ -2777,8 +2777,8 @@
             },
             "uri": "spotify:playlist:3333333333333333333333",
             "context_uri": "spotify:playlist:3333333333333333333333",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "7c834ef25910921e96723c41ac2f91f0"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "2b1b4535141c9ec191cc9ac1dcacd152"
           },
           {
             "id": "spotify:playlist:4444444444444444444444",
@@ -2799,8 +2799,8 @@
             },
             "uri": "spotify:playlist:4444444444444444444444",
             "context_uri": "spotify:playlist:4444444444444444444444",
-            "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-            "action_id": "c141718b97df9f742ddbd2cab3293916"
+            "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+            "action_id": "21f33b827aaec2b62513698daf007260"
           }
         ],
         "action": "none",
@@ -2811,7 +2811,7 @@
         },
         "result_set": {
           "schema_version": 1,
-          "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
+          "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
           "expires_in": 600.0,
           "items": [
             {
@@ -2833,8 +2833,8 @@
               },
               "uri": "spotify:album:0000000000000000000000",
               "context_uri": "spotify:album:0000000000000000000000",
-              "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-              "action_id": "ca2042e9b0354670bc152a63e50320e6"
+              "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+              "action_id": "50dffce8794dbedea21ebac3f7ea71e4"
             },
             {
               "id": "spotify:album:1111111111111111111111",
@@ -2855,8 +2855,8 @@
               },
               "uri": "spotify:album:1111111111111111111111",
               "context_uri": "spotify:album:1111111111111111111111",
-              "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-              "action_id": "00ba0570aa95966db7addfb1bec7c650"
+              "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+              "action_id": "29a6b51a51aa64f5f66f1f6b77e3a1a1"
             },
             {
               "id": "spotify:album:2222222222222222222222",
@@ -2877,8 +2877,8 @@
               },
               "uri": "spotify:album:2222222222222222222222",
               "context_uri": "spotify:album:2222222222222222222222",
-              "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-              "action_id": "25a6917e315537dc18dc85864ede98e3"
+              "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+              "action_id": "5c3318a4bb0ff1c1b41cc2bf3fce6654"
             },
             {
               "id": "spotify:album:3333333333333333333333",
@@ -2899,8 +2899,8 @@
               },
               "uri": "spotify:album:3333333333333333333333",
               "context_uri": "spotify:album:3333333333333333333333",
-              "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-              "action_id": "cd4c6bea9122a9ad646310ef9b7e1ece"
+              "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+              "action_id": "ea482d0fa4663ab4470a93307192d1ec"
             },
             {
               "id": "spotify:album:4444444444444444444444",
@@ -2921,8 +2921,8 @@
               },
               "uri": "spotify:album:4444444444444444444444",
               "context_uri": "spotify:album:4444444444444444444444",
-              "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-              "action_id": "9a13af7b916ee147f9c7ad4e211f102e"
+              "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+              "action_id": "4de655b2f4c1080aab7983595a798354"
             },
             {
               "id": "spotify:playlist:0000000000000000000000",
@@ -2943,8 +2943,8 @@
               },
               "uri": "spotify:playlist:0000000000000000000000",
               "context_uri": "spotify:playlist:0000000000000000000000",
-              "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-              "action_id": "2470e63c9117e78a929d335c66c87876"
+              "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+              "action_id": "10115ba9db35724b6330fdb5aee427f8"
             },
             {
               "id": "spotify:playlist:1111111111111111111111",
@@ -2965,8 +2965,8 @@
               },
               "uri": "spotify:playlist:1111111111111111111111",
               "context_uri": "spotify:playlist:1111111111111111111111",
-              "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-              "action_id": "1a44cf61d6ca374d8a30049d7c4c2b13"
+              "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+              "action_id": "6ac7f749843464b426f4071a424e8367"
             },
             {
               "id": "spotify:playlist:2222222222222222222222",
@@ -2987,8 +2987,8 @@
               },
               "uri": "spotify:playlist:2222222222222222222222",
               "context_uri": "spotify:playlist:2222222222222222222222",
-              "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-              "action_id": "690f39bf2fac7b0da3a7406b53cb9844"
+              "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+              "action_id": "0634e922a908380518ee21d76de4e629"
             },
             {
               "id": "spotify:playlist:3333333333333333333333",
@@ -3009,8 +3009,8 @@
               },
               "uri": "spotify:playlist:3333333333333333333333",
               "context_uri": "spotify:playlist:3333333333333333333333",
-              "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-              "action_id": "7c834ef25910921e96723c41ac2f91f0"
+              "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+              "action_id": "2b1b4535141c9ec191cc9ac1dcacd152"
             },
             {
               "id": "spotify:playlist:4444444444444444444444",
@@ -3031,8 +3031,8 @@
               },
               "uri": "spotify:playlist:4444444444444444444444",
               "context_uri": "spotify:playlist:4444444444444444444444",
-              "result_set_id": "choices-472d049da1bf41e885b489bbfd1ada0f",
-              "action_id": "c141718b97df9f742ddbd2cab3293916"
+              "result_set_id": "choices-ca445d05b9b74476a88f067b752078c8",
+              "action_id": "21f33b827aaec2b62513698daf007260"
             }
           ]
         },
@@ -3092,7 +3092,7 @@
             "ha_configured"
           ],
           "processor_qualification_required": true,
-          "expires_at": "2026-11-25T09:12:52.996572+00:00",
+          "expires_at": "2026-11-25T09:19:12.532112+00:00",
           "cache_policy": "private,no-store",
           "attribution": [
             {
@@ -3396,7 +3396,7 @@
       "custom_components/djconnect/spotify_backend.py": "a25149de5c59b21b5ab88c00c6d1fa8c231b47c4821d70830c6a1669373da49e",
       "custom_components/djconnect/spotify_connection_repair.py": "558a9b550599776bd88a2d94bc082d6fb4b45afc6882e04e9011a41b53ca9ef3",
       "custom_components/djconnect/spotify_oauth.py": "38a28235e9bff336fb5ae3406ed591cd742a699c65673017ca5aaeb01f1db3ff",
-      "custom_components/djconnect/strings.json": "051f2eea46c6a109b817a8812f45c71b3d5e44ed75dbe3a082574ac384e7f299",
+      "custom_components/djconnect/strings.json": "ce91e19a7470c8a7b2dbe431e7398320164af64f2b5a3f5a579ccfdbdb276635",
       "custom_components/djconnect/structural_invariant_validator.py": "f993a1acd9b13818c9a3d1da64b2e3ef41f9935f538ca4f970a7a9042875fba2",
       "custom_components/djconnect/structured_artist.py": "77668b23c65addc4734458b032166b206268dc52ca1ff24205fb3a2ef8f91a27",
       "custom_components/djconnect/structured_playback.py": "38646476e55728ca71c63135e41e523ca284cabae5e0c2f0a4c830349d8fc01d",
@@ -3430,11 +3430,11 @@
       "custom_components/djconnect/track_insight.py": "f9f3e4d179b2af4433ed3bb6a98432457a114da64be4099fecbdfa7422b81604",
       "custom_components/djconnect/track_insight_target.py": "c74959290c40ee0a8ac838e0a472cdb461c11fa9acfa41eaceb2e3129f98b562",
       "custom_components/djconnect/track_start_announcement.py": "cfafd0f33db5e60bad04a694ee69782ee8db935d2ae86d1a6c5b24afcffa1175",
-      "custom_components/djconnect/translations/de.json": "c89869c1d0ef51d8b19cc5a7934901641db93ff786b858a0353c2c88bfee574a",
-      "custom_components/djconnect/translations/en.json": "1c325da4253ab24c1384e3f0a53b59f9e0f8e20ab886ee9187e3e305341d4978",
-      "custom_components/djconnect/translations/es.json": "490759814dec7b429799e24b6e161659ff08352201b17f354595a4c0a6ee8694",
-      "custom_components/djconnect/translations/fr.json": "da0c2ecbee9ec0062362b679c562058c9f46cf36b7e342a6a03fe423f0b4ca52",
-      "custom_components/djconnect/translations/nl.json": "82afc19c4d391a773b7d41784c44e654fefe0ee52c7a0b78945c57704e0a63b3",
+      "custom_components/djconnect/translations/de.json": "491700dfa4b97b8569e03bad4ecaa245f5ef39240c3cb2f2aeee953efbc34101",
+      "custom_components/djconnect/translations/en.json": "a3f2402152a3abcc72800ebd72e7e1384930c6e9e556b77aade361169c0f4a6c",
+      "custom_components/djconnect/translations/es.json": "7f03df3d72caae7760f169444b2fe624eae47f993998d3d9e780a11f1a737b54",
+      "custom_components/djconnect/translations/fr.json": "6f615279c264bbe1e567580612d50e6f3f945ddae2c35ba4a11335fef6303c48",
+      "custom_components/djconnect/translations/nl.json": "278713d530190886bc4577ddba770c6a09949905abcf2e44ab0e11ee768fedf7",
       "custom_components/djconnect/transport_capabilities.py": "bf7d7dd57b6f3c967852cf97ed843ab13fa2615a77521acdb36115e7727fa59a",
       "custom_components/djconnect/transport_delivery.py": "70b45afe6e25f960973affd39ae6d77e8a695db41df8919e749ca6885aedd8af",
       "custom_components/djconnect/transport_operations.py": "a62e88ab68d3115a5f1cc0d1d99b4b13c5ecdb75ec2267ae5211e4282e2c1a50",
@@ -3663,7 +3663,7 @@
     "custom_components/djconnect/profile_export.py": "69146e56bfef2bc0983a9499acaa0ff54fa9c9664010d1e75e1c2acae10a316d",
     "custom_components/djconnect/manifest.json": "8505e42341f3980f11af8fef73b194868f1b63432b9fc7b7f55ef03e2e2030db",
     "custom_components/djconnect/music_origin.py": "51cd507cb3f16dc30f142a196b31df4d5cf70e3331aab3fd3d5b7d9fd6191a8d",
-    "custom_components/djconnect/strings.json": "051f2eea46c6a109b817a8812f45c71b3d5e44ed75dbe3a082574ac384e7f299",
+    "custom_components/djconnect/strings.json": "ce91e19a7470c8a7b2dbe431e7398320164af64f2b5a3f5a579ccfdbdb276635",
     "custom_components/djconnect/speech_processor.py": "ff840cf29dd7563d525d9e96f5627853ce2b5c9517907aba4206f7c17b17b8b7",
     "custom_components/djconnect/visual_director.py": "17eb7db9b903fc4341cb0e881c6935b5d4bd2dccc76dd32d41a715eab73c22ec",
     "custom_components/djconnect/guest_conversation.py": "5d9683c4ecaa548038afff85472b840c51a644afd61f3e86666c72df5d3fb7ec",
@@ -3816,11 +3816,11 @@
     "custom_components/djconnect/domain/__init__.py": "104de8336815898807e43ff381c27e7ed22d47d62ce4855adc7446eb26d67902",
     "custom_components/djconnect/domain/storage.py": "a5b6c488431b93ed8d076ee421e7a80c92eb18fc950aa8f89c5cd2e1862c35d3",
     "custom_components/djconnect/domain/errors.py": "d9766fd1d4e50dda60104676f16f8f6fb3ea89d64f65b9db001fc8d8b77f76cf",
-    "custom_components/djconnect/translations/nl.json": "82afc19c4d391a773b7d41784c44e654fefe0ee52c7a0b78945c57704e0a63b3",
-    "custom_components/djconnect/translations/de.json": "c89869c1d0ef51d8b19cc5a7934901641db93ff786b858a0353c2c88bfee574a",
-    "custom_components/djconnect/translations/en.json": "1c325da4253ab24c1384e3f0a53b59f9e0f8e20ab886ee9187e3e305341d4978",
-    "custom_components/djconnect/translations/fr.json": "da0c2ecbee9ec0062362b679c562058c9f46cf36b7e342a6a03fe423f0b4ca52",
-    "custom_components/djconnect/translations/es.json": "490759814dec7b429799e24b6e161659ff08352201b17f354595a4c0a6ee8694",
+    "custom_components/djconnect/translations/nl.json": "278713d530190886bc4577ddba770c6a09949905abcf2e44ab0e11ee768fedf7",
+    "custom_components/djconnect/translations/de.json": "491700dfa4b97b8569e03bad4ecaa245f5ef39240c3cb2f2aeee953efbc34101",
+    "custom_components/djconnect/translations/en.json": "a3f2402152a3abcc72800ebd72e7e1384930c6e9e556b77aade361169c0f4a6c",
+    "custom_components/djconnect/translations/fr.json": "6f615279c264bbe1e567580612d50e6f3f945ddae2c35ba4a11335fef6303c48",
+    "custom_components/djconnect/translations/es.json": "7f03df3d72caae7760f169444b2fe624eae47f993998d3d9e780a11f1a737b54",
     "custom_components/djconnect/domain/music_account/models.py": "eefc64ac272cd7cbf17ac4af8ec08213184d90e224280aab5a63f8a9ab2487d0",
     "custom_components/djconnect/domain/music_account/__init__.py": "36ad7ec36df88b1d51c173af9e0ade1ee382368120f8cc04759dcd164292f785",
     "custom_components/djconnect/domain/backend/models.py": "a521deaff497130fe275de653f672e7e0829c4baec3e798b245db0f1b8c72fe3",
@@ -3845,7 +3845,7 @@
     "harness": "scripts/verification/verify_session_private_catalogue_http.py",
     "harness_sha256": "753f6b898488274b2980b00bd0d97d8135d36d1266bdec4f1de0e0fb1ade4688",
     "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
-    "raw_receipt_sha256": "50bde06dda1ae2624893bab69403e66a4ba4cb5e33b790be0019fc1ac9cb5c2a",
+    "raw_receipt_sha256": "d918dbb1796ce6514c866ae4a2657efb7c2efd90379cfecee645c05ab6a78679",
     "run_log_sha256": "f8f1a3e37f29c2c00017f48b70123a7bcb2ee2516bdad71cb63c4aa1bc00c35b",
     "source_before_after_equal": true,
     "scope": "ACTUAL_ISOLATED_HA_WITH_DECLARED_SYNTHETIC_INPUTS; NO_INSTALLED_NATIVE_PROVIDER_EDITORIAL_ACCEPTANCE"

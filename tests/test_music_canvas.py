@@ -328,7 +328,6 @@ class CanvasDomainTests(unittest.TestCase):
         actual = proof["receipt"]["extension"]
         for field in ("actual_sqlite", "paired_tls", "native_switchbot_schema",
                       "ha_admin_sets_switchbot_portrait_geometry_without_profile_grant_or_upload",
-
                       "ha_admin_pairs_exact_registered_samsung_without_profile_authority_change",
                       "tokenless_art_registration_pins_tls_and_requires_loaded_entry",
                       "ha_options_flow_pairs_registered_samsung_with_live_admin",

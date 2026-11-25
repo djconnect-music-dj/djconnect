@@ -16,7 +16,7 @@
       ],
       "synthetic_request": {
         "schema_version": "1",
-        "request_id": "6e6be02b-db6c-4d8c-9855-cbd04e4143e6",
+        "request_id": "96c18cfb-91af-4dd3-b9ef-03790467f43d",
         "surface": "ask_dj",
         "language": "nl",
         "catalogue_id": "ask_dj_examples_v1",
@@ -25,7 +25,7 @@
       },
       "response_body": {
         "schema_version": 1,
-        "request_id": "6e6be02b-db6c-4d8c-9855-cbd04e4143e6",
+        "request_id": "96c18cfb-91af-4dd3-b9ef-03790467f43d",
         "surface": "ask_dj",
         "language": "nl",
         "session_id": null,
@@ -38,7 +38,7 @@
           "qualified": true
         },
         "available": true,
-        "observation_id": "b6a5acc6-07a2-493a-b4b9-ecccb0e886e9",
+        "observation_id": "67e1b888-8cfb-4906-b43e-de5fab5d30e5",
         "eligible_entry_ids": [
           "play.artist",
           "play.cooking",
@@ -73,20 +73,20 @@
       ],
       "synthetic_request": {
         "schema_version": "1",
-        "request_id": "83c4a923-e4c6-42f8-b190-4ceff189d305",
+        "request_id": "83a9161d-5473-4cb2-a694-fa676faf108e",
         "surface": "active_session",
         "language": "nl",
         "catalogue_id": "ask_dj_examples_v1",
         "catalogue_revision": "2",
         "catalogue_sha256": "5c8c52c044782f18dae53f10d6babe02b6c6e414131e52f16255d65ad60f730b",
-        "session_id": "session-d1c4ecb71be4416b8ee4d0f9f5199add"
+        "session_id": "session-00fa92685c2445dbadc2b21ade2e6908"
       },
       "response_body": {
         "schema_version": 1,
-        "request_id": "83c4a923-e4c6-42f8-b190-4ceff189d305",
+        "request_id": "83a9161d-5473-4cb2-a694-fa676faf108e",
         "surface": "active_session",
         "language": "nl",
-        "session_id": "session-d1c4ecb71be4416b8ee4d0f9f5199add",
+        "session_id": "session-00fa92685c2445dbadc2b21ade2e6908",
         "track_id": "02e3d582594577327c335fc0",
         "catalogue": {
           "schema_version": 1,
@@ -96,7 +96,7 @@
           "qualified": true
         },
         "available": true,
-        "observation_id": "fb26509a-7516-4ea1-aa05-d6c3e91ea371",
+        "observation_id": "542be7f4-fa86-457e-a573-cc8ee6c5de89",
         "eligible_entry_ids": [
           "play.artist",
           "play.cooking",
@@ -121,7 +121,7 @@
       "eligible_entry_ids": [],
       "synthetic_request": {
         "schema_version": "1",
-        "request_id": "544658e6-7503-47de-a428-5db20fa43c57",
+        "request_id": "a97a1454-532e-446e-b431-69d85a100337",
         "surface": "ask_dj",
         "language": "de",
         "catalogue_id": "ask_dj_examples_v1",
@@ -130,7 +130,7 @@
       },
       "response_body": {
         "schema_version": 1,
-        "request_id": "544658e6-7503-47de-a428-5db20fa43c57",
+        "request_id": "a97a1454-532e-446e-b431-69d85a100337",
         "surface": "ask_dj",
         "language": "de",
         "session_id": null,
@@ -143,7 +143,7 @@
           "qualified": true
         },
         "available": true,
-        "observation_id": "36df1e45-db3d-4987-b26b-a14e76bdab87",
+        "observation_id": "f13abea6-9a36-4934-b296-47c2aef18ffa",
         "eligible_entry_ids": []
       }
     },
@@ -153,7 +153,7 @@
       "eligible_entry_ids": [],
       "synthetic_request": {
         "schema_version": "1",
-        "request_id": "ed53959a-30be-4b6e-a651-a6dbdf3ba912",
+        "request_id": "731bc9a5-cc49-46d3-8dcc-69a42bef3e09",
         "surface": "ask_dj",
         "language": "fr",
         "catalogue_id": "ask_dj_examples_v1",
@@ -162,7 +162,7 @@
       },
       "response_body": {
         "schema_version": 1,
-        "request_id": "ed53959a-30be-4b6e-a651-a6dbdf3ba912",
+        "request_id": "731bc9a5-cc49-46d3-8dcc-69a42bef3e09",
         "surface": "ask_dj",
         "language": "fr",
         "session_id": null,
@@ -175,7 +175,7 @@
           "qualified": true
         },
         "available": true,
-        "observation_id": "d50e289c-aac9-483d-9726-3489e437ebb5",
+        "observation_id": "9b848c62-3802-4b57-8c1d-25772a9b0555",
         "eligible_entry_ids": []
       }
     },
@@ -185,7 +185,7 @@
       "eligible_entry_ids": [],
       "synthetic_request": {
         "schema_version": "1",
-        "request_id": "18bda9c9-c806-47c6-b045-e29b507094c7",
+        "request_id": "3b6cbb50-7feb-4665-bcab-c3a6450070dd",
         "surface": "ask_dj",
         "language": "es",
         "catalogue_id": "ask_dj_examples_v1",
@@ -194,7 +194,7 @@
       },
       "response_body": {
         "schema_version": 1,
-        "request_id": "18bda9c9-c806-47c6-b045-e29b507094c7",
+        "request_id": "3b6cbb50-7feb-4665-bcab-c3a6450070dd",
         "surface": "ask_dj",
         "language": "es",
         "session_id": null,
@@ -207,7 +207,7 @@
           "qualified": true
         },
         "available": true,
-        "observation_id": "1061e323-c204-469d-9dbc-8f84beac5f8c",
+        "observation_id": "f6592a7b-0081-4551-b4f3-c458dc0bac86",
         "eligible_entry_ids": []
       }
     },
@@ -217,7 +217,7 @@
       "eligible_entry_ids": [],
       "synthetic_request": {
         "schema_version": "1",
-        "request_id": "57e3e296-f942-4b92-a44b-23278d4ab71e",
+        "request_id": "edac089f-dc4e-409f-b8ff-c8d648b2a1a2",
         "surface": "ask_dj",
         "language": "nl",
         "catalogue_id": "ask_dj_examples_v1",
@@ -226,7 +226,7 @@
       },
       "response_body": {
         "schema_version": 1,
-        "request_id": "57e3e296-f942-4b92-a44b-23278d4ab71e",
+        "request_id": "edac089f-dc4e-409f-b8ff-c8d648b2a1a2",
         "surface": "ask_dj",
         "language": "nl",
         "session_id": null,
@@ -243,7 +243,7 @@
       "eligible_entry_ids": [],
       "synthetic_request": {
         "schema_version": "1",
-        "request_id": "71db2c13-51f1-437b-9d61-50baf5057d3a",
+        "request_id": "2f9f1fd7-6ce8-44c4-a217-d9307f41d983",
         "surface": "ask_dj",
         "language": "nl",
         "catalogue_id": "ask_dj_examples_v1",
@@ -253,7 +253,7 @@
       },
       "response_body": {
         "schema_version": 1,
-        "request_id": "71db2c13-51f1-437b-9d61-50baf5057d3a",
+        "request_id": "2f9f1fd7-6ce8-44c4-a217-d9307f41d983",
         "surface": "ask_dj",
         "language": "nl",
         "session_id": "null",
@@ -276,7 +276,7 @@
       "eligible_entry_ids": [],
       "synthetic_request": {
         "schema_version": "1",
-        "request_id": "d9a549a5-d53d-47e5-bf4e-c2f4b21fa217",
+        "request_id": "e3a0f772-4ffe-465d-b083-a15ac156b4c5",
         "surface": "ask_dj",
         "language": "nl",
         "catalogue_id": "ask_dj_examples_v1",
@@ -286,7 +286,7 @@
       },
       "response_body": {
         "schema_version": 1,
-        "request_id": "d9a549a5-d53d-47e5-bf4e-c2f4b21fa217",
+        "request_id": "e3a0f772-4ffe-465d-b083-a15ac156b4c5",
         "surface": "ask_dj",
         "language": "nl",
         "session_id": "None",
@@ -309,7 +309,7 @@
       "eligible_entry_ids": [],
       "synthetic_request": {
         "schema_version": "1",
-        "request_id": "ba20c035-2d87-43e6-9bd7-98f407edc6f2",
+        "request_id": "072ab5c0-06a1-45c7-98c9-f7efb89bd407",
         "surface": "ask_dj",
         "language": "nl",
         "catalogue_id": "ask_dj_examples_v1",
@@ -319,7 +319,7 @@
       },
       "response_body": {
         "schema_version": 1,
-        "request_id": "ba20c035-2d87-43e6-9bd7-98f407edc6f2",
+        "request_id": "072ab5c0-06a1-45c7-98c9-f7efb89bd407",
         "surface": "ask_dj",
         "language": "nl",
         "session_id": "foreign",
@@ -342,7 +342,7 @@
       "eligible_entry_ids": null,
       "synthetic_request": {
         "schema_version": "1",
-        "request_id": "565299ea-a511-4de7-a3bb-a0abf4a4f25d",
+        "request_id": "9f5cf87d-42d6-4632-aa50-4f267d05571d",
         "surface": "ask_dj",
         "language": "nl",
         "catalogue_id": "ask_dj_examples_v1",
@@ -359,7 +359,7 @@
       "eligible_entry_ids": null,
       "synthetic_request": {
         "schema_version": "1",
-        "request_id": "54000dcc-67ca-427e-9ca1-08ccf773b6a9",
+        "request_id": "a16678c4-a280-436a-ab64-6e057d66d08a",
         "surface": "ask_dj",
         "language": "nl",
         "catalogue_id": "ask_dj_examples_v1",
@@ -376,7 +376,7 @@
       "eligible_entry_ids": null,
       "synthetic_request": {
         "schema_version": "1",
-        "request_id": "91dd6e4b-fc19-402d-a4c3-a7cd5ea33329",
+        "request_id": "10fd3519-d96e-491d-9cc0-1a319c84e5e7",
         "surface": "ask_dj",
         "language": "nl",
         "catalogue_id": "ask_dj_examples_v1",
@@ -393,7 +393,7 @@
       "eligible_entry_ids": null,
       "synthetic_request": {
         "schema_version": "1",
-        "request_id": "41d6148d-61a8-4cff-820f-1d975ee1f46d",
+        "request_id": "dde62be8-a581-48c8-9c2e-9b4a5c746cce",
         "surface": "ask_dj",
         "language": "nl",
         "catalogue_id": "ask_dj_examples_v1",
@@ -410,7 +410,7 @@
       "eligible_entry_ids": null,
       "synthetic_request": {
         "schema_version": "1",
-        "request_id": "db1629ce-23ae-4482-9fa1-e127ed1cefce",
+        "request_id": "d33e8c06-8dcc-44e0-a7ba-f4add76e0236",
         "surface": "ask_dj",
         "language": "nl",
         "catalogue_id": "ask_dj_examples_v1",
@@ -427,7 +427,7 @@
       "eligible_entry_ids": null,
       "synthetic_request": {
         "schema_version": "1",
-        "request_id": "2f8f3c4f-bd7e-4a54-88e0-2359e911fb68",
+        "request_id": "2e71c150-e6ce-4224-9850-5a4e7b69edc7",
         "surface": "ask_dj",
         "language": "nl",
         "catalogue_id": "ask_dj_examples_v1",
@@ -455,20 +455,20 @@
       ],
       "synthetic_request": {
         "schema_version": "1",
-        "request_id": "6b97e24c-3ad5-4c0b-a775-00e8b2e72492",
+        "request_id": "674a2a16-327f-4fc6-b00c-9475f0886b92",
         "surface": "active_session",
         "language": "nl",
         "catalogue_id": "ask_dj_examples_v1",
         "catalogue_revision": "2",
         "catalogue_sha256": "5c8c52c044782f18dae53f10d6babe02b6c6e414131e52f16255d65ad60f730b",
-        "session_id": "session-d1c4ecb71be4416b8ee4d0f9f5199add"
+        "session_id": "session-00fa92685c2445dbadc2b21ade2e6908"
       },
       "response_body": {
         "schema_version": 1,
-        "request_id": "6b97e24c-3ad5-4c0b-a775-00e8b2e72492",
+        "request_id": "674a2a16-327f-4fc6-b00c-9475f0886b92",
         "surface": "active_session",
         "language": "nl",
-        "session_id": "session-d1c4ecb71be4416b8ee4d0f9f5199add",
+        "session_id": "session-00fa92685c2445dbadc2b21ade2e6908",
         "track_id": "02e3d582594577327c335fc0",
         "catalogue": {
           "schema_version": 1,
@@ -478,7 +478,7 @@
           "qualified": true
         },
         "available": true,
-        "observation_id": "726c5f41-4dca-4244-b243-032719de5227",
+        "observation_id": "197cefc4-7316-4862-9507-ebe67d9ace4d",
         "eligible_entry_ids": [
           "discover.artist_albums",
           "discover.artist_tracks",
@@ -499,7 +499,7 @@
       "eligible_entry_ids": [],
       "synthetic_request": {
         "schema_version": "1",
-        "request_id": "7ca48b74-b8d1-45e2-abae-1c5051d52ce4",
+        "request_id": "e6b0111a-ab24-4877-bbb2-426d5e006cfb",
         "surface": "ask_dj",
         "language": "nl",
         "catalogue_id": "ask_dj_examples_v1",
@@ -508,7 +508,7 @@
       },
       "response_body": {
         "schema_version": 1,
-        "request_id": "7ca48b74-b8d1-45e2-abae-1c5051d52ce4",
+        "request_id": "e6b0111a-ab24-4877-bbb2-426d5e006cfb",
         "surface": "ask_dj",
         "language": "nl",
         "session_id": null,
@@ -531,7 +531,7 @@
       "eligible_entry_ids": [],
       "synthetic_request": {
         "schema_version": "1",
-        "request_id": "ccaf0609-ecc4-4b84-847f-d67d2b190cce",
+        "request_id": "4cdb6e6d-cbd4-4101-8b17-a3ca654c726d",
         "surface": "ask_dj",
         "language": "nl",
         "catalogue_id": "ask_dj_examples_v1",
@@ -540,7 +540,7 @@
       },
       "response_body": {
         "schema_version": 1,
-        "request_id": "ccaf0609-ecc4-4b84-847f-d67d2b190cce",
+        "request_id": "4cdb6e6d-cbd4-4101-8b17-a3ca654c726d",
         "surface": "ask_dj",
         "language": "nl",
         "session_id": null,
@@ -749,7 +749,7 @@
     "custom_components/djconnect/profile_export.py": "69146e56bfef2bc0983a9499acaa0ff54fa9c9664010d1e75e1c2acae10a316d",
     "custom_components/djconnect/manifest.json": "8505e42341f3980f11af8fef73b194868f1b63432b9fc7b7f55ef03e2e2030db",
     "custom_components/djconnect/music_origin.py": "51cd507cb3f16dc30f142a196b31df4d5cf70e3331aab3fd3d5b7d9fd6191a8d",
-    "custom_components/djconnect/strings.json": "051f2eea46c6a109b817a8812f45c71b3d5e44ed75dbe3a082574ac384e7f299",
+    "custom_components/djconnect/strings.json": "ce91e19a7470c8a7b2dbe431e7398320164af64f2b5a3f5a579ccfdbdb276635",
     "custom_components/djconnect/speech_processor.py": "ff840cf29dd7563d525d9e96f5627853ce2b5c9517907aba4206f7c17b17b8b7",
     "custom_components/djconnect/visual_director.py": "17eb7db9b903fc4341cb0e881c6935b5d4bd2dccc76dd32d41a715eab73c22ec",
     "custom_components/djconnect/guest_conversation.py": "5d9683c4ecaa548038afff85472b840c51a644afd61f3e86666c72df5d3fb7ec",
@@ -902,11 +902,11 @@
     "custom_components/djconnect/domain/__init__.py": "104de8336815898807e43ff381c27e7ed22d47d62ce4855adc7446eb26d67902",
     "custom_components/djconnect/domain/storage.py": "a5b6c488431b93ed8d076ee421e7a80c92eb18fc950aa8f89c5cd2e1862c35d3",
     "custom_components/djconnect/domain/errors.py": "d9766fd1d4e50dda60104676f16f8f6fb3ea89d64f65b9db001fc8d8b77f76cf",
-    "custom_components/djconnect/translations/nl.json": "82afc19c4d391a773b7d41784c44e654fefe0ee52c7a0b78945c57704e0a63b3",
-    "custom_components/djconnect/translations/de.json": "c89869c1d0ef51d8b19cc5a7934901641db93ff786b858a0353c2c88bfee574a",
-    "custom_components/djconnect/translations/en.json": "1c325da4253ab24c1384e3f0a53b59f9e0f8e20ab886ee9187e3e305341d4978",
-    "custom_components/djconnect/translations/fr.json": "da0c2ecbee9ec0062362b679c562058c9f46cf36b7e342a6a03fe423f0b4ca52",
-    "custom_components/djconnect/translations/es.json": "490759814dec7b429799e24b6e161659ff08352201b17f354595a4c0a6ee8694",
+    "custom_components/djconnect/translations/nl.json": "278713d530190886bc4577ddba770c6a09949905abcf2e44ab0e11ee768fedf7",
+    "custom_components/djconnect/translations/de.json": "491700dfa4b97b8569e03bad4ecaa245f5ef39240c3cb2f2aeee953efbc34101",
+    "custom_components/djconnect/translations/en.json": "a3f2402152a3abcc72800ebd72e7e1384930c6e9e556b77aade361169c0f4a6c",
+    "custom_components/djconnect/translations/fr.json": "6f615279c264bbe1e567580612d50e6f3f945ddae2c35ba4a11335fef6303c48",
+    "custom_components/djconnect/translations/es.json": "7f03df3d72caae7760f169444b2fe624eae47f993998d3d9e780a11f1a737b54",
     "custom_components/djconnect/domain/music_account/models.py": "eefc64ac272cd7cbf17ac4af8ec08213184d90e224280aab5a63f8a9ab2487d0",
     "custom_components/djconnect/domain/music_account/__init__.py": "36ad7ec36df88b1d51c173af9e0ade1ee382368120f8cc04759dcd164292f785",
     "custom_components/djconnect/domain/backend/models.py": "a521deaff497130fe275de653f672e7e0829c4baec3e798b245db0f1b8c72fe3",
@@ -932,7 +932,7 @@
     "harness": "scripts/verification/verify_help_live_context_http.py",
     "harness_sha256": "3691408b723c30f14f4873287197ff6ad0ebe85f6b9ea2a89d715d01cbbc6d4e",
     "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
-    "raw_receipt_sha256": "67aa8b2fb98cc0b96486f7302006a55ba16b1a932db1327e25fec3538cf093e1",
+    "raw_receipt_sha256": "e704a717b23d40a6d55c34d2e1857d60be1e61fe2881dbc1ecd93ef8ec2e96be",
     "raw_receipt": {
       "status": "PASS",
       "scope": "actual_HA_2026.10_paired_loopback_R5_committed_Store_public_Task_only",
@@ -1228,7 +1228,7 @@
         "custom_components/djconnect/spotify_backend.py": "a25149de5c59b21b5ab88c00c6d1fa8c231b47c4821d70830c6a1669373da49e",
         "custom_components/djconnect/spotify_connection_repair.py": "558a9b550599776bd88a2d94bc082d6fb4b45afc6882e04e9011a41b53ca9ef3",
         "custom_components/djconnect/spotify_oauth.py": "38a28235e9bff336fb5ae3406ed591cd742a699c65673017ca5aaeb01f1db3ff",
-        "custom_components/djconnect/strings.json": "051f2eea46c6a109b817a8812f45c71b3d5e44ed75dbe3a082574ac384e7f299",
+        "custom_components/djconnect/strings.json": "ce91e19a7470c8a7b2dbe431e7398320164af64f2b5a3f5a579ccfdbdb276635",
         "custom_components/djconnect/structural_invariant_validator.py": "f993a1acd9b13818c9a3d1da64b2e3ef41f9935f538ca4f970a7a9042875fba2",
         "custom_components/djconnect/structured_artist.py": "77668b23c65addc4734458b032166b206268dc52ca1ff24205fb3a2ef8f91a27",
         "custom_components/djconnect/structured_playback.py": "38646476e55728ca71c63135e41e523ca284cabae5e0c2f0a4c830349d8fc01d",
@@ -1262,11 +1262,11 @@
         "custom_components/djconnect/track_insight.py": "f9f3e4d179b2af4433ed3bb6a98432457a114da64be4099fecbdfa7422b81604",
         "custom_components/djconnect/track_insight_target.py": "c74959290c40ee0a8ac838e0a472cdb461c11fa9acfa41eaceb2e3129f98b562",
         "custom_components/djconnect/track_start_announcement.py": "cfafd0f33db5e60bad04a694ee69782ee8db935d2ae86d1a6c5b24afcffa1175",
-        "custom_components/djconnect/translations/de.json": "c89869c1d0ef51d8b19cc5a7934901641db93ff786b858a0353c2c88bfee574a",
-        "custom_components/djconnect/translations/en.json": "1c325da4253ab24c1384e3f0a53b59f9e0f8e20ab886ee9187e3e305341d4978",
-        "custom_components/djconnect/translations/es.json": "490759814dec7b429799e24b6e161659ff08352201b17f354595a4c0a6ee8694",
-        "custom_components/djconnect/translations/fr.json": "da0c2ecbee9ec0062362b679c562058c9f46cf36b7e342a6a03fe423f0b4ca52",
-        "custom_components/djconnect/translations/nl.json": "82afc19c4d391a773b7d41784c44e654fefe0ee52c7a0b78945c57704e0a63b3",
+        "custom_components/djconnect/translations/de.json": "491700dfa4b97b8569e03bad4ecaa245f5ef39240c3cb2f2aeee953efbc34101",
+        "custom_components/djconnect/translations/en.json": "a3f2402152a3abcc72800ebd72e7e1384930c6e9e556b77aade361169c0f4a6c",
+        "custom_components/djconnect/translations/es.json": "7f03df3d72caae7760f169444b2fe624eae47f993998d3d9e780a11f1a737b54",
+        "custom_components/djconnect/translations/fr.json": "6f615279c264bbe1e567580612d50e6f3f945ddae2c35ba4a11335fef6303c48",
+        "custom_components/djconnect/translations/nl.json": "278713d530190886bc4577ddba770c6a09949905abcf2e44ab0e11ee768fedf7",
         "custom_components/djconnect/transport_capabilities.py": "bf7d7dd57b6f3c967852cf97ed843ab13fa2615a77521acdb36115e7727fa59a",
         "custom_components/djconnect/transport_delivery.py": "70b45afe6e25f960973affd39ae6d77e8a695db41df8919e749ca6885aedd8af",
         "custom_components/djconnect/transport_operations.py": "a62e88ab68d3115a5f1cc0d1d99b4b13c5ecdb75ec2267ae5211e4282e2c1a50",
@@ -1317,7 +1317,7 @@
           ],
           "synthetic_request": {
             "schema_version": "1",
-            "request_id": "6e6be02b-db6c-4d8c-9855-cbd04e4143e6",
+            "request_id": "96c18cfb-91af-4dd3-b9ef-03790467f43d",
             "surface": "ask_dj",
             "language": "nl",
             "catalogue_id": "ask_dj_examples_v1",
@@ -1326,7 +1326,7 @@
           },
           "response_body": {
             "schema_version": 1,
-            "request_id": "6e6be02b-db6c-4d8c-9855-cbd04e4143e6",
+            "request_id": "96c18cfb-91af-4dd3-b9ef-03790467f43d",
             "surface": "ask_dj",
             "language": "nl",
             "session_id": null,
@@ -1339,7 +1339,7 @@
               "qualified": true
             },
             "available": true,
-            "observation_id": "b6a5acc6-07a2-493a-b4b9-ecccb0e886e9",
+            "observation_id": "67e1b888-8cfb-4906-b43e-de5fab5d30e5",
             "eligible_entry_ids": [
               "play.artist",
               "play.cooking",
@@ -1374,20 +1374,20 @@
           ],
           "synthetic_request": {
             "schema_version": "1",
-            "request_id": "83c4a923-e4c6-42f8-b190-4ceff189d305",
+            "request_id": "83a9161d-5473-4cb2-a694-fa676faf108e",
             "surface": "active_session",
             "language": "nl",
             "catalogue_id": "ask_dj_examples_v1",
             "catalogue_revision": "2",
             "catalogue_sha256": "5c8c52c044782f18dae53f10d6babe02b6c6e414131e52f16255d65ad60f730b",
-            "session_id": "session-d1c4ecb71be4416b8ee4d0f9f5199add"
+            "session_id": "session-00fa92685c2445dbadc2b21ade2e6908"
           },
           "response_body": {
             "schema_version": 1,
-            "request_id": "83c4a923-e4c6-42f8-b190-4ceff189d305",
+            "request_id": "83a9161d-5473-4cb2-a694-fa676faf108e",
             "surface": "active_session",
             "language": "nl",
-            "session_id": "session-d1c4ecb71be4416b8ee4d0f9f5199add",
+            "session_id": "session-00fa92685c2445dbadc2b21ade2e6908",
             "track_id": "02e3d582594577327c335fc0",
             "catalogue": {
               "schema_version": 1,
@@ -1397,7 +1397,7 @@
               "qualified": true
             },
             "available": true,
-            "observation_id": "fb26509a-7516-4ea1-aa05-d6c3e91ea371",
+            "observation_id": "542be7f4-fa86-457e-a573-cc8ee6c5de89",
             "eligible_entry_ids": [
               "play.artist",
               "play.cooking",
@@ -1422,7 +1422,7 @@
           "eligible_entry_ids": [],
           "synthetic_request": {
             "schema_version": "1",
-            "request_id": "544658e6-7503-47de-a428-5db20fa43c57",
+            "request_id": "a97a1454-532e-446e-b431-69d85a100337",
             "surface": "ask_dj",
             "language": "de",
             "catalogue_id": "ask_dj_examples_v1",
@@ -1431,7 +1431,7 @@
           },
           "response_body": {
             "schema_version": 1,
-            "request_id": "544658e6-7503-47de-a428-5db20fa43c57",
+            "request_id": "a97a1454-532e-446e-b431-69d85a100337",
             "surface": "ask_dj",
             "language": "de",
             "session_id": null,
@@ -1444,7 +1444,7 @@
               "qualified": true
             },
             "available": true,
-            "observation_id": "36df1e45-db3d-4987-b26b-a14e76bdab87",
+            "observation_id": "f13abea6-9a36-4934-b296-47c2aef18ffa",
             "eligible_entry_ids": []
           }
         },
@@ -1454,7 +1454,7 @@
           "eligible_entry_ids": [],
           "synthetic_request": {
             "schema_version": "1",
-            "request_id": "ed53959a-30be-4b6e-a651-a6dbdf3ba912",
+            "request_id": "731bc9a5-cc49-46d3-8dcc-69a42bef3e09",
             "surface": "ask_dj",
             "language": "fr",
             "catalogue_id": "ask_dj_examples_v1",
@@ -1463,7 +1463,7 @@
           },
           "response_body": {
             "schema_version": 1,
-            "request_id": "ed53959a-30be-4b6e-a651-a6dbdf3ba912",
+            "request_id": "731bc9a5-cc49-46d3-8dcc-69a42bef3e09",
             "surface": "ask_dj",
             "language": "fr",
             "session_id": null,
@@ -1476,7 +1476,7 @@
               "qualified": true
             },
             "available": true,
-            "observation_id": "d50e289c-aac9-483d-9726-3489e437ebb5",
+            "observation_id": "9b848c62-3802-4b57-8c1d-25772a9b0555",
             "eligible_entry_ids": []
           }
         },
@@ -1486,7 +1486,7 @@
           "eligible_entry_ids": [],
           "synthetic_request": {
             "schema_version": "1",
-            "request_id": "18bda9c9-c806-47c6-b045-e29b507094c7",
+            "request_id": "3b6cbb50-7feb-4665-bcab-c3a6450070dd",
             "surface": "ask_dj",
             "language": "es",
             "catalogue_id": "ask_dj_examples_v1",
@@ -1495,7 +1495,7 @@
           },
           "response_body": {
             "schema_version": 1,
-            "request_id": "18bda9c9-c806-47c6-b045-e29b507094c7",
+            "request_id": "3b6cbb50-7feb-4665-bcab-c3a6450070dd",
             "surface": "ask_dj",
             "language": "es",
             "session_id": null,
@@ -1508,7 +1508,7 @@
               "qualified": true
             },
             "available": true,
-            "observation_id": "1061e323-c204-469d-9dbc-8f84beac5f8c",
+            "observation_id": "f6592a7b-0081-4551-b4f3-c458dc0bac86",
             "eligible_entry_ids": []
           }
         },
@@ -1518,7 +1518,7 @@
           "eligible_entry_ids": [],
           "synthetic_request": {
             "schema_version": "1",
-            "request_id": "57e3e296-f942-4b92-a44b-23278d4ab71e",
+            "request_id": "edac089f-dc4e-409f-b8ff-c8d648b2a1a2",
             "surface": "ask_dj",
             "language": "nl",
             "catalogue_id": "ask_dj_examples_v1",
@@ -1527,7 +1527,7 @@
           },
           "response_body": {
             "schema_version": 1,
-            "request_id": "57e3e296-f942-4b92-a44b-23278d4ab71e",
+            "request_id": "edac089f-dc4e-409f-b8ff-c8d648b2a1a2",
             "surface": "ask_dj",
             "language": "nl",
             "session_id": null,
@@ -1544,7 +1544,7 @@
           "eligible_entry_ids": [],
           "synthetic_request": {
             "schema_version": "1",
-            "request_id": "71db2c13-51f1-437b-9d61-50baf5057d3a",
+            "request_id": "2f9f1fd7-6ce8-44c4-a217-d9307f41d983",
             "surface": "ask_dj",
             "language": "nl",
             "catalogue_id": "ask_dj_examples_v1",
@@ -1554,7 +1554,7 @@
           },
           "response_body": {
             "schema_version": 1,
-            "request_id": "71db2c13-51f1-437b-9d61-50baf5057d3a",
+            "request_id": "2f9f1fd7-6ce8-44c4-a217-d9307f41d983",
             "surface": "ask_dj",
             "language": "nl",
             "session_id": "null",
@@ -1577,7 +1577,7 @@
           "eligible_entry_ids": [],
           "synthetic_request": {
             "schema_version": "1",
-            "request_id": "d9a549a5-d53d-47e5-bf4e-c2f4b21fa217",
+            "request_id": "e3a0f772-4ffe-465d-b083-a15ac156b4c5",
             "surface": "ask_dj",
             "language": "nl",
             "catalogue_id": "ask_dj_examples_v1",
@@ -1587,7 +1587,7 @@
           },
           "response_body": {
             "schema_version": 1,
-            "request_id": "d9a549a5-d53d-47e5-bf4e-c2f4b21fa217",
+            "request_id": "e3a0f772-4ffe-465d-b083-a15ac156b4c5",
             "surface": "ask_dj",
             "language": "nl",
             "session_id": "None",
@@ -1610,7 +1610,7 @@
           "eligible_entry_ids": [],
           "synthetic_request": {
             "schema_version": "1",
-            "request_id": "ba20c035-2d87-43e6-9bd7-98f407edc6f2",
+            "request_id": "072ab5c0-06a1-45c7-98c9-f7efb89bd407",
             "surface": "ask_dj",
             "language": "nl",
             "catalogue_id": "ask_dj_examples_v1",
@@ -1620,7 +1620,7 @@
           },
           "response_body": {
             "schema_version": 1,
-            "request_id": "ba20c035-2d87-43e6-9bd7-98f407edc6f2",
+            "request_id": "072ab5c0-06a1-45c7-98c9-f7efb89bd407",
             "surface": "ask_dj",
             "language": "nl",
             "session_id": "foreign",
@@ -1643,7 +1643,7 @@
           "eligible_entry_ids": null,
           "synthetic_request": {
             "schema_version": "1",
-            "request_id": "565299ea-a511-4de7-a3bb-a0abf4a4f25d",
+            "request_id": "9f5cf87d-42d6-4632-aa50-4f267d05571d",
             "surface": "ask_dj",
             "language": "nl",
             "catalogue_id": "ask_dj_examples_v1",
@@ -1660,7 +1660,7 @@
           "eligible_entry_ids": null,
           "synthetic_request": {
             "schema_version": "1",
-            "request_id": "54000dcc-67ca-427e-9ca1-08ccf773b6a9",
+            "request_id": "a16678c4-a280-436a-ab64-6e057d66d08a",
             "surface": "ask_dj",
             "language": "nl",
             "catalogue_id": "ask_dj_examples_v1",
@@ -1677,7 +1677,7 @@
           "eligible_entry_ids": null,
           "synthetic_request": {
             "schema_version": "1",
-            "request_id": "91dd6e4b-fc19-402d-a4c3-a7cd5ea33329",
+            "request_id": "10fd3519-d96e-491d-9cc0-1a319c84e5e7",
             "surface": "ask_dj",
             "language": "nl",
             "catalogue_id": "ask_dj_examples_v1",
@@ -1694,7 +1694,7 @@
           "eligible_entry_ids": null,
           "synthetic_request": {
             "schema_version": "1",
-            "request_id": "41d6148d-61a8-4cff-820f-1d975ee1f46d",
+            "request_id": "dde62be8-a581-48c8-9c2e-9b4a5c746cce",
             "surface": "ask_dj",
             "language": "nl",
             "catalogue_id": "ask_dj_examples_v1",
@@ -1711,7 +1711,7 @@
           "eligible_entry_ids": null,
           "synthetic_request": {
             "schema_version": "1",
-            "request_id": "db1629ce-23ae-4482-9fa1-e127ed1cefce",
+            "request_id": "d33e8c06-8dcc-44e0-a7ba-f4add76e0236",
             "surface": "ask_dj",
             "language": "nl",
             "catalogue_id": "ask_dj_examples_v1",
@@ -1728,7 +1728,7 @@
           "eligible_entry_ids": null,
           "synthetic_request": {
             "schema_version": "1",
-            "request_id": "2f8f3c4f-bd7e-4a54-88e0-2359e911fb68",
+            "request_id": "2e71c150-e6ce-4224-9850-5a4e7b69edc7",
             "surface": "ask_dj",
             "language": "nl",
             "catalogue_id": "ask_dj_examples_v1",
@@ -1756,20 +1756,20 @@
           ],
           "synthetic_request": {
             "schema_version": "1",
-            "request_id": "6b97e24c-3ad5-4c0b-a775-00e8b2e72492",
+            "request_id": "674a2a16-327f-4fc6-b00c-9475f0886b92",
             "surface": "active_session",
             "language": "nl",
             "catalogue_id": "ask_dj_examples_v1",
             "catalogue_revision": "2",
             "catalogue_sha256": "5c8c52c044782f18dae53f10d6babe02b6c6e414131e52f16255d65ad60f730b",
-            "session_id": "session-d1c4ecb71be4416b8ee4d0f9f5199add"
+            "session_id": "session-00fa92685c2445dbadc2b21ade2e6908"
           },
           "response_body": {
             "schema_version": 1,
-            "request_id": "6b97e24c-3ad5-4c0b-a775-00e8b2e72492",
+            "request_id": "674a2a16-327f-4fc6-b00c-9475f0886b92",
             "surface": "active_session",
             "language": "nl",
-            "session_id": "session-d1c4ecb71be4416b8ee4d0f9f5199add",
+            "session_id": "session-00fa92685c2445dbadc2b21ade2e6908",
             "track_id": "02e3d582594577327c335fc0",
             "catalogue": {
               "schema_version": 1,
@@ -1779,7 +1779,7 @@
               "qualified": true
             },
             "available": true,
-            "observation_id": "726c5f41-4dca-4244-b243-032719de5227",
+            "observation_id": "197cefc4-7316-4862-9507-ebe67d9ace4d",
             "eligible_entry_ids": [
               "discover.artist_albums",
               "discover.artist_tracks",
@@ -1800,7 +1800,7 @@
           "eligible_entry_ids": [],
           "synthetic_request": {
             "schema_version": "1",
-            "request_id": "7ca48b74-b8d1-45e2-abae-1c5051d52ce4",
+            "request_id": "e6b0111a-ab24-4877-bbb2-426d5e006cfb",
             "surface": "ask_dj",
             "language": "nl",
             "catalogue_id": "ask_dj_examples_v1",
@@ -1809,7 +1809,7 @@
           },
           "response_body": {
             "schema_version": 1,
-            "request_id": "7ca48b74-b8d1-45e2-abae-1c5051d52ce4",
+            "request_id": "e6b0111a-ab24-4877-bbb2-426d5e006cfb",
             "surface": "ask_dj",
             "language": "nl",
             "session_id": null,
@@ -1832,7 +1832,7 @@
           "eligible_entry_ids": [],
           "synthetic_request": {
             "schema_version": "1",
-            "request_id": "ccaf0609-ecc4-4b84-847f-d67d2b190cce",
+            "request_id": "4cdb6e6d-cbd4-4101-8b17-a3ca654c726d",
             "surface": "ask_dj",
             "language": "nl",
             "catalogue_id": "ask_dj_examples_v1",
@@ -1841,7 +1841,7 @@
           },
           "response_body": {
             "schema_version": 1,
-            "request_id": "ccaf0609-ecc4-4b84-847f-d67d2b190cce",
+            "request_id": "4cdb6e6d-cbd4-4101-8b17-a3ca654c726d",
             "surface": "ask_dj",
             "language": "nl",
             "session_id": null,
