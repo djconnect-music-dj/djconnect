@@ -37,6 +37,10 @@ is deselected. Composition and interval inherit the previously saved values.
 Samsung also inherits the previous matte and title values, while SwitchBot
 starts with both options off.
 
+While screen settings are open, Apple observes the optional target
+`preview_revision` on the existing read and reloads the private preview when
+it changes. An older Core can omit the field.
+
 ## 2026-11-22 — Music Origin Moment v1 consumer contract
 
 Core #1581 selects `music_origin` / `music_origin_story` on existing requested-Moments operations, with schema1 relation/direction/uncertainty and original track subject. Apple consumes the same avatar, persistence/history and speech owners, preserving nuance; one shared disclaimer above both composers. See [design](docs/product/MUSIC_ORIGIN_MOMENT_V1.md). No new API or proactive selection. Source qualification and actual provider/native acceptance are separate.
