@@ -95,9 +95,14 @@ def patched(current, patch):
          and all(x in CADENCES for x in overrides.values()))
     presentation = result["presentation_overrides"]
     need(type(presentation) is dict and len(presentation) <= 64)
+    prior_presentation = current.get("presentation_overrides", {})
     for target, style in presentation.items():
-        need(identifier(target) and type(style) is dict and set(style) == {"matte", "show_track_title"}
+        need(identifier(target) and type(style) is dict
+             and {"matte", "show_track_title"} <= set(style) <= {"matte", "show_track_title", "composition", "cadence"}
              and style["matte"] in MATTES and type(style["show_track_title"]) is bool)
+        need("composition" not in style or style["composition"] in COMPOSITIONS)
+        need("cadence" not in style or style["cadence"] in CADENCES)
+        presentation[target] = {**prior_presentation.get(target, {}), **style}
     return result
 
 
@@ -106,7 +111,13 @@ def screen_presentation(prefs, target, device):
     style = prefs.get("presentation_overrides", {}).get(target)
     if style is None:
         style = {"matte": "off", "show_track_title": False} if device["adapter"] == "switchbot" else prefs
-    return prefs["composition"], style["matte"], style.get("show_track_title", False)
+    return style.get("composition", prefs["composition"]), style["matte"], style.get("show_track_title", False)
+
+
+def screen_cadence(prefs, target):
+    """Resolve the interval for this screen, including existing saved overrides."""
+    style = prefs.get("presentation_overrides", {}).get(target, {})
+    return style.get("cadence", prefs["cadence_overrides"].get(target, prefs["cadence"]))
 
 
 def fresh_state():

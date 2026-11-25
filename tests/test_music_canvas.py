@@ -16,7 +16,7 @@ sys.modules.setdefault("custom_components.djconnect", package)
 
 from custom_components.djconnect.music_canvas import (  # noqa: E402
     CanvasError, Cadence, apply_update, fresh_state, profile, reserve_forget,
-    digest, finish_forget, screen_presentation, validate_request,
+    digest, finish_forget, screen_cadence, screen_presentation, validate_request,
 )
 from custom_components.djconnect.music_canvas_adapters import discover, samsung_action  # noqa: E402
 from custom_components.djconnect.music_canvas_render import art_prompt, compose  # noqa: E402
@@ -415,19 +415,27 @@ class CanvasDomainTests(unittest.TestCase):
         self.assertEqual(screen_presentation(prefs, "frame", state["devices"]["frame"]), ("central", "off", False))
         self.assertEqual(screen_presentation(prefs, "tv", state["devices"]["tv"]), ("central", "contrast", True))
 
-        override = {"matte": "matching", "show_track_title": False}
+        override = {"matte": "matching", "show_track_title": False, "composition": "full", "cadence": "track"}
         data = update(legacy["revision"], presentation_overrides={"tv": override})
         validate_request("update", data)
         saved = apply_update(state, "owner", "scope", data, 2)
         self.assertEqual(saved["preferences"]["selected_targets"], [])
         self.assertEqual(screen_presentation(saved["preferences"], "tv", state["devices"]["tv"]),
-                         ("central", "matching", False))
+                         ("full", "matching", False))
+        self.assertEqual(screen_cadence(saved["preferences"], "tv"), "track")
+        self.assertEqual(screen_cadence(saved["preferences"], "frame"), "1800")
+        legacy_edit = update(saved["revision"], presentation_overrides={
+            "tv": {"matte": "off", "show_track_title": True}})
+        preserved = apply_update(state, "owner", "scope", legacy_edit, 3)
+        self.assertEqual(screen_presentation(preserved["preferences"], "tv", state["devices"]["tv"]),
+                         ("full", "off", True))
+        self.assertEqual(screen_cadence(preserved["preferences"], "tv"), "track")
         with self.assertRaises(CanvasError):
-            apply_update(state, "owner", "scope", update(saved["revision"],
-                         presentation_overrides={"unknown": override}), 3)
+            apply_update(state, "owner", "scope", update(preserved["revision"],
+                         presentation_overrides={"unknown": override}), 4)
         finish_forget(state, "tv")
         self.assertEqual(profile(state, "owner")["preferences"]["presentation_overrides"], {})
-        self.assertEqual(profile(state, "owner")["revision"], saved["revision"] + 1)
+        self.assertEqual(profile(state, "owner")["revision"], preserved["revision"] + 1)
 
     def test_actual_ha_proof_binds_current_source_and_closes_no_physical_claim(self):
         import hashlib

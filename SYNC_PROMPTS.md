@@ -29,12 +29,13 @@ provider/display acceptance remain separate. No install/deployment authorized.
 Core owns `docs/product/MUSIC_CANVAS_V1.md` and `docs/technical/MUSIC_CANVAS_V1_CONTRACT.md`. Apple consumes only version-1 capability and paired routes. Profile preferences, image generation, scheduler, device secrets and adapters are Core-owned; no Apple timer/provider or Cast route. Source implementation and physical/provider acceptance are reported separately.
 
 Music Canvas read preferences can include `presentation_overrides`, a map of
-registered screen IDs to `matte` and `show_track_title`. Its presence offers
-per-screen presentation controls. Send edits through the existing revisioned
-update and retain settings when a screen is deselected. Before a screen has an
-override, Samsung inherits the previous Profile-wide values and SwitchBot
-starts with both options off. Clients connected to older Core versions use
-the existing Profile-wide controls.
+registered screen IDs to `matte` and `show_track_title`. When the read advertises
+`per_screen_composition_and_cadence`, entries also accept `composition` and
+`cadence`. Send edits through the existing revisioned update. Open the settings
+from each screen row, independent of selection. Keep settings when a screen
+is deselected. Composition and interval inherit the previously saved values.
+Samsung also inherits the previous matte and title values, while SwitchBot
+starts with both options off.
 
 ## 2026-11-22 — Music Origin Moment v1 consumer contract
 
