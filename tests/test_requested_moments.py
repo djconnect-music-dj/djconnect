@@ -1580,7 +1580,7 @@ class RequestedMomentsTest(unittest.IsolatedAsyncioTestCase):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads(
             (
-                root / 'examples/client_contracts/requested_moments_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--d30364f3.json'
+                root / 'examples/client_contracts/requested_moments_v1/vibecast-party-qr-timing-20261125-0261125-ngs-20261125-2-9f8c5a3a.json'
             ).read_text()
         )
         self.assertTrue(proof["source_before_after_equal"])

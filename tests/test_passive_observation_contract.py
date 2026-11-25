@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class PassiveObservationContractTests(unittest.TestCase):
     def test_original_grant_frames_and_nonrenewing_reads_match_current_source(self):
-        wire = json.loads((ROOT / 'examples/client_contracts/passive_observation_sequence_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--17960ce6.json').read_text())
+        wire = json.loads((ROOT / 'examples/client_contracts/passive_observation_sequence_v1/vibecast-party-qr-timing-20261125-0261125-ngs-20261125-2-fa4e3635.json').read_text())
         self.assertTrue(wire['source_before_after_equal'])
         self.assertEqual(len(wire['source_pins']), 361)
         for name, digest in {**wire['source_pins'], **wire['harness_pins']}.items():
