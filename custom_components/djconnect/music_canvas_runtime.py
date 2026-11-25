@@ -10,7 +10,7 @@ import secrets
 import time
 
 from .music_canvas import (
-    Cadence, CanvasError, apply_update, digest, finish_forget, need, profile, reserve_forget,
+    Cadence, CanvasError, apply_update, digest, finish_forget, need, profile, reserve_forget, screen_presentation,
 )
 from .persistence import persistence_service
 from .persistence.music_canvas import CanvasRepository
@@ -400,8 +400,6 @@ class CanvasRuntime:
         storage = profile_storage(self.hass)
         authority_revision = storage.authority_revision
         prefs = config["preferences"]
-        show_title = prefs.get("show_track_title", False)
-        presentation = [prefs["composition"], prefs["matte"], show_title]
         sample = active.broadcast.passive_observation
         if not sample or time.monotonic()-sample[0] > 30 or sample[2].state != "playing":
             return
@@ -455,11 +453,12 @@ class CanvasRuntime:
                     self.states[target] = "waiting_screen"
                     continue
             key = (owner, active.session_id, target)
+            presentation = screen_presentation(prefs, target, device)
             previous_presentation = device.get("presentation")
             if isinstance(previous_presentation, list) and len(previous_presentation) == 2:
                 previous_presentation = [*previous_presentation, False]
             cached = device.get("source_image") if (device.get("preview_owner") == owner
-                and previous_presentation != presentation) else None
+                and previous_presentation != list(presentation)) else None
             if not cached and not self.cadence.due(key, occurrence, cadence, time.monotonic()):
                 continue
             if device["adapter"] == "samsung":
@@ -485,13 +484,16 @@ class CanvasRuntime:
                     self.states[target] = exc.code if isinstance(exc, CanvasError) else "unavailable"
                     continue
             self.claims[target] = owner
-            groups.setdefault((screen["width"], screen["height"], cached, cadence == "track"), []).append((target, device, key))
+            groups.setdefault((screen["width"], screen["height"], cached, cadence == "track", presentation),
+                              []).append((target, device, key))
         if not groups:
             return
 
         pending_attempts = {}
+        generated = {}
         try:
-            for (width, height, cached, per_track), targets in groups.items():
+            for (width, height, cached, per_track, presentation), targets in groups.items():
+                composition, matte, show_title = presentation
                 def current_scope():
                     return scope_current(per_track)
                 need(current_scope(), "canvas_context_changed", 409)
@@ -506,22 +508,26 @@ class CanvasRuntime:
                         attempt = (occurrence, time.monotonic())
                         pending_attempts[key] = attempt
                         self.cadence.mark(key, *attempt)
+                generation_key = (width, height, per_track, composition)
                 if cached:
                     raw = await self.hass.async_add_executor_job((self.asset_root/cached).read_bytes)
+                elif generation_key in generated:
+                    raw = generated[generation_key]
                 else:
                     now = time.monotonic()
                     while self.generation_attempts and now-self.generation_attempts[0] >= 3600:
                         self.generation_attempts.popleft()
                     need(len(self.generation_attempts) < 48, "canvas_generation_budget_wait", 429)
                     self.generation_attempts.append(now)
-                    prompt = render.art_prompt(playback.title, active.selected_mood, prefs["composition"],
+                    prompt = render.art_prompt(playback.title, active.selected_mood, composition,
                         width, height, latitude=getattr(self.hass.config, "latitude", None),
                         month=__import__("datetime").datetime.now().month)
                     async with asyncio.timeout(120):
                         raw = await render.generate(self.hass, prompt)
+                    generated[generation_key] = raw
                 need(current_scope(), "canvas_context_changed", 409)
                 art = await self.hass.async_add_executor_job(
-                    render.compose, raw, width, height, prefs["composition"], prefs["matte"],
+                    render.compose, raw, width, height, composition, matte,
                     playback.title if show_title else None)
                 filename = hashlib.sha256(art).hexdigest()+".jpg"
                 source_file = cached or hashlib.sha256(raw).hexdigest()+".jpg"
@@ -666,9 +672,7 @@ class CanvasRuntime:
                 row["preview"] = filename
                 row["preview_owner"] = owner
                 row["source_image"] = source_file
-                row["presentation"] = [
-                    config["preferences"]["composition"], config["preferences"]["matte"],
-                    config["preferences"].get("show_track_title", False)]
+                row["presentation"] = list(screen_presentation(config["preferences"], target, device))
                 row["provenance"] = {
                     "input": "bounded_confirmed_title_only", "external_attachments": False,
                     "generated": True, "native_model_resolution_qualified": False}

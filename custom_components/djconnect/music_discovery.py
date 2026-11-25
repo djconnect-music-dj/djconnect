@@ -573,14 +573,19 @@ async def _refresh_recently_played_if_stale(
     *,
     user_id: str | None,
 ) -> bool:
-    """Refresh Music DNA from backend recent history without mutating playback."""
+    """Keep both the top items and recent history fresh without touching playback."""
     memory = getattr(runtime, "memory", None)
-    freshness = getattr(memory, "async_recent_profile_is_fresh", None) or getattr(memory, "async_listening_profile_is_fresh", None)
+    profile_freshness = getattr(memory, "async_listening_profile_is_fresh", None)
+    recent_freshness = getattr(memory, "async_recent_profile_is_fresh", None) or profile_freshness
     updater = getattr(memory, "async_update_listening_profile", None)
-    if not callable(freshness) or not callable(updater):
+    if not callable(recent_freshness) or not callable(updater):
         return False
     try:
-        if await freshness(
+        # Fresh recent history does not renew the artwork on Spotify top items.
+        full_refresh = callable(profile_freshness) and callable(
+            getattr(memory, "async_listening_profile", None)
+        ) and not await profile_freshness(runtime, payload, user_id=user_id)
+        if not full_refresh and await recent_freshness(
             runtime,
             payload,
             user_id=user_id,
@@ -590,13 +595,8 @@ async def _refresh_recently_played_if_stale(
         guard = await capture_refresh_guard(runtime, payload, user_id=user_id)
         if guard is not None and (not guard.valid() or not guard.persistence_allowed):
             return False
-        getter = getattr(memory, "async_listening_profile", None)
-        stored = await getter(runtime, payload, user_id=user_id) if callable(getter) else {}
-        if guard is not None and not guard.valid():
-            return False
-        full_refresh = callable(getter) and stored.get("artwork_reference_version") != 1
-        result = await run_music_command(hass, runtime, "listening_profile" if full_refresh else "recently_played", None if full_refresh else {"limit": 50})
         if full_refresh:
+            result = await run_music_command(hass, runtime, "listening_profile")
             if guard is not None and not guard.valid():
                 return False
             profile = result.get("profile") if isinstance(result, dict) else {}
@@ -604,6 +604,7 @@ async def _refresh_recently_played_if_stale(
                 return False
             await updater(runtime, profile, payload, user_id=user_id, **({"refresh_guard": guard} if guard is not None else {}))
             return guard is None or guard.valid()
+        result = await run_music_command(hass, runtime, "recently_played", {"limit": 50})
     except Exception as exc:  # noqa: BLE001
         _LOGGER.debug(
             "DJConnect Music Discovery recently played refresh skipped: %s",

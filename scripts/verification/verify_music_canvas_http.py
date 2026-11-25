@@ -237,17 +237,23 @@ async def qualify(hass, manager, history, request, client):
         failing.add("samsung:fixture-a")
         latest, code = await call("read")
         changed, code = await call("update", dict(binding=binding, operation_id=str(uuid.uuid4()),
-            expected_revision=latest["revision"], patch={"matte": "contrast", "show_track_title": True}))
+            expected_revision=latest["revision"], patch={
+                "matte": "contrast", "show_track_title": True,
+                "presentation_overrides": {"samsung:fixture-b": {"matte": "matching", "show_track_title": True}},
+            }))
         assert code == 200 and changed["preferences"]["show_track_title"] is True
         await runtime.tick()
         await runtime.jobs["profile-a"]
         assert len(generations) == 2, "matte change regenerated instead of composing"
         assert runtime.states["samsung:fixture-a"] == "canvas_device_offline"
         assert runtime.states["samsung:fixture-b"] == "displayed", "one offline screen blocked another"
-        titled = (await runtime.repository.read())["devices"]["samsung:fixture-b"]
+        updated_devices = (await runtime.repository.read())["devices"]
+        titled = updated_devices["samsung:fixture-b"]
         untitled = rendered["devices"]["samsung:fixture-b"]
-        assert titled["presentation"] == ["central", "contrast", True]
+        assert titled["presentation"] == ["central", "matching", True]
         assert titled["preview"] != untitled["preview"] and titled["source_image"] == untitled["source_image"]
+        assert updated_devices["switchbot:fixture-p"]["presentation"] == ["central", "off", False]
+        assert updated_devices["switchbot:fixture-p"]["preview"] == rendered["devices"]["switchbot:fixture-p"]["preview"]
         failing.clear()
         runtime.next_probe.clear()  # Isolate later cases from the deliberate offline backoff.
         # A physically running executor retains its effect slot through repeated cancellation.
@@ -720,6 +726,7 @@ async def qualify(hass, manager, history, request, client):
             "ha_admin_can_enable_and_disable_switchbot_rotation_without_upload": True,
             "samsung_off_no_upload": True, "synthetic_image_generations": len(generations),
             "shared_samsung_generation": True, "matte_reuses_source": True, "track_title_reuses_source": True,
+            "screen_presentation_is_independent_with_switchbot_default_off": True,
             "cross_profile_preview_denied": True, "offline_target_isolated": True,
             "late_model_after_session_end_denied": True, "admin_deletion_withdraws_management": True,
             "settings_update_resumes_before_delivery_and_noop_preserves_live_job": True,
