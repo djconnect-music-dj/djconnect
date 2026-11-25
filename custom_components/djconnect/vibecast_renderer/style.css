@@ -272,6 +272,9 @@ progress { height:.7rem; border-radius:1rem; overflow:hidden }
 /* Shared VibeCast connect treatment: the receiver retains its actual host states. */
 .receiver-brand { display:flex; align-items:center; gap:.65rem; color:#f4f5ff; letter-spacing:-.02em; text-transform:none; font-size:1.1rem; font-weight:700 }
 .receiver-mark { display:block; flex:none; color:#fff }
+.receiver-mark-party,
+.receiver-mark-is-party .receiver-mark-waveform { display:none }
+.receiver-mark-is-party .receiver-mark-party { display:inline }
 @media (forced-colors:active) { .receiver-mark { color:CanvasText } }
 .browser-edge { display:none }
 .idle .atmosphere { background:radial-gradient(ellipse at 8% 22%,#34d2ff1c,transparent 46%),radial-gradient(ellipse at 16% 58%,#246bff40,transparent 58%),radial-gradient(ellipse at 92% 18%,#8b39ef45,transparent 52%),radial-gradient(ellipse at 72% 96%,#5148e533,transparent 56%),linear-gradient(135deg,#071027,#100b24); animation:none }
