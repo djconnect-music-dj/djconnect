@@ -6,18 +6,26 @@ import sys
 import types
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def install_button_stubs() -> None:
-    homeassistant = sys.modules.setdefault("homeassistant", types.ModuleType("homeassistant"))
-    components = sys.modules.setdefault("homeassistant.components", types.ModuleType("homeassistant.components"))
+    def isolated_module(name: str) -> types.ModuleType:
+        module = types.ModuleType(name)
+        if original := sys.modules.get(name):
+            module.__dict__.update(vars(original))
+        sys.modules[name] = module
+        return module
+
+    homeassistant = isolated_module("homeassistant")
+    components = isolated_module("homeassistant.components")
     button = types.ModuleType("homeassistant.components.button")
     config_entries = types.ModuleType("homeassistant.config_entries")
     core = types.ModuleType("homeassistant.core")
-    helpers = sys.modules.setdefault("homeassistant.helpers", types.ModuleType("homeassistant.helpers"))
+    helpers = isolated_module("homeassistant.helpers")
     device_registry = types.ModuleType("homeassistant.helpers.device_registry")
     entity_registry = types.ModuleType("homeassistant.helpers.entity_registry")
     entity_platform = types.ModuleType("homeassistant.helpers.entity_platform")
@@ -79,20 +87,11 @@ def install_button_stubs() -> None:
 class DJConnectButtonEntityTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        cls.enterClassContext(patch.dict(sys.modules))
+        for module in ("button", "entity_ids", "const"):
+            sys.modules.pop(f"custom_components.djconnect.{module}", None)
         install_button_stubs()
         cls.button = importlib.import_module("custom_components.djconnect.button")
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        for module in (
-            "custom_components.djconnect.button",
-            "custom_components.djconnect.spotify_backend",
-            "custom_components.djconnect.push",
-            "custom_components.djconnect.entity_ids",
-            "custom_components.djconnect.const",
-            "custom_components.djconnect",
-        ):
-            sys.modules.pop(module, None)
 
     def test_reboot_button_is_skipped_for_app_clients(self) -> None:
         added = []
