@@ -121,8 +121,9 @@ async function run(name,engine){
    assert.equal(await page.locator('.session-status #live-guest-count').count(),0);
   }
   await page.setViewportSize({width:1920,height:1080});
-  assert.equal((await page.locator('#live-indicator').innerText()).trim(),'');
-  assert.equal(await page.locator('#live-indicator svg').evaluate(icon=>getComputedStyle(icon).stroke),'rgb(255, 255, 255)');
+  assert.equal(await page.locator('#live-indicator, #sharing-hand').count(),0);
+  assert.equal(await page.locator('#live-guest-count .live-guest-icon')
+    .evaluate(icon=>getComputedStyle(icon).filter),'brightness(0) invert(1)');
   assert.equal(await page.locator('.session-status #state').isVisible(),false);
   assert.equal(await page.locator('.guest-manual-entry strong').innerText(),'ABCD-EFGH-JKLM');
   assert.equal(await page.locator('.guest-manual-entry span').innerText(),'ha.example.net');
@@ -143,7 +144,7 @@ async function run(name,engine){
   assert.equal(leaveCalls,0);
   await page.evaluate(data=>window.__cafReceive(data),{kind:'vibecast_display_stop',version:1,handoff_id:id});
   await page.waitForFunction(()=>document.querySelector('#title').textContent!=='Declared fixture recording');
-  assert.equal(await page.locator('#live-indicator').isVisible(),false);
+  assert.equal(await page.locator('#live-guest-count').isVisible(),false);
   assert.equal(await page.locator('#receiver-brand-label').innerText(),'DJConnect VibeCast');
   assert.equal(await guestCount.isVisible(),false);
   assert.equal(await horizonPreview.isVisible(),false);
