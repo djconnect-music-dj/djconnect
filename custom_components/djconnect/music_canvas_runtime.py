@@ -10,7 +10,8 @@ import secrets
 import time
 
 from .music_canvas import (
-    Cadence, CanvasError, apply_update, digest, finish_forget, need, profile, reserve_forget, screen_presentation,
+    Cadence, CanvasError, apply_update, digest, finish_forget, need, profile, reserve_forget, screen_cadence,
+    screen_presentation,
 )
 from .persistence import persistence_service
 from .persistence.music_canvas import CanvasRepository
@@ -94,7 +95,8 @@ class CanvasRuntime:
                 "shared_profiles": sum(key in x["preferences"]["selected_targets"] for x in state["profiles"].values()),
                 "forgetting": device.get("forgetting") is True,
             })
-        return {**result, "targets": devices, "image_generation_available": render.generation_available(self.hass)}
+        return {**result, "targets": devices, "image_generation_available": render.generation_available(self.hass),
+                "per_screen_composition_and_cadence": True}
 
     async def update(self, owner, binding, data, authorize):
         async with self.lock, self.effect_lock:
@@ -422,7 +424,6 @@ class CanvasRuntime:
                     and active.broadcast.passive_observation[2].state == "playing"
                     and (not per_track or active.broadcast.passive_observation[2].item_id == playback.item_id)
                     and time.monotonic()-active.broadcast.passive_observation[0] <= 30)
-        cadence = prefs["cadence"]
         groups = {}
         for target in prefs["selected_targets"]:
             device = state["devices"].get(target)
@@ -454,6 +455,7 @@ class CanvasRuntime:
                     continue
             key = (owner, active.session_id, target)
             presentation = screen_presentation(prefs, target, device)
+            cadence = screen_cadence(prefs, target)
             previous_presentation = device.get("presentation")
             if isinstance(previous_presentation, list) and len(previous_presentation) == 2:
                 previous_presentation = [*previous_presentation, False]
