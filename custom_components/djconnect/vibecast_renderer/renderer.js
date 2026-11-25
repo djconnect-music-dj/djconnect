@@ -682,9 +682,19 @@
     e("moment").textContent = card.type === "dj_bulletin" ? "" : card.summary;
     const source=card.attribution;
     const safeSource=source && ({Spotify:"https://open.spotify.com/",MusicBrainz:"https://musicbrainz.org/",Wikidata:"https://www.wikidata.org/wiki/"}[source.provider]) && String(source.url || "").startsWith({Spotify:"https://open.spotify.com/",MusicBrainz:"https://musicbrainz.org/",Wikidata:"https://www.wikidata.org/wiki/"}[source.provider]);
-    e("moment-source").hidden=!safeSource;
-    e("moment-source").textContent=safeSource ? source.provider : "";
-    if (safeSource) e("moment-source").href=source.url; else e("moment-source").removeAttribute("href");
+    const sourceLink=e("moment-source");
+    const spotifyLogo=safeSource && card.type==="music_announcement" && source.provider==="Spotify"
+      ? e("spotify-source").querySelector("img") : null;
+    sourceLink.hidden=!safeSource;
+    if (spotifyLogo) {
+      if (!sourceLink.firstElementChild) {
+        sourceLink.textContent="";
+        sourceLink.appendChild(spotifyLogo.cloneNode());
+      }
+    } else {
+      sourceLink.textContent=safeSource ? source.provider : "";
+    }
+    if (safeSource) sourceLink.href=source.url; else sourceLink.removeAttribute("href");
     const researchSources=e("moment-research-sources");
     if (researchSources) {
       clearChildren(researchSources);
@@ -692,7 +702,7 @@
       const valid=citations.length > 0;
       researchSources.hidden=!valid;
       if (valid) {
-        e("moment-source").hidden=true;
+        sourceLink.hidden=true;
         for (const citation of citations) {
           const link=document.createElement("a");
           const provider=citation.provider === "Artist website" ? (artistWebsiteLabels[root.lang] || artistWebsiteLabels.en) : citation.provider;
