@@ -376,14 +376,30 @@ async def qualify(hass, manager, history, request, client):
         await runtime.tick()
         await runtime.jobs["profile-a"]
         await asyncio.sleep(5.1)  # Let the new observation pass the stable-track debounce.
-        runtime.cadence.completed = {k: (v[0], 0) for k, v in runtime.cadence.completed.items()}
-        with patch.object(render, "generate", delayed):
-            await runtime.tick()
-            await asyncio.wait_for(begun.wait(), timeout=5)
-            before_end = len(deliveries)
-            await manager.async_end(owner_profile_id="profile-a", session_id=session.session_id)
-            release.set()
-            await runtime.jobs["profile-a"]
+        # This scenario tests Session withdrawal, independent of cadence and
+        # presentation changes. Keep one ready synthetic screen on this owner
+        # and leave its current preview in custody until the real run ends.
+        state = await runtime.repository.read()
+        active = manager.current_active("profile-a")
+        config = deepcopy(state["profiles"]["profile-a"])
+        target = "samsung:fixture-a"
+        config["preferences"]["selected_targets"] = [target]
+        row = state["devices"][target]
+        row["presentation"] = [config["preferences"]["composition"], config["preferences"]["matte"],
+                               config["preferences"]["show_track_title"]]
+        runtime.next_probe.clear()
+        with patch.object(render, "generate", delayed), patch.object(runtime.cadence, "due", lambda *args: True):
+            late = asyncio.create_task(runtime.safe_run("profile-a", active, config, state))
+            wait_started = asyncio.create_task(begun.wait())
+            try:
+                await asyncio.wait({late, wait_started}, timeout=5, return_when=asyncio.FIRST_COMPLETED)
+                assert begun.is_set(), (runtime.states, "new generation did not start")
+                before_end = len(deliveries)
+                await manager.async_end(owner_profile_id="profile-a", session_id=session.session_id)
+            finally:
+                wait_started.cancel()
+                release.set()
+                await late
             assert len(deliveries) == before_end, "late model completion delivered after Session end"
         before_end = len(deliveries)
         await runtime.tick()
