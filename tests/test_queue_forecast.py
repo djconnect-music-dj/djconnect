@@ -136,7 +136,7 @@ class QueueProjectionTests(unittest.TestCase):
 
     def test_actual_ha_receipt_pins_current_source_and_declares_visible_acceptance_open(self):
         root = Path(__file__).resolve().parents[1]
-        fixture = json.loads((root/'examples/client_contracts/session_forecast_v1/vibecast-party-20261125--20261124-0261124-2026-da45c16d.json').read_text())
+        fixture = json.loads((root/'examples/client_contracts/session_forecast_v1/vibecast-waiting-copy-20261125---20261124-0261124-202-dd9c8d92.json').read_text())
         import hashlib
         self.assertEqual(fixture['state'], 'PASS')
         self.assertEqual(len(fixture['cases']), 20)

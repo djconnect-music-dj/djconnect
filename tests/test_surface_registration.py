@@ -30,7 +30,7 @@ class PassiveRegistrationTests(unittest.IsolatedAsyncioTestCase):
     def test_actual_HA_fixture_joins_exact_product_and_closed_acceptance(self):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads((root / 'examples/client_contracts/passive_surface_registration_v1/actual-ha-wire-live-impression-20261119-requested-moments-20261120.json').read_text())
-        current = json.loads((root / 'examples/client_contracts/passive_surface_registration_v1/vibecast-party-20261125--20261124-0261124-2026-7b1fe243.json').read_text())
+        current = json.loads((root / 'examples/client_contracts/passive_surface_registration_v1/vibecast-waiting-copy-20261125---20261124-0261124-202-e8d458a4.json').read_text())
         self.assertEqual(current['status'], 'PASS')
         self.assertEqual(len(current['source_hashes']), 361)
         for name, digest in current['source_hashes'].items():
