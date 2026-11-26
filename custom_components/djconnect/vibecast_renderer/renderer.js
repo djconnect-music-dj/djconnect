@@ -420,10 +420,21 @@
     const labels={en:"Requested",nl:"Aangevraagd",de:"Gewünscht",fr:"Demandés",es:"Solicitadas"};
     card.querySelector("h2").textContent=labels[root.lang] || labels.en;
     const list=card.querySelector("ul");
-    const titles=items.map(({title,artist})=>[title,artist].filter(Boolean).join(" — "));
-    if(JSON.stringify(Array.from(list.children,row=>row.textContent))!==JSON.stringify(titles)){
-      list.replaceChildren(...titles.map(title=>{
-        const row=document.createElement("li");row.textContent=title;return row;
+    const scheduledLabels={en:"Scheduled",nl:"Ingepland",de:"Eingeplant",fr:"Programmé",es:"Programada"};
+    const rendered=items.map(({title,artist,scheduled})=>({
+      track:[title,artist].filter(Boolean).join(" — "), status:scheduled===true ? (scheduledLabels[root.lang] || scheduledLabels.en) : ""
+    }));
+    const signature=JSON.stringify(rendered);
+    if(list.dataset.signature!==signature){
+      list.dataset.signature=signature;
+      list.replaceChildren(...rendered.map(({track,status})=>{
+        const row=document.createElement("li");
+        row.textContent=track;
+        if(status){
+          const badge=document.createElement("span");
+          badge.className="requested-track-scheduled";badge.textContent=status;row.appendChild(badge);
+        }
+        return row;
       }));
     }
     requestedTracksTimer=window.setTimeout(()=>{card.hidden=true;},remaining);

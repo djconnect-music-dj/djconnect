@@ -58,7 +58,7 @@ def request_queue(actor):
     actor.validate()
     rows = []
     for record in actor.manager._display_admission.participation.requests.pending(actor.share):
-        row = {'request_id': record.request_id, 'title': record.title, 'artist': record.artist}
+        row = {'request_id': record.request_id, **record.queue_row()}
         if (asset := record.artwork) is not None:
             row['artwork'] = {'reference': _request_reference(actor, asset),
                               'item_id': asset.item_id, 'expires_at': asset.expires_at}
