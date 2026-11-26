@@ -191,19 +191,24 @@ class Cadence:
         self.observed = {}
         self.completed = {}
 
-    def due(self, key, occurrence, cadence, now):
+    def mood_changed(self, key, mood_revision):
+        last = self.completed.get(key)
+        return mood_revision != (last[2] if last is not None else 0)
+
+    def due(self, key, occurrence, cadence, now, mood_revision=0):
         before = self.observed.get(key)
         if before is None or before[0] != occurrence:
-            self.observed[key] = (occurrence, now)
-            return False
+            before = self.observed[key] = (occurrence, now)
+        if self.mood_changed(key, mood_revision):
+            return True
         if now-before[1] < 5:
             return False
         last = self.completed.get(key)
         return last is None or (last[0] != occurrence if cadence == "track"
                                 else now-last[1] >= int(cadence))
 
-    def mark(self, key, occurrence, now):
-        self.completed[key] = (occurrence, now)
+    def mark(self, key, occurrence, now, mood_revision=0):
+        self.completed[key] = (occurrence, now, mood_revision)
 
     def release(self, key, attempt):
         """Allow replacement of this attempt only before sending it to a device."""

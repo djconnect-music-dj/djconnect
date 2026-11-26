@@ -8342,6 +8342,12 @@ class SessionRuntimeManager:
         self._opening_tasks: dict[str, asyncio.Task] = {}
         self._opening_prepared: dict[str, tuple[DJMoment, DJMoment]] = {}
 
+    def _notify_canvas_mood_change(self, owner_profile_id):
+        hass = getattr(self, "_hass", None)
+        canvas = hass.data.get(DOMAIN, {}).get("music_canvas") if hass is not None else None
+        if canvas is not None:
+            canvas.session_mood_changed(owner_profile_id)
+
     def _watch_moment_publisher(self, owner_profile_id, broadcast):
         delivery = self._watch_moment_delivery
         if delivery is None:
@@ -8690,6 +8696,8 @@ class SessionRuntimeManager:
         # Publish the complete accepted RAM state before any fallible event delivery.
         # Existing budgets, Moments and playback remain intact.
         self._active_by_profile[owner_profile_id] = updated
+        if changed_mood:
+            self._notify_canvas_mood_change(owner_profile_id)
         active.broadcast.state = DJBroadcastState(
             **{
                 **active.broadcast.state.__dict__,
@@ -10057,6 +10065,7 @@ class SessionRuntimeManager:
                 }
             )
             self._active_by_profile[owner_profile_id] = updated
+            self._notify_canvas_mood_change(owner_profile_id)
             self._publish_legacy_settings_confirmation(owner_profile_id, updated, confirmation)
             active.broadcast.update_forecast(updated)
             active.broadcast._publish(

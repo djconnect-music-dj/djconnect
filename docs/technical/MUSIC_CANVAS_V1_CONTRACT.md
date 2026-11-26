@@ -101,8 +101,11 @@ a conservative installation budget of 48 attempts per rolling hour. An unknown
 provider outcome consumes its attempt. SwitchBot keeps at most two outstanding
 file leases per target and 32 installation-wide; backpressure preserves the last
 good work and coalesces later music instead of generating discarded images. First confirmed stable playing track is
-eligible immediately after debounce, then cadence applies. Paused/ended/stale
-observations do not generate. No backlog catchup. One bounded generation runs at
+eligible immediately after debounce, then cadence applies. An accepted Session
+mood revision wakes the scheduler and triggers a fresh generation for every
+eligible target, independently of its cadence or current track. The attempt
+starts a new cadence window. Superseded work cannot publish after acceptance.
+Paused/ended/stale observations do not generate. No backlog catchup. One bounded generation runs at
 a time; equal target profiles share bytes. Target arbitration reserves a physical
 device for one active Profile; a competing Profile receives busy, never last-wins.
 Every await is fenced against original Profile, Session, revision and device
