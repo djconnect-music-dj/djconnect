@@ -111,7 +111,7 @@ def _art_peer_sha256(art):
     return sha256(certificate).hexdigest()
 
 
-def _samsung_current_preview(art, device, owned_preview_id, preview_file):
+def _samsung_current_preview(art, device, owned_preview_id, preview_file, *, require_current=False):
     from samsungtvws.exceptions import ResponseError
     from .music_canvas_render import samsung_preview_jpeg
 
@@ -119,6 +119,7 @@ def _samsung_current_preview(art, device, owned_preview_id, preview_file):
     shown = current.get("content_id") if isinstance(current, dict) else None
     need(isinstance(shown, str) and re.fullmatch(r"[A-Za-z0-9_.-]{1,128}", shown),
          "canvas_preview_unavailable", 404)
+    need(not require_current or shown == owned_preview_id, "canvas_preview_unavailable", 404)
     need(shown not in device["owned_content"] or shown == owned_preview_id,
          "canvas_preview_unavailable", 404)
     if shown == owned_preview_id and preview_file is not None and preview_file.is_file():
@@ -162,7 +163,7 @@ def _samsung_current_preview(art, device, owned_preview_id, preview_file):
 
 
 def samsung_action(device, action, *, content=None, content_id=None, displayed_content_id=None,
-                   preview_file=None):
+                   preview_file=None, require_current=False):
     """Blocking protocol library is confined to an executor and one connection."""
     from samsungtvws import SamsungTVWS
     remote = SamsungTVWS(device["host"], port=8002, token=device.get("token"),
@@ -192,7 +193,7 @@ def samsung_action(device, action, *, content=None, content_id=None, displayed_c
         # Never call set_artmode, power, remote keys, HDMI, volume or sound APIs.
         need(art.get_artmode() == "on", "canvas_manual_takeover", 409)
         if action == "preview":
-            return _samsung_current_preview(art, device, content_id, preview_file)
+            return _samsung_current_preview(art, device, content_id, preview_file, require_current=require_current)
         if action == "upload":
             uploaded = art.upload(content, matte="none", portrait_matte="none", file_type="jpg")
             need(type(uploaded) is str and bool(uploaded), "canvas_upload_unknown", 503)

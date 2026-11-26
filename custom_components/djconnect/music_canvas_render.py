@@ -4,13 +4,14 @@ import io
 import json
 from pathlib import Path
 
-from .music_canvas import DEFAULT_MATTE_SIZE, need
+from .music_canvas import DEFAULT_MATTE_SIZE, FRAME_MATTE_PREFIX, need
 
 MAX_IMAGE = 24 * 1024 * 1024
 TITLE_FONT = Path(__file__).with_name("music_canvas_assets") / "SourceSerif4-Semibold.ttf"
 
 
-def art_prompt(title, mood, composition, width, height, *, latitude=None, month=None, alternative=None):
+def art_prompt(title, mood, composition, width, height, *, latitude=None, month=None,
+               alternative=None, spectra6=False):
     """Untrusted title is inspiration data, never a tool or factual directive."""
     need(type(title) is str and 0 < len(title) <= 300, "canvas_context_unavailable", 503)
     rhythm = {"chill": "spacious, gently layered", "groove": "balanced, flowing",
@@ -33,6 +34,10 @@ def art_prompt(title, mood, composition, width, height, *, latitude=None, month=
         + f". Spatial direction: {composition}; visual rhythm: {rhythm}. "
         + f"Target aspect ratio {width}:{height}. {season}"
         + (alternative or "")
+        + (" Optimize colors and contrast for an E Ink Spectra 6 screen. Use a restrained palette with "
+           "clearly separated light and dark values, distinct color areas and readable silhouettes. "
+           "Favor broad, clean tonal transitions over fine gradients and keep shadow details visible."
+           if spectra6 else "")
     )
 
 
@@ -154,6 +159,13 @@ def _draw_title(canvas, image, position, matte, background, title):
     draw.text((text_x, text_y), title, font=font, fill=fill, stroke_width=stroke, stroke_fill=outline)
 
 
+FRAME_MATTE_COLORS = {
+    "white": (244, 242, 237),
+    "teak": (192, 172, 145),
+    "walnut": (88, 64, 52),
+    "sand_gold": (201, 175, 134),
+    "terracotta": (168, 97, 77),
+}
 MATTE_FRACTIONS = {"small": 0.03, "medium": 0.055, "large": 0.09}
 
 
@@ -166,8 +178,14 @@ def compose(content, width, height, composition, matte, track_title=None, matte_
     with Image.open(io.BytesIO(content)) as original:
         need(original.width*original.height <= 34_000_000, "canvas_image_invalid", 503)
         image = ImageOps.exif_transpose(original).convert("RGB")
-        palette = tuple(int(v) for v in ImageStat.Stat(image.resize((1, 1))).mean)
-        background = (12, 12, 12) if matte == "contrast" else palette
+        if matte.startswith(FRAME_MATTE_PREFIX):
+            background = FRAME_MATTE_COLORS[matte.removeprefix(FRAME_MATTE_PREFIX)]
+        elif matte == "contrast":
+            background = (12, 12, 12)
+        elif matte == "matching":
+            background = tuple(int(v) for v in ImageStat.Stat(image.resize((1, 1))).mean)
+        else:
+            background = None
         if matte == "off":
             # Containing the image leaves a border whenever the aspect ratios differ.
             canvas = fitted = ImageOps.fit(image, (width, height), Image.Resampling.LANCZOS)

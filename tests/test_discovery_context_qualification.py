@@ -11,7 +11,7 @@ class DiscoveryContextQualificationTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         p = json.loads(
             (
-                root / 'examples/client_contracts/discovery_context_v1/selected-release-20261126-d097706b.json'
+                root / 'examples/client_contracts/discovery_context_v1/music-canvas-refresh-20261126-d097706b.json'
             ).read_text()
         )
         r = p["receipt"]

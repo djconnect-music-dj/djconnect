@@ -66,9 +66,9 @@ Dit is geen verplicht plakboek of vaste albumhoes-op-achtergrondpipeline. De eer
 
 **Compositie:** `Centraal · Vrij · Beeldvullend`. Dit zijn ruimtelijke richtingen, geen rustige/gemiddelde/intense varianten. Bij vrije generatieve kunst slaat Centraal op het focuspunt/kunstvlak, niet op een verplichte albumhoes. Native beeldverhouding behouden; geen vierkante bron ongedocumenteerd uitrekken tot 16:9.
 
-**Passe-partout:** één driewegkeuze `Uit · Passend · Contrasterend`. Passend = rustige tint passend bij compositie/palet; Contrasterend = bewust contrasterende neutrale rand, bijvoorbeeld zwart. Per scherm is bij Passend of Contrasterend de dikte instelbaar op Smal, Gemiddeld of Breed. Gemiddeld behoudt de bestaande standaarddikte. De keuze wordt bewaard als het passe-partout uit staat. Passe-partout rondom het werk, niet als crop/overlay over inhoud. Generieke compositor levert dit; native adaptermatte alleen indien equivalent en zonder dubbele rand.
+**Passe-partout:** kies `Uit · Passend · Contrasterend · Matchen met rand`. Passend haalt zijn tint uit het kunstwerk. Contrasterend gebruikt een neutrale donkere tint. Bij Matchen met rand verschijnt het menu **Randafwerking** met Wit, Teakhout, Walnoothout, Sand Gold Metal en Terracotta. Teakhout (`#C0AC91`) is de standaard. De gekozen afwerking blijft per scherm bewaard. Per scherm is de dikte instelbaar op Smal, Gemiddeld of Breed. Gemiddeld behoudt de standaarddikte. De dikte blijft bewaard als het passe-partout uit staat. De compositor plaatst het passe-partout rondom het werk. Een native adaptermatte mag dezelfde rand weergeven als die geen dubbele rand veroorzaakt.
 
-**Geen intensiteits-/dynamiekslider en geen extra artworkgrootte-slider in Music Canvas v1.** Bestaande lokale VibeScape-bediening blijft ongemoeid. Presentatie aanpassen mag niet onnodig een nieuwe modelgeneratie starten; passe-partout is waar mogelijk deterministische heropmaak.
+**Geen intensiteits-/dynamiekslider en geen extra artworkgrootte-slider in Music Canvas v1.** Bestaande lokale VibeScape-bediening blijft ongemoeid.
 
 ## 4. Persistent profiel en automatische lifecycle
 
@@ -97,11 +97,11 @@ Enabled is een **voorkeur**, niet bewijs van weergave. Scheid desired state, act
 
 Keuzes exact: **`Ieder nummer · Ieder kwartier · Ieder half uur · Ieder uur`**. Startwaarde: ieder half uur. Eén gezamenlijke instelling; per geselecteerd scherm kan een expliciete afwijking gelden, zonder alle schermen verplicht apart te configureren.
 
-- Ieder nummer: confirmed/stable trackwissel, kort debounce tegen snel skippen; coalesce naar nieuwste relevante track. Geen generatie voor iedere voorbijgaande skip.
+- Ieder nummer: bij bevestigde trackwissel direct wisselen. Met een bekende volgende track in de Spotify-wachtrij bereidt Core het beeld in de laatste 45 seconden voor. Zodra die track speelt, stuurt Core het voorbereide beeld naar het scherm. Bij een onverwachte trackwissel begint de generatie direct voor de daadwerkelijk afgespeelde track.
 - Tijdsinterval: pas op de beurt context/generatie starten voor de dan spelende muziek. Niet toch per track genereren en afbeeldingen onzichtbaar weggooien.
 - Bij activering/nieuwe sessie geldt de directe eerste generatie, daarna de cadence. Bij pauze/geen actieve muziek geen periodieke nieuwe werken; hervatten zonder achterstallige wissels inhalen.
 - Een bevestigde wijziging van de Session mood start direct nieuw artwork voor alle actieve schermen met een actueel spelend nummer. Elk scherm hervat daarna zijn eigen wisselinterval.
-- Een gewijzigde scherminstelling rendert het beeld direct opnieuw en stuurt het naar dat scherm. Als de sessiemood intussen verandert, gebruikt Music Canvas het nieuwste moodbeeld.
+- Een gewijzigde scherminstelling genereert direct een nieuw kunstwerk en stuurt het naar dat scherm. Als de sessiemood intussen verandert, gebruikt Music Canvas het nieuwste moodbeeld.
 - Met **Nieuw kunstwerk** vraag je direct een alternatief aan voor het actieve scherm. Music Canvas gebruikt de huidige instellingen en sessiemood en geeft de afwijzing van het vorige beeld mee als tekstuele inspiratie.
 - Bevries context/track bij de gekozen renderopdracht. In per-trackmodus mag inmiddels achterhaalde track niet alsnog verschijnen; intervalmodus mag zijn gekozen moment interpreteren zonder iedere volgende track als nieuwe opdracht te behandelen. Session-/profiel-/settings-/device-epochwijzigingen hebben altijd de afgesproken geldigheidscontrole.
 - Geen onbegrensde wachtrij; per device maximaal lopend werk plus nieuwste relevante intent. E-paper/cloudlatentie respecteren; gemiste termijnen niet inhalen.
@@ -214,9 +214,9 @@ De Core-opdracht is niet klaar met comments. Lever als eerste documentary/contra
 | Naam/scope | Music Canvas exact; VibeScape/VibeCast ongewijzigd; geen Cast-route. |
 | Artistieke kern | Rijke geschikte referenties én titel-only zoals Born Slippy leveren geldige originele kunst; geen fictieve muziekfeiten; geen verplichte albumhoes. |
 | Visueel | Geen extra tekst/controls/logo/glass/klok/statuslagen; matte museumachtige resultaten; mood verandert ritme, niet vaste appkleuren; seizoen optioneel, geen weer. |
-| Presentatie | Alle drie composities en alle drie passe-partouts; deterministische heropmaak waar mogelijk; landscape/portrait en passende native kwaliteit. |
+| Presentatie | Alle drie composities en alle passe-partoutopties; vers kunstwerk bij iedere wijziging; landscape/portrait en passende native kwaliteit. |
 | Persistente UX | Enable + schermen + instellingen overleven sessie-einde, nieuwe sessie, appclose en Core-restart. Geen opnieuw pairen/kiezen. Profilewissel en multi-clientconflict veilig. |
-| Cadence | Alle vier intervallen; eerste werk direct; debounce/skip; pauze/einde; geen per-trackgeneratie bij interval; geen catchupstorm of late stale aflevering. |
+| Cadence | Alle vier intervallen; eerste werk direct; prerender/skip; pauze/einde; geen per-trackgeneratie bij interval; geen catchupstorm of late stale aflevering. |
 | Multi-device | Minimaal twee Samsungs plus portrait-frame; onafhankelijke voortgang/fouten; gedeelde assets niet voortijdig verwijderd; meerdere profielen vechten niet om scherm. |
 | Samsung | Ontdekken zonder HACS, expliciete pairing, supported/unsupported/unknown, IP-wijziging, autorisatie vervallen, upload/select/readback, no-takeover/no-onbedoeld-wake en uitsluitend eigen cleanup op echte compatibele hardware. |
 | SwitchBot | Alleen met ingestelde passende HA-cloudintegratie; echte native actie; cloudbereikbare tijdelijke URL; latency/offline/storage-full; geen aangenomen delete/displayACK/local route. |

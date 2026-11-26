@@ -67,6 +67,10 @@ fields and return private no-store responses. Every request has
 * `new_artwork`: binding, operation_id, expected_revision and target_id. A paired
   Profile can request an alternative for its selected, active screen. The
   receipt acknowledges scheduling, and replay cannot generate another image.
+  One manual replacement per selected screen can wait for generation, delivery
+  or preview readback. While it waits, the target advertises
+  `artwork_request_pending` and rejects further artwork requests. The app
+  waits for the replacement preview to load before enabling the action.
   The next job bypasses cadence, uses the current track, mood and screen
   settings, and asks for a distinct alternative to the rejected artwork. For
   the Profile’s previous Canvas image it sends a small text palette summary
@@ -77,20 +81,29 @@ fields and return private no-store responses. Every request has
 * `forget`: binding, operation_id, target_id, cleanup_remote, allow_remaining_art.
   Requires actual linked HA-administrator authority, checked again at commit and
   effects. Ordinary selection is Profile-local; forgetting is installation-wide.
-* `preview`: target_id. Authenticated bytes for a currently selected target only;
+* `preview`: target_id and optional preview_revision for the target's
+  `artwork_preview_revision`. During replacement readback, Samsung must
+  report that exact uploaded content as currently displayed. SwitchBot uses
+  its existing uploaded-image preview. Authenticated bytes for a currently selected target only;
   no external source/token URLs are exposed to the client. Samsung reads the
   currently displayed Art Mode item. It returns the matching Profile-owned local
   file if bound to that item, otherwise an available thumbnail from the same TV.
   A changed item, unverified upload, or a different Profile's owned content
-  cannot supply the preview. Samsung uses no fixed preview revision so an open
-  app can follow manual changes. SwitchBot retains its committed preview revision.
+  cannot supply the preview. In regular live preview, Samsung follows manual
+  changes. SwitchBot retains its committed preview revision.
 
 Preferences: enabled=false, selected_targets=[], composition=central,
 matte=off, cadence=1800; composition central/free/full, matte off/matching/contrast,
 cadence track/900/1800/3600 are the Profile defaults.
 The v1 preference `presentation_overrides` stores `matte` and
-`show_track_title` and optionally `composition` and `cadence` for each configured
-screen ID. The read response advertises `per_screen_composition_and_cadence`
+`show_track_title` and optionally `composition`, `cadence`, `matte_size`,
+`match_frame` and `frame_finish` for each configured screen ID. The optional
+`frame_matching_matte` read flag enables frame matching. A style with
+`matte: "matching"` and `match_frame: true` uses the selected finish
+(`white`, `teak`, `walnut`, `sand_gold` or `terracotta`). The default is
+light teak (`#C0AC91`). Core retains the finish when another matte is selected.
+Older clients can still read the matte as Matching and preserve the finish
+when saving other settings. The read response advertises `per_screen_composition_and_cadence`
 for clients that can edit the additional fields. A screen without an entry
 inherits the previous Profile-wide values for Samsung and uses matte off and
 title false for SwitchBot. Overrides remain when a screen is deselected and are
@@ -99,11 +112,12 @@ title to the rendered artwork only
 when enabled. With a matte it adjusts the dominant artwork color for contrast
 and centers the title in the bottom matte band. Without a matte it chooses
 white-on-black or black-on-white outlined text based on the artwork immediately
-behind the title. An accepted change to composition, title, matte or cadence
-wakes Canvas and recomposes and sends the image for the affected active screen
-without waiting for cadence or a track change. Reuse only a source whose Session
-and mood match. Older or unbound sources are regenerated. The app receives an
-optional owner-scoped `preview_revision` for the committed preview.
+behind the title. An accepted change to composition, title, matte, matte
+thickness, frame finish or cadence wakes Canvas for the affected active screen.
+Core generates and sends a new artwork using the current track and Session mood
+without waiting for cadence or a track change. A pending manual replacement
+keeps its request and follows the latest accepted settings. The app receives
+an optional owner-scoped `preview_revision` for the committed preview.
 If a screen has no explicit interval, Core uses an existing selected-screen
 `cadence_overrides` entry and then the legacy shared `cadence` value.
 Screen dimensions and orientation carry provenance; unknown values remain unknown.
@@ -114,8 +128,12 @@ Core owns a single lifecycle scheduler. One model call may run at once, with
 a conservative installation budget of 48 attempts per rolling hour. An unknown
 provider outcome consumes its attempt. SwitchBot keeps at most two outstanding
 file leases per target and 32 installation-wide; backpressure preserves the last
-good work and coalesces later music instead of generating discarded images. First confirmed stable playing track is
-eligible immediately after debounce, then cadence applies. An accepted Session
+good work and coalesces later music instead of generating discarded images. An accepted playing track is immediately eligible. For per-track screens, Core
+can prepare the next Spotify queue entry during the last 45 seconds. It retains
+bounded in-memory render bytes and uses them only when the same recording starts
+on the same output with matching Session, mood and screen settings. Upload starts
+after playback confirmation. If the queue entry is absent or changes, Core
+renders the confirmed playing track immediately. An accepted Session
 mood revision wakes the scheduler and triggers a fresh generation for every
 eligible target, independently of its cadence or current track. The attempt
 starts a new cadence window. Superseded work cannot publish after acceptance.
@@ -128,7 +146,9 @@ epoch. Disable/end/forget cancel future work and prohibit late delivery.
 Model input is bounded untrusted inspiration data, never instructions. V1 starts
 with permitted textual title/context; no Spotify artwork/lyrics attachment or
 image-caption laundering. No fictitious factual claim. The preferred HA image
-provider remains an explicit setup dependency. No paid model calls are made by
+provider remains an explicit setup dependency. SwitchBot generation and pre-rendering
+ask the image provider to optimize color and tonal contrast for E Ink Spectra 6.
+Each display technology keeps its own generated and pre-rendered images. No paid model calls are made by
 development tests. Private/shared privacy modes that suppress personal persistence
 suspend new Canvas output; Profile deletion purges preferences, receipts and private
 previews through the existing Profile lifecycle. Hardware pairing remains
