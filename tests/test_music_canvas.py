@@ -566,12 +566,12 @@ class CanvasDomainTests(unittest.TestCase):
         import hashlib
         import json
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/samsung-current-preview-20261126-actual-ha.json").read_text())
+        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/new-artwork-20261126-actual-ha.json").read_text())
         self.assertEqual(len(proof["source_pins"]), 361)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), expected, name)
         self.assertTrue(proof["source_before_after_equal"])
-        matrix = json.loads((root/"docs/verification/music-canvas-samsung-preview-actual-ha-matrix-20261126.json").read_text())
+        matrix = json.loads((root/"docs/verification/music-canvas-new-artwork-actual-ha-matrix-20261126.json").read_text())
         self.assertEqual(matrix["source_pins"], proof["source_pins"])
         self.assertTrue(matrix["source_before_after_equal"])
         self.assertEqual(len(matrix["results"]), 54)
@@ -604,7 +604,8 @@ class CanvasDomainTests(unittest.TestCase):
                       "settings_wake_without_tick_and_cadence_only_reuploads",
                       "queued_screen_settings_use_latest_mood_for_samsung_and_switchbot",
                       "preview_revision_changes_only_with_owner_artwork",
-                      "samsung_preview_reads_current_art_without_canvas_generation_or_upload"):
+                      "samsung_preview_reads_current_art_without_canvas_generation_or_upload",
+                      "manual_alternative_bypasses_timer_and_deduplicates_replay"):
             self.assertTrue(actual[field], field)
         self.assertEqual(actual["real_model_calls"], 0)
         self.assertEqual(actual["physical_hardware"], "NOT_RUN")

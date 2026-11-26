@@ -10,7 +10,7 @@ MAX_IMAGE = 24 * 1024 * 1024
 TITLE_FONT = Path(__file__).with_name("music_canvas_assets") / "InterVariable.ttf"
 
 
-def art_prompt(title, mood, composition, width, height, *, latitude=None, month=None):
+def art_prompt(title, mood, composition, width, height, *, latitude=None, month=None, alternative=None):
     """Untrusted title is inspiration data, never a tool or factual directive."""
     need(type(title) is str and 0 < len(title) <= 300, "canvas_context_unavailable", 503)
     rhythm = {"chill": "spacious, gently layered", "groove": "balanced, flowing",
@@ -30,7 +30,34 @@ def art_prompt(title, mood, composition, width, height, *, latitude=None, month=
         + json.dumps({"title": title}, ensure_ascii=False)
         + f". Spatial direction: {composition}; visual rhythm: {rhythm}. "
         + f"Target aspect ratio {width}:{height}. {season}"
+        + (alternative or "")
     )
+
+
+def alternative_direction(operation_id, rejected_file=None):
+    """Text-only rejection feedback derived from the previous Canvas artwork."""
+    from PIL import Image
+
+    directions = (
+        "layered printmaking with distinct silhouettes",
+        "an abstract oil study with a different focal motif",
+        "a paper collage with a new arrangement of forms",
+        "a tonal painting with a new visual metaphor",
+    )
+    direction = directions[int(operation_id[-8:], 16) % len(directions)]
+    palette = ""
+    if rejected_file is not None:
+        try:
+            with Image.open(rejected_file) as previous:
+                previous.thumbnail((32, 32))
+                colors = previous.convert("RGB").quantize(colors=3).convert("RGB").getcolors(1024)
+                swatches = [("#%02x%02x%02x" % rgb) for _, rgb in sorted(colors, reverse=True)]
+                palette = " The rejected image used these dominant colors: " + ", ".join(swatches) + "."
+        except (OSError, ValueError):
+            pass
+    return (" The user did not like the current artwork and requested a different one."
+            + palette + " Create a clearly different subject, focal arrangement, textures and palette."
+            + " Preserve the requested mood and screen composition. Explore " + direction + ".")
 
 
 def samsung_preview_jpeg(content):

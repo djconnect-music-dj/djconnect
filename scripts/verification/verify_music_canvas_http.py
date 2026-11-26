@@ -348,6 +348,67 @@ async def qualify(hass, manager, history, request, client):
         assert recast[tv]["presentation"] == ["full", "off", True]
         assert recast[frame]["presentation"] == ["central", "matching", True]
         assert all(recast[target]["source_context"]["mood_revision"] == updated.mood_revision for target in (tv, frame))
+
+        # Manual alternatives use the current mood and rendering settings without a timer or retry replay.
+        latest, code = await call("read")
+        target = next(item for item in latest["targets"] if item["id"] == tv)
+        assert code == 200 and latest["manual_artwork_refresh"] and target["can_request_artwork"]
+        original_art = await read_preview(tv)
+        baseline_uploads = deliveries.count((tv, "upload"))
+        baseline_frame_uploads = deliveries.count((frame, "cloud_upload"))
+        new_prompts = []
+        alternatives = []
+        for color in ((42, 88, 220), (210, 65, 120)):
+            sample = io.BytesIO()
+            Image.new("RGB", (640, 640), color).save(sample, "PNG")
+            alternatives.append(sample.getvalue())
+        alternatives.append(alternatives[-1])
+
+        async def generate_alternative(_hass, prompt):
+            new_prompts.append(prompt)
+            return alternatives[len(new_prompts) - 1]
+
+        with patch.object(render, "generate", generate_alternative):
+            for index in range(3):
+                operation = str(uuid.uuid4())
+                payload = dict(binding=binding, operation_id=operation, target_id=tv,
+                               expected_revision=latest["revision"])
+                receipt, code = await call("new_artwork", payload)
+                assert code == 200 and receipt["state"] == "confirmed"
+                replay, code = await call("new_artwork", payload)
+                assert code == 200 and replay == receipt
+                recovered, code = await call("operation", {"binding": binding, "operation_id": operation})
+                assert code == 200 and recovered == receipt
+                await await_canvas_refresh()
+                assert len(new_prompts) == index + 1
+                image = await read_preview(tv)
+                if index < 2:
+                    assert image != original_art
+                else:
+                    assert image == original_art and runtime.states[tv] == "canvas_alternative_unchanged"
+                original_art = image
+        assert deliveries.count((tv, "upload")) == baseline_uploads + 2
+        assert deliveries.count((frame, "cloud_upload")) == baseline_frame_uploads
+        assert all("user did not like the current artwork" in prompt
+                   and "rejected image used these dominant colors" in prompt
+                   and "expressive, richly layered" in prompt
+                   and "Spatial direction: full" in prompt for prompt in new_prompts)
+        manual_result = (await runtime.repository.read())["devices"][tv]
+        assert manual_result["presentation"] == ["full", "off", True]
+        frame_prompt = []
+
+        async def generate_frame_alternative(_hass, prompt):
+            frame_prompt.append(prompt)
+            return alternatives[0]
+
+        with patch.object(render, "generate", generate_frame_alternative):
+            receipt, code = await call("new_artwork", dict(binding=binding, operation_id=str(uuid.uuid4()),
+                target_id=frame, expected_revision=latest["revision"]))
+            assert code == 200 and receipt["state"] == "confirmed"
+            await await_canvas_refresh()
+        assert len(frame_prompt) == 1 and "user did not like the current artwork" in frame_prompt[0]
+        assert deliveries.count((frame, "cloud_upload")) == baseline_frame_uploads + 1
+        assert deliveries.count((tv, "upload")) == baseline_uploads + 2
         # A physically running executor retains its effect slot through repeated cancellation.
         import threading
         started_thread, finish_thread = threading.Event(), threading.Event()
@@ -824,6 +885,7 @@ async def qualify(hass, manager, history, request, client):
             "queued_screen_settings_use_latest_mood_for_samsung_and_switchbot": True,
             "preview_revision_changes_only_with_owner_artwork": True,
             "samsung_preview_reads_current_art_without_canvas_generation_or_upload": True,
+            "manual_alternative_bypasses_timer_and_deduplicates_replay": True,
             "cross_profile_preview_denied": True, "offline_target_isolated": True,
             "late_model_after_session_end_denied": True, "admin_deletion_withdraws_management": True,
             "settings_update_resumes_before_delivery_and_noop_preserves_live_job": True,

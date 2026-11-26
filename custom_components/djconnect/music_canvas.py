@@ -18,6 +18,7 @@ FIELDS = {
     "read": set(),
     "update": {"binding", "operation_id", "expected_revision", "patch"},
     "operation": {"binding", "operation_id"},
+    "new_artwork": {"binding", "operation_id", "expected_revision", "target_id"},
     "setup": {"binding", "operation_id", "target_id", "screen"},
     "forget": {"binding", "operation_id", "target_id", "cleanup_remote", "allow_remaining_art"},
     "preview": {"target_id"},
@@ -59,8 +60,9 @@ def validate_request(kind, data):
             raise CanvasError("invalid_canvas_operation") from None
     if "target_id" in data:
         need(identifier(data["target_id"]))
-    if kind == "update":
+    if "expected_revision" in data:
         need(type(data["expected_revision"]) is int and 0 <= data["expected_revision"] < 2**53)
+    if kind == "update":
         patched(DEFAULTS, data["patch"])
     if kind == "setup":
         validate_screen(data["screen"])

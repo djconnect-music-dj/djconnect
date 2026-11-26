@@ -121,6 +121,8 @@ class CanvasView(HomeAssistantView):
                 result["can_manage_devices"] = management()
             elif kind == "update":
                 result = await runtime.update(owner, binding, data, authorized)
+            elif kind == "new_artwork":
+                result = await runtime.request_artwork(owner, binding, data, authorized)
             elif kind == "operation":
                 result = await runtime.operation(owner, binding, data["operation_id"], authorized)
             else:

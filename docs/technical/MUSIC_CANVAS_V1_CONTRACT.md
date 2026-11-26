@@ -61,6 +61,13 @@ fields and return private no-store responses. Every request has
 * `update`: binding, operation_id (UUID), expected_revision, patch. Accepted
   writes atomically persist preferences plus a bounded original-operation receipt.
   Conflict is 409; unknown transmission uses `operation`, never execute replay.
+* `new_artwork`: binding, operation_id, expected_revision and target_id. A paired
+  Profile can request an alternative for its selected, active screen. The
+  receipt acknowledges scheduling, and replay cannot generate another image.
+  The next job bypasses cadence, uses the current track, mood and screen
+  settings, and asks for a distinct alternative to the rejected artwork. For
+  the Profile’s previous Canvas image it sends a small text palette summary
+  to the existing provider. Previous pixels are never attached to the prompt.
 * `operation`: binding and original operation_id; receipts expire after 24h.
 * `setup`: binding, operation_id, target_id and only missing screen-profile fields;
   deliberate Samsung pairing is explicit. Stable registry identity is not an IP.
