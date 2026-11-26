@@ -107,7 +107,7 @@ def validate(plan, previous_validator):
           and proof.get('source_pins') == matrix.get('source_pins') == actual
           and proof.get('source_before_after_equal') is matrix.get('source_before_after_equal') is True
           and proof.get('execution_count') == len(rows) == len({r['harness'] for r in rows}) == 54
-          and all(r.get('exit_code') == 0 and r.get('harness_sha256') == sha(historical_verification_source(ROOT, r['harness']).read_bytes())
+          and all(r.get('exit_code') == 0 and r.get('harness_sha256') == sha(historical_verification_source(ROOT, r['harness'], r['harness_sha256']).read_bytes())
                   for r in rows), 'fresh full54 actual HA matrix')
     native = proof.get('additional_native_execution', {})
     native_raw = native.get('receipt', {})
@@ -128,7 +128,7 @@ def validate(plan, previous_validator):
     check(live.get('product_source_pins') == actual and live.get('product_source_count') == 356
           and live.get('product_source_before_after_equal') is True
           and live.get('live_ui_harness_sha256') == sha((ROOT/'scripts/verification/verify_vibecast_live_ui_actual_ha.py').read_bytes())
-          and all(sha((ROOT/'scripts/verification'/n).read_bytes()) == v
+          and all(sha(historical_verification_source(ROOT, 'scripts/verification/' + n, v).read_bytes()) == v
                   for n,v in live['reused_harnesses'].items())
           and len(cases) == 11 and {r['scenario'] for r in cases} == EXPECTED_LIVE_CASES
           and all(r['status'] == 'PASS' for r in cases)

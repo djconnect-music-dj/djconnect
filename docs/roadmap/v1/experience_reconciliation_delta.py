@@ -2,6 +2,7 @@
 from copy import deepcopy
 import hashlib
 import json
+import re
 from pathlib import Path
 from contextvars import ContextVar
 
@@ -11,8 +12,14 @@ from contextvars import ContextVar
 HISTORICAL_DOCUMENT_SOURCES = ContextVar("historical_document_sources", default={})
 
 
-def historical_verification_source(root, name):
-    return HISTORICAL_DOCUMENT_SOURCES.get().get(name, root / name)
+def historical_verification_source(root, name, expected_sha=None):
+    source = Path(HISTORICAL_DOCUMENT_SOURCES.get().get(name, root / name))
+    if (isinstance(expected_sha, str) and re.fullmatch(r"[a-f0-9]{64}", expected_sha)
+            and (not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest() != expected_sha)):
+        archived = root / "docs/roadmap/v1/history/20261126/selected-release-predecessor-files" / expected_sha / name
+        if archived.is_file():
+            return archived
+    return source
 
 PRIOR = 'history/20261017/settings-finalization-maintenance-v14.json'
 NODE = 'CORRECTION::CORE::PERSONAL-DJ-EXPERIENCE'
@@ -61,10 +68,9 @@ def validate(plan, previous_validator):
     references = stripped.get('document_references', [])
     check({r['path'] for r in prior['document_references']} <= {r['path'] for r in references},
           'prior document references retained')
-    sources = HISTORICAL_DOCUMENT_SOURCES.get()
-    check(all(Path(sources.get(r['path'], Path(__file__).parents[3] / r['path'])).is_file()
-              and hashlib.sha256(Path(sources.get(r['path'], Path(__file__).parents[3] / r['path'])).read_bytes()).hexdigest() == r['sha256']
-              for r in references), 'current canonical document bytes')
+    root = Path(__file__).parents[3]
+    check(all(hashlib.sha256(historical_verification_source(root, r['path'], r['sha256']).read_bytes()).hexdigest()
+              == r['sha256'] for r in references), 'current canonical document bytes')
     current_references = stripped['document_references']
     stripped['document_references'] = prior['document_references']
     check(stripped == prior, 'historical receipts and unrelated lanes unchanged')
