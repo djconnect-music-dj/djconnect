@@ -59,6 +59,12 @@ header { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); g
 #vibescape-scene { position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none }
 #vibescape-scene[hidden],#live-guest-count[hidden] { display:none }
 .vibescape-mode .session-panels { display:none }
+.vibescape-mode .session-panels:has(#requested-tracks:not([hidden])) {
+  display:block; position:fixed; inset:unset 4vw 18vh auto; z-index:4;
+  width:min(92vw,32rem); max-height:55vh; overflow:auto;
+}
+.vibescape-mode .session-panels:has(#requested-tracks:not([hidden])) > .shared-flow { display:none }
+.vibescape-mode #requested-tracks { background:rgba(17,16,35,.9) }
 #live-guest-count { white-space:nowrap; font-size:clamp(.85rem,1.7vw,1.2rem); letter-spacing:normal }
 .live-guest-icon { display:inline-block; margin-inline-end:.35em; filter:brightness(0) invert(1) }
 .guest-participation[hidden] { display:none }
@@ -524,6 +530,9 @@ main { height:auto; min-width:0 }
 .horizon-panel h3 { margin:0; font-size:.86em }
 .horizon-panel section + section,.horizon-panel #horizon-notice { margin-top:.75em }
 .horizon-panel #horizon-notice { font-size:.8em; opacity:.82 }
+.horizon-panel:has(#requested-tracks:not([hidden])) > :is(#horizon-preview,#horizon-card) { display:none }
+#requested-tracks ul { margin:0; padding-inline-start:1.1em }
+#requested-tracks li { margin-block:.4em; overflow-wrap:anywhere }
 #horizon-preview:not([hidden]) + #horizon-card { margin-top:.7rem }
 .horizon-preview-track { display:flex; align-items:flex-start; gap:.65rem; overflow-wrap:anywhere }
 .horizon-preview-track > img { flex:none; width:clamp(3rem,6vw,5rem); aspect-ratio:1; object-fit:cover; border-radius:.65rem }
@@ -782,6 +791,10 @@ main { height:auto; min-width:0 }
   <button id="flow-live" class="flow-live" type="button" hidden></button>
 </section>
 <aside class="horizon-panel" tabindex="0">
+  <article id="requested-tracks" class="flow-card mood-palette" aria-live="polite" hidden>
+    <h2></h2>
+    <ul></ul>
+  </article>
   <article id="horizon-preview" class="flow-card mood-palette" hidden>
     <h2 id="horizon-preview-label"></h2>
     <div class="horizon-preview-track">
@@ -829,7 +842,7 @@ main { height:auto; min-width:0 }
 </aside>
 </div></section><footer><section id="up-next" class="up-next" hidden><img id="next-art" alt=""><div><span id="next-label" class="up-next-label"></span><strong id="next-title"></strong><span id="next-artist"></span></div></section><progress id="progress" max="1" value="0" hidden></progress><div class="meta"><span id="time"></span></div></footer></main>
 <footer class="renderer-footer">
-  <span id="renderer-build"><span id="renderer-build-label">VibeCast versie</span> 4.1.0 (e23778ad)</span>
+  <span id="renderer-build"><span id="renderer-build-label">VibeCast versie</span> 4.1.0 (21cd3ddb)</span>
   <a href="https://djconnect.dev/" rel="noreferrer">
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m9 15 6-6m-5 0h5v5"/></svg>
     djconnect.dev
@@ -1249,7 +1262,34 @@ main { height:auto; min-width:0 }
     if(label.textContent!==title)label.textContent=title;
     document.body.classList.toggle("receiver-mark-is-party",partyEnabled);
   }
+  let requestedTracksTimer=0,requestedTracksExpiry="",requestedTracksDeadline=0;
+  function renderRequestedTracks(queue){
+    const card=e("requested-tracks");
+    if(!card)return;
+    window.clearTimeout(requestedTracksTimer);
+    const expiry=queue?.expires_at || "";
+    if(expiry!==requestedTracksExpiry){
+      const ttl=Math.min(20000,Date.parse(expiry)-Date.now());
+      requestedTracksDeadline=performance.now()+ttl;
+      requestedTracksExpiry=expiry;
+    }
+    const remaining=requestedTracksDeadline-performance.now();
+    const items=Array.isArray(queue?.items) ? queue.items.slice(0,12) : [];
+    card.hidden=!(remaining>0 && items.length);
+    if(card.hidden)return;
+    const labels={en:"Requested",nl:"Aangevraagd",de:"Gewünscht",fr:"Demandés",es:"Solicitadas"};
+    card.querySelector("h2").textContent=labels[root.lang] || labels.en;
+    const list=card.querySelector("ul");
+    const titles=items.map(({title,artist})=>[title,artist].filter(Boolean).join(" — "));
+    if(JSON.stringify(Array.from(list.children,row=>row.textContent))!==JSON.stringify(titles)){
+      list.replaceChildren(...titles.map(title=>{
+        const row=document.createElement("li");row.textContent=title;return row;
+      }));
+    }
+    requestedTracksTimer=window.setTimeout(()=>{card.hidden=true;},remaining);
+  }
   function clearLiveStatus(){
+    renderRequestedTracks(null);
     renderReceiverBrand(false);
     if(guestCounter){guestCounter.hidden=true;guestCounter.textContent="";guestCounter.removeAttribute("aria-label");}
     for(const [node,timer] of reactionTimers){window.clearTimeout(timer);node.remove();}
@@ -1294,7 +1334,7 @@ main { height:auto; min-width:0 }
   function renderLiveStatus(detail){
     if(!displayHost || !snapshotAccepted || ended || !detail)return;
     const enabled=detail.live_enabled===true;
-    if(enabled)renderReceiverBrand(true);
+    if(enabled){renderReceiverBrand(true);renderRequestedTracks(detail.requested_tracks);}
     else clearLiveStatus();
     if(!guestCounter){
       guestCounter=document.createElement("span");guestCounter.id="live-guest-count";

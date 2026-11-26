@@ -411,7 +411,34 @@
     if(label.textContent!==title)label.textContent=title;
     document.body.classList.toggle("receiver-mark-is-party",partyEnabled);
   }
+  let requestedTracksTimer=0,requestedTracksExpiry="",requestedTracksDeadline=0;
+  function renderRequestedTracks(queue){
+    const card=e("requested-tracks");
+    if(!card)return;
+    window.clearTimeout(requestedTracksTimer);
+    const expiry=queue?.expires_at || "";
+    if(expiry!==requestedTracksExpiry){
+      const ttl=Math.min(20000,Date.parse(expiry)-Date.now());
+      requestedTracksDeadline=performance.now()+ttl;
+      requestedTracksExpiry=expiry;
+    }
+    const remaining=requestedTracksDeadline-performance.now();
+    const items=Array.isArray(queue?.items) ? queue.items.slice(0,12) : [];
+    card.hidden=!(remaining>0 && items.length);
+    if(card.hidden)return;
+    const labels={en:"Requested",nl:"Aangevraagd",de:"Gewünscht",fr:"Demandés",es:"Solicitadas"};
+    card.querySelector("h2").textContent=labels[root.lang] || labels.en;
+    const list=card.querySelector("ul");
+    const titles=items.map(({title,artist})=>[title,artist].filter(Boolean).join(" — "));
+    if(JSON.stringify(Array.from(list.children,row=>row.textContent))!==JSON.stringify(titles)){
+      list.replaceChildren(...titles.map(title=>{
+        const row=document.createElement("li");row.textContent=title;return row;
+      }));
+    }
+    requestedTracksTimer=window.setTimeout(()=>{card.hidden=true;},remaining);
+  }
   function clearLiveStatus(){
+    renderRequestedTracks(null);
     renderReceiverBrand(false);
     if(guestCounter){guestCounter.hidden=true;guestCounter.textContent="";guestCounter.removeAttribute("aria-label");}
     for(const [node,timer] of reactionTimers){window.clearTimeout(timer);node.remove();}
@@ -456,7 +483,7 @@
   function renderLiveStatus(detail){
     if(!displayHost || !snapshotAccepted || ended || !detail)return;
     const enabled=detail.live_enabled===true;
-    if(enabled)renderReceiverBrand(true);
+    if(enabled){renderReceiverBrand(true);renderRequestedTracks(detail.requested_tracks);}
     else clearLiveStatus();
     if(!guestCounter){
       guestCounter=document.createElement("span");guestCounter.id="live-guest-count";

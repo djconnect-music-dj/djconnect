@@ -1,4 +1,5 @@
 """Guest proposals exercise common dialogue and the real bounded effect journal."""
+import asyncio
 from copy import deepcopy
 from dataclasses import replace
 import importlib
@@ -109,6 +110,47 @@ class GuestRequestTests(unittest.IsolatedAsyncioTestCase):
 
     def propose(self):
         return self.requests.propose(self.actor, 'original-intent', self.item)
+
+    async def test_party_projects_all_unplayed_requests_and_places_one_at_a_time(self):
+        from custom_components.djconnect.guest_admission import ParticipationPolicy
+        from custom_components.djconnect.guest_artwork import RequestArtwork, request_queue, _request_asset
+        from custom_components.djconnect.guest_live import display_status
+        share = self.actor.share
+        share.party_requests = True
+        self.requests.admission._policies[share.share_id].policy = ParticipationPolicy(True, 'auto_queue')
+        initial = self.propose()
+        initial.artwork = RequestArtwork('test', initial.request_id, b'cover', 'image/jpeg', share.requested_until)
+        until = share.requested_until
+        self.assertIs(self.propose(), initial)
+        self.assertEqual(share.requested_until, until)
+        other = self.requests.propose(self.actor, 'other-intent',
+            {**self.item, 'uri':'spotify:track:' + 'c' * 22, 'title':'Life on Mars?'})
+        self.assertEqual([item['title'] for item in display_status(
+            self.requests.admission, share.share_id)['requested_tracks']['items']], ['Heroes', 'Life on Mars?'])
+        rows = request_queue(self.actor)
+        reference = rows[0]['artwork']['reference']
+        self.assertIs(_request_asset(self.actor, reference), initial.artwork)
+
+        async def place(_state, record):
+            record.started = True
+            record.state = 'queue_confirmed'
+
+        with (patch.object(self.actor.hass, 'async_create_task', asyncio.create_task, create=True),
+              patch.object(self.module, 'fulfil', side_effect=place) as fulfil):
+            self.requests.schedule(share)
+            await share.request_dispatch
+            self.assertEqual(fulfil.await_count, 1)
+            self.assertFalse(other.started)
+            await self.actor.manager.async_update_playback_projection(
+                owner_profile_id=self.actor.profile.profile_id, session_id=self.actor.active.session_id,
+                media_identity=initial.uri, state='playing', title=initial.title, artist=initial.artist)
+            await share.request_dispatch
+            self.assertEqual(fulfil.await_count, 2)
+        self.assertEqual(initial.state, 'actually_playing')
+        self.assertIsNone(_request_asset(self.actor, reference))
+        self.assertEqual([item['request_id'] for item in request_queue(self.actor)], [other.request_id])
+        self.assertEqual(share.requested_until, display_status(
+            self.requests.admission, share.share_id)['requested_tracks']['expires_at'])
 
     async def test_actual_adapter_one_post_durable_receipt_and_readonly_retry_without_host_dna(self):
         record = self.propose()

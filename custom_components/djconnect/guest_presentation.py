@@ -32,7 +32,9 @@ def public_context(actor):
         'shared_flow': list(items.values())[-12:], 'view': view(actor.share, actor.active)}
     from .display_observed import public as public_observations
     result['observed_playback'] = public_observations(actor.share, actor.manager._display_admission)
-    from .guest_artwork import descriptor
+    from .guest_artwork import descriptor, request_queue
+    if actor.share.party_requests:
+        result['requested_tracks'] = request_queue(actor)
     artwork = descriptor(actor)
     if artwork is not None:
         result['playback']['artwork'] = artwork

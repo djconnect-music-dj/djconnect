@@ -274,7 +274,6 @@ def _ha_language(hass: Any) -> str:
 def _options_actions_for_status(hass: Any, defaults: dict[str, Any]) -> dict[str, str]:
     """Return visible options actions for the current pairing state."""
     actions = dict(_options_action_names(hass))
-    actions["guest_participation"] = flow_label(hass, "guest_participation")
     actions[OPTIONS_ACTION_CANVAS_SAMSUNG] = flow_label(hass, OPTIONS_ACTION_CANVAS_SAMSUNG)
     if defaults.get("profile_backend_entry_id"):
         from .spotify_connection_repair import for_config, reauthorization_binding
@@ -301,7 +300,6 @@ def _conversation_agent_options_actions(hass: Any, defaults: dict[str, Any]) -> 
         OPTIONS_ACTION_SAVE: names[OPTIONS_ACTION_SAVE],
         OPTIONS_ACTION_PROFILE_PLATFORM: names[OPTIONS_ACTION_PROFILE_PLATFORM],
         "native_voice_access": flow_label(hass, "native_voice_access"),
-        "guest_participation": flow_label(hass, "guest_participation"),
         OPTIONS_ACTION_CANVAS_SAMSUNG: flow_label(hass, OPTIONS_ACTION_CANVAS_SAMSUNG),
         OPTIONS_ACTION_CHANGE_MUSIC_BACKEND: names[OPTIONS_ACTION_CHANGE_MUSIC_BACKEND],
     }
@@ -2911,8 +2909,6 @@ class DJConnectOptionsFlow(config_entries.OptionsFlow):
                 return await self.async_step_music_backend()
             if action == OPTIONS_ACTION_PROFILE_PLATFORM:
                 return await self.async_step_profile_platform()
-            if action == "guest_participation":
-                return await self.async_step_guest_participation()
             if action == OPTIONS_ACTION_CANVAS_SAMSUNG:
                 return await self.async_step_music_canvas_samsung()
             if action == "native_voice_access" and current.get(CONF_CLIENT_TYPE) == CLIENT_TYPE_CONVERSATION_AGENT:
@@ -3021,96 +3017,6 @@ class DJConnectOptionsFlow(config_entries.OptionsFlow):
             }),
             errors=errors,
         )
-
-    async def async_step_guest_participation(self, user_input=None):
-        """Actual HA-admin OptionsFlow, not a paired-owner credential surrogate."""
-        from .guest_host import options_consent
-        from .guest_admission import ParticipationPolicy
-        from .display_admission import DisplayAdmissionError
-        from .session_conversation import SessionConversationError
-        from .session_runtime import session_runtime_manager
-        from .guest_requests import fulfil
-        from homeassistant.helpers import device_registry as dr
-        manager = session_runtime_manager(self.hass)
-        state = manager._display_admission
-        storage = _profile_storage(self.hass)
-        await storage.async_load()
-        registry = dr.async_get(self.hass)
-        errors = {}
-        async with manager._lock:
-            state.prune()
-            shares = {key: storage.household.profiles[share.owner.profile_id].display_name
-                      for key, share in state._shares.items() if share.owner.valid()
-                      and share.owner.profile_id in storage.household.profiles}
-            requests = {key: r.title + ' — ' + r.artist for key,r in state.participation.requests.records.items()
-                        if r.actor.grant.share_id in shares and r.state in {'received','considering'}}
-        if not shares:
-            return self.async_abort(reason='guest_no_live_share')
-        if user_input is not None:
-            try:
-                share_id = user_input['share_id']
-                async with manager._lock:
-                    host = options_consent(self, manager, share_id)
-                    guests = state.participation
-                    request_id = user_input.get('request_id', '')
-                    decision = user_input.get('decision', 'none')
-                    record = guests.requests.records.get(request_id)
-                    if decision != 'none':
-                        if record is None or record.actor.share is not host.share or record.started:
-                            raise DisplayAdmissionError('guest_request_unavailable', 409)
-                        if decision == 'accept':
-                            pass  # The original policy is retained for this decision.
-                        elif decision in {'consider','reject'}:
-                            record.state = 'considering' if decision == 'consider' else 'rejected'
-                        else:
-                            raise DisplayAdmissionError('guest_request_invalid', 400)
-                    else:
-                        mode = user_input.get('participation_mode', 'off')
-                        if mode not in {'off','information','review','auto_queue'}:
-                            raise DisplayAdmissionError('guest_policy_invalid', 400)
-                        endpoints = user_input.get('shared_voice_endpoints', [])
-                        if (not isinstance(endpoints, list) or len(endpoints) > 32
-                                or len(set(endpoints)) != len(endpoints) or (mode == 'off' and endpoints)):
-                            raise DisplayAdmissionError('guest_voice_endpoint_invalid', 403)
-                        devices = [(identifier, registry.async_get(identifier)) for identifier in endpoints]
-                        if any(device is None or identifier in storage.household.shared.personal_voice_endpoint_profile_ids
-                               for identifier,device in devices):
-                            raise DisplayAdmissionError('guest_voice_endpoint_invalid', 403)
-                        other = {key for key, endpoint in guests._voice.items() if endpoint.share_id != share_id}
-                        if other.intersection(endpoints) or len(other) + len(endpoints) > 32:
-                            raise DisplayAdmissionError('guest_voice_endpoint_in_use', 409)
-                        policy = ParticipationPolicy(mode != 'off',
-                            mode if mode in {'review','auto_queue'} else 'disabled',
-                            user_input.get('max_pending', 3), user_input.get('screen_focus', False))
-                        guests.configure(owner=host, share_id=share_id, policy=policy)
-                        for key, endpoint in tuple(guests._voice.items()):
-                            if endpoint.share_id == share_id and key not in endpoints:
-                                guests.unbind_voice(key)
-                        for endpoint_id,device in devices:
-                            guests.bind_voice(owner=host, share_id=share_id, endpoint_id=endpoint_id,
-                                current=lambda identifier=endpoint_id, original=device:
-                                    registry.async_get(identifier) is original and identifier not in
-                                    storage.household.shared.personal_voice_endpoint_profile_ids)
-                if decision == 'accept':
-                    await fulfil(guests.requests, record, host=host)
-                return self.async_abort(reason='guest_participation_updated')
-            except (DisplayAdmissionError, SessionConversationError):
-                errors['base'] = 'guest_participation_unavailable'
-        devices = {'':flow_label(self.hass, 'none'), **{item.id: item.name_by_user or item.name or item.id
-                   for item in registry.devices}}
-        return self.async_show_form(step_id='guest_participation', errors=errors,
-            data_schema=vol.Schema({
-                vol.Required('share_id'):vol.In(shares),
-                vol.Required('participation_mode', default='off'):vol.In({
-                    key:flow_label(self.hass, 'guest_' + key) for key in ('off','information','review','auto_queue')}),
-                vol.Required('screen_focus', default=False):bool,
-                vol.Required('max_pending', default=3):vol.All(vol.Coerce(int), vol.Range(min=1,max=10)),
-                vol.Optional('shared_voice_endpoints', default=[]):selector.SelectSelector(
-                    selector.SelectSelectorConfig(options=[{'value':key,'label':label} for key,label in devices.items() if key], multiple=True)),
-                vol.Optional('request_id', default=''):vol.In({'':flow_label(self.hass,'none'), **requests}),
-                vol.Required('decision', default='none'):vol.In({
-                    key:flow_label(self.hass, 'guest_' + key) for key in ('none','consider','accept','reject')}),
-            }))
 
     async def async_step_native_voice_access(self, user_input=None):
         """HA-admin installation consent, independent of synthetic agent device binding."""

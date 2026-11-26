@@ -296,13 +296,29 @@ def schedule_artwork(hass, manager, observed, result, source_sample, *, occurren
                          source_sample.observed_monotonic))
 
 
-async def _prepare_artwork(hass, state, broadcast, item_id, source_url, url, current,
-                           source_current, admitted_shares, observed_at, *, horizon_deadline=None):
+async def fetch_display_artwork(hass, url, current):
     from aiohttp import ClientTimeout
     from homeassistant.helpers.aiohttp_client import async_get_clientsession
     from .image_proxy import session_images
     from .session_artwork import _decode_prepared
 
+    async with asyncio.timeout(10):
+        async with async_get_clientsession(hass).get(
+            url, allow_redirects=False, timeout=ClientTimeout(total=8)
+        ) as response:
+            if response.status != 200 or not current():
+                return
+            body = bytearray()
+            async for chunk in response.content.iter_chunked(65536):
+                if len(body) + len(chunk) > MAX_DISPLAY_ARTWORK_BYTES or not current():
+                    return
+                body.extend(chunk)
+        _, witness = await session_images(hass).decode(_decode_prepared, bytes(body))
+        return witness
+
+
+async def _prepare_artwork(hass, state, broadcast, item_id, source_url, url, current,
+                           source_current, admitted_shares, observed_at, *, horizon_deadline=None):
     deadline = observed_at + DISPLAY_ARTWORK_LIFETIME
     flow_deadline = observed_at + FLOW_ARTWORK_LIFETIME
     if horizon_deadline is not None:
@@ -311,17 +327,7 @@ async def _prepare_artwork(hass, state, broadcast, item_id, source_url, url, cur
         if not current() or not admitted_shares():
             return
         async with asyncio.timeout(10):
-            async with async_get_clientsession(hass).get(
-                url, allow_redirects=False, timeout=ClientTimeout(total=8)
-            ) as response:
-                if response.status != 200 or not current():
-                    return
-                body = bytearray()
-                async for chunk in response.content.iter_chunked(65536):
-                    if len(body) + len(chunk) > MAX_DISPLAY_ARTWORK_BYTES or not current():
-                        return
-                    body.extend(chunk)
-            _, witness = await session_images(hass).decode(_decode_prepared, bytes(body))
+            witness = await fetch_display_artwork(hass, url, current)
             shares = admitted_shares()
             now = state._clock()
             if witness is not None and current() and shares and now < deadline:

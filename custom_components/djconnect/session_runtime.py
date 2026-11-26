@@ -8092,6 +8092,9 @@ class _PlaybackObservationAttempt:
         self.active.broadcast.passive_observation = (time.monotonic(), time.time(), self.projection)
         self.active.broadcast.passive_state_observed = self.active.broadcast.passive_observation[:2]
         self.changed = self.active.broadcast.update_playback(self.projection)
+        manager._display_admission.participation.requests.observe_playback(
+            self.active, self.projection, self.occurrence
+        )
         if not self.changed and self.active.broadcast.passive_grants:
             self.active.broadcast._publish(
                 BroadcastEventType.PLAYBACK_CHANGED,

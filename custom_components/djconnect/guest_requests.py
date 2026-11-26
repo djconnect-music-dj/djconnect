@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 from contextvars import ContextVar
 from dataclasses import dataclass, field
+from datetime import UTC, datetime, timedelta
 import hashlib
 import json
 import re
@@ -27,6 +28,7 @@ TEXT = {
     'choose': {'en':'Which recording would you like to request?', 'nl':'Welke opname wil je aanvragen?', 'de':'Welche Aufnahme möchtest du wünschen?', 'fr':'Quel enregistrement souhaites-tu demander ?', 'es':'¿Qué grabación quieres pedir?'},
     'missing': {'en':'Name the song and artist you would like to request.', 'nl':'Noem het nummer en de artiest die je wilt aanvragen.', 'de':'Nenne das Lied und den Künstler für deinen Wunsch.', 'fr':'Indique le titre et l’artiste que tu souhaites demander.', 'es':'Indica la canción y el artista que quieres pedir.'},
     'received': {'en':'Your request has been received for host review.', 'nl':'Je verzoek is ontvangen voor beoordeling door de host.', 'de':'Dein Wunsch ist zur Prüfung beim Gastgeber eingegangen.', 'fr':'Ta demande a été reçue pour examen par l’hôte.', 'es':'Tu petición se ha recibido para que el anfitrión la revise.'},
+    'party_received': {'en':'The DJ has received your request.','nl':'De DJ heeft je verzoek ontvangen.','de':'Der DJ hat deinen Wunsch erhalten.','fr':'Le DJ a reçu ta demande.','es':'El DJ ha recibido tu petición.'},
     'queue_confirmed': {'en':'The recording is confirmed in the music queue.', 'nl':'De opname staat bevestigd in de muziekwachtrij.', 'de':'Die Aufnahme ist in der Musikwarteschlange bestätigt.', 'fr':'L’enregistrement est confirmé dans la file musicale.', 'es':'La grabación está confirmada en la cola de música.'},
     'effect_uncertain': {'en':'Queue placement is uncertain. I will check the existing request without adding it again.', 'nl':'Plaatsing in de wachtrij is onzeker. Ik controleer het bestaande verzoek zonder het opnieuw toe te voegen.', 'de':'Die Einreihung ist ungewiss. Ich prüfe den bestehenden Wunsch, ohne ihn erneut hinzuzufügen.', 'fr':'La mise en file est incertaine. Je vérifierai la demande existante sans l’ajouter de nouveau.', 'es':'La incorporación a la cola es incierta. Comprobaré la petición existente sin añadirla otra vez.'},
 }
@@ -98,6 +100,12 @@ class SongRequest:
     host: object = None
     participants: set[str] = field(default_factory=set)
     lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+    artwork: object = None
+    played_occurrence: str = ""
+
+    @property
+    def item_id(self):
+        return hashlib.sha256(self.uri.encode()).hexdigest()[:24]
 
     def public(self):
         return {'request_id':self.request_id, 'title':self.title, 'artist':self.artist,
@@ -133,15 +141,7 @@ class GuestRequestState:
         # Never evict a still-live receipt in order to dispatch another effect.
         if len(self.records) >= MAX_REQUESTS or len(self.clients) >= 256:
             raise SessionConversationError('guest_request_capacity', 429)
-        pending = []
-        for record in self.records.values():
-            if record.actor.share is not actor.share or record.state not in ACTIVE or record.deadline <= now:
-                continue
-            try:
-                record.actor.validate()
-            except SessionConversationError:
-                continue  # No fresh caller inherits an expired guest's status/approval.
-            pending.append(record)
+        pending = list(self.pending(actor.share))
         # Coalesce exact active recordings for this share, without another write.
         existing = next((r for r in pending if r.uri == uri), None)
         if existing is not None:
@@ -152,19 +152,76 @@ class GuestRequestState:
             return existing
         if len(pending) >= MAX_SHARE_PENDING or sum(r.actor.grant is actor.grant for r in pending) >= policy.max_pending:
             raise SessionConversationError('guest_request_capacity', 429)
-        from .hybrid_service import operations
-        journal = operations(actor.hass).journal
-        ms = journal.now_ms()
-        operation_id = str(UUID(int=(ms << 80) | (7 << 76) | (secrets.randbits(12) << 64)
-                                | (2 << 62) | secrets.randbits(62)))
         request = SongRequest(secrets.token_urlsafe(24), actor, client_key, uri,
             str(item.get('title') or item.get('name') or '')[:200],
             str(item.get('artist') or item.get('artist_name') or item.get('subtitle') or '')[:200],
-            operation_id, policy.requests, min(actor.share.deadline, now + 300))
+            "", policy.requests, actor.share.deadline if actor.share.party_requests
+            else min(actor.share.deadline, now + 300))
         request.participants.add(actor.grant.principal_id)
         self.records[request.request_id] = request
         self.clients[client_key] = request.request_id
+        if actor.share.party_requests:
+            actor.share.requested_until = (datetime.now(UTC) + timedelta(seconds=20)).isoformat()
+            from .guest_artwork import prepare_request
+            prepare_request(self, request, item.get('thumbnail_url') or item.get('image_url'))
         return request
+
+    def pending(self, share):
+        now = self.admission.display._clock()
+        for record in self.records.values():
+            if record.actor.share is not share or record.state not in ACTIVE or record.deadline <= now:
+                continue
+            if not (share.party_requests and (record.sent or record.state == 'queue_confirmed')):
+                try:
+                    record.actor.validate()
+                except SessionConversationError:
+                    continue
+            yield record
+
+    def observe_playback(self, active, playback, occurrence=None):
+        """Called under the Runtime lock from an accepted playback sample."""
+        if playback.state != 'playing' or not playback.item_id:
+            return
+        for share in self.admission.display._shares.values():
+            if not share.party_requests or share.owner.session_id != active.session_id:
+                continue
+            for record in self.pending(share):
+                if record.item_id == playback.item_id:
+                    record.state, record.basis = 'actually_playing', 'observed_shared_playback'
+                    record.played_occurrence = occurrence.occurrence_id if occurrence else ''
+                    record.artwork = None
+            self.schedule(share)
+
+    def was_requested(self, session_id, occurrence_id):
+        return any(record.actor.share.party_requests and record.actor.active.session_id == session_id
+                   and record.played_occurrence == occurrence_id for record in self.records.values())
+
+    def schedule(self, share):
+        """Keep one request placed ahead, leaving the existing playback order intact."""
+        if share.request_dispatch is not None and not share.request_dispatch.done():
+            return
+        pending = list(self.pending(share))
+        if any(record.started for record in pending):
+            return
+        if not pending:
+            return
+        record = pending[0]
+        if record.actor.active.broadcast.state.playback.state != 'playing':
+            return
+
+        async def dispatch():
+            try:
+                await fulfil(self, record)
+            except SessionConversationError:
+                if not record.sent and record.state in ACTIVE:
+                    record.state = 'expired'
+            finally:
+                async with record.actor.manager._lock:
+                    share.request_dispatch = None
+                    if self.admission.display._shares.get(share.share_id) is share:
+                        self.schedule(share)
+
+        share.request_dispatch = record.actor.hass.async_create_task(dispatch())
 
     def owned(self, actor, request_id):
         actor.validate()
@@ -180,12 +237,16 @@ class GuestRequestState:
         for record in self.records.values():
             if record.actor.grant is grant and not record.sent and record.state in {'received','considering','planned'}:
                 record.state = 'expired'
+                record.artwork = None
 
     def prune_share(self, share_id):
         # Retain opaque retry binding until Runtime ends. Withdrawing a share
         # invalidates actors; it cannot turn an old input into a fresh dispatch.
         for record in self.records.values():
-            if record.actor.grant.share_id == share_id and record.state in {'received','considering','planned'} and not record.sent:
+            if record.actor.grant.share_id != share_id:
+                continue
+            record.artwork = None
+            if record.state in {'received','considering','planned'} and not record.sent:
                 record.state = 'expired'
 
 
@@ -288,17 +349,27 @@ async def fulfil(state, record, *, host=None):
                     record.state, record.basis = 'actually_playing', 'observed_shared_playback'
                 return record.public()
             record.started = True  # All failure paths retain the original intent.
+            ms = journal.now_ms()
+            record.operation_id = str(UUID(int=(ms << 80) | (7 << 76)
+                                           | (secrets.randbits(12) << 64)
+                                           | (2 << 62) | secrets.randbits(62)))
             key, receipt, fresh = await journal.reserve(owner=record.actor.profile.profile_id,
                 device=record.actor.share.owner.entry_id, binding=record.actor.grant.generation,
                 identifier=record.operation_id, epoch=journal.epoch, operation='guest/request/enqueue',
                 digest=hashlib.sha256(json.dumps([record.uri, record.client_key]).encode()).hexdigest())
             record.journal_key = key
+            if record.actor.share.party_requests and record.state == 'actually_playing':
+                await journal.transition(key, 'confirmed')
+                return record.public()
             if not fresh:
                 record.state = 'effect_uncertain'
                 return record.public()
             # Read actual output, not Profile/device names or a caller-selected ID.
             playback = await backend._request('GET', '/me/player')
             admission.validate()
+            if record.actor.share.party_requests and record.state == 'actually_playing':
+                await journal.transition(key, 'confirmed')
+                return record.public()
             device = playback.get('device') if isinstance(playback, dict) else None
             current = playback.get('item') if isinstance(playback, dict) else None
             expected = record.actor.active.broadcast.state.playback.item_id
@@ -319,6 +390,9 @@ async def fulfil(state, record, *, host=None):
             record.output_id = device['id']
             queue = await backend.queue()
             admission.validate()
+            if record.actor.share.party_requests and record.state == 'actually_playing':
+                await journal.transition(key, 'confirmed')
+                return record.public()
             if any(item.get('uri') == record.uri for item in queue.get('queue', [])):
                 record.state, record.basis = 'queue_confirmed', 'observed_exact_recording_in_queue'
                 await journal.transition(key, 'confirmed')
@@ -333,6 +407,9 @@ async def fulfil(state, record, *, host=None):
             record.acknowledged = True
             output = await backend._request('GET', '/me/player')
             admission.validate()
+            if record.actor.share.party_requests and record.state == 'actually_playing':
+                await journal.transition(key, 'confirmed')
+                return record.public()
             if (not isinstance(output, dict) or not isinstance(output.get('device'), dict)
                     or output['device'].get('id') != record.output_id):
                 record.state, record.basis = 'effect_uncertain', 'original_output_no_longer_current'
@@ -342,10 +419,12 @@ async def fulfil(state, record, *, host=None):
             await journal.transition(key, 'confirmed')
             return record.public()
         except asyncio.CancelledError:
-            record.state = 'effect_uncertain' if record.sent else 'expired'
+            if record.state != 'actually_playing':
+                record.state = 'effect_uncertain' if record.sent else 'expired'
             raise
         except Exception as exc:
-            record.state = 'effect_uncertain' if record.sent else 'expired'
+            if record.state != 'actually_playing':
+                record.state = 'effect_uncertain' if record.sent else 'expired'
             if key:
                 await journal.transition(key, 'unknown' if record.sent else 'rejected', error='guest_request_unconfirmed')
             if isinstance(exc, SessionConversationError):
@@ -425,19 +504,30 @@ async def respond(actor, runtime, payload):
         if len(items) == 1 and len(exact) == 1 and (subject is None or subject[1] or completing_request):
             selected = exact[0]
         else:
-            turn.pending = {'type':'guest_request', 'query':query[:800], 'deadline':turn.history.dialogue.clock() + 120}
+            from .display_delivery import safe_cdn_url
+            covers = {i['uri']: url for i in items
+                      if isinstance(url := i.get('thumbnail_url') or i.get('image_url'), str) and safe_cdn_url(url)}
+            turn.pending = {'type':'guest_request', 'query':query[:800], 'deadline':turn.history.dialogue.clock() + 120,
+                            'covers':covers}
             return {'success':True, 'text':message('choose' if items else 'missing', language),
                     'playback_actions':[{'kind':'track','uri':i['uri'],
                         'title':str(i.get('title') or i.get('name') or '')[:200],
                         'artist':str(i.get('artist') or i.get('artist_name') or '')[:200],
                         'command':'guest_request_recording'} for i in items]}
     async with actor.manager._lock:
-        request = actor.manager._display_admission.participation.requests.propose(actor, turn.client_id, selected)
+        requests = actor.manager._display_admission.participation.requests
+        if isinstance(turn.pending_at_start, dict) and original and selected.get('action_id'):
+            covers = turn.pending_at_start.get('covers', {})
+            selected = {**selected, 'thumbnail_url':covers.get(selected.get('uri'))}
+        request = requests.propose(actor, turn.client_id, selected)
+        if actor.share.party_requests:
+            requests.schedule(actor.share)
     turn.clear_pending = True
     turn.clear_result_set = True
-    if request.policy_mode == 'auto_queue':
-        await fulfil(actor.manager._display_admission.participation.requests, request)
-    return {'success':True, 'text':message(request.state if request.state in TEXT else 'received', language),
+    if request.policy_mode == 'auto_queue' and not actor.share.party_requests:
+        await fulfil(requests, request)
+    state = 'party_received' if actor.share.party_requests and request.state == 'received' else request.state
+    return {'success':True, 'text':message(state if state in TEXT else 'received', language),
             'guest_request':request.public()}
 
 STATUS_TEXT = {
@@ -468,6 +558,7 @@ async def respond_status(actor, payload):
     if not records:
         return {'success':True,'text':message('missing_request',payload.get('language'))}
     record = records[-1]
-    if record.started and record.state in {'queue_confirmed','planned','effect_uncertain'}:
+    if not actor.share.party_requests and record.started and record.state in {'queue_confirmed','planned','effect_uncertain'}:
         await fulfil(requests, record)
-    return {'success':True,'text':message(record.state,payload.get('language')),'guest_request':record.public()}
+    state = 'party_received' if actor.share.party_requests and record.state == 'received' else record.state
+    return {'success':True,'text':message(state,payload.get('language')),'guest_request':record.public()}

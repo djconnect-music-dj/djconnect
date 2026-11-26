@@ -76,6 +76,9 @@ class _Share:
     dynamics: float = 0.5
     observed_playback: tuple = ()
     observed_key: str = ""
+    party_requests: bool = False
+    requested_until: str = ""
+    request_dispatch: object = None
 
 
 @dataclass(slots=True, repr=False)
@@ -348,8 +351,9 @@ class DisplayAdmissionState:
         self._shares[selected.share_id] = selected
         if mode == "create" and live:
             from .guest_admission import ParticipationPolicy
+            selected.party_requests = True
             self.participation.configure(owner=owner, share_id=selected.share_id,
-                policy=ParticipationPolicy(information=True, requests="review"))
+                policy=ParticipationPolicy(information=True, requests="auto_queue"))
         claim.owner, claim.share_id = owner, selected.share_id
         claim.display_id, claim.approval_key = display_id, key
         claim.include_output_status = include_output_status
