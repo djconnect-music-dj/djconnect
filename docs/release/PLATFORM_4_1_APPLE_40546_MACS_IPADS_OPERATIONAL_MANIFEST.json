@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "kind": "platform_release_operational_manifest",
+  "manifest_id": "release-apple-internal-4.1.0-40546-macs-ipads",
+  "status": "APPROVED_DEPLOYMENT_DISPATCH_PENDING",
+  "platform_version": "4.1",
+  "release_version": "4.1.0",
+  "release_profile": "INTERNAL_RELEASE",
+  "approval": {
+    "state": "APPROVED",
+    "approved_at": "2026-11-26T18:57:26Z",
+    "approved_statement": "En installeer die ook op macs en iPads",
+    "effect": "Private installation of build 40546 on the configured Mac mini and MacBook, iPad Pro, and iPad mini through the existing protected Apple relays."
+  },
+  "repositories": [
+    {
+      "repository": "djconnect-music-dj/djconnect-app",
+      "source_sha": "3740379af39b375590ece9f0854e1b2a276d4a95",
+      "version": "4.1.0",
+      "build_number": "40546"
+    }
+  ],
+  "artifact_bindings": [
+    {
+      "target": "apple_private_device",
+      "target_device": "macbook",
+      "artifact_id": "797285489",
+      "artifact_sha256": "be30cbb8f899017a7bb38e102b755f8c9885ade4b112884fb54f5677142a3497",
+      "github_repository_id": 1444773078,
+      "github_release_asset_id": 797285489,
+      "signing": "local_developer_provisioning_required",
+      "paired_watch_validation": "disabled"
+    },
+    {
+      "target": "apple_private_device",
+      "target_device": "ipad",
+      "artifact_id": "797277593",
+      "artifact_sha256": "b7a0d935c52afcf346d7ecd50ae037a992d136db594bfb07d8298840eefc5867",
+      "github_repository_id": 1444773078,
+      "github_release_asset_id": 797277593,
+      "signing": "local_developer_provisioning_required"
+    },
+    {
+      "target": "apple_private_device",
+      "target_device": "ipad-mini",
+      "artifact_id": "797277829",
+      "artifact_sha256": "b7a0d935c52afcf346d7ecd50ae037a992d136db594bfb07d8298840eefc5867",
+      "github_repository_id": 1444773078,
+      "github_release_asset_id": 797277829,
+      "signing": "local_developer_provisioning_required"
+    }
+  ],
+  "deployment_constraints": {
+    "dispatch_now": [
+      "macbook",
+      "ipad",
+      "ipad-mini"
+    ],
+    "iphone_and_watch": "NOT_AUTHORIZED_FOR_THIS_MANIFEST",
+    "iphone_only_route": "NOT_APPLICABLE"
+  }
+}
