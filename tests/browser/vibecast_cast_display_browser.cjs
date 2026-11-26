@@ -111,6 +111,25 @@ async function run(name,engine){
   assert.equal(await page.evaluate(()=>window.__castStorageAccesses),0);
   await page.locator('#flow-cards .flow-card').waitFor();await page.locator('.guest-participation img').waitFor();
   assert.equal(await page.locator('#receiver-brand-label').innerText(),'VibeCast Party');
+  for(const party of [false,true]){
+   await page.evaluate(enabled=>window.dispatchEvent(new CustomEvent('djconnect-live-status',{
+    detail:{live_enabled:enabled,guest_count:0}
+   })),party);
+   const label=page.locator('#receiver-brand-label');
+   assert.equal(await label.innerText(),party?'VibeCast Party':'DJConnect VibeCast');
+   assert.equal(await page.locator('.receiver-mark-party').isVisible(),party);
+   for(const [width,height] of [[960,540],[1280,720],[1920,1080]]){
+    await page.setViewportSize({width,height});
+    const titleSize=await label.evaluate(node=>parseFloat(getComputedStyle(node).fontSize));
+    assert.ok(Math.abs(titleSize-35.2)<.01);
+    const mark=await page.locator('#receiver-mark').boundingBox();
+    const brand=await label.boundingBox();
+    const clock=await page.locator('.header-clock').boundingBox();
+    assert.equal(mark.width,80);assert.equal(mark.height,80);
+    assert.ok(mark.x+mark.width<=brand.x && brand.x+brand.width<=clock.x,
+      `VibeCast header elements overlap at ${width}x${height} (Party ${party})`);
+   }
+  }
   assert.equal(await page.locator('#live-indicator, #sharing-hand').count(),0);
   assert.equal(await page.locator('#live-guest-count .live-guest-icon')
     .evaluate(icon=>getComputedStyle(icon).filter),'brightness(0) invert(1)');
