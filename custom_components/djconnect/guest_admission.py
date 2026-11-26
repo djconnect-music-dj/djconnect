@@ -5,7 +5,7 @@ a Profile, pairing registry, Session, conversation engine or effect grant.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import hashlib
 import secrets
 import time
@@ -187,9 +187,13 @@ class GuestAdmissionState:
 
     def configure(self, *, owner, share_id, policy):
         self.prune()
-        self._owner(owner, share_id)
+        share = self._owner(owner, share_id)
         if type(policy) is not ParticipationPolicy:
             raise DisplayAdmissionError('guest_policy_invalid', 400)
+        if policy.requests == 'auto_queue':
+            share.party_requests = True
+        if share.party_requests and policy.information:
+            policy = replace(policy, requests='auto_queue')
         existing = self._policies.get(share_id)
         if existing is None or existing.policy != policy:
             self.revoke_share(share_id)

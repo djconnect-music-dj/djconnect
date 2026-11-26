@@ -352,7 +352,6 @@ class DisplayAdmissionState:
         self._shares[selected.share_id] = selected
         if mode == "create" and live:
             from .guest_admission import ParticipationPolicy
-            selected.party_requests = True
             self.participation.configure(owner=owner, share_id=selected.share_id,
                 policy=ParticipationPolicy(information=True, requests="auto_queue"))
         claim.owner, claim.share_id = owner, selected.share_id

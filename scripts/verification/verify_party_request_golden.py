@@ -105,6 +105,13 @@ async def run_golden(hass, manager, client, post, host, origin, current_uri):
         value = await response.json()
         assert response.headers["Cache-Control"] == "no-store"
         if spec["expected"] == "queued":
+            if request := value.get("guest_request"):
+                share = manager._display_admission._shares[host["share_id"]]
+                if share.request_dispatch is not None:
+                    await share.request_dispatch
+                status = await post("participation", "request/status",
+                                    {**binding, "request_id": request["request_id"]}, token=token)
+                value = {**value, "guest_request": status["request"]}
             assert writes[before:] in ([], [spec["recording"]]), "Unexpected automatic queue effect"
         else:
             assert len(writes) == before, "Review-mode guest turn wrote to the queue"
@@ -142,9 +149,23 @@ async def run_golden(hass, manager, client, post, host, origin, current_uri):
             # Use independent threads within the real per-guest and per-IP limits.
             policy = case.get("policy")
             if policy:
-                await post("participation", "owner/configure", {**host, "policy": {
+                configured = await post("participation", "owner/configure", {**host, "policy": {
                     "information": True, "requests": policy, "max_pending": 3, "screen_focus": True,
                 }}, owner=True)
+                assert configured["policy"]["requests"] == policy
+                if policy == "auto_queue":
+                    assert manager._display_admission._shares[host["share_id"]].party_requests
+                    active = manager._display_admission._shares[host["share_id"]].owner
+                    # The earlier confirmed review request still occupies one slot
+                    # when the same display switches into Party.
+                    previously_queued = queue.pop(0)
+                    await manager.async_update_playback_projection(
+                        owner_profile_id=active.profile_id, session_id=active.session_id,
+                        state="playing", media_identity=previously_queued["uri"],
+                        title=previously_queued["name"])
+                    await manager.async_update_playback_projection(
+                        owner_profile_id=active.profile_id, session_id=active.session_id,
+                        state="playing", media_identity=current_uri, title="Fixture regular set")
             if index % 4 == 0 or policy:
                 invited = await post("participation", "owner/invite", host, owner=True)
                 joined = await post("participation", "redeem", {key: invited[key] for key in

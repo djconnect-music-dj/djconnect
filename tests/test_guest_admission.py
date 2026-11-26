@@ -97,6 +97,13 @@ class GuestAdmissionTests(unittest.TestCase):
                     self.authenticate(result)
                 self.assertEqual(invalidated, [True])
 
+    def test_party_enabled_for_existing_display_keeps_song_requests_on(self):
+        self.enable(requests='auto_queue')
+        self.assertTrue(self.state._shares[self.share_id].party_requests)
+        self.enable()
+        self.assertEqual(self.guests._policies[self.share_id].policy.requests, 'auto_queue')
+        self.assertTrue(self.join()['capabilities']['request_song'])
+
     def test_policy_withdrawal_and_regrant_never_reauthorize_original_principal(self):
         self.enable(requests='auto_queue')
         original = self.join()
