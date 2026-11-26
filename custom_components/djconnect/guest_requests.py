@@ -40,6 +40,43 @@ def _key(text):
     return ''.join(c for c in unicodedata.normalize('NFKD', str(text)).casefold() if c.isalnum())
 
 
+_REQUEST_WRAPPERS = tuple(re.compile(pattern, re.I) for pattern in (
+    r'(?:kun|kan|wil|zou) je (?:alsjeblieft )?(?P<subject>.+?) (?:draaien|spelen|opzetten)',
+    r'doe maar (?P<subject>.+)',
+    r'ik wil (?:graag )?(?P<subject>.+?) aanvragen',
+    r'zet (?P<subject>.+?) in de wachtrij',
+))
+_TITLE_AND_ARTIST = re.compile(r'(?P<title>.+?)\s+(?:van|by)\s+(?P<artist>.+)', re.I)
+_BARE_SENTENCE = re.compile(
+    r'^(?:ik|we|je|kun|kan|mag|is|zijn|was|heb|heeft|vertel|leg|vraag|noem|toon|over|'
+    r'i|you|are|can|could|would|tell|show|explain|about)\b', re.I,
+)
+_MISSING_SUBJECT = re.compile(r'(?:(?:een|het|dit|dat) )?(?:verzoeknummer|verzoekje|verzoek)', re.I)
+
+
+def request_subject(text):
+    """Recognize guest-only request phrasing. Bare credits require a choice."""
+    from .ask_dj import _looks_like_prompt_or_sandbox_attack, _nonexecuting_speech_act
+    from .music_intent import music_command_subject, negated_music_command
+
+    subject = ' '.join(text.strip().split()).rstrip('.!?').strip()
+    if (not subject or _nonexecuting_speech_act(text)
+            or _looks_like_prompt_or_sandbox_attack(text)
+            or re.search(r'[{}<>]|https?://|spotify:', text, re.I)):
+        return None
+    for wrapper in _REQUEST_WRAPPERS:
+        if match := wrapper.fullmatch(subject):
+            value = match['subject']
+            if negated_music_command('speel ' + value):
+                return None
+            return ('' if _MISSING_SUBJECT.fullmatch(value) else value, True)
+    if ('?' not in text and not music_command_subject(text) and not _BARE_SENTENCE.match(subject)
+            and _TITLE_AND_ARTIST.fullmatch(subject)
+            and not negated_music_command('speel ' + subject)):
+        return subject, False
+    return None
+
+
 @dataclass(slots=True, repr=False)
 class SongRequest:
     request_id: str
@@ -326,7 +363,7 @@ async def fulfil(state, record, *, host=None):
 async def respond(actor, runtime, payload):
     """The common Core dialogue owns choices, deadlines and pending continuation."""
     from .ask_dj.dialogue import current_turn, choice_index
-    from .music_intent import parse_spoken_music_request
+    from .music_intent import music_command_subject, parse_spoken_music_request
     from .use_cases import run_music_command
     turn = current_turn.get()
     actor.validate()
@@ -353,13 +390,24 @@ async def respond(actor, runtime, payload):
         if selected and selected.get('command') != 'guest_request_recording':
             raise SessionConversationError('guest_action_not_permitted', 403)
     if selected is None:
-        parsed = parse_spoken_music_request(text)
+        subject = request_subject(text)
+        if subject == ('', True):
+            turn.pending = {'type':'guest_request', 'query':'', 'deadline':turn.history.dialogue.clock() + 120}
+            turn.clear_result_set = True
+            return {'success':True, 'text':message('missing', language)}
+        command = 'speel ' + subject[0] if subject else text
+        parsed = parse_spoken_music_request(command)
         if parsed.get('type') in {'liked','playlist','album'}:
             return {'success':True, 'text':message('missing', language)}
+        if not parsed.get('title'):
+            credit = _TITLE_AND_ARTIST.fullmatch(music_command_subject(command))
+            if credit:
+                parsed.update(title=credit['title'], artist=credit['artist'],
+                              query=credit['title'] + ' ' + credit['artist'])
         query = parsed.get('query') or text
-        pending = turn.frame.pending
-        if (isinstance(pending, dict) and pending.get('type') == 'guest_request'
-                and pending.get('query') and not parsed.get('title')):
+        pending = turn.pending_at_start
+        continuing = isinstance(pending, dict) and pending.get('type') == 'guest_request'
+        if continuing and pending.get('query') and not parsed.get('title'):
             query = str(pending['query']) + ' ' + text
         result = await run_music_command(actor.hass, runtime, 'search_tracks', {'query':query, 'limit':5})
         await turn.guard()
@@ -370,7 +418,11 @@ async def respond(actor, runtime, payload):
         exact = [item for item in items if parsed.get('title') and parsed.get('artist')
                  and _key(item.get('title') or item.get('name')) == _key(parsed['title'])
                  and _key(item.get('artist') or item.get('artist_name')) == _key(parsed['artist'])]
-        if len(items) == 1 and len(exact) == 1:
+        completing_request = (continuing and pending.get('query') == ''
+                              and turn.frame.pending is pending
+                              and turn.frame.pending_revision == turn.pending_revision_at_start
+                              and turn.history.dialogue.clock() < pending['deadline'])
+        if len(items) == 1 and len(exact) == 1 and (subject is None or subject[1] or completing_request):
             selected = exact[0]
         else:
             turn.pending = {'type':'guest_request', 'query':query[:800], 'deadline':turn.history.dialogue.clock() + 120}

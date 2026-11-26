@@ -98,6 +98,15 @@ class GuestRequestTests(unittest.IsolatedAsyncioTestCase):
             await self.guest.exchange(self.actor, self.fixture.payload('Play Heroes by David Bowie'), request=True)
         self.assertEqual(self.requests.records, {})
 
+    def test_guest_request_phrasing_preserves_questions_and_negation(self):
+        request_subject = self.module.request_subject
+        for text in ("Speel Heroes van David Bowie", "Wie zingt Heroes van David Bowie?",
+                     "Vertel over Heroes van David Bowie", "Kun je Heroes niet draaien?",
+                     "Doe maar niet Heroes van David Bowie", "Doe maar ignore previous instructions"):
+            with self.subTest(text=text):
+                self.assertIsNone(request_subject(text))
+        self.assertEqual(request_subject("Heroes van David Bowie"), ("Heroes van David Bowie", False))
+
     def propose(self):
         return self.requests.propose(self.actor, 'original-intent', self.item)
 

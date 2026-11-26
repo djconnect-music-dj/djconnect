@@ -272,16 +272,18 @@ async def exchange(actor, payload, *, request=None):
     view = GuestRuntimeView(actor)
     if request is None:
         from .ask_dj import classify_ask_dj
+        from .guest_requests import request_subject, status_action
         intent = classify_ask_dj(str(data.get('text') or ''))
         frame = history.dialogue.owners.get(actor.scope, {}).get(context.get('thread_id') or 'default')
         pending = frame.pending if frame else None
         request = intent.intent == 'play_music' or (
+            intent.intent == 'ask_music_info' and original_moment is None
+            and request_subject(data.get('text') or '') is not None) or (
             isinstance(pending, dict) and pending.get('type') == 'guest_request'
             and intent.intent not in {'conversation_stop', 'session_lifecycle'}
             and not (intent.category == 'action' and intent.intent != 'play_music'))
         # Original common-owner replay carries the routing mode. Consuming a
         # choice must not change the digest of the same delivered HA turn.
-        from .guest_requests import status_action
         from .guest_presentation import presentation_action
         if status_action(data.get('text')) or presentation_action(data.get('text')):
             request = False

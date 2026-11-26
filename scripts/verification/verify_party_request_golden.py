@@ -81,6 +81,8 @@ async def run_golden(hass, manager, client, post, host, origin, current_uri):
             keys = []
             if "promise" in query:
                 keys = ["J"]
+            elif "beginners" in query:
+                keys = ["K"]
             elif "hello" in query:
                 keys = ["L"] if "adele" in query else ["L", "M"]
             elif "hallelujah" in query:
@@ -97,6 +99,7 @@ async def run_golden(hass, manager, client, post, host, origin, current_uri):
         if choice is not None:
             body["choice_action"] = choice
         before = len(writes)
+        searches_before = len(searches)
         response = await client.post("/api/djconnect/v1/participation/" + action,
                                      headers={"Authorization": "Bearer " + token, "Origin": origin}, json=body)
         value = await response.json()
@@ -127,6 +130,8 @@ async def run_golden(hass, manager, client, post, host, origin, current_uri):
             passed &= sorted(returned, key=str) == sorted(expected_choices)
         if expected == "information":
             passed &= "Fixture request" in value.get("text", "")
+        if spec.get("no_search"):
+            passed &= len(searches) == searches_before
         return {"input": text, "route": action, "expected": expected, "actual": kind,
                 "http": response.status, "text": value.get("text"), "error": value.get("error"),
                 "choices": returned, "recording": recorded, "pass": bool(passed)}, value, body

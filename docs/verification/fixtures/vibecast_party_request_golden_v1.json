@@ -18,11 +18,12 @@
     {"id": "nl-two-versions", "language": "nl", "prompt": "Speel Hallelujah van Jeff Buckley", "expected": "choices", "choices": ["N", "O"], "follow_up": {"select": "O", "expected": "proposal", "recording": "O", "approve": true}},
     {"id": "nl-explicit-live", "language": "nl", "prompt": "Speel de liveversie van Hallelujah van Jeff Buckley", "expected": "proposal_or_choices", "recording": "O"},
     {"id": "nl-artist-only", "language": "nl", "prompt": "Speel iets van HAEVN", "expected": "choices", "choices": ["J", "K"]},
-    {"id": "nl-missing-title", "language": "nl", "prompt": "Ik wil een verzoeknummer aanvragen", "expected": "clarification"},
+    {"id": "nl-missing-title", "language": "nl", "prompt": "Ik wil een verzoeknummer aanvragen", "expected": "clarification", "no_search": true, "follow_up": {"prompt": "Promise van HAEVN", "expected": "proposal", "recording": "J"}},
     {"id": "nl-no-match", "language": "nl", "prompt": "Speel Verdwenen Testtitel van Onbekende Testartiest", "expected": "clarification"},
     {"id": "en-polite", "language": "en", "prompt": "Could you play Promise by HAEVN?", "expected": "proposal", "recording": "J"},
     {"id": "nl-informational", "language": "nl", "prompt": "Welk nummer speelt er nu?", "expected": "information"},
     {"id": "nl-typed-ordinal", "language": "nl", "prompt": "Speel Hallelujah van Jeff Buckley", "expected": "choices", "choices": ["N", "O"], "follow_up": {"prompt": "De eerste", "expected": "proposal", "recording": "N"}},
-    {"id": "nl-auto-queue", "language": "nl", "policy": "auto_queue", "prompt": "Speel Promise van HAEVN", "expected": "queued", "recording": "J"}
+    {"id": "nl-auto-queue", "language": "nl", "policy": "auto_queue", "prompt": "Speel Promise van HAEVN", "expected": "queued", "recording": "J"},
+    {"id": "nl-bare-auto-queue", "language": "nl", "prompt": "Beginners van HAEVN", "expected": "choices", "choices": ["K"]}
   ]
 }
