@@ -17,14 +17,15 @@
   "approval": {
     "state": "APPROVED",
     "approved_at": "2026-11-26",
-    "approved_statement": "The owner instructed proceeding with the Apple 4.1.0 internal rollout. Build 40545 uses the qualified source and increments the build number above the observed installed development builds.",
+    "approved_statement": "The owner instructed proceeding with the Apple 4.1.0 internal rollout. Build 40545 uses the qualified source and increments the build number above the observed installed development builds. On 2026-11-26 the owner explicitly confirmed the separate iPad mini target and installation of build 40545 on that device.",
     "effect": "Private installation of these exact artifacts through the existing Developer signing relays for their configured targets. Require the paired Watch with iPhone. Preserve existing deployment verification and device-scoped configuration."
   },
   "deployment_constraints": {
     "dispatch_now": [
       "iphone",
       "ipad",
-      "macbook"
+      "macbook",
+      "ipad-mini"
     ],
     "iphone_and_watch": "COMBINED_ROUTE_REQUIRED_TARGET_PREFLIGHT_REQUIRED",
     "paired_watch_validation": "required",
@@ -59,6 +60,15 @@
       "signing": "local_developer_provisioning_required",
       "paired_watch_validation": "disabled",
       "artifact_id": "795656797"
+    },
+    {
+      "target": "apple_private_device",
+      "target_device": "ipad-mini",
+      "github_repository_id": 1444773078,
+      "github_release_asset_id": 796023729,
+      "artifact_sha256": "e55ebbb283ab38f50516080584ce40ea9c65f6bf09782ef964c10ef03184e481",
+      "signing": "local_developer_provisioning_required",
+      "artifact_id": "796023729"
     }
   ]
 }
