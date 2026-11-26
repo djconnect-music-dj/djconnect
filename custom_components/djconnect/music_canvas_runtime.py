@@ -311,7 +311,11 @@ class CanvasRuntime:
             await self.protocol(clean)
 
     def session_mood_changed(self, owner):
-        if not self.stopped and owner not in self.mood_refreshes:
+        if self.stopped:
+            return
+        # A cloud frame that has not fetched the superseded image must use the new one.
+        self.leases = {key: lease for key, lease in self.leases.items() if lease["owner"] != owner}
+        if owner not in self.mood_refreshes:
             self.mood_refreshes[owner] = self.hass.async_create_task(
                 self.refresh_mood(owner), eager_start=False)
 

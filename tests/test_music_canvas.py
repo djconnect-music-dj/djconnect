@@ -99,7 +99,8 @@ class CanvasMoodRefreshTests(unittest.IsolatedAsyncioTestCase):
                                      cadence_overrides={"tv": "track", "frame": "3600"})
         for target, width, height, orientation in (("tv", 640, 360, "landscape"), ("frame", 360, 640, "portrait")):
             state["devices"][target] = {
-                "adapter": "samsung", "epoch": 1, "state": "ready", "owned_content": [],
+                "adapter": "samsung" if target == "tv" else "switchbot",
+                "epoch": 1, "state": "ready", "owned_content": [],
                 "screen": dict(width=width, height=height, orientation=orientation),
                 "preview_owner": owner, "presentation": ["full", "off", False],
                 "source_image": "previous-mood.jpg",
@@ -114,7 +115,9 @@ class CanvasMoodRefreshTests(unittest.IsolatedAsyncioTestCase):
         with tempfile.TemporaryDirectory() as folder:
             hass = types.SimpleNamespace(
                 config=types.SimpleNamespace(path=lambda *parts: str(Path(folder, *parts))),
-                data={"djconnect": {"session_runtime_manager": manager}},
+                data={"djconnect": {"session_runtime_manager": manager,
+                                   "music_canvas_asset_origin": "https://assets.example"}},
+                services=types.SimpleNamespace(has_service=lambda *_: True),
                 async_create_task=lambda job, **_: asyncio.create_task(job),
                 async_add_executor_job=AsyncMock(side_effect=lambda work, *args: work(*args)),
             )
@@ -131,6 +134,9 @@ class CanvasMoodRefreshTests(unittest.IsolatedAsyncioTestCase):
 
             stale = asyncio.create_task(asyncio.Event().wait())
             runtime.jobs[owner] = stale
+            runtime.leases = {"old": {"owner": owner, "target": "frame"},
+                              "older": {"owner": owner, "target": "frame"},
+                              "unrelated": {"owner": "other", "target": "other-screen"}}
             image_provider = AsyncMock(side_effect=[b"new landscape", b"new portrait"])
             with patch.dict(sys.modules, {"custom_components.djconnect.profile_context":
                             types.SimpleNamespace(profile_storage=lambda _: storage)}), \
@@ -144,6 +150,7 @@ class CanvasMoodRefreshTests(unittest.IsolatedAsyncioTestCase):
                 await refresh
                 await runtime.jobs[owner]
                 self.assertTrue(stale.cancelled())
+                self.assertEqual(set(runtime.leases), {"unrelated"})
                 self.assertEqual([call.args[3] for call in runtime.deliver.await_args_list], ["tv", "frame"])
                 self.assertEqual(image_provider.await_count, 2)
                 for call in image_provider.await_args_list:
