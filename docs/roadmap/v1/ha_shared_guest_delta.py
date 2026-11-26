@@ -2,7 +2,7 @@
 from copy import deepcopy
 import hashlib
 
-from experience_reconciliation_delta import historical_verification_source
+from experience_reconciliation_delta import HISTORICAL_DOCUMENT_SOURCES, historical_verification_source
 import json
 from pathlib import Path
 
