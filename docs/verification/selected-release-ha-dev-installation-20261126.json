@@ -1,0 +1,23 @@
+{
+  "candidate_sha": "748879aad3353e3608bebeb271a479283bc5ddde",
+  "artifact_sha256": "e967402daafd2ffa7039bbedc55be32752b3c64064f7df030139ec4a43aad88f",
+  "verified_files": 361,
+  "installed_utc": "2026-11-26T10:46:11.610829+00:00",
+  "ha_dev_http": 200,
+  "renderer_version": "4.1.0",
+  "renderer_pin": "4b590bd3",
+  "verified_installed_files": 361,
+  "preserved_backup_files": 361,
+  "developer_sqlite_backup_integrity": "ok",
+  "source_pr": 1722,
+  "reviewed_source": "0346595d05bc2bcad851dd3101af6294063bf1e6",
+  "main_ci_run": 45803149179,
+  "owner_authorization_run": 45802361343,
+  "artifact_run": 45803981313,
+  "qualification_evidence_sha256": "54591fd87e4b76dac28b9db201a18d7966bc0d62a7705f0b8c743d19cb20e04c",
+  "isolated_ha_executions": 55,
+  "local_ha_dev_runtime": "RUNNING",
+  "developer_live_sqlite_integrity": "ok",
+  "physical_cast_tv_acceptance": "OPEN",
+  "ask_dj_release_editorial_qualification": "DEFERRED_CORE_4_1_0"
+}
