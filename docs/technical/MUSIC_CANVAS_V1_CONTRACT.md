@@ -84,9 +84,11 @@ title to the rendered artwork only
 when enabled. With a matte it adjusts the dominant artwork color for contrast
 and centers the title in the bottom matte band. Without a matte it chooses
 white-on-black or black-on-white outlined text based on the artwork immediately
-behind the title. Changing the toggle
-or matte setting can recompose the current Profile's cached source for that
-screen without a new provider request.
+behind the title. An accepted change to composition, title, matte or cadence
+wakes Canvas and recomposes and sends the image for the affected active screen
+without waiting for cadence or a track change. Reuse only a source whose Session
+and mood match. Older or unbound sources are regenerated. The app receives an
+optional owner-scoped `preview_revision` for the committed preview.
 If a screen has no explicit interval, Core uses an existing selected-screen
 `cadence_overrides` entry and then the legacy shared `cadence` value.
 Screen dimensions and orientation carry provenance; unknown values remain unknown.

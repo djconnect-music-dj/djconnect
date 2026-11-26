@@ -15,6 +15,8 @@ import verify_requested_moments_http as harness
 async def qualify(hass, manager, history, request, client):
     from custom_components.djconnect.music_canvas_runtime import setup
     from custom_components.djconnect.music_canvas import CanvasError
+    from custom_components.djconnect.session_runtime import session_runtime_manager
+    assert session_runtime_manager(hass) is manager
     runtime = await setup(hass)
     # No independent discovery/hardware worker is needed in this controlled lab.
     runtime.unsubscribe()
@@ -179,6 +181,12 @@ async def qualify(hass, manager, history, request, client):
     # was exercised above, and physical cloud execution remains substituted.
     hass.services.async_register("switchbot_cloud", "upload_art_frame_image", lambda call: None)
     real_samsung_action = adapters.samsung_action
+
+    async def await_canvas_refresh():
+        if refresh := runtime.refreshes.get("profile-a"):
+            await refresh
+        await runtime.jobs["profile-a"]
+
     with patch.object(render, "generation_available", lambda _hass: True), \
          patch.object(render, "generate", generate), patch.object(adapters, "samsung_action", hardware), \
          patch.object(adapters, "deliver_switchbot", cloud):
@@ -213,8 +221,7 @@ async def qualify(hass, manager, history, request, client):
             restored, code = await call("update", dict(binding=binding, operation_id=str(uuid.uuid4()),
                 expected_revision=changed["revision"], patch={"show_track_title": False}))
             assert code == 200 and restored["revision"] == changed["revision"] + 1
-        await runtime.tick()
-        await runtime.jobs["profile-a"]
+        await await_canvas_refresh()
         assert len(generations) == 2, "identical Samsung targets must share one generation"
         assert runtime.states["samsung:fixture-a"] == "displayed"
         assert runtime.states["switchbot:fixture-p"] == "delivered_unknown"
@@ -228,6 +235,9 @@ async def qualify(hass, manager, history, request, client):
             state["profiles"]["profile-other"] = {"revision": 1, "preferences": {
                 **state["profiles"]["profile-a"]["preferences"], "selected_targets": ["samsung:fixture-a"]}}
         await runtime.repository.mutate(select_other, lambda: True)
+        other_snapshot = await runtime.snapshot("profile-other", lambda: True)
+        other_tv = next(target for target in other_snapshot["targets"] if target["id"] == "samsung:fixture-a")
+        assert not other_tv["preview_available"] and other_tv["preview_revision"] is None
         try:
             await runtime.preview("profile-other", "samsung:fixture-a", lambda: True)
             raise AssertionError("cross-Profile preview exposed")
@@ -237,6 +247,8 @@ async def qualify(hass, manager, history, request, client):
         failing.add("samsung:fixture-a")
         latest, code = await call("read")
         assert code == 200 and latest["per_screen_composition_and_cadence"] is True
+        before_preview = next(target for target in latest["targets"] if target["id"] == "samsung:fixture-b")
+        assert before_preview["preview_available"] and len(before_preview["preview_revision"]) == 64
         changed, code = await call("update", dict(binding=binding, operation_id=str(uuid.uuid4()),
             expected_revision=latest["revision"], patch={
                 "matte": "contrast", "show_track_title": True,
@@ -244,8 +256,7 @@ async def qualify(hass, manager, history, request, client):
                     "matte": "matching", "show_track_title": True, "composition": "full", "cadence": "900"}},
             }))
         assert code == 200 and changed["preferences"]["show_track_title"] is True
-        await runtime.tick()
-        await runtime.jobs["profile-a"]
+        await await_canvas_refresh()
         assert len(generations) == 2, "matte change regenerated instead of composing"
         assert runtime.states["samsung:fixture-a"] == "canvas_device_offline"
         assert runtime.states["samsung:fixture-b"] == "displayed", "one offline screen blocked another"
@@ -254,6 +265,10 @@ async def qualify(hass, manager, history, request, client):
         untitled = rendered["devices"]["samsung:fixture-b"]
         assert titled["presentation"] == ["full", "matching", True]
         assert titled["preview"] != untitled["preview"] and titled["source_image"] == untitled["source_image"]
+        latest, code = await call("read")
+        assert code == 200
+        after_preview = next(target for target in latest["targets"] if target["id"] == "samsung:fixture-b")
+        assert after_preview["preview_available"] and after_preview["preview_revision"] != before_preview["preview_revision"]
         assert updated_devices["switchbot:fixture-p"]["presentation"] == ["central", "off", False]
         assert updated_devices["switchbot:fixture-p"]["preview"] == rendered["devices"]["switchbot:fixture-p"]["preview"]
         with patch.object(runtime.cadence, "due", wraps=runtime.cadence.due) as due:
@@ -264,6 +279,42 @@ async def qualify(hass, manager, history, request, client):
         assert intervals["switchbot:fixture-p"] == "1800"
         failing.clear()
         runtime.next_probe.clear()  # Isolate later cases from the deliberate offline backoff.
+        tv = "samsung:fixture-b"
+        frame = "switchbot:fixture-p"
+        prefs = latest["preferences"]["presentation_overrides"]
+        changed_settings = {"presentation_overrides": {tv: {**prefs[tv], "cadence": "1800"}}}
+        previous_uploads = deliveries.count((tv, "upload"))
+        changed, code = await call("update", dict(binding=binding, operation_id=str(uuid.uuid4()),
+            expected_revision=latest["revision"], patch=changed_settings))
+        assert code == 200
+        await await_canvas_refresh()
+        assert deliveries.count((tv, "upload")) == previous_uploads + 1
+        assert len(generations) == 2, "cadence-only change did not recompose current art"
+
+        # A setting queued before a mood change must render against the accepted new mood.
+        previous_generations = len(generations)
+        previous_tv_uploads = deliveries.count((tv, "upload"))
+        previous_frame_uploads = deliveries.count((frame, "cloud_upload"))
+        async with runtime.generation_lock:
+            changed, code = await call("update", dict(binding=binding, operation_id=str(uuid.uuid4()),
+                expected_revision=changed["revision"], patch={"presentation_overrides": {
+                    tv: {**changed["preferences"]["presentation_overrides"][tv], "matte": "off"},
+                    frame: {"matte": "matching", "show_track_title": True},
+                }}))
+            assert code == 200
+            active = manager.current_active("profile-a")
+            updated = await manager.async_update_mood(
+                owner_profile_id="profile-a", session_id=active.session_id, selected_mood="party")
+            assert updated.mood_revision > active.mood_revision
+        await await_canvas_refresh()
+        assert len(generations) > previous_generations
+        assert all("expressive, richly layered" in prompt for prompt in generations[previous_generations:])
+        assert deliveries.count((tv, "upload")) == previous_tv_uploads + 1
+        assert deliveries.count((frame, "cloud_upload")) == previous_frame_uploads + 1
+        recast = (await runtime.repository.read())["devices"]
+        assert recast[tv]["presentation"] == ["full", "off", True]
+        assert recast[frame]["presentation"] == ["central", "matching", True]
+        assert all(recast[target]["source_context"]["mood_revision"] == updated.mood_revision for target in (tv, frame))
         # A physically running executor retains its effect slot through repeated cancellation.
         import threading
         started_thread, finish_thread = threading.Event(), threading.Event()
@@ -736,6 +787,9 @@ async def qualify(hass, manager, history, request, client):
             "shared_samsung_generation": True, "matte_reuses_source": True, "track_title_reuses_source": True,
             "screen_presentation_is_independent_with_switchbot_default_off": True,
             "screen_composition_and_cadence_applied_independently": True,
+            "settings_wake_without_tick_and_cadence_only_reuploads": True,
+            "queued_screen_settings_use_latest_mood_for_samsung_and_switchbot": True,
+            "preview_revision_changes_only_with_owner_artwork": True,
             "cross_profile_preview_denied": True, "offline_target_isolated": True,
             "late_model_after_session_end_denied": True, "admin_deletion_withdraws_management": True,
             "settings_update_resumes_before_delivery_and_noop_preserves_live_job": True,
