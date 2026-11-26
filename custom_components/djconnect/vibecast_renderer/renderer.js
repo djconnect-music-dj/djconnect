@@ -407,14 +407,14 @@
     const card=e("requested-tracks");
     if(!card)return;
     window.clearTimeout(requestedTracksTimer);
-    const expiry=queue?.expires_at || "";
+    const expiry=(queue && queue.expires_at) || "";
     if(expiry!==requestedTracksExpiry){
       const ttl=Math.min(20000,Date.parse(expiry)-Date.now());
       requestedTracksDeadline=performance.now()+ttl;
       requestedTracksExpiry=expiry;
     }
     const remaining=requestedTracksDeadline-performance.now();
-    const items=Array.isArray(queue?.items) ? queue.items.slice(0,12) : [];
+    const items=queue && Array.isArray(queue.items) ? queue.items.slice(0,12) : [];
     card.hidden=!(remaining>0 && items.length);
     if(card.hidden)return;
     const labels={en:"Requested",nl:"Aangevraagd",de:"Gewünscht",fr:"Demandés",es:"Solicitadas"};
