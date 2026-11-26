@@ -2,7 +2,7 @@
   "schema_version": 1,
   "kind": "platform_release_operational_manifest",
   "manifest_id": "release-apple-internal-4.1.0-40546",
-  "status": "APPROVED_DEPLOYMENT_DISPATCH_PENDING",
+  "status": "SUPERSEDED",
   "platform_version": "4.1",
   "release_version": "4.1.0",
   "release_profile": "INTERNAL_RELEASE",
@@ -33,9 +33,7 @@
     }
   ],
   "deployment_constraints": {
-    "dispatch_now": [
-      "iphone"
-    ],
+    "dispatch_now": [],
     "iphone_and_watch": "COMBINED_ROUTE_REQUIRED_TARGET_PREFLIGHT_REQUIRED",
     "paired_watch_validation": "required",
     "iphone_only_route": "NOT_QUALIFIED"
