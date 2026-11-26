@@ -72,6 +72,12 @@ header { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); g
     background:radial-gradient(ellipse closest-side,#05081288 0%,#05081268 52%,#05081200 100%);
   }
 }
+.vibescape-mode .session-panels:has(#requested-tracks:not([hidden])) {
+  display:block; position:fixed; inset:unset 4vw 18vh auto; z-index:4;
+  width:min(92vw,32rem); max-height:55vh; overflow:auto;
+}
+.vibescape-mode .session-panels:has(#requested-tracks:not([hidden])) > .shared-flow { display:none }
+.vibescape-mode #requested-tracks { background:rgba(17,16,35,.9) }
 #live-guest-count { white-space:nowrap; font-size:clamp(.85rem,1.7vw,1.2rem); letter-spacing:normal }
 .live-guest-icon { display:inline-block; margin-inline-end:.35em; filter:brightness(0) invert(1) }
 .guest-participation[hidden] { display:none }
@@ -557,6 +563,9 @@ main { height:auto; min-width:0 }
 .horizon-panel h3 { margin:0; font-size:.86em }
 .horizon-panel section + section,.horizon-panel #horizon-notice { margin-top:.75em }
 .horizon-panel #horizon-notice { font-size:.8em; opacity:.82 }
+.horizon-panel:has(#requested-tracks:not([hidden])) > :is(#horizon-preview,#horizon-card) { display:none }
+#requested-tracks ul { margin:0; padding-inline-start:1.1em }
+#requested-tracks li { margin-block:.4em; overflow-wrap:anywhere }
 #horizon-preview:not([hidden]) + #horizon-card { margin-top:.7rem }
 .horizon-preview-track { display:flex; align-items:flex-start; gap:.65rem; overflow-wrap:anywhere }
 .horizon-preview-artwork { flex:none; width:clamp(3rem,6vw,5rem) }

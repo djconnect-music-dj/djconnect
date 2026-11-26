@@ -428,7 +428,15 @@ async def publish(manager, *, owner_profile_id, session_id, occurrence, authoriz
     try:
         guard()
         value = Contribution(occurrence, active.locale, scope)
-        content = fallback(occurrence, active.locale, active.dj_persona.value)
+        requested = manager._display_admission.participation.requests.was_requested(
+            session_id, occurrence.occurrence_id)
+        if requested:
+            intros = {'en':'You requested it.', 'nl':'Dit nummer is aangevraagd.',
+                      'de':'Dieses Lied wurde gewünscht.', 'fr':'Ce morceau a été demandé.',
+                      'es':'Esta canción ha sido solicitada.'}
+            content = f'{intros[active.locale]} {occurrence.title} — {occurrence.artist}.'
+        else:
+            content = fallback(occurrence, active.locale, active.dj_persona.value)
         seed = DJMoment(moment_id='moment-'+uuid4().hex, session_id=session_id, created_at=_timestamp(),
             moment_type=DJMomentType.MUSIC_ANNOUNCEMENT,
             knowledge_intent=KnowledgeIntent(KnowledgeIntentType.TRACK_CONTEXT,
@@ -445,7 +453,9 @@ async def publish(manager, *, owner_profile_id, session_id, occurrence, authoriz
         # The existing expressive realizer and its independent reviewer receive
         # placeholders only. Text delivery never waits for audio synthesis.
         prepared = state.selected_prepared
-        if prepared is not None and prepared.valid(manager._monotonic_source(),
+        if requested:
+            moment = seed
+        elif prepared is not None and prepared.valid(manager._monotonic_source(),
                 settings_context=text_context(active), source_context=occurrence.source_context,
                 queue_revision=state.queue_revision):
             from .narration_brief import qualify_runtime_moment

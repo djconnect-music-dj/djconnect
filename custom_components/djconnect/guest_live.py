@@ -26,11 +26,20 @@ def display_status(guests, share_id):
     now = guests.display._clock()
     record = guests._policies.get(share_id)
     enabled = bool(record and record.policy.information)
-    return {"live_enabled": enabled,
+    result = {"live_enabled": enabled,
             "guest_count": sum(g.share_id == share_id and g.kind == "browser" and
                                g.lease_deadline > now for g in guests._guests.values()) if enabled else 0,
             "reactions": [dict(row["event"]) for row in guests._emotion_receipts.values()
                           if enabled and row["share_id"] == share_id and row["deadline"] > now]}
+    share = guests.display._shares.get(share_id)
+    if enabled and share is not None and share.party_requests:
+        result['requested_tracks'] = {
+            'expires_at': share.requested_until,
+            'items': [{'title': record.title, 'artist': record.artist}
+                      for record in guests.requests.pending(share)],
+        }
+    return result
+
 
 
 def react(actor, *, client_message_id, playback_item_id, emotion):

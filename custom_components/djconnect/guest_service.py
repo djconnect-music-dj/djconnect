@@ -299,6 +299,8 @@ class GuestParticipationService:
                     record = request_state.records.get(payload['request_id'])
                     if record is None or record.actor.share is not state._shares.get(payload['share_id']):
                         raise DisplayAdmissionError('guest_request_unavailable', 404)
+                    if record.actor.share.party_requests:
+                        raise DisplayAdmissionError('guest_action_not_permitted', 403)
                     if payload['decision'] not in {'accept', 'reject', 'consider'}:
                         raise DisplayAdmissionError('guest_request_invalid', 400)
                     actor = record.actor
@@ -314,7 +316,7 @@ class GuestParticipationService:
                     record = request_state.owned(actor, payload['request_id'])
                 run = ((action == 'owner/decide' and payload['decision'] == 'accept'
                         and record.state in {'received','considering','planned','effect_uncertain','queue_confirmed'})
-                       or (action == 'request/status' and record.started
+                       or (action == 'request/status' and not actor.share.party_requests and record.started
                            and record.state in {'planned','effect_uncertain','queue_confirmed'}))
             if run:
                 await fulfil(request_state, record, host=owner if action == 'owner/decide' else None)
@@ -417,6 +419,7 @@ class GuestParticipationService:
                     return (current['focused_moment_id'] == result['focused_moment_id']
                             and current.get('focus_revision') == result.get('focus_revision')
                             and all(result.get(key) == value for key, value in status.items())
+                            and result.get('requested_tracks') == status.get('requested_tracks')
                             and active_now is not None and share_now is not None
                             and result.get('view') == view(share_now, active_now))
                 except DisplayAdmissionError:

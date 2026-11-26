@@ -141,7 +141,9 @@ async def qualify(hass, manager, history, request, client):
         if method == 'POST':
             await guard_effect_dispatch(method=method, path=path)
             writes.append(path)
-            queue.append({'uri':requested_uri,'name':'Fixture request','artists':[{'name':'Fixture artist'}]})
+            from urllib.parse import parse_qs, urlsplit
+            uri = parse_qs(urlsplit(path).query)['uri'][0]
+            queue.append({'uri':uri,'name':'Fixture request','artists':[{'name':'Fixture artist'}]})
             return {}
         if path == '/me/player':
             return {'device':{'id':'synthetic-current-output','is_restricted':False},'item':{'uri':current_uri}}
@@ -253,24 +255,64 @@ async def qualify(hass, manager, history, request, client):
     options = hass.config_entries.options
     opened = await options.async_init(native_entry.entry_id)
     assert opened['type'] == 'form', opened.get('type')
-    controls = await options.async_configure(opened['flow_id'], {'options_action':'guest_participation'})
-    assert controls['type'] == 'form' and controls['step_id'] == 'guest_participation', controls.get('type')
-    updated = await options.async_configure(controls['flow_id'], {
-        'share_id':display['share_id'], 'participation_mode':'review', 'screen_focus':True,
-        'max_pending':3, 'shared_voice_endpoints':[d.id for d in devices],
-        'request_id':'', 'decision':'none'})
-    assert updated['type'] == 'abort' and updated['reason'] == 'guest_participation_updated', updated.get('reason')
-    configured = manager._display_admission.participation
-    assert all(device.id in configured._voice for device in devices)
-    from custom_components.djconnect.guest_host import InstallationAdminConsent
-    assert type(configured._policies[display['share_id']].owner) is InstallationAdminConsent
-    try:
-        manager._display_admission._owner(configured._policies[display['share_id']].owner)
-    except DisplayAdmissionError:
-        pass
-    else:
-        raise AssertionError('HA administration must not become B paired-owner authority')
-    cases.append({'scenario':'actual_HA_options_flow_distinct_admin_consent_two_room_endpoints_no_B_owner_promotion','status':'PASS'})
+    assert 'guest_participation' not in repr(opened['data_schema'])
+    cases.append({'scenario':'actual_HA_options_no_party_request_administration','status':'PASS'})
+    # Activate a fresh Party through the real paired-display consent route.
+    manager._display_admission.revoke_session(sid)
+    nonce = secrets.token_urlsafe(32)
+    claim = await post('display', 'claim', {'browser_nonce':nonce})
+    await post('display', 'owner/approve', {**{key:claim[key] for key in
+        ('issuer_epoch','claim_id','browser_generation','code')}, 'session_id':sid,
+        'share':{'mode':'create','consent':True,'live':True,'language':'nl'}}, owner=True)
+    party = await post('display','collect',{**{key:claim[key] for key in
+        ('issuer_epoch','claim_id','browser_generation','claim_secret')}, 'browser_nonce':nonce})
+    party_host = {'session_id':sid,'share_id':party['share_id']}
+    party_display = {key:party[key] for key in ('issuer_epoch','display_id')}
+    share = manager._display_admission._shares[party['share_id']]
+    await manager.async_update_playback_projection(owner_profile_id='profile-a', session_id=sid,
+        state='playing', media_identity=current_uri, title='Fixture track', artist='Fixture artist')
+    queue.clear()
+    initial_writes = len(writes)
+    guests = []
+    with patch.object(SpotifyBackend, '_request', provider):
+        for index in range(2):
+            invitation = await post('participation','owner/invite',party_host,owner=True)
+            participant = await post('participation','redeem',{key:invitation[key] for key in
+                ('issuer_epoch','invitation_id','invitation_secret')})
+            assert participant['capabilities']['request_song']
+            scope = {key:participant[key] for key in ('issuer_epoch','guest_id')}
+            bearer = participant['guest_token']
+            guests.append((scope,bearer))
+            offer = await post('participation','request',{**scope,'text':'Fixture request',
+                'client_message_id':f'party-proposal-{index}','language':'en'},token=bearer)
+            choices = offer['request_choices']
+            selection = {**scope,'text':'Fixture request','language':'en',
+                         'client_message_id':f'party-selection-{index}','choice_action':{
+                             'result_set_id':choices['result_set_id'],
+                             'action_id':choices['items'][index]['action_id']}}
+            await post('participation','request',selection,token=bearer)
+            if share.request_dispatch is not None:
+                await share.request_dispatch
+        assert len(writes) == initial_writes + 1
+        shown = (await post('participation','display/focus',party_display,
+                            token=party['grant_token']))['requested_tracks']
+        assert [entry['title'] for entry in shown['items']] == ['Fixture request (Live)','Fixture request']
+        for scope,bearer in guests:
+            context = await post('participation','context',scope,token=bearer)
+            assert [entry['title'] for entry in context['requested_tracks']] == [
+                'Fixture request (Live)','Fixture request']
+        current_uri = 'spotify:track:' + 'B' * 22
+        await manager.async_update_playback_projection(owner_profile_id='profile-a', session_id=sid,
+            state='playing', media_identity=current_uri, title='Fixture request (Live)', artist='Fixture artist')
+        if share.request_dispatch is not None:
+            await share.request_dispatch
+        assert len(writes) == initial_writes + 2
+        shown_after_start = (await post('participation','display/focus',party_display,
+                                        token=party['grant_token']))['requested_tracks']
+        assert shown_after_start['expires_at'] == shown['expires_at']
+        assert [entry['title'] for entry in shown_after_start['items']] == ['Fixture request']
+    cases.append({'scenario':'paired_party_automatically_queues_two_guest_requests_and_projects_only_unplayed',
+                  'status':'PASS'})
     return {'requests':cases,'actual_ha':True,'actual_tls':True,'common_application_service':True,
             'provider_io':'DECLARED_SYNTHETIC','fixture_model_calls':len(model_calls),'queue_posts':len(writes),'physical_satellite':'NOT_RUN',
             'installed':'NOT_RUN','real_provider':'NOT_RUN','editorial_acceptance':'OPEN'}
