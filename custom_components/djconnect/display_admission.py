@@ -79,6 +79,7 @@ class _Share:
     party_requests: bool = False
     requested_until: str = ""
     request_dispatch: object = None
+    last_requested_playback_item: str = ""
 
 
 @dataclass(slots=True, repr=False)

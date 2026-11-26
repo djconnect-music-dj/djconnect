@@ -144,6 +144,13 @@ class GuestRequestTests(unittest.IsolatedAsyncioTestCase):
             await self.actor.manager.async_update_playback_projection(
                 owner_profile_id=self.actor.profile.profile_id, session_id=self.actor.active.session_id,
                 media_identity=initial.uri, state='playing', title=initial.title, artist=initial.artist)
+            self.assertIsNone(share.request_dispatch)
+            self.assertEqual(fulfil.await_count, 1)
+            self.requests.schedule(share)  # Polls and fresh submissions cannot bypass the set break.
+            self.assertIsNone(share.request_dispatch)
+            await self.actor.manager.async_update_playback_projection(
+                owner_profile_id=self.actor.profile.profile_id, session_id=self.actor.active.session_id,
+                media_identity=self.current_uri, state='playing', title='Regular set track')
             await share.request_dispatch
             self.assertEqual(fulfil.await_count, 2)
         self.assertEqual(initial.state, 'actually_playing')

@@ -30,7 +30,7 @@ Shared focus may use an original licensed Live-impressie photo only through a se
 
 ## Aangevraagd
 
-A Party share keeps an in-memory list of unplayed requests. The DJ places one recording at a time through the existing playback queue and advances when playback of the placed request is independently observed. The existing track-start announcement publishes the requested recording as one contribution in Session Flow. A new exact recording opens the TV card in the Horizon area for 20 seconds. Replays and coalesced submissions preserve the original deadline. The native guest queue stays available throughout the Party. Artwork uses separate short-lived guest-bound references to prepared Spotify pixels.
+A Party share keeps an in-memory list of unplayed requests. The DJ places one recording at a time through the existing playback queue. After a request starts, the DJ waits for a different, regular set track before placing another request. Pausing, resuming or polling the same requested recording does not open the next placement. Spotify Direct controls the actual queue position through its Add Item to Playback Queue API. The existing track-start announcement publishes the requested recording as one contribution in Session Flow. A new exact recording opens the TV card in the Horizon area for 20 seconds. Replays and coalesced submissions preserve the original deadline. The native guest queue stays available throughout the Party. Artwork uses separate short-lived guest-bound references to prepared Spotify pixels.
 
 ## Wire and operational bounds
 

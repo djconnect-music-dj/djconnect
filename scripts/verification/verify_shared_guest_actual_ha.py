@@ -307,13 +307,17 @@ async def qualify(hass, manager, history, request, client, *, party_request_gold
         current_uri = 'spotify:track:' + 'B' * 22
         await manager.async_update_playback_projection(owner_profile_id='profile-a', session_id=sid,
             state='playing', media_identity=current_uri, title='Fixture request (Live)', artist='Fixture artist')
-        if share.request_dispatch is not None:
-            await share.request_dispatch
-        assert len(writes) == initial_writes + 2
+        assert share.request_dispatch is None and len(writes) == initial_writes + 1
         shown_after_start = (await post('participation','display/focus',party_display,
                                         token=party['grant_token']))['requested_tracks']
         assert shown_after_start['expires_at'] == shown['expires_at']
         assert [entry['title'] for entry in shown_after_start['items']] == ['Fixture request']
+        current_uri = 'spotify:track:' + 'D' * 22
+        await manager.async_update_playback_projection(owner_profile_id='profile-a', session_id=sid,
+            state='playing', media_identity=current_uri, title='Fixture regular set track', artist='Fixture artist')
+        if share.request_dispatch is not None:
+            await share.request_dispatch
+        assert len(writes) == initial_writes + 2
     cases.append({'scenario':'paired_party_automatically_queues_two_guest_requests_and_projects_only_unplayed',
                   'status':'PASS'})
     return {'requests':cases,'actual_ha':True,'actual_tls':True,'common_application_service':True,

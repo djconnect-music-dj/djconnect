@@ -185,19 +185,30 @@ class GuestRequestState:
         for share in self.admission.display._shares.values():
             if not share.party_requests or share.owner.session_id != active.session_id:
                 continue
-            for record in self.pending(share):
-                if record.item_id == playback.item_id:
-                    record.state, record.basis = 'actually_playing', 'observed_shared_playback'
-                    record.played_occurrence = occurrence.occurrence_id if occurrence else ''
-                    record.artwork = None
+            requested = next((record for record in self.pending(share)
+                              if record.item_id == playback.item_id), None)
+            if requested is not None:
+                self._observe_request_start(requested, occurrence)
+            elif share.last_requested_playback_item != playback.item_id:
+                share.last_requested_playback_item = ""
             self.schedule(share)
+
+    @staticmethod
+    def _observe_request_start(record, occurrence=None):
+        record.state, record.basis = 'actually_playing', 'observed_shared_playback'
+        record.played_occurrence = occurrence.occurrence_id if occurrence else ""
+        record.artwork = None
+        if record.actor.share.party_requests:
+            record.actor.share.last_requested_playback_item = record.item_id
 
     def was_requested(self, session_id, occurrence_id):
         return any(record.actor.share.party_requests and record.actor.active.session_id == session_id
                    and record.played_occurrence == occurrence_id for record in self.records.values())
 
     def schedule(self, share):
-        """Keep one request placed ahead, leaving the existing playback order intact."""
+        """Place one request while the regular set is playing."""
+        if share.last_requested_playback_item:
+            return
         if share.request_dispatch is not None and not share.request_dispatch.done():
             return
         pending = list(self.pending(share))
@@ -384,7 +395,7 @@ async def fulfil(state, record, *, host=None):
                 await journal.transition(key, 'rejected', error='guest_output_unavailable')
                 return record.public()
             if expected == requested_item_id and record.actor.active.broadcast.state.playback.state == 'playing':
-                record.state, record.basis = 'actually_playing', 'observed_shared_playback'
+                state._observe_request_start(record)
                 await journal.transition(key, 'confirmed')
                 return record.public()
             record.output_id = device['id']
