@@ -8092,6 +8092,9 @@ class _PlaybackObservationAttempt:
         self.active.broadcast.passive_observation = (time.monotonic(), time.time(), self.projection)
         self.active.broadcast.passive_state_observed = self.active.broadcast.passive_observation[:2]
         self.changed = self.active.broadcast.update_playback(self.projection)
+        if (self.old_playback.state, self.old_playback.item_id, self.old_playback.target_name) != (
+                self.projection.state, self.projection.item_id, self.projection.target_name):
+            manager._notify_canvas_playback_change(self.owner_profile_id, self.projection)
         manager._display_admission.participation.requests.observe_playback(
             self.active, self.projection, self.occurrence
         )
@@ -8341,6 +8344,12 @@ class SessionRuntimeManager:
         self._bulletin_service = None
         self._opening_tasks: dict[str, asyncio.Task] = {}
         self._opening_prepared: dict[str, tuple[DJMoment, DJMoment]] = {}
+
+    def _notify_canvas_playback_change(self, owner_profile_id, playback):
+        hass = getattr(self, "_hass", None)
+        canvas = hass.data.get(DOMAIN, {}).get("music_canvas") if hass is not None else None
+        if canvas is not None:
+            canvas.playback_changed(owner_profile_id, playback)
 
     def _notify_canvas_mood_change(self, owner_profile_id):
         hass = getattr(self, "_hass", None)

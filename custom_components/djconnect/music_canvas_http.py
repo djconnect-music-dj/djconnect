@@ -114,7 +114,7 @@ class CanvasView(HomeAssistantView):
             if "binding" in data:
                 need(data["binding"] == binding, "canvas_binding_changed", 409)
             if kind == "preview":
-                content = await runtime.preview(owner, data["target_id"], authorized)
+                content = await runtime.preview(owner, data["target_id"], authorized, revision=data.get("preview_revision"))
                 return web.Response(body=content, content_type="image/jpeg", headers=HEADERS)
             if kind == "read":
                 result = await runtime.snapshot(owner, authorized)
