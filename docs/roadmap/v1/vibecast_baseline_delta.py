@@ -5,7 +5,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from experience_reconciliation_delta import HISTORICAL_DOCUMENT_SOURCES
+from experience_reconciliation_delta import HISTORICAL_DOCUMENT_SOURCES, historical_verification_source
 
 
 ROADMAP = Path(__file__).resolve().parent
@@ -108,11 +108,11 @@ def validate(plan, previous_validator):
     current = {str(path.relative_to(ROOT)): sha(path)
                for path in (ROOT / "custom_components/djconnect").rglob("*")
                if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"}
-    successor = ROOT / "docs/verification/vibecast-white-guests-actual-ha-matrix-20261125.json"
+    successor = ROOT / "docs/verification/selected-release-actual-ha-matrix-20261126.json"
     successor_matrix = json.loads(successor.read_bytes())
     successor_rows = successor_matrix["results"]
     check(current == successor_matrix["source_pins"]
-          == json.loads((ROOT / "docs/verification/vibecast-white-guests-product-manifest-20261125.json").read_bytes())
+          == json.loads((ROOT / "docs/verification/selected-release-product-manifest-20261126.json").read_bytes())
           and successor_matrix["source_before_after_equal"] is True
           and len(current) == 361 and len(successor_rows) == 54
           and all(row["exit_code"] == 0 and sha(ROOT / row["harness"]) == row["harness_sha256"]
@@ -128,8 +128,8 @@ def validate(plan, previous_validator):
           and proof.get("source_before_after_equal") is matrix.get("source_before_after_equal") is True
           and len(rows) == proof.get("execution_count") == 54
           and {row["harness"] for row in rows} == {row["harness"] for row in prior_matrix["results"]}
-          and all(row["exit_code"] == 0 and sha((BASELINE_ARCHIVE if row["harness"] in CHANGED_VERIFICATION_INPUTS else ROOT)
-                  / row["harness"]) == row["harness_sha256"] for row in rows),
+          and all(row["exit_code"] == 0 and sha((BASELINE_ARCHIVE / row["harness"]) if row["harness"] in CHANGED_VERIFICATION_INPUTS else
+                      historical_verification_source(ROOT, row["harness"], row["harness_sha256"])) == row["harness_sha256"] for row in rows),
           "complete 359-file inventory and actual HA matrix")
     retry, = [row for row in rows if row["harness"] == "scripts/verification/verify_passive_observation_http.py"]
     check(retry.get("updated_helper") == "scripts/verification/passive_observation_sequence_lab.py"
@@ -151,7 +151,7 @@ def validate(plan, previous_validator):
     from vibecast_ui_delta import EXPECTED_LIVE_CASES
     check(live.get("product_source_pins") == actual and live.get("product_source_before_after_equal") is True
           and live.get("live_ui_harness_sha256") == sha(ROOT / "scripts/verification/verify_vibecast_live_ui_actual_ha.py")
-          and all(sha(ROOT / "scripts/verification" / name) == value for name, value in live["reused_harnesses"].items())
+          and all(sha(historical_verification_source(ROOT, "scripts/verification/" + name, value)) == value for name, value in live["reused_harnesses"].items())
           and len(live_cases) == 11 and {case["scenario"] for case in live_cases} == EXPECTED_LIVE_CASES
           and all(case["status"] == "PASS" for case in live_cases)
           and extension.get("actual_ha") is extension.get("actual_verified_tls") is True

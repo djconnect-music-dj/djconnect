@@ -1,11 +1,78 @@
 """Prepared public track art under an original guest, never display authority."""
 from __future__ import annotations
 
+from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 import hashlib
+import secrets
 import re
 
 from .display_admission import DisplayAdmissionError
 from .session_conversation import SessionConversationError
+
+
+
+@dataclass(frozen=True, slots=True)
+class RequestArtwork:
+    nonce: str
+    item_id: str
+    body: bytes
+    mime: str
+    expires_at: str
+
+
+def prepare_request(state, record, url):
+    from .display_delivery import fetch_display_artwork, safe_cdn_url
+    if not isinstance(url, str) or not safe_cdn_url(url):
+        return
+
+    def current():
+        return (record.actor.share.owner.valid() and
+                state.admission.display._shares.get(record.actor.share.share_id) is record.actor.share
+                and any(candidate is record for candidate in state.pending(record.actor.share)))
+
+    async def prepare():
+        from aiohttp import ClientError
+        try:
+            if not current():
+                return
+            witness = await fetch_display_artwork(record.actor.hass, url, current)
+            remaining = record.deadline - state.admission.display._clock()
+            if witness is not None and current() and remaining > 0:
+                record.artwork = RequestArtwork(secrets.token_hex(16), record.request_id, witness.body,
+                    witness.mime, (datetime.now(UTC) + timedelta(seconds=remaining)).isoformat())
+        except (ClientError, OSError, ValueError, TimeoutError):
+            return
+
+    record.actor.hass.async_create_task(prepare())
+
+
+def _request_reference(actor, asset):
+    state = actor.manager._display_admission
+    binding = (state.issuer_epoch, 'guest-request', actor.grant.principal_id, actor.grant.generation,
+               actor.share.share_id, str(actor.share.generation), asset.item_id, asset.nonce, asset.expires_at)
+    return hashlib.sha256(':'.join(binding).encode()).hexdigest()
+
+
+def request_queue(actor):
+    actor.validate()
+    rows = []
+    for record in actor.manager._display_admission.participation.requests.pending(actor.share):
+        row = {'request_id': record.request_id, **record.queue_row()}
+        if (asset := record.artwork) is not None:
+            row['artwork'] = {'reference': _request_reference(actor, asset),
+                              'item_id': asset.item_id, 'expires_at': asset.expires_at}
+        rows.append(row)
+    return rows
+
+
+def _request_asset(actor, reference):
+    actor.validate()
+    if actor.share.party_requests:
+        for record in actor.manager._display_admission.participation.requests.pending(actor.share):
+            if (asset := record.artwork) is not None and _request_reference(actor, asset) == reference:
+                return asset
+    return None
 
 
 def qualified(actor, *, flow_item_id=None):
@@ -58,9 +125,10 @@ def read(service, actor, reference, selected):
             if match is not None and match[0] == reference:
                 found, flow_item_id = match, item_id
                 break
-    if found is None:
+    request_art = _request_asset(actor, reference) if found is None else None
+    if found is None and request_art is None:
         raise DisplayAdmissionError('guest_artwork_unavailable', 404)
-    asset = found[1]
+    asset = request_art if request_art is not None else found[1]
     from .display_delivery import MAX_DISPLAY_ARTWORK_BYTES, display_live_hub
     if (type(asset.body) is not bytes or len(asset.body) > MAX_DISPLAY_ARTWORK_BYTES
             or asset.mime not in {'image/jpeg', 'image/png', 'image/webp'}):
@@ -68,6 +136,8 @@ def read(service, actor, reference, selected):
 
     def guard():
         try:
+            if request_art is not None:
+                return _request_asset(actor, reference) is request_art
             match = qualified(actor, flow_item_id=flow_item_id)
             return match is not None and match[0] == reference and match[1] is asset
         except (SessionConversationError, DisplayAdmissionError):

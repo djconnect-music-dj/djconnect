@@ -5,6 +5,7 @@ import io
 from pathlib import Path
 import sys
 import tempfile
+import time
 import types
 import unittest
 from unittest.mock import AsyncMock, Mock, patch
@@ -16,7 +17,7 @@ sys.modules.setdefault("custom_components.djconnect", package)
 
 from custom_components.djconnect.music_canvas import (  # noqa: E402
     CanvasError, Cadence, apply_update, fresh_state, profile, reserve_forget,
-    digest, finish_forget, screen_cadence, screen_presentation, validate_request,
+    digest, finish_forget, screen_cadence, screen_matte_size, screen_presentation, validate_request,
 )
 from custom_components.djconnect.music_canvas_adapters import discover, samsung_action  # noqa: E402
 from custom_components.djconnect.music_canvas_render import art_prompt, compose  # noqa: E402
@@ -86,6 +87,83 @@ class CanvasSwitchBotRotationTests(unittest.IsolatedAsyncioTestCase):
                                     if p and p["command"] == "deleteImage"))
 
 
+class CanvasMoodRefreshTests(unittest.IsolatedAsyncioTestCase):
+    async def test_mood_change_replaces_all_screens_without_waiting_for_cadence(self):
+        from custom_components.djconnect import music_canvas_runtime as canvas
+        from custom_components.djconnect.domain.profile.models import ProfileState
+
+        owner, session = "profile", "session"
+        state = fresh_state()
+        config = state["profiles"][owner] = profile(state, owner)
+        config["preferences"].update(enabled=True, selected_targets=["tv", "frame"],
+                                     cadence_overrides={"tv": "track", "frame": "3600"})
+        for target, width, height, orientation in (("tv", 640, 360, "landscape"), ("frame", 360, 640, "portrait")):
+            state["devices"][target] = {
+                "adapter": "samsung" if target == "tv" else "switchbot",
+                "epoch": 1, "state": "ready", "owned_content": [],
+                "screen": dict(width=width, height=height, orientation=orientation),
+                "preview_owner": owner, "presentation": ["full", "off", False],
+                "source_image": "previous-mood.jpg",
+            }
+        playback = types.SimpleNamespace(item_id="track", title="Still Playing", state="playing")
+        active = types.SimpleNamespace(session_id=session, selected_mood="party", mood_revision=1,
+            runtime_state="active", broadcast=types.SimpleNamespace(
+                passive_observation=(time.monotonic(), time.time(), playback)))
+        manager = types.SimpleNamespace(current_active=lambda _: active, _history_source_contexts={}, _visual_ending=set())
+        storage = types.SimpleNamespace(authority_revision=1, household=types.SimpleNamespace(
+            profiles={owner: types.SimpleNamespace(state=ProfileState.ACTIVE)}))
+        with tempfile.TemporaryDirectory() as folder:
+            hass = types.SimpleNamespace(
+                config=types.SimpleNamespace(path=lambda *parts: str(Path(folder, *parts))),
+                data={"djconnect": {"session_runtime_manager": manager,
+                                   "music_canvas_asset_origin": "https://assets.example"}},
+                services=types.SimpleNamespace(has_service=lambda *_: True),
+                async_create_task=lambda job, **_: asyncio.create_task(job),
+                async_add_executor_job=AsyncMock(side_effect=lambda work, *args: work(*args)),
+            )
+            with patch.object(canvas, "persistence_service"):
+                runtime = canvas.CanvasRuntime(hass)
+            runtime.repository = types.SimpleNamespace(read=AsyncMock(return_value=state))
+            runtime.observe_samsung = AsyncMock()
+            runtime.deliver = AsyncMock()
+            previous = digest([session, playback.item_id])
+            for target in state["devices"]:
+                key = (owner, session, target)
+                runtime.cadence.due(key, previous, "track", time.monotonic()-5)
+                runtime.cadence.mark(key, previous, time.monotonic())
+
+            stale = asyncio.create_task(asyncio.Event().wait())
+            runtime.jobs[owner] = stale
+            runtime.leases = {"old": {"owner": owner, "target": "frame"},
+                              "older": {"owner": owner, "target": "frame"},
+                              "unrelated": {"owner": "other", "target": "other-screen"}}
+            image_provider = AsyncMock(side_effect=[b"new landscape", b"new portrait"])
+            with patch.dict(sys.modules, {"custom_components.djconnect.profile_context":
+                            types.SimpleNamespace(profile_storage=lambda _: storage)}), \
+                 patch.object(canvas.render, "generation_available", return_value=True), \
+                 patch.object(canvas.render, "generate", image_provider), \
+                 patch.object(canvas.render, "compose", side_effect=lambda raw, *_: raw):
+                runtime.session_mood_changed(owner)
+                refresh = runtime.refreshes[owner]
+                runtime.session_mood_changed(owner)
+                self.assertIs(refresh, runtime.refreshes[owner])
+                await refresh
+                await runtime.jobs[owner]
+                self.assertTrue(stale.cancelled())
+                self.assertEqual(set(runtime.leases), {"unrelated"})
+                self.assertEqual([call.args[3] for call in runtime.deliver.await_args_list], ["tv", "frame"])
+                self.assertEqual(image_provider.await_count, 2)
+                for call in image_provider.await_args_list:
+                    self.assertIn("expressive, richly layered", call.args[1])
+                    self.assertIn("Still Playing", call.args[1])
+
+                for device in state["devices"].values():
+                    device["presentation"] = ["central", "off", False]
+                await runtime.run(owner, active, config, state)
+                self.assertEqual(image_provider.await_count, 2)
+                self.assertEqual(runtime.deliver.await_count, 2)
+
+
 class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
     async def test_confirmed_display_survives_cleanup_failure(self):
         from copy import deepcopy
@@ -151,12 +229,60 @@ class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(recovered["last_selected_content"], "latest")
         self.assertEqual(device["owned_content"], ["old", "latest"])
 
+    def test_samsung_preview_reads_only_the_still_displayed_artwork(self):
+        from PIL import Image
+
+        png = io.BytesIO()
+        Image.new("RGB", (24, 32), (150, 90, 35)).save(png, "PNG")
+        remote_error = type("ResponseError", (Exception,), {})
+        artwork = Mock()
+        artwork.get_artmode.return_value = "on"
+        artwork.get_current.return_value = {"content_id": "manual-art"}
+        artwork.get_thumbnail_list.side_effect = remote_error()
+        artwork.get_thumbnail.return_value = {"manual-art.png": png.getvalue()}
+        module = types.SimpleNamespace(SamsungTVWS=lambda *_args, **_kw: types.SimpleNamespace(art=lambda: artwork))
+        device = {"host": "192.0.2.55", "token": "fixture", "owned_content": []}
+        with patch.dict(sys.modules, {"samsungtvws": module,
+                                      "samsungtvws.exceptions": types.SimpleNamespace(ResponseError=remote_error)}):
+            output = samsung_action(device, "preview")["image"]
+            with Image.open(io.BytesIO(output)) as loaded:
+                self.assertEqual((loaded.format, loaded.size), ("JPEG", (24, 32)))
+            artwork.get_thumbnail_list.assert_called_once_with("manual-art")
+            artwork.get_thumbnail.assert_called_once_with("manual-art", as_dict=True)
+            artwork.upload.assert_not_called()
+            artwork.select_image.assert_not_called()
+            artwork.get_current.side_effect = [{"content_id": "manual-art"}, {"content_id": "other"}]
+            with self.assertRaises(CanvasError):
+                samsung_action(device, "preview")
+            artwork.get_current.side_effect = None
+            artwork.get_thumbnail.reset_mock()
+            with self.assertRaises(CanvasError):
+                samsung_action({**device, "owned_content": ["manual-art"]}, "preview")
+            artwork.get_thumbnail.assert_not_called()
+
+    def test_samsung_thumbnail_socket_must_stay_on_the_original_tv(self):
+        artwork = Mock()
+        artwork.get_artmode.return_value = "on"
+        artwork.get_current.return_value = {"content_id": "manual-art"}
+        artwork.connection.sock.getpeername.return_value = ("192.0.2.55", 8002)
+        original_socket = artwork._open_d2d_socket
+        artwork.get_thumbnail_list.side_effect = lambda _: artwork._open_d2d_socket({"ip": "192.0.2.99", "port": 8000})
+        module = types.SimpleNamespace(SamsungTVWS=lambda *_args, **_kw: types.SimpleNamespace(art=lambda: artwork))
+        error = type("ResponseError", (Exception,), {})
+        device = {"host": "192.0.2.55", "token": "fixture", "owned_content": []}
+        with patch.dict(sys.modules, {"samsungtvws": module,
+                                      "samsungtvws.exceptions": types.SimpleNamespace(ResponseError=error)}):
+            with self.assertRaises(CanvasError):
+                samsung_action(device, "preview")
+        original_socket.assert_not_called()
+
     def test_cleanup_requires_the_latest_owned_art_to_still_be_visible(self):
         current = {"content_id": "latest"}
         deleted = []
         art = types.SimpleNamespace(
             get_artmode=lambda: "on",
             get_current=lambda: current,
+            available=lambda: [{"content_id": cid} for cid in ("old", "latest")],
             delete=lambda content_id: deleted.append(content_id) is None,
             close=lambda: None,
         )
@@ -170,6 +296,26 @@ class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
                 with self.assertRaises(CanvasError):
                     samsung_action(device, "cleanup", content_id="old", displayed_content_id="latest")
         self.assertEqual(deleted, ["old"])
+
+    def test_cleanup_recovers_an_owned_upload_already_missing_from_the_tv(self):
+        art = types.SimpleNamespace(
+            get_artmode=lambda: "on",
+            get_current=lambda: {"content_id": "latest"},
+            available=Mock(return_value=[{"content_id": "latest"}, {"content_id": "personal"}]),
+            delete=Mock(return_value=False),
+            close=lambda: None,
+        )
+        module = types.SimpleNamespace(SamsungTVWS=lambda *_args, **_kw: types.SimpleNamespace(art=lambda: art))
+        device = {"host": "192.0.2.55", "token": "fixture", "owned_content": ["old", "latest"]}
+        with patch.dict(sys.modules, {"samsungtvws": module}):
+            self.assertEqual(samsung_action(device, "cleanup", content_id="old", displayed_content_id="latest"),
+                             {"deleted": True})
+            art.delete.assert_not_called()
+            for incomplete in ([], [{"content_id": "latest"}, {}]):
+                art.available.return_value = incomplete
+                self.assertEqual(samsung_action(device, "cleanup", content_id="old", displayed_content_id="latest"),
+                                 {"deleted": False})
+            self.assertEqual([call.args for call in art.delete.call_args_list], [("old",), ("old",)])
 
     def test_tokenless_art_requires_explicit_registry_binding_and_pinned_peer(self):
         events = []
@@ -406,6 +552,91 @@ class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
         async_call.assert_not_awaited()
 
 
+class CanvasTrackArtworkTests(unittest.IsolatedAsyncioTestCase):
+    async def test_new_track_and_presentation_change_generate_from_new_title(self):
+        import time
+        from custom_components.djconnect import music_canvas_runtime as canvas
+
+        owner, target = "owner", "frame"
+        state = fresh_state()
+        state["devices"][target] = {
+            "adapter": "switchbot", "state": "ready", "epoch": 0,
+            "screen": {"width": 320, "height": 480, "orientation": "portrait"},
+        }
+        config = profile(state, owner)
+        config["preferences"].update(selected_targets=[target], cadence="track")
+        broadcast = types.SimpleNamespace()
+        active = types.SimpleNamespace(session_id="session", runtime_state="active",
+                                       selected_mood="chill", mood_revision=0, broadcast=broadcast)
+        manager = types.SimpleNamespace(_history_source_contexts={}, _visual_ending=set(),
+                                        current_active=lambda _: active)
+        store = types.SimpleNamespace(authority_revision=0)
+
+        async def executor(action, *args):
+            return action(*args)
+
+        async def mutate(change, authorize):
+            self.assertTrue(authorize())
+            return change(state)
+
+        with tempfile.TemporaryDirectory() as directory, patch.object(canvas, "persistence_service"), \
+             patch.dict(sys.modules, {"custom_components.djconnect.profile_context":
+                 types.SimpleNamespace(profile_storage=lambda _: store)}):
+            hass = types.SimpleNamespace(
+                config=types.SimpleNamespace(path=lambda *_: directory),
+                services=types.SimpleNamespace(has_service=lambda *_: True),
+                data={"djconnect": {"session_runtime_manager": manager,
+                                    "music_canvas_asset_origin": "https://fixture.example"}},
+                async_add_executor_job=executor,
+            )
+            runtime = canvas.CanvasRuntime(hass)
+            runtime.revisions[owner] = config["revision"]
+            runtime.repository = types.SimpleNamespace(read=AsyncMock(return_value=state), mutate=mutate)
+            runtime.registry_art_current = lambda _: True
+            key = (owner, active.session_id, target)
+
+            async def play(item_id, title):
+                now = time.monotonic()
+                broadcast.passive_observation = (
+                    now, None, types.SimpleNamespace(item_id=item_id, title=title, state="playing"),
+                )
+                runtime.cadence.observed[key] = (digest([active.session_id, item_id]), now - 6)
+                await runtime.run(owner, active, config, state)
+
+            generate = AsyncMock(side_effect=[b"promise image", b"beginners image"])
+            cloud = AsyncMock(return_value={"state": "delivered_unknown"})
+            with patch.object(canvas.render, "generation_available", return_value=True), \
+                 patch.object(canvas.render, "generate", generate), \
+                 patch.object(canvas.render, "compose", side_effect=lambda raw, *_: raw + b" render"), \
+                 patch.object(canvas.adapters, "deliver_switchbot", cloud):
+                await play("first", "Promise")
+                first = state["devices"][target]["source_image"]
+                runtime.leases.clear()
+                config["preferences"]["presentation_overrides"][target] = {
+                    "matte": "contrast", "show_track_title": True,
+                }
+                runtime.screen_setting_revisions[owner] = {target: 1}
+                await play("first", "Promise")
+                self.assertEqual(state["devices"][target]["source_image"], first)
+                self.assertEqual(generate.await_count, 1)
+
+                runtime.leases.clear()
+                config["preferences"]["presentation_overrides"][target]["matte"] = "matching"
+                runtime.screen_setting_revisions[owner][target] += 1
+                await play("second", "Beginners")
+                self.assertEqual(generate.await_count, 2)
+                self.assertIn('"title": "Beginners"', generate.await_args.args[1])
+                self.assertNotEqual(state["devices"][target]["source_image"], first)
+                self.assertEqual(cloud.await_count, 3)
+
+                runtime.leases.clear()
+                config["preferences"]["cadence"] = "1800"
+                config["preferences"]["presentation_overrides"][target]["matte"] = "off"
+                await play("third", "One Day")
+                self.assertEqual(generate.await_count, 2)
+                self.assertEqual(cloud.await_count, 3)
+
+
 class CanvasDomainTests(unittest.TestCase):
     def test_presentation_is_per_screen_and_preserved_while_deselected(self):
         state = fresh_state()
@@ -437,16 +668,52 @@ class CanvasDomainTests(unittest.TestCase):
         self.assertEqual(profile(state, "owner")["preferences"]["presentation_overrides"], {})
         self.assertEqual(profile(state, "owner")["revision"], preserved["revision"] + 1)
 
+    def test_matte_size_is_per_screen_and_survives_turning_the_mat_off(self):
+        state = fresh_state()
+        state["devices"] = {"frame": {"adapter": "switchbot"}, "tv": {"adapter": "samsung"}}
+        style = {"matte": "matching", "show_track_title": False}
+        initial = apply_update(state, "owner", "scope", update(presentation_overrides={
+            "frame": {**style, "matte_size": "small"},
+            "tv": {**style, "matte_size": "large"},
+        }), 1)
+        prefs = initial["preferences"]
+        self.assertEqual(screen_matte_size(prefs, "frame", "matching"), "small")
+        self.assertEqual(screen_matte_size(prefs, "tv", "matching"), "large")
+        self.assertEqual(screen_matte_size(prefs, "legacy", "matching"), "medium")
+        self.assertEqual(screen_matte_size(prefs, "tv", "off"), "medium")
+        legacy_edit = update(initial["revision"], presentation_overrides={"tv": {**style, "matte": "off"}})
+        saved = apply_update(state, "owner", "scope", legacy_edit, 2)
+        self.assertEqual(saved["preferences"]["presentation_overrides"]["tv"]["matte_size"], "large")
+        with self.assertRaises(CanvasError):
+            validate_request("update", update(presentation_overrides={"tv": {**style, "matte_size": "extra"}}))
+
+    def test_matte_size_changes_border_and_preserves_default_pixels(self):
+        from PIL import Image
+
+        source = io.BytesIO()
+        Image.new("RGB", (800, 450), "white").save(source, "PNG")
+        args = (source.getvalue(), 800, 450, "full", "contrast")
+        self.assertEqual(compose(*args), compose(*args, matte_size="medium"))
+        for size, expected in (("small", (250, 250, 250)), ("medium", (12, 12, 12)), ("large", (12, 12, 12))):
+            with self.subTest(size=size):
+                with Image.open(io.BytesIO(compose(*args, matte_size=size))) as image:
+                    pixel = image.getpixel((400, 19))
+                    self.assertTrue(all(abs(channel-value) < 10 for channel, value in zip(pixel, expected)))
+        with Image.open(io.BytesIO(compose(*args, matte_size="large"))) as image:
+            self.assertLess(max(image.getpixel((400, 34))), 30)
+        with Image.open(io.BytesIO(compose(*args, matte_size="medium"))) as image:
+            self.assertGreater(min(image.getpixel((400, 34))), 240)
+
     def test_actual_ha_proof_binds_current_source_and_closes_no_physical_claim(self):
         import hashlib
         import json
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/vibecast-white-guests-20261125-actual-ha.json").read_text())
+        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/selected-release-20261126-actual-ha.json").read_text())
         self.assertEqual(len(proof["source_pins"]), 361)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), expected, name)
         self.assertTrue(proof["source_before_after_equal"])
-        matrix = json.loads((root/"docs/verification/vibecast-white-guests-actual-ha-matrix-20261125.json").read_text())
+        matrix = json.loads((root/"docs/verification/selected-release-actual-ha-matrix-20261126.json").read_text())
         self.assertEqual(matrix["source_pins"], proof["source_pins"])
         self.assertTrue(matrix["source_before_after_equal"])
         self.assertEqual(len(matrix["results"]), 54)
@@ -475,7 +742,12 @@ class CanvasDomainTests(unittest.TestCase):
                       "preserve_reload_retains_runtime_final_unload_recreates_it",
                       "asset_configuration_uses_localized_ha_errors",
                       "late_private_preview_after_forget_is_denied",
-                      "cancelled_private_save_drains_and_releases_all_references"):
+                      "cancelled_private_save_drains_and_releases_all_references",
+                      "settings_wake_without_tick_and_cadence_only_reuploads",
+                      "queued_screen_settings_use_latest_mood_for_samsung_and_switchbot",
+                      "preview_revision_changes_only_with_owner_artwork",
+                      "samsung_preview_reads_current_art_without_canvas_generation_or_upload",
+                      "manual_alternative_bypasses_timer_and_deduplicates_replay"):
             self.assertTrue(actual[field], field)
         self.assertEqual(actual["real_model_calls"], 0)
         self.assertEqual(actual["physical_hardware"], "NOT_RUN")
@@ -599,6 +871,22 @@ class CanvasDomainTests(unittest.TestCase):
         white, black = (255, 255, 255), (0, 0, 0)
         self.assertEqual(_outline_colors(sample, (10, 80, 90, 95)), (black, white))
         self.assertEqual(_outline_colors(sample, (10, 50, 90, 65)), (white, black))
+
+    def test_off_fills_the_screen_without_a_matte_in_every_composition(self):
+        from PIL import Image
+
+        source = io.BytesIO()
+        artwork = Image.new("RGB", (640, 480), (200, 30, 20))
+        artwork.paste((20, 30, 200), (0, 240, 640, 480))
+        artwork.save(source, "PNG")
+        for width, height in ((320, 480), (640, 360), (640, 480)):
+            for composition in ("central", "free", "full"):
+                with self.subTest(size=(width, height), composition=composition):
+                    data = compose(source.getvalue(), width, height, composition, "off")
+                    with Image.open(io.BytesIO(data)) as image:
+                        for x in (0, width-1):
+                            self.assertGreater(image.getpixel((x, 0))[0], 180)
+                            self.assertGreater(image.getpixel((x, height-1))[2], 180)
 
     def test_composition_all_nine_variants_portrait_landscape_and_no_stretch(self):
         from PIL import Image

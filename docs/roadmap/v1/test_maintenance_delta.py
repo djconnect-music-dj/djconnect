@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 from validate_snapshot import load, validate
 from render_snapshot import render
-from experience_reconciliation_delta import HISTORICAL_DOCUMENT_SOURCES
+from experience_reconciliation_delta import historical_verification_source
 from vibecast_baseline_delta import predecessor_files
 
 ROOT = Path(__file__).resolve().parent
@@ -177,9 +177,8 @@ class MaintenanceTests(unittest.TestCase):
             {k: v for k, v in self.p.items() if k != "planning_maintenance"}, historical
         )
         with predecessor_files():
-            sources = HISTORICAL_DOCUMENT_SOURCES.get()
             for r in d["document_references"]:
-                path = sources.get(r["path"], ROOT.parents[2] / r["path"])
+                path = historical_verification_source(ROOT.parents[2], r["path"], r["sha256"])
                 self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), r["sha256"])
         for name, body in render(load(ROOT / "djconnect-platform-v1.json")).items():
             self.assertEqual((ROOT / name).read_text(), body)

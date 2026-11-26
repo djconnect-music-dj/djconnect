@@ -66,7 +66,7 @@ Dit is geen verplicht plakboek of vaste albumhoes-op-achtergrondpipeline. De eer
 
 **Compositie:** `Centraal · Vrij · Beeldvullend`. Dit zijn ruimtelijke richtingen, geen rustige/gemiddelde/intense varianten. Bij vrije generatieve kunst slaat Centraal op het focuspunt/kunstvlak, niet op een verplichte albumhoes. Native beeldverhouding behouden; geen vierkante bron ongedocumenteerd uitrekken tot 16:9.
 
-**Passe-partout:** één driewegkeuze `Uit · Passend · Contrasterend`. Passend = rustige tint passend bij compositie/palet; Contrasterend = bewust contrasterende neutrale rand, bijvoorbeeld zwart. Geen vaste dikte-/smal-/breed-keuze of aparte dikteslider; maatvoering volgt de compositie/het doelprofiel. Passe-partout rondom het werk, niet als crop/overlay over inhoud. Generieke compositor levert dit; native adaptermatte alleen indien equivalent en zonder dubbele rand.
+**Passe-partout:** één driewegkeuze `Uit · Passend · Contrasterend`. Passend = rustige tint passend bij compositie/palet; Contrasterend = bewust contrasterende neutrale rand, bijvoorbeeld zwart. Per scherm is bij Passend of Contrasterend de dikte instelbaar op Smal, Gemiddeld of Breed. Gemiddeld behoudt de bestaande standaarddikte. De keuze wordt bewaard als het passe-partout uit staat. Passe-partout rondom het werk, niet als crop/overlay over inhoud. Generieke compositor levert dit; native adaptermatte alleen indien equivalent en zonder dubbele rand.
 
 **Geen intensiteits-/dynamiekslider en geen extra artworkgrootte-slider in Music Canvas v1.** Bestaande lokale VibeScape-bediening blijft ongemoeid. Presentatie aanpassen mag niet onnodig een nieuwe modelgeneratie starten; passe-partout is waar mogelijk deterministische heropmaak.
 
@@ -100,7 +100,9 @@ Keuzes exact: **`Ieder nummer · Ieder kwartier · Ieder half uur · Ieder uur`*
 - Ieder nummer: confirmed/stable trackwissel, kort debounce tegen snel skippen; coalesce naar nieuwste relevante track. Geen generatie voor iedere voorbijgaande skip.
 - Tijdsinterval: pas op de beurt context/generatie starten voor de dan spelende muziek. Niet toch per track genereren en afbeeldingen onzichtbaar weggooien.
 - Bij activering/nieuwe sessie geldt de directe eerste generatie, daarna de cadence. Bij pauze/geen actieve muziek geen periodieke nieuwe werken; hervatten zonder achterstallige wissels inhalen.
-- Mood bepaalt nooit cadence. Zelfde frame kan langer blijven terwijl tracks wisselen: dat is expliciet doelgedrag bij intervalkeuze.
+- Een bevestigde wijziging van de Session mood start direct nieuw artwork voor alle actieve schermen met een actueel spelend nummer. Elk scherm hervat daarna zijn eigen wisselinterval.
+- Een gewijzigde scherminstelling rendert het beeld direct opnieuw en stuurt het naar dat scherm. Als de sessiemood intussen verandert, gebruikt Music Canvas het nieuwste moodbeeld.
+- Met **Nieuw kunstwerk** vraag je direct een alternatief aan voor het actieve scherm. Music Canvas gebruikt de huidige instellingen en sessiemood en geeft de afwijzing van het vorige beeld mee als tekstuele inspiratie.
 - Bevries context/track bij de gekozen renderopdracht. In per-trackmodus mag inmiddels achterhaalde track niet alsnog verschijnen; intervalmodus mag zijn gekozen moment interpreteren zonder iedere volgende track als nieuwe opdracht te behandelen. Session-/profiel-/settings-/device-epochwijzigingen hebben altijd de afgesproken geldigheidscontrole.
 - Geen onbegrensde wachtrij; per device maximaal lopend werk plus nieuwste relevante intent. E-paper/cloudlatentie respecteren; gemiste termijnen niet inhalen.
 - Werkende tv's niet laten wachten op een traag/offline frame. Technische uitvoertijd is geen garantie op seconde-exact synchroon beeld.

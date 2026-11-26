@@ -10,6 +10,8 @@ VERSION = 1
 CADENCES = ("track", "900", "1800", "3600")
 COMPOSITIONS = ("central", "free", "full")
 MATTES = ("off", "matching", "contrast")
+MATTE_SIZES = ("small", "medium", "large")
+DEFAULT_MATTE_SIZE = "medium"
 DEFAULTS = dict(enabled=False, selected_targets=[], composition="central",
                 matte="off", cadence="1800", cadence_overrides={}, show_track_title=False,
                 presentation_overrides={})
@@ -18,6 +20,7 @@ FIELDS = {
     "read": set(),
     "update": {"binding", "operation_id", "expected_revision", "patch"},
     "operation": {"binding", "operation_id"},
+    "new_artwork": {"binding", "operation_id", "expected_revision", "target_id"},
     "setup": {"binding", "operation_id", "target_id", "screen"},
     "forget": {"binding", "operation_id", "target_id", "cleanup_remote", "allow_remaining_art"},
     "preview": {"target_id"},
@@ -59,8 +62,9 @@ def validate_request(kind, data):
             raise CanvasError("invalid_canvas_operation") from None
     if "target_id" in data:
         need(identifier(data["target_id"]))
-    if kind == "update":
+    if "expected_revision" in data:
         need(type(data["expected_revision"]) is int and 0 <= data["expected_revision"] < 2**53)
+    if kind == "update":
         patched(DEFAULTS, data["patch"])
     if kind == "setup":
         validate_screen(data["screen"])
@@ -98,9 +102,10 @@ def patched(current, patch):
     prior_presentation = current.get("presentation_overrides", {})
     for target, style in presentation.items():
         need(identifier(target) and type(style) is dict
-             and {"matte", "show_track_title"} <= set(style) <= {"matte", "show_track_title", "composition", "cadence"}
+             and {"matte", "show_track_title"} <= set(style) <= {"matte", "show_track_title", "composition", "cadence", "matte_size"}
              and style["matte"] in MATTES and type(style["show_track_title"]) is bool)
         need("composition" not in style or style["composition"] in COMPOSITIONS)
+        need(style.get("matte_size", DEFAULT_MATTE_SIZE) in MATTE_SIZES)
         need("cadence" not in style or style["cadence"] in CADENCES)
         presentation[target] = {**prior_presentation.get(target, {}), **style}
     return result
@@ -112,6 +117,12 @@ def screen_presentation(prefs, target, device):
     if style is None:
         style = {"matte": "off", "show_track_title": False} if device["adapter"] == "switchbot" else prefs
     return style.get("composition", prefs["composition"]), style["matte"], style.get("show_track_title", False)
+
+
+def screen_matte_size(prefs, target, matte):
+    if matte == "off":
+        return DEFAULT_MATTE_SIZE
+    return prefs.get("presentation_overrides", {}).get(target, {}).get("matte_size", DEFAULT_MATTE_SIZE)
 
 
 def screen_cadence(prefs, target):
@@ -182,19 +193,28 @@ class Cadence:
         self.observed = {}
         self.completed = {}
 
-    def due(self, key, occurrence, cadence, now):
+    def mood_changed(self, key, mood_revision):
+        last = self.completed.get(key)
+        return mood_revision != (last[2] if last is not None else 0)
+
+    def settings_changed(self, key, settings_revision):
+        last = self.completed.get(key)
+        return settings_revision != (last[3] if last is not None else 0)
+
+    def due(self, key, occurrence, cadence, now, mood_revision=0, settings_revision=0):
         before = self.observed.get(key)
         if before is None or before[0] != occurrence:
-            self.observed[key] = (occurrence, now)
-            return False
+            before = self.observed[key] = (occurrence, now)
+        if self.mood_changed(key, mood_revision) or self.settings_changed(key, settings_revision):
+            return True
         if now-before[1] < 5:
             return False
         last = self.completed.get(key)
         return last is None or (last[0] != occurrence if cadence == "track"
                                 else now-last[1] >= int(cadence))
 
-    def mark(self, key, occurrence, now):
-        self.completed[key] = (occurrence, now)
+    def mark(self, key, occurrence, now, mood_revision=0, settings_revision=0):
+        self.completed[key] = (occurrence, now, mood_revision, settings_revision)
 
     def release(self, key, attempt):
         """Allow replacement of this attempt only before sending it to a device."""

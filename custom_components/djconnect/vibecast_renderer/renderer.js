@@ -317,39 +317,30 @@
       box(ctx, .32, .22, .225, .4, .17, .47 - swing, .08 - swing * .24, colors);
     }
 
-    function festival(ctx, aspect, t, dynamics, colors) {
-      const strands = 52, points = 74;
-      const pitch = 2.55 + dynamics * .22;
-      const radius = .21 + dynamics * .047;
+    function festival(ctx, aspect, t, dynamics, colors, height, unit) {
+      // The original Festival laser fan, in the shared renderer's coordinates.
       ctx.globalCompositeOperation = "screen";
-      for (let layer = 0; layer < 2; layer++) {
-        for (let band = 0; band < colors.length; band++) {
-          ctx.fillStyle = colors[band] + (layer ? "e6" : "70");
-          ctx.beginPath();
-          for (let strand = band; strand < strands; strand += colors.length) {
-            const offset = strand / strands * tau;
-            for (let point = 1; point < points; point++) {
-              const height = point / points;
-              const angle = height * tau * pitch + offset + t * 1.7;
-              const wave = 1 + .24 * Math.sin(3 * angle - 2 * offset + t);
-              const depth = Math.sin(angle) * wave;
-              if (Number(depth > 0) !== layer) continue;
-              const taper = .44 + .56 * Math.pow(Math.sin(Math.PI * height), .65);
-              const glint = (strand * 11 + point * 17) % 109 === 0;
-              const size = (.00136 + .00047 * (1 + depth)) * taper * (glint ? 1.8 : 1);
-              const bend = (height - .5) * .24 + .038 * Math.sin(height * 10 - t * .4);
-              const x = Math.cos(angle) * radius * taper * wave + bend;
-              const y = (height - .49) * .94 + depth * (.067 + dynamics * .034);
-              ctx.rect(x - size, y - size, 2 * size, 2 * size);
-            }
-          }
-          ctx.fill();
-        }
+      for (let index = 0; index < 7; index++) {
+        const phase = t * .12 + index * tau / 7;
+        const x = aspect * (.18 + .28 * dynamics) * Math.sin(phase);
+        const y = height * (.16 + .24 * dynamics) * Math.cos(phase * .8);
+        const color = colors[index % colors.length];
+        const glow = ctx.createRadialGradient(x, y, 0, x, y, aspect * .43);
+        glow.addColorStop(0, color + "77");
+        glow.addColorStop(1, color + "00");
+        ctx.fillStyle = glow;
+        ctx.fillRect(-aspect / 2, -height / 2, aspect, height);
+        ctx.strokeStyle = color + "88";
+        ctx.lineWidth = 1.5 / unit;
+        ctx.beginPath();
+        ctx.moveTo(0, height * .22);
+        ctx.lineTo(x + Math.sin(phase) * aspect * .3, y - height * .4);
+        ctx.stroke();
       }
     }
 
     const scenes = { home_dj: home, radio_dj: radio, club_dj: club, festival_dj: festival };
-    const backdrops = { home_dj: "#041315", radio_dj: "#0c1110", club_dj: "#0a1110", festival_dj: "#020505" };
+    const backdrops = { home_dj: "#041315", radio_dj: "#0c1110", club_dj: "#0a1110", festival_dj: "#080b19" };
     return function drawVibeScape(ctx, width, height, settings, elapsed) {
       const { persona, colors, dynamics, mood } = settings;
       const unit = Math.min(height, width * .95);
@@ -361,7 +352,7 @@
       ctx.fillRect(0, 0, width, height);
       ctx.translate(width / 2, height / 2);
       ctx.scale(unit, unit);
-      (scenes[persona] || home)(ctx, aspect, time, dynamics, colors);
+      (scenes[persona] || home)(ctx, aspect, time, dynamics, colors, height / unit, unit);
       ctx.restore();
     };
   })();
@@ -411,7 +402,45 @@
     if(label.textContent!==title)label.textContent=title;
     document.body.classList.toggle("receiver-mark-is-party",partyEnabled);
   }
+  let requestedTracksTimer=0,requestedTracksExpiry="",requestedTracksDeadline=0;
+  function renderRequestedTracks(queue){
+    const card=e("requested-tracks");
+    if(!card)return;
+    window.clearTimeout(requestedTracksTimer);
+    const expiry=(queue && queue.expires_at) || "";
+    if(expiry!==requestedTracksExpiry){
+      const ttl=Math.min(20000,Date.parse(expiry)-Date.now());
+      requestedTracksDeadline=performance.now()+ttl;
+      requestedTracksExpiry=expiry;
+    }
+    const remaining=requestedTracksDeadline-performance.now();
+    const items=queue && Array.isArray(queue.items) ? queue.items.slice(0,12) : [];
+    card.hidden=!(remaining>0 && items.length);
+    if(card.hidden)return;
+    const labels={en:"Requested",nl:"Aangevraagd",de:"Gewünscht",fr:"Demandés",es:"Solicitadas"};
+    card.querySelector("h2").textContent=labels[root.lang] || labels.en;
+    const list=card.querySelector("ul");
+    const scheduledLabels={en:"Scheduled",nl:"Ingepland",de:"Eingeplant",fr:"Programmé",es:"Programada"};
+    const rendered=items.map(({title,artist,scheduled})=>({
+      track:[title,artist].filter(Boolean).join(" — "), status:scheduled===true ? (scheduledLabels[root.lang] || scheduledLabels.en) : ""
+    }));
+    const signature=JSON.stringify(rendered);
+    if(list.dataset.signature!==signature){
+      list.dataset.signature=signature;
+      list.replaceChildren(...rendered.map(({track,status})=>{
+        const row=document.createElement("li");
+        row.textContent=track;
+        if(status){
+          const badge=document.createElement("span");
+          badge.className="requested-track-scheduled";badge.textContent=status;row.appendChild(badge);
+        }
+        return row;
+      }));
+    }
+    requestedTracksTimer=window.setTimeout(()=>{card.hidden=true;},remaining);
+  }
   function clearLiveStatus(){
+    renderRequestedTracks(null);
     renderReceiverBrand(false);
     if(guestCounter){guestCounter.hidden=true;guestCounter.textContent="";guestCounter.removeAttribute("aria-label");}
     for(const [node,timer] of reactionTimers){window.clearTimeout(timer);node.remove();}
@@ -456,7 +485,7 @@
   function renderLiveStatus(detail){
     if(!displayHost || !snapshotAccepted || ended || !detail)return;
     const enabled=detail.live_enabled===true;
-    if(enabled)renderReceiverBrand(true);
+    if(enabled){renderReceiverBrand(true);renderRequestedTracks(detail.requested_tracks);}
     else clearLiveStatus();
     if(!guestCounter){
       guestCounter=document.createElement("span");guestCounter.id="live-guest-count";
@@ -682,9 +711,19 @@
     e("moment").textContent = card.type === "dj_bulletin" ? "" : card.summary;
     const source=card.attribution;
     const safeSource=source && ({Spotify:"https://open.spotify.com/",MusicBrainz:"https://musicbrainz.org/",Wikidata:"https://www.wikidata.org/wiki/"}[source.provider]) && String(source.url || "").startsWith({Spotify:"https://open.spotify.com/",MusicBrainz:"https://musicbrainz.org/",Wikidata:"https://www.wikidata.org/wiki/"}[source.provider]);
-    e("moment-source").hidden=!safeSource;
-    e("moment-source").textContent=safeSource ? source.provider : "";
-    if (safeSource) e("moment-source").href=source.url; else e("moment-source").removeAttribute("href");
+    const sourceLink=e("moment-source");
+    const spotifyLogo=safeSource && card.type==="music_announcement" && source.provider==="Spotify"
+      ? e("spotify-source").querySelector("img") : null;
+    sourceLink.hidden=!safeSource;
+    if (spotifyLogo) {
+      if (!sourceLink.firstElementChild) {
+        sourceLink.textContent="";
+        sourceLink.appendChild(spotifyLogo.cloneNode());
+      }
+    } else {
+      sourceLink.textContent=safeSource ? source.provider : "";
+    }
+    if (safeSource) sourceLink.href=source.url; else sourceLink.removeAttribute("href");
     const researchSources=e("moment-research-sources");
     if (researchSources) {
       clearChildren(researchSources);
@@ -692,7 +731,7 @@
       const valid=citations.length > 0;
       researchSources.hidden=!valid;
       if (valid) {
-        e("moment-source").hidden=true;
+        sourceLink.hidden=true;
         for (const citation of citations) {
           const link=document.createElement("a");
           const provider=citation.provider === "Artist website" ? (artistWebsiteLabels[root.lang] || artistWebsiteLabels.en) : citation.provider;
@@ -818,12 +857,13 @@
     e("horizon-preview-artist").textContent=visible ? track.artist : "";
     e("horizon-preview-text").textContent=visible ? preview.text : "";
     const source=e("horizon-preview-source"), image=e("horizon-preview-art");
+    const artwork=e("horizon-preview-artwork");
     const cover=visible && preview.artwork && displayArtwork.get(preview.artwork.reference);
     if (cover && cover.item_id===track.item_id) {
       if(image.getAttribute("src")!==cover.url)image.src=cover.url;
-      image.hidden=false;
+      artwork.hidden=false;
     } else {
-      image.hidden=true;
+      artwork.hidden=true;
       image.removeAttribute("src");
     }
     if (!visible) {

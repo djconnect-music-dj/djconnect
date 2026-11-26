@@ -25,9 +25,12 @@ async function run(name,engine){
  const errors=[];page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(7000);
  let claimCalls=0,collectCalls=0,leaveCalls=0,approved=false,socket,preflights=0;
  const calls=[];
+ const artworkRef='a'.repeat(64);
+ const cover=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAE0lEQVR4nGMsnn2WAQaY4Cy8HABdcAHjEtxbjwAAAABJRU5ErkJggg==','base64');
  const cors={'Access-Control-Allow-Origin':receiver,'Access-Control-Allow-Methods':'POST','Access-Control-Allow-Headers':'Content-Type, Authorization','Vary':'Origin','Cache-Control':'no-store'};
  await page.route('https://www.gstatic.com/**',r=>r.fulfill({body:sdk,contentType:'application/javascript'}));
- await page.route(receiver+'/**',r=>r.fulfill({body:html,contentType:'text/html'}));
+ await page.route(receiver+'/**',r=>r.request().url()===receiver+'/'
+  ? r.fulfill({body:html,contentType:'text/html'}) : r.fulfill({status:405}));
  await page.route(ha+'/**',async route=>{
   const request=route.request(),url=new URL(request.url());calls.push(url.pathname);
   assert.ok(url.pathname.startsWith('/api/djconnect/v1/cast/'));
@@ -50,6 +53,10 @@ async function run(name,engine){
   }
   if(endpoint==='cancel')return respond({success:true,contract_version:1});
   assert.equal(request.headers().authorization,'Bearer '+grant);
+  if(endpoint==='artwork'){
+   assert.deepEqual(body,{contract_version:1,display_id:binding.display_id,issuer_epoch:binding.issuer_epoch,reference:artworkRef});
+   return route.fulfill({body:cover,headers:{...cors,'Content-Type':'image/png','Content-Length':String(cover.length)}});
+  }
   if(endpoint==='focus')return respond({success:true,contract_version:1,focused_moment_id:null,expires_in:0,live_enabled:true,guest_count:0});
   if(endpoint==='invitation'){
    const svg='<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="128" height="128" fill="white"/><path d="M8 8h32v32H8zM88 8h32v32H88zM8 88h32v32H8z" fill="black"/></svg>';
@@ -64,7 +71,8 @@ async function run(name,engine){
   ws.send(JSON.stringify({type:'snapshot',contract_version:1,connection_generation:3,snapshot:{contract_version:1,...binding,
    session:{session_id:binding.session_id,runtime_state:'active',locale:'nl'},session_presentation:{mood:'calm',persona:'relaxed',presence:'soft'},
    view:{mode:'flow',revision:0,dynamics:.5},
-   playback:{state:'playing',item_id:'declared-fixture-track',title:'Declared fixture recording',artist:'Declared fixture performer',duration_ms:240000,position_ms:210000},
+   playback:{state:'playing',item_id:'declared-fixture-track',title:'Declared fixture recording',artist:'Declared fixture performer',duration_ms:240000,position_ms:4000},
+   artwork:{reference:artworkRef,item_id:'declared-fixture-track',expires_at:new Date(Date.now()+30000).toISOString()},
    horizon_preview:{current_item_id:'declared-fixture-track',expires_at:new Date(Date.now()+20000).toISOString(),
     text:'Hierna staat het volgende nummer klaar.',track:{item_id:'declared-next',title:'Declared next recording',
      artist:'Declared next performer',source_url:'https://open.spotify.com/track/'+'A'.repeat(22)}},
@@ -102,6 +110,8 @@ async function run(name,engine){
   approved=true;
   await page.waitForFunction(()=>window.__cafSent.some(x=>x.data.state==='presenting'));
   assert.equal(await page.locator('#title').textContent(),'Declared fixture recording');
+  await page.waitForFunction(()=>document.querySelector('#artwork').naturalWidth>0);
+  assert.ok(calls.includes('/api/djconnect/v1/cast/artwork'));
   const horizonPreview=page.locator('.horizon-panel #horizon-preview');
   await horizonPreview.waitFor({state:'visible'});
   assert.equal(await horizonPreview.locator('h2').textContent(),'Hierna');
@@ -111,15 +121,32 @@ async function run(name,engine){
   assert.equal(await page.evaluate(()=>window.__castStorageAccesses),0);
   await page.locator('#flow-cards .flow-card').waitFor();await page.locator('.guest-participation img').waitFor();
   assert.equal(await page.locator('#receiver-brand-label').innerText(),'VibeCast Party');
+  for(const party of [false,true]){
+   await page.evaluate(enabled=>window.dispatchEvent(new CustomEvent('djconnect-live-status',{
+    detail:{live_enabled:enabled,guest_count:0}
+   })),party);
+   const label=page.locator('#receiver-brand-label');
+   assert.equal(await label.innerText(),party?'VibeCast Party':'DJConnect VibeCast');
+   assert.equal(await page.locator('.receiver-mark-party').isVisible(),party);
+   for(const [width,height] of [[960,540],[1280,720],[1920,1080]]){
+    await page.setViewportSize({width,height});
+    const titleSize=await label.evaluate(node=>parseFloat(getComputedStyle(node).fontSize));
+    assert.ok(Math.abs(titleSize-35.2)<.01);
+    const mark=await page.locator('#receiver-mark').boundingBox();
+    const brand=await label.boundingBox();
+    const clock=await page.locator('.header-clock').boundingBox();
+    assert.equal(mark.width,80);assert.equal(mark.height,80);
+    assert.ok(mark.x+mark.width<=brand.x && brand.x+brand.width<=clock.x,
+      `VibeCast header elements overlap at ${width}x${height} (Party ${party})`);
+   }
+  }
   assert.equal(await page.locator('#live-indicator, #sharing-hand').count(),0);
   assert.equal(await page.locator('#live-guest-count .live-guest-icon')
     .evaluate(icon=>getComputedStyle(icon).filter),'brightness(0) invert(1)');
   assert.equal(await page.locator('.session-status #state').isVisible(),false);
-  assert.equal(await page.locator('.guest-manual-entry strong').innerText(),'ABCD-EFGH-JKLM');
-  assert.equal(await page.locator('.guest-manual-entry span').innerText(),'ha.example.net');
+  assert.equal(await page.locator('.guest-participation > :not(img)').count(),0);
+  assert.equal(await page.locator('.guest-participation').textContent(),'');
   const qr=await page.locator('.guest-participation img').boundingBox();
-  const code=await page.locator('.guest-manual-entry').boundingBox();
-  assert.ok(code.x+code.width<qr.x);
   const footer=await page.locator('.renderer-footer').boundingBox();
   assert.ok(qr.x+qr.width>page.viewportSize().width-40 && qr.y+qr.height>footer.y-30);
   assert.ok(qr.y+qr.height<=footer.y,'Guest QR must stay above the footer');
@@ -138,7 +165,7 @@ async function run(name,engine){
   assert.equal(await page.locator('#receiver-brand-label').innerText(),'DJConnect VibeCast');
   assert.equal(await horizonPreview.isVisible(),false);
   assert.equal(await page.locator('.guest-participation').isVisible(),false);
-  assert.equal(await page.locator('.guest-manual-entry strong').textContent(),'');
+  assert.equal(await page.locator('.guest-participation img').getAttribute('src'),null);
   for(let i=0;leaveCalls===0&&i<50;i++)await new Promise(resolve=>setTimeout(resolve,20));
   assert.equal(leaveCalls,1);assert.equal(claimCalls,1);assert.deepEqual(errors,[]);
   return{engine:name,claim_calls:claimCalls,collect_calls:collectCalls,leave_calls:leaveCalls,preflights,actual_route_paths:[...new Set(calls)],page_errors:errors,passed:true};

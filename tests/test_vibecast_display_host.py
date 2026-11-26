@@ -7,7 +7,7 @@ import unittest
 
 
 class DisplayHostRaceTests(unittest.TestCase):
-    def test_display_reissues_code_only_after_current_grant_ends(self):
+    def test_display_lifecycle_and_party_invitation_timing(self):
         node = shutil.which("node")
         if node is None:
             self.skipTest("Node.js required")
@@ -17,8 +17,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
 const source=fs.readFileSync(SOURCE_PATH,"utf8");
-for(const scenario of ["late-pending","late-admitted","revoked","disconnected","expired","renew-denied","reload","refresh","capacity","language"]){
-  let time=0, resolveCollect, claims=0, socket, serial=0, clears=0;
+for(const scenario of ["late-pending","late-admitted","revoked","disconnected","expired","renew-denied","reload","refresh","capacity","language","party-qr"]){
+  let time=0, resolveCollect, claims=0, socket, serial=0, clears=0, partyEnabled=true;
   const timers=new Map();
   const handlers=new Map();
   const cancellations=[];
@@ -26,11 +26,11 @@ for(const scenario of ["late-pending","late-admitted","revoked","disconnected","
   const history={state:null,replaceState(value){this.state=value}};
   let randomCalls=0;
   function element(tag="span"){
-    const value={tag,children:[],hidden:false,classList:new Set(),append(child){this.children.push(child)},setAttribute(){}};
+    const value={tag,children:[],hidden:false,classList:new Set(),append(...children){this.children.push(...children)},setAttribute(){},getAttribute(key){return this[key]},removeAttribute(key){delete this[key]}};
     Object.defineProperty(value,"textContent",{get(){return this._text || ""},set(text){this._text=text;this.children=[]}});
     return value;
   }
-  const panel=element(),header=element(),selector=element("select"),localeStore=new Map();
+  const panel=element(),header=element(),body=element(),selector=element("select"),localeStore=new Map();
   let changeLanguage;
   selector.addEventListener=(type,handler)=>{assert.equal(type,"change");changeLanguage=handler};
   const codeBlock=()=>panel.children.find(child=>child.className==="handoff-code");
@@ -39,12 +39,12 @@ for(const scenario of ["late-pending","late-admitted","revoked","disconnected","
   const context={navigator:{language:"en",onLine:true,clipboard:{writeText:async value=>clipboard.push(value)}},performance:{now:()=>time},
     location:{protocol:"https:",origin:"https://ha.example.test",search:"",hash:""},
     crypto:{getRandomValues:bytes=>bytes.fill(scenario==="refresh"?++randomCalls:claims+1)},btoa:value=>Buffer.from(value,"binary").toString("base64"),
-    AbortController,Event,CustomEvent:class{},WebSocket:class{
+    AbortController,Event,URL,CustomEvent:class{},WebSocket:class{
       constructor(){socket=this}
       close(){}
     },
-    setTimeout:(fn,delay)=>{timers.set(++serial,{fn,delay});return serial},clearTimeout:id=>timers.delete(id),
-    document:{getElementById:id=>id==="display-language"?selector:panel,createElement:element,querySelector:()=>header,addEventListener(){}},
+    setTimeout:(fn,delay)=>{timers.set(++serial,{fn,delay,due:time+delay});return serial},clearTimeout:id=>timers.delete(id),
+    document:{body,getElementById:id=>id==="display-language"?selector:panel,createElement:element,querySelector:()=>header,addEventListener(){}},
     window:{localStorage:{getItem:key=>localeStore.get(key),setItem:(key,value)=>localeStore.set(key,value)},history:scenario==="refresh"?history:undefined,addEventListener(type,handler){handlers.set(type,handler)},dispatchEvent(event){if(event.type==="djconnect-display-clear")clears++}},
     fetch:async (path,options)=>{
       if(path.endsWith("/claim")){
@@ -64,6 +64,11 @@ for(const scenario of ["late-pending","late-admitted","revoked","disconnected","
         return response({contract_version:1,code:++claims===1?"123456":"654321",expires_in:120,
         issuer_epoch:"epoch",claim_id:"claim",claim_secret:"secret",browser_generation:"generation"});}
       if(path.endsWith("/cancel")){cancellations.push(options);return response({});}
+      if(path.endsWith("/focus"))return response({live_enabled:partyEnabled});
+      if(path.endsWith("/invitation"))return response({expires_in:30,qr_data_uri:"data:image/svg+xml;base64,QQ=="});
+      if(path.endsWith("/renew") && scenario==="party-qr"){
+        return response({lease_revision:JSON.parse(options.body).renew_sequence,lease_expires_in:60});
+      }
       if(path.endsWith("/renew"))return {ok:false,status:401,text:async()=>JSON.stringify({error:"display_grant_invalid"})};
       return new Promise(resolve=>{resolveCollect=resolve});
     }};
@@ -126,6 +131,61 @@ for(const scenario of ["late-pending","late-admitted","revoked","disconnected","
       capabilities:{owner_controls:false,session_end:false}}));
     await new Promise(setImmediate);
     assert.equal(panel.children[0].textContent,"Opnieuw verbinden…");
+    if(scenario==="party-qr"){
+      const snapshot=async (state,item_id,position_ms)=>{
+        socket.onmessage({data:JSON.stringify({type:"snapshot",contract_version:1,connection_generation:1,
+          snapshot:{playback:{state,item_id,position_ms}}})});
+        await new Promise(setImmediate);
+      };
+      const advance=async until=>{
+        while(true){
+          const next=[...timers].sort((a,b)=>a[1].due-b[1].due)[0];
+          if(!next || next[1].due>until)break;
+          time=next[1].due;timers.delete(next[0]);next[1].fn();
+          await new Promise(setImmediate);
+        }
+        time=until;
+      };
+      await snapshot("playing","already-playing",60000);
+      const qr=body.children[0];
+      assert.equal(qr.hidden,true,"opening midway through a track does not show the QR");
+      await snapshot("paused","already-playing",60000);
+      assert.equal(qr.hidden,false);
+      await advance(21000);
+      assert.equal(qr.hidden,false,"the invitation stays visible while paused across polls");
+      await snapshot("playing","already-playing",60000);
+      assert.equal(qr.hidden,true,"resuming an older track does not start a new intro");
+      await snapshot("idle");
+      assert.equal(qr.hidden,false);
+      await advance(30000);
+      assert.equal(qr.hidden,false);
+      await snapshot("playing","first",0);
+      assert.equal(qr.hidden,false);
+      await advance(42000);
+      await snapshot("playing","first",12000);
+      await advance(49999);
+      assert.equal(qr.hidden,false);
+      await advance(50000);
+      assert.equal(qr.hidden,true,"the QR hides exactly at 20 seconds without another frame");
+      await advance(51000);
+      assert.equal(qr.hidden,true,"invitation rotation does not restart the window");
+      await snapshot("playing","next",2000);
+      assert.equal(qr.hidden,false);
+      await advance(69000);
+      assert.equal(qr.hidden,true,"the known track position counts toward the 20 seconds");
+      await snapshot("paused","next",20000);
+      assert.equal(qr.hidden,false);
+      partyEnabled=false;
+      await advance(72000);
+      assert.equal(qr.hidden,true);
+      assert.equal(qr.children[0].src,undefined);
+      partyEnabled=true;
+      await advance(75000);
+      assert.equal(qr.hidden,false);
+      socket.onclose({code:1006});
+      assert.equal(qr.hidden,true,"disconnect clears the invitation immediately");
+      continue;
+    }
     const previousClears=clears;
     if(scenario==="disconnected"){
       socket.onclose({code:1006});

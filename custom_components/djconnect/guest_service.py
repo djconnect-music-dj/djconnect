@@ -5,7 +5,7 @@ import math
 
 from .display_admission import DisplayAdmissionError
 from .display_service import DisplayAdmissionService
-from .guest_admission import MANUAL_CODE_ALPHABET, ParticipationPolicy
+from .guest_admission import ParticipationPolicy
 from .session_conversation import SessionConversationError
 
 _OWNER = {'identity', 'session_id', 'share_id'}
@@ -21,7 +21,6 @@ SHAPES = {
     'owner/voice': (_OWNER | {'ha_device_id'}, set()),
     'owner/unbind-voice': (_OWNER | {'ha_device_id'}, set()),
     'redeem': ({'issuer_epoch', 'invitation_id', 'invitation_secret'}, set()),
-    'redeem-code': ({'code'}, set()),
     'renew': (_GUEST | {'renew_sequence'}, set()),
     'leave': (_GUEST, set()),
     'context': (_GUEST, set()),
@@ -63,9 +62,6 @@ def shape(action, payload):
                 raise DisplayAdmissionError('guest_request_invalid', 400)
         elif key == 'dynamics':
             if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1:
-                raise DisplayAdmissionError('guest_request_invalid', 400)
-        elif key == 'code':
-            if not isinstance(value, str) or len(value) != 12 or any(c not in MANUAL_CODE_ALPHABET for c in value):
                 raise DisplayAdmissionError('guest_request_invalid', 400)
         elif key in {'contract_version', 'renew_sequence'}:
             if type(value) is not int or value < 1:
@@ -179,12 +175,9 @@ class GuestParticipationService:
                                  and issued.deadline > state._clock())))
             else:
                 context_snapshot = None
-                if action in {'redeem', 'redeem-code'}:
-                    if action == 'redeem-code':
-                        result = guests.redeem_code(code=payload['code'], source=source)
-                    else:
-                        result = guests.redeem(invitation_id=payload['invitation_id'],
-                            invitation_secret=payload['invitation_secret'], issuer_epoch=payload['issuer_epoch'], source=source)
+                if action == 'redeem':
+                    result = guests.redeem(invitation_id=payload['invitation_id'],
+                        invitation_secret=payload['invitation_secret'], issuer_epoch=payload['issuer_epoch'], source=source)
                     grant = guests.authorize(guest_id=result['guest_id'], token=result['guest_token'],
                                               issuer_epoch=state.issuer_epoch)
                 else:
@@ -299,6 +292,8 @@ class GuestParticipationService:
                     record = request_state.records.get(payload['request_id'])
                     if record is None or record.actor.share is not state._shares.get(payload['share_id']):
                         raise DisplayAdmissionError('guest_request_unavailable', 404)
+                    if record.actor.share.party_requests:
+                        raise DisplayAdmissionError('guest_action_not_permitted', 403)
                     if payload['decision'] not in {'accept', 'reject', 'consider'}:
                         raise DisplayAdmissionError('guest_request_invalid', 400)
                     actor = record.actor
@@ -314,7 +309,7 @@ class GuestParticipationService:
                     record = request_state.owned(actor, payload['request_id'])
                 run = ((action == 'owner/decide' and payload['decision'] == 'accept'
                         and record.state in {'received','considering','planned','effect_uncertain','queue_confirmed'})
-                       or (action == 'request/status' and record.started
+                       or (action == 'request/status' and not actor.share.party_requests and record.started
                            and record.state in {'planned','effect_uncertain','queue_confirmed'}))
             if run:
                 await fulfil(request_state, record, host=owner if action == 'owner/decide' else None)
@@ -382,7 +377,6 @@ class GuestParticipationService:
                 buffer = BytesIO()
                 segno.make(url, error='m').save(buffer, kind='svg', scale=4, border=4)
                 result = {'invitation_id':invitation.invitation_id, 'expires_in':result['expires_in'],
-                          'manual_code': result['manual_code'], 'manual_origin': selected,
                           'qr_data_uri':'data:image/svg+xml;base64,' + base64.b64encode(buffer.getvalue()).decode()}
             else:
                 if action == 'display/return':
@@ -417,6 +411,7 @@ class GuestParticipationService:
                     return (current['focused_moment_id'] == result['focused_moment_id']
                             and current.get('focus_revision') == result.get('focus_revision')
                             and all(result.get(key) == value for key, value in status.items())
+                            and result.get('requested_tracks') == status.get('requested_tracks')
                             and active_now is not None and share_now is not None
                             and result.get('view') == view(share_now, active_now))
                 except DisplayAdmissionError:

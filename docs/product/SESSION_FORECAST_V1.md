@@ -293,7 +293,10 @@ actual contiguous next three to five Spotify tracks, stopping after at least
 three when the observed durations cover roughly fifteen minutes, with an
 absolute maximum of five. A shorter valid prefix remains shorter. An episode,
 unknown identity or incomplete metadata ends the prefix; Core never skips it,
-pads the queue or searches for replacements. Artist genres are optional exact-ID
+pads the queue or searches for replacements. Like the ordinary queue view,
+Horizon shows identical adjacent Spotify rows once. The observed positions
+still count toward the time window, and repeats separated by another track
+remain visible. Artist genres are optional exact-ID
 Spotify artist metadata, not measurements of a recording's sound, BPM, energy
 or emotional trajectory. Missing genres remain missing.
 
@@ -314,10 +317,14 @@ at thirty seconds; neither a poll/cache read nor localized projection renews it.
 The accepted narrative deadline is capped by that original deadline and current
 playback observation. Changed source, owner, Session, output, command generation,
 current recording, revocation or expiry rejects/withdraws late content. HTTP and
-Broadcast reads remain pure. Queue narrative is owner-only: shared display projections
-retain their prior current-context narrative without queue names or genres;
-this extension grants no background/widget/external display rights. Missing/expired queue falls back to the existing
-honest current-context Forecast rather than a fictional future.
+Broadcast reads remain pure. The original queue narrative was owner-only.
+The November 25 VibeCast display correction also permits the existing authored
+queue text in Horizon on actively approved VibeCast displays. It uses the
+same accepted current item, queue authority and original expiry as the owner
+Forecast. The display receives only localized section titles and text. Guest
+chat, ordinary shared snapshots and background or widget surfaces retain their
+existing audience limits. Missing or expired queue data cannot produce new
+upcoming claims.
 
 Local source validation: 3168 tests PASS (seven existing skips), Ruff and eight
 isolated actual-HA HTTP harnesses PASS on all241 product files. See

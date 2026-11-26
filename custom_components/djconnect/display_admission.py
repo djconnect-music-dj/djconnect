@@ -76,6 +76,11 @@ class _Share:
     dynamics: float = 0.5
     observed_playback: tuple = ()
     observed_key: str = ""
+    observed_item_id: str = ""
+    party_requests: bool = False
+    requested_until: str = ""
+    request_dispatch: object = None
+    last_requested_playback_item: str = ""
 
 
 @dataclass(slots=True, repr=False)
@@ -136,6 +141,7 @@ class DisplayAdmissionState:
         if share is not None:
             share.observed_playback = ()
             share.observed_key = ""
+            share.observed_item_id = ""
         if self._participation is not None:
             self._participation.revoke_share(share_id)
         for claim_id, claim in tuple(self._claims.items()):
@@ -349,7 +355,7 @@ class DisplayAdmissionState:
         if mode == "create" and live:
             from .guest_admission import ParticipationPolicy
             self.participation.configure(owner=owner, share_id=selected.share_id,
-                policy=ParticipationPolicy(information=True, requests="review"))
+                policy=ParticipationPolicy(information=True, requests="auto_queue"))
         claim.owner, claim.share_id = owner, selected.share_id
         claim.display_id, claim.approval_key = display_id, key
         claim.include_output_status = include_output_status

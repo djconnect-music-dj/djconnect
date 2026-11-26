@@ -334,7 +334,12 @@ async def current_artist_read(hass, runtime, selected=None, *, require_recording
         ):
             artist_id = artist_ids[0]
         image_samples.append(artist_id)
-        return identity
+        if identity is None:
+            return None
+        # Guest status already exposes the broadcast item ID, not a provider URI.
+        item_id = (playback.get("item_id") if turn and turn.participant_actor is not None
+                   else hashlib.sha256(identity[0].encode()).hexdigest()[:24])
+        return identity, item_id
 
     answer = None
     target = None
@@ -349,16 +354,16 @@ async def current_artist_read(hass, runtime, selected=None, *, require_recording
             if len(artists) == 1:
                 answer = artist_only[locale].format(artist=artists[0][:512])
     else:
-        target = await fresh()
-        if target:
-            if (turn and turn.captured_playback_item_id
-                and hashlib.sha256(target[0].encode()).hexdigest()[:24] != turn.captured_playback_item_id):
+        sample = await fresh()
+        if sample:
+            target, item_id = sample
+            if turn and turn.captured_playback_item_id and item_id != turn.captured_playback_item_id:
                 raise DialogueError("session_context_changed", 409)
             # No stale cache fallback and no acceptance of a response crossing tracks.
             confirmed = await fresh()
-            if confirmed is not None and confirmed != target:
+            if confirmed is not None and confirmed != sample:
                 raise DialogueError("playback_context_changed", 409)
-            if confirmed == target:
+            if confirmed == sample:
                 answer = identified[locale].format(artist=target[1], title=target[2])
     if answer and target and re.fullmatch(r"spotify:track:[A-Za-z0-9]{22}", target[0]):
         sources = [{"source": "spotify_playback_context", "title": "Spotify", "kind": "source",

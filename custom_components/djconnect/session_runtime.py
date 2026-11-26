@@ -8092,6 +8092,9 @@ class _PlaybackObservationAttempt:
         self.active.broadcast.passive_observation = (time.monotonic(), time.time(), self.projection)
         self.active.broadcast.passive_state_observed = self.active.broadcast.passive_observation[:2]
         self.changed = self.active.broadcast.update_playback(self.projection)
+        manager._display_admission.participation.requests.observe_playback(
+            self.active, self.projection, self.occurrence
+        )
         if not self.changed and self.active.broadcast.passive_grants:
             self.active.broadcast._publish(
                 BroadcastEventType.PLAYBACK_CHANGED,
@@ -8338,6 +8341,12 @@ class SessionRuntimeManager:
         self._bulletin_service = None
         self._opening_tasks: dict[str, asyncio.Task] = {}
         self._opening_prepared: dict[str, tuple[DJMoment, DJMoment]] = {}
+
+    def _notify_canvas_mood_change(self, owner_profile_id):
+        hass = getattr(self, "_hass", None)
+        canvas = hass.data.get(DOMAIN, {}).get("music_canvas") if hass is not None else None
+        if canvas is not None:
+            canvas.session_mood_changed(owner_profile_id)
 
     def _watch_moment_publisher(self, owner_profile_id, broadcast):
         delivery = self._watch_moment_delivery
@@ -8687,6 +8696,8 @@ class SessionRuntimeManager:
         # Publish the complete accepted RAM state before any fallible event delivery.
         # Existing budgets, Moments and playback remain intact.
         self._active_by_profile[owner_profile_id] = updated
+        if changed_mood:
+            self._notify_canvas_mood_change(owner_profile_id)
         active.broadcast.state = DJBroadcastState(
             **{
                 **active.broadcast.state.__dict__,
@@ -10054,6 +10065,7 @@ class SessionRuntimeManager:
                 }
             )
             self._active_by_profile[owner_profile_id] = updated
+            self._notify_canvas_mood_change(owner_profile_id)
             self._publish_legacy_settings_confirmation(owner_profile_id, updated, confirmation)
             active.broadcast.update_forecast(updated)
             active.broadcast._publish(

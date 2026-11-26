@@ -58,9 +58,19 @@ fields and return private no-store responses. Every request has
 * `read`: returns opaque binding, authoritative revision/preferences, target
   descriptors, per-target observed state, generation availability, and management
   permission. Reading/opening/preview never triggers generation or discovery scans.
+  A target with an authorized preview can include an opaque `preview_revision`
+  that changes when its committed JPEG changes. Clients can refetch the private
+  preview when that revision changes while the settings page is open.
 * `update`: binding, operation_id (UUID), expected_revision, patch. Accepted
   writes atomically persist preferences plus a bounded original-operation receipt.
   Conflict is 409; unknown transmission uses `operation`, never execute replay.
+* `new_artwork`: binding, operation_id, expected_revision and target_id. A paired
+  Profile can request an alternative for its selected, active screen. The
+  receipt acknowledges scheduling, and replay cannot generate another image.
+  The next job bypasses cadence, uses the current track, mood and screen
+  settings, and asks for a distinct alternative to the rejected artwork. For
+  the Profile’s previous Canvas image it sends a small text palette summary
+  to the existing provider. Previous pixels are never attached to the prompt.
 * `operation`: binding and original operation_id; receipts expire after 24h.
 * `setup`: binding, operation_id, target_id and only missing screen-profile fields;
   deliberate Samsung pairing is explicit. Stable registry identity is not an IP.
@@ -68,7 +78,12 @@ fields and return private no-store responses. Every request has
   Requires actual linked HA-administrator authority, checked again at commit and
   effects. Ordinary selection is Profile-local; forgetting is installation-wide.
 * `preview`: target_id. Authenticated bytes for a currently selected target only;
-  no external source/token URLs are exposed to the client.
+  no external source/token URLs are exposed to the client. Samsung reads the
+  currently displayed Art Mode item. It returns the matching Profile-owned local
+  file if bound to that item, otherwise an available thumbnail from the same TV.
+  A changed item, unverified upload, or a different Profile's owned content
+  cannot supply the preview. Samsung uses no fixed preview revision so an open
+  app can follow manual changes. SwitchBot retains its committed preview revision.
 
 Preferences: enabled=false, selected_targets=[], composition=central,
 matte=off, cadence=1800; composition central/free/full, matte off/matching/contrast,
@@ -84,9 +99,11 @@ title to the rendered artwork only
 when enabled. With a matte it adjusts the dominant artwork color for contrast
 and centers the title in the bottom matte band. Without a matte it chooses
 white-on-black or black-on-white outlined text based on the artwork immediately
-behind the title. Changing the toggle
-or matte setting can recompose the current Profile's cached source for that
-screen without a new provider request.
+behind the title. An accepted change to composition, title, matte or cadence
+wakes Canvas and recomposes and sends the image for the affected active screen
+without waiting for cadence or a track change. Reuse only a source whose Session
+and mood match. Older or unbound sources are regenerated. The app receives an
+optional owner-scoped `preview_revision` for the committed preview.
 If a screen has no explicit interval, Core uses an existing selected-screen
 `cadence_overrides` entry and then the legacy shared `cadence` value.
 Screen dimensions and orientation carry provenance; unknown values remain unknown.
@@ -98,8 +115,11 @@ a conservative installation budget of 48 attempts per rolling hour. An unknown
 provider outcome consumes its attempt. SwitchBot keeps at most two outstanding
 file leases per target and 32 installation-wide; backpressure preserves the last
 good work and coalesces later music instead of generating discarded images. First confirmed stable playing track is
-eligible immediately after debounce, then cadence applies. Paused/ended/stale
-observations do not generate. No backlog catchup. One bounded generation runs at
+eligible immediately after debounce, then cadence applies. An accepted Session
+mood revision wakes the scheduler and triggers a fresh generation for every
+eligible target, independently of its cadence or current track. The attempt
+starts a new cadence window. Superseded work cannot publish after acceptance.
+Paused/ended/stale observations do not generate. No backlog catchup. One bounded generation runs at
 a time; equal target profiles share bytes. Target arbitration reserves a physical
 device for one active Profile; a competing Profile receives busy, never last-wins.
 Every await is fenced against original Profile, Session, revision and device

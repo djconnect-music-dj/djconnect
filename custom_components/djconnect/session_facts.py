@@ -994,17 +994,18 @@ class SessionFactsResolver:
     def __init__(self, hass: Any) -> None:
         self.hass = hass
         self.lock = asyncio.Lock()
-        self.backoff_until = 0.0
+        self._backoff_until: dict[str, float] = {}
 
     async def _get(
         self, path: str, params: dict[str, str] | None = None, *, wikidata: bool = False,
         authorize=None,
     ) -> dict[str, Any]:
+        source = "wikidata" if wikidata else "musicbrainz"
         async with self.lock:
             if authorize is not None:
                 authorize()
             now = time.monotonic()
-            if now < self.backoff_until:
+            if now < self._backoff_until.get(source, 0.0):
                 from .ask_dj.public_research import note_temporary_source_failure
                 note_temporary_source_failure()
                 return {}
@@ -1035,20 +1036,20 @@ class SessionFactsResolver:
                     timeout=ClientTimeout(total=8),
                     allow_redirects=False,
                 ) as response:
-                    return await self._consume_response(response, wikidata, musicbrainz_rate, authorize)
+                    return await self._consume_response(response, source, musicbrainz_rate, authorize)
             except (ValueError, OSError, ClientError, asyncio.TimeoutError):
                 from .ask_dj.public_research import note_temporary_source_failure
                 note_temporary_source_failure()
                 return {}
 
-    def _response_available(self, response, wikidata, musicbrainz_rate):
+    def _response_available(self, response, source, musicbrainz_rate):
         if response.status in {429, 503}:
             from .ask_dj.public_research import note_temporary_source_failure
             note_temporary_source_failure()
             retry = response.headers.get("Retry-After", "60")
-            if not wikidata:
+            if source == "musicbrainz":
                 musicbrainz_rate.defer(retry)
-            self.backoff_until = time.monotonic() + max(
+            self._backoff_until[source] = time.monotonic() + max(
                 60, min(3600, int(retry) if retry.isdigit() else 60)
             )
             return False
@@ -1057,8 +1058,8 @@ class SessionFactsResolver:
             note_temporary_source_failure()
         return response.status == 200
 
-    async def _consume_response(self, response, wikidata, musicbrainz_rate, authorize):
-        if not self._response_available(response, wikidata, musicbrainz_rate):
+    async def _consume_response(self, response, source, musicbrainz_rate, authorize):
+        if not self._response_available(response, source, musicbrainz_rate):
             return {}
         # Bound response size before parsing; never retain raw responses.
         if response.content_length and response.content_length > 512_000:
@@ -1075,7 +1076,7 @@ class SessionFactsResolver:
         if isinstance(result, dict) and result.get("error"):
             from .ask_dj.public_research import note_temporary_source_failure
             note_temporary_source_failure()
-            self.backoff_until = time.monotonic() + 60
+            self._backoff_until[source] = time.monotonic() + 60
             return {}
         return result if isinstance(result, dict) else {}
 

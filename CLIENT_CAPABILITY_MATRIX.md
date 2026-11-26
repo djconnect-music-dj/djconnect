@@ -80,7 +80,7 @@ No client owns product features. Clients render or expose platform capabilities 
 | Music control | Full | Basic/shared when the receiver permits it | Physical or voice controls |
 | Ask DJ | Rich text and voice where available | Guest-safe/read-only where permitted | Voice and short TTS only |
 | Music DNA | Personal UI | Never exposed without explicit policy | Never exposed without explicit policy |
-| VibeCast | Paired owner display setup; existing-app temporary guest join from pairing screen or paired top menu, by discovery or QR; optional Cast sender | Web-first ambient TV/desktop/tablet plus responsive guest view; same server-authorized meaning | No visual rendering |
+| VibeCast | Paired owner display setup and optional Cast sender | Ambient TV/desktop/tablet display. Temporary VibeCast Party guests join on iPhone or iPad by scanning the TV QR | No visual rendering |
 | Diagnostics and updates | Platform-specific | Platform-specific | Device-focused |
 
 ## Rules

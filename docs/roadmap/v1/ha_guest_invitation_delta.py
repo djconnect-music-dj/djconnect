@@ -109,7 +109,7 @@ def validate(plan, previous_validator, *, historical_product=False):
           and proof.get('source_before_after_equal') is matrix.get('source_before_after_equal') is True
           and proof.get('matrix_sha256') == sha(matrix_raw)
           and proof.get('execution_count') == len(rows) == len({r['harness'] for r in rows}) == 54
-          and all(r.get('exit_code') == 0 and r.get('harness_sha256') == sha(historical_verification_source(ROOT, r['harness']).read_bytes())
+          and all(r.get('exit_code') == 0 and r.get('harness_sha256') == sha(historical_verification_source(ROOT, r['harness'], r['harness_sha256']).read_bytes())
               for r in rows), 'fresh all54 actual HA executions on unchanged full source')
     browser = loaded['browser_receipt']
     check(browser.get('scope') == 'REAL_BROWSER_WITH_DECLARED_SYNTHETIC_HTTP_NOT_HA_PROVIDER_PHYSICAL'

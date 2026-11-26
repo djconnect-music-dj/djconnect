@@ -8,6 +8,7 @@ import time
 from datetime import datetime, UTC, timedelta
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from tests import test_session_conversation_history as history_fixtures
 
@@ -99,6 +100,21 @@ class AnnouncementRuntimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(json.loads(raw['body'])['session_media_reference']['album_uri'], 'spotify:album:'+'Z'*22)
         self.assertTrue(retained_projection(entry)['manual_allowed'])
         self.assertEqual(retained_projection(entry)['moment_type'], 'music_announcement')
+
+    async def test_party_request_uses_the_existing_track_start_contribution_once(self):
+        occurrence = await self.sample(title='Heroes', artist='David Bowie')
+        requests = self.manager._display_admission.participation.requests
+        with patch.object(requests, 'was_requested',
+                          side_effect=lambda session, identifier: (session, identifier) ==
+                          (self.active.session_id, occurrence.occurrence_id)):
+            moment = await self.publish(occurrence)
+            self.assertIsNone(await self.publish(occurrence))
+        self.assertEqual(moment.content, 'Dit nummer is aangevraagd. Heroes — David Bowie.')
+        self.assertTrue(self.module.accepted(moment))
+        self.assertEqual(self.calls, [])
+        active = self.manager.current_active('profile-a')
+        self.assertEqual(sum(item.moment_id == moment.moment_id for item in
+                             active.broadcast.state.session_flow.items), 1)
 
     async def test_source_withdrawal_during_expression_never_publishes(self):
         occurrence = await self.sample()

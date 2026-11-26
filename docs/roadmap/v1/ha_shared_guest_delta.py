@@ -2,7 +2,7 @@
 from copy import deepcopy
 import hashlib
 
-from experience_reconciliation_delta import historical_verification_source
+from experience_reconciliation_delta import HISTORICAL_DOCUMENT_SOURCES, historical_verification_source
 import json
 from pathlib import Path
 
@@ -23,7 +23,6 @@ def sha(raw):
 
 
 def validate(plan, previous_validator, *, historical_product=False):
-    from experience_reconciliation_delta import HISTORICAL_DOCUMENT_SOURCES
     from ha_native_voice_delta import validate as native_source
     from ha_native_voice_finalization_delta import validate as native_final
     delta = plan['planning_maintenance']
@@ -70,11 +69,10 @@ def validate(plan, previous_validator, *, historical_product=False):
                 node.pop('assignment_status', None)
     restored['document_references'] = prior['document_references']
     check(restored == prior, 'all other nodes, scopes, edges and receipts unchanged')
-    sources = HISTORICAL_DOCUMENT_SOURCES.get()
     original_docs = {d['path']:d['sha256'] for d in prior['ha_native_voice_receipt']['documents']}
     docs = receipt.get('documents', [])
     check(len(docs) == 11 and {d.get('path') for d in docs} == original_docs.keys() | ADDED_DOCS
-          and all(sha(Path(sources.get(d['path'], ROOT/d['path'])).read_bytes()) == d.get('sha256') for d in docs),
+          and all(sha(historical_verification_source(ROOT, d['path'], d['sha256']).read_bytes()) == d.get('sha256') for d in docs),
           'current canonical contracts and prompt history')
     refs = {d['path']:d['sha256'] for d in delta['document_references']}
     old_refs = {d['path']:d['sha256'] for d in prior['document_references']}
@@ -111,7 +109,7 @@ def validate(plan, previous_validator, *, historical_product=False):
               'sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82',
               'sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4'}
               and r.get('exit_code') == 0
-              and r.get('harness_sha256') == sha(historical_verification_source(ROOT, r['harness']).read_bytes()) for r in rows),
+              and r.get('harness_sha256') == sha(historical_verification_source(ROOT, r['harness'], r['harness_sha256']).read_bytes()) for r in rows),
           '54 actual isolated HA executions bound to unchanged current source')
     check(shared.get('harness') == 'scripts/verification/verify_shared_guest_actual_ha.py'
           and shared.get('exit_code') == 0

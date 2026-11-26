@@ -63,18 +63,25 @@ class GuestServiceTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(self.module.DisplayAdmissionError):
             await self.call('context', binding, headers={'Authorization':'Bearer '+self.admitted.payload['grant_token']})
 
-    async def test_guest_code_and_qr_share_a_single_admission(self):
+    async def test_guest_admission_requires_the_single_use_qr_invitation(self):
         await self.enable()
+        display = self.admitted.payload
+        invitation = (await self.call('display/invitation', {
+            'issuer_epoch': display['issuer_epoch'], 'display_id': display['display_id'],
+        }, headers={'Authorization': 'Bearer ' + display['grant_token']})).payload
+        self.assertEqual(set(invitation), {
+            'contract_version', 'success', 'invitation_id', 'expires_at', 'expires_in', 'qr_data_uri',
+        })
+        self.assertTrue(invitation['qr_data_uri'].startswith('data:image/svg+xml;base64,'))
         invite = (await self.call('owner/invite')).payload
-        code = {'code': invite['manual_code'].replace('-', '')}
+        self.assertNotIn('manual_code', invite)
+        with self.assertRaisesRegex(self.module.DisplayAdmissionError, 'guest_request_invalid'):
+            await self.call('redeem-code', {'code': 'ABCDEFGHJKLM'}, headers={})
         qr = {key: invite[key] for key in ('issuer_epoch', 'invitation_id', 'invitation_secret')}
-        with self.assertRaises(self.module.DisplayAdmissionError):
-            await self.call('redeem-code', code, headers={}, origins=['https://foreign.example'])
-        grant = (await self.call('redeem-code', code, headers={})).payload
+        grant = (await self.call('redeem', qr, headers={})).payload
         self.assertFalse(grant['capabilities']['owner_controls'])
-        for action, payload in (('redeem-code', code), ('redeem', qr)):
-            with self.assertRaises(self.module.DisplayAdmissionError):
-                await self.call(action, payload, headers={})
+        with self.assertRaises(self.module.DisplayAdmissionError):
+            await self.call('redeem', qr, headers={})
 
     async def test_withdrawal_after_response_preparation_rejects_original_release(self):
         joined = await self.join()
