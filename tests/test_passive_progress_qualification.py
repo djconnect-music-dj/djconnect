@@ -9,7 +9,7 @@ class PassiveProgressQualificationTests(unittest.TestCase):
     def test_actual_http_receipt_is_bound_to_current_source_and_harnesses(self):
         root = Path(__file__).resolve().parents[1]
         folder = root/'examples/client_contracts/passive_progress_v3'
-        proof = json.loads((folder/'vibecast-white-guests-20261125-ngs-20261125-20261125--b0749363.json').read_text())
+        proof = json.loads((folder/'selected-release-20261126-b0749363.json').read_text())
         receipt = proof['receipt']
         self.assertTrue(proof['source_before_after_equal'])
         self.assertTrue(receipt['source_unchanged'])

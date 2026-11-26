@@ -13,7 +13,7 @@ def sha(path):
 
 class SharedGuestActualHAEvidenceTests(unittest.TestCase):
     def test_full_current_manifest_and_all_executed_adapters_are_bound(self):
-        proof = json.loads((ROOT/'docs/verification/vibecast-white-guests-qualification-20261125.json').read_text())
+        proof = json.loads((ROOT/'docs/verification/selected-release-shared-qualification-20261126.json').read_text())
         actual = {str(p.relative_to(ROOT)):sha(p) for p in (ROOT/'custom_components/djconnect').rglob('*')
                   if p.is_file() and '__pycache__' not in p.parts and p.suffix != '.pyc'}
         self.assertEqual(len(actual), 361)
@@ -38,10 +38,10 @@ class SharedGuestActualHAEvidenceTests(unittest.TestCase):
         for path, digest in raw['source_files_sha256'].items():
             self.assertEqual(sha(ROOT/path), digest)
         extension = raw['extension']
-        self.assertEqual(len(extension['requests']), 13)
+        self.assertEqual(len(extension['requests']), 14)
         self.assertEqual({r['status'] for r in extension['requests']}, {'PASS'})
-        self.assertEqual(len({r['scenario'] for r in extension['requests']}), 13)
-        self.assertEqual(extension['queue_posts'], 1)
+        self.assertEqual(len({r['scenario'] for r in extension['requests']}), 14)
+        self.assertEqual(extension['queue_posts'], 3)
         for field in ('installed', 'real_provider', 'physical_satellite'):
             self.assertEqual(extension[field], 'NOT_RUN')
         for field in ('installed', 'deployment', 'real_provider', 'physical_satellite'):
