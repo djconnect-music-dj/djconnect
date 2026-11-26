@@ -90,13 +90,14 @@ class CanvasRuntime:
                     observed = self.states.get(key, device["state"])
             preview = (device.get("preview") if key in selected and device.get("preview_owner") == owner
                        and not device.get("forgetting") else None)
+            live_preview = key in selected and self.samsung_preview_ready(owner, key, device)
             devices.append({
                 "id": key, "name": device["name"], "adapter": device["adapter"],
                 "state": observed,
                 "screen": device["screen"], "remote_cleanup": device["adapter"] == "samsung"
                     and device.get("cleanup_supported") is True,
-                "preview_available": bool(preview),
-                "preview_revision": digest([owner, key, preview]) if preview else None,
+                "preview_available": live_preview if device["adapter"] == "samsung" else bool(preview),
+                "preview_revision": digest([owner, key, preview]) if preview and device["adapter"] != "samsung" else None,
                 "shared_profiles": sum(key in x["preferences"]["selected_targets"] for x in state["profiles"].values()),
                 "forgetting": device.get("forgetting") is True,
             })
@@ -298,15 +299,55 @@ class CanvasRuntime:
                 state["operations"] = {k: v for k, v in state["operations"].items() if v.get("owner") != owner}
                 for device in state["devices"].values():
                     if device.get("preview_owner") == owner:
-                        for key in ("preview", "preview_owner", "source_image", "source_context", "preview_matte_size", "presentation", "provenance"):
+                        for key in ("preview", "preview_owner", "preview_content_id", "source_image", "source_context", "preview_matte_size", "presentation", "provenance"):
                             device.pop(key, None)
             await self.repository.mutate(purge, lambda: not self.stopped)
             await self.cleanup_assets()
+
+    def samsung_preview_ready(self, owner, target, device):
+        return (not self.stopped and device["adapter"] == "samsung" and device["state"] == "ready"
+                and not device.get("forgetting") and not device.get("upload_pending")
+                and bool(device.get("token") or (device.get("art_registry_entry_id") and device.get("art_tls_peer_sha256")))
+                and self.claims.get(target, owner) == owner and self.registry_art_current(device))
+
+    async def samsung_preview(self, owner, target, authorize):
+        from functools import partial
+
+        # Yield to upload/setup/forget rather than queuing a background TV read.
+        need(not self.effect_lock.locked(), "canvas_preview_unavailable", 404)
+        async with self.effect_lock:
+            state = await self.repository.read(authorize)
+            device = state["devices"].get(target)
+            need(device and target in profile(state, owner)["preferences"]["selected_targets"]
+                 and self.samsung_preview_ready(owner, target, device), "canvas_preview_unavailable", 404)
+            need(authorize(), "unauthorized", 401)
+            preview_id, preview_file = None, None
+            if device.get("preview_owner") == owner:
+                preview_id = device.get("preview_content_id")
+                if preview_id and device.get("preview"):
+                    preview_file = self.asset_root / device["preview"]
+                elif device["owned_content"] == [device.get("last_selected_content")]:
+                    # A legacy row with one confirmed owned upload can use the
+                    # TV thumbnail. Its local file was never bound to the ID.
+                    preview_id = device.get("last_selected_content")
+            try:
+                async with asyncio.timeout(15):
+                    result = await self.protocol(partial(adapters.samsung_action, device, "preview",
+                                                 content_id=preview_id, preview_file=preview_file))
+            except Exception as exc:
+                if isinstance(exc, CanvasError):
+                    raise
+                raise CanvasError("canvas_preview_unavailable", 404) from None
+            need(authorize() and self.samsung_preview_ready(owner, target, device),
+                 "canvas_preview_unavailable", 404)
+            return result["image"]
 
     async def preview(self, owner, target, authorize):
         state = await self.repository.read(authorize)
         need(target in profile(state, owner)["preferences"]["selected_targets"], "canvas_preview_unavailable", 404)
         device = state["devices"].get(target)
+        if device and device["adapter"] == "samsung":
+            return await self.samsung_preview(owner, target, authorize)
         need(device and device.get("preview") and device.get("preview_owner") == owner
              and not device.get("forgetting"), "canvas_preview_unavailable", 404)
         data = await self.hass.async_add_executor_job((self.asset_root/device["preview"]).read_bytes)
@@ -739,8 +780,10 @@ class CanvasRuntime:
             def commit(state):
                 need(authorized(), "canvas_context_changed", 409)
                 row = state["devices"][target]
-                if device["adapter"] == "samsung" and observed == "displayed":
-                    row["last_selected_content"] = content_id
+                if device["adapter"] == "samsung":
+                    row["preview_content_id"] = content_id
+                    if observed == "displayed":
+                        row["last_selected_content"] = content_id
                 row["preview"] = filename
                 row["preview_owner"] = owner
                 row["source_image"] = source_file

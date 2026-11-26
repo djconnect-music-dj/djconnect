@@ -229,6 +229,53 @@ class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(recovered["last_selected_content"], "latest")
         self.assertEqual(device["owned_content"], ["old", "latest"])
 
+    def test_samsung_preview_reads_only_the_still_displayed_artwork(self):
+        from PIL import Image
+
+        png = io.BytesIO()
+        Image.new("RGB", (24, 32), (150, 90, 35)).save(png, "PNG")
+        remote_error = type("ResponseError", (Exception,), {})
+        artwork = Mock()
+        artwork.get_artmode.return_value = "on"
+        artwork.get_current.return_value = {"content_id": "manual-art"}
+        artwork.get_thumbnail_list.side_effect = remote_error()
+        artwork.get_thumbnail.return_value = {"manual-art.png": png.getvalue()}
+        module = types.SimpleNamespace(SamsungTVWS=lambda *_args, **_kw: types.SimpleNamespace(art=lambda: artwork))
+        device = {"host": "192.0.2.55", "token": "fixture", "owned_content": []}
+        with patch.dict(sys.modules, {"samsungtvws": module,
+                                      "samsungtvws.exceptions": types.SimpleNamespace(ResponseError=remote_error)}):
+            output = samsung_action(device, "preview")["image"]
+            with Image.open(io.BytesIO(output)) as loaded:
+                self.assertEqual((loaded.format, loaded.size), ("JPEG", (24, 32)))
+            artwork.get_thumbnail_list.assert_called_once_with("manual-art")
+            artwork.get_thumbnail.assert_called_once_with("manual-art", as_dict=True)
+            artwork.upload.assert_not_called()
+            artwork.select_image.assert_not_called()
+            artwork.get_current.side_effect = [{"content_id": "manual-art"}, {"content_id": "other"}]
+            with self.assertRaises(CanvasError):
+                samsung_action(device, "preview")
+            artwork.get_current.side_effect = None
+            artwork.get_thumbnail.reset_mock()
+            with self.assertRaises(CanvasError):
+                samsung_action({**device, "owned_content": ["manual-art"]}, "preview")
+            artwork.get_thumbnail.assert_not_called()
+
+    def test_samsung_thumbnail_socket_must_stay_on_the_original_tv(self):
+        artwork = Mock()
+        artwork.get_artmode.return_value = "on"
+        artwork.get_current.return_value = {"content_id": "manual-art"}
+        artwork.connection.sock.getpeername.return_value = ("192.0.2.55", 8002)
+        original_socket = artwork._open_d2d_socket
+        artwork.get_thumbnail_list.side_effect = lambda _: artwork._open_d2d_socket({"ip": "192.0.2.99", "port": 8000})
+        module = types.SimpleNamespace(SamsungTVWS=lambda *_args, **_kw: types.SimpleNamespace(art=lambda: artwork))
+        error = type("ResponseError", (Exception,), {})
+        device = {"host": "192.0.2.55", "token": "fixture", "owned_content": []}
+        with patch.dict(sys.modules, {"samsungtvws": module,
+                                      "samsungtvws.exceptions": types.SimpleNamespace(ResponseError=error)}):
+            with self.assertRaises(CanvasError):
+                samsung_action(device, "preview")
+        original_socket.assert_not_called()
+
     def test_cleanup_requires_the_latest_owned_art_to_still_be_visible(self):
         current = {"content_id": "latest"}
         deleted = []
@@ -659,12 +706,12 @@ class CanvasDomainTests(unittest.TestCase):
         import hashlib
         import json
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/screen-settings-refresh-20261126-actual-ha.json").read_text())
+        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/samsung-current-preview-20261126-actual-ha.json").read_text())
         self.assertEqual(len(proof["source_pins"]), 361)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), expected, name)
         self.assertTrue(proof["source_before_after_equal"])
-        matrix = json.loads((root/"docs/verification/music-canvas-screen-settings-actual-ha-matrix-20261126.json").read_text())
+        matrix = json.loads((root/"docs/verification/music-canvas-samsung-preview-actual-ha-matrix-20261126.json").read_text())
         self.assertEqual(matrix["source_pins"], proof["source_pins"])
         self.assertTrue(matrix["source_before_after_equal"])
         self.assertEqual(len(matrix["results"]), 54)
@@ -696,7 +743,8 @@ class CanvasDomainTests(unittest.TestCase):
                       "cancelled_private_save_drains_and_releases_all_references",
                       "settings_wake_without_tick_and_cadence_only_reuploads",
                       "queued_screen_settings_use_latest_mood_for_samsung_and_switchbot",
-                      "preview_revision_changes_only_with_owner_artwork"):
+                      "preview_revision_changes_only_with_owner_artwork",
+                      "samsung_preview_reads_current_art_without_canvas_generation_or_upload"):
             self.assertTrue(actual[field], field)
         self.assertEqual(actual["real_model_calls"], 0)
         self.assertEqual(actual["physical_hardware"], "NOT_RUN")

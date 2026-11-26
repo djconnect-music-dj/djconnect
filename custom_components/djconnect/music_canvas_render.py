@@ -35,6 +35,21 @@ def art_prompt(title, mood, composition, width, height, *, latitude=None, month=
     )
 
 
+def samsung_preview_jpeg(content):
+    """Normalize a small current-TV thumbnail for the native JPEG preview route."""
+    from PIL import Image, ImageOps
+
+    need(isinstance(content, (bytes, bytearray)) and 0 < len(content) <= 2 * 1024 * 1024,
+         "canvas_preview_unavailable", 404)
+    with Image.open(io.BytesIO(content), formats=["JPEG", "PNG", "WEBP"]) as artwork:
+        need(artwork.width * artwork.height <= 4_000_000, "canvas_preview_unavailable", 404)
+        artwork.thumbnail((1280, 1280))
+        oriented = ImageOps.exif_transpose(artwork).convert("RGB")
+        output = io.BytesIO()
+        oriented.save(output, format="JPEG", quality=88)
+        return output.getvalue()
+
+
 def _luminance(color):
     def linear(channel):
         value = channel / 255
