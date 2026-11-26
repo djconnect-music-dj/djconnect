@@ -256,7 +256,7 @@
     "custom_components/djconnect/music_canvas_assets/SourceSerif4-Semibold.ttf": "8b16c167eda4efc1d3fceda28eeeedb673e770330ea82521fc699e08c4cd4391",
     "custom_components/djconnect/music_canvas_http.py": "8b9912f18ced60cd181b2858fa05e1fb8bbc966ac9bc5b96314ffbedce7ce388",
     "custom_components/djconnect/music_canvas_render.py": "a1494d294c52b986e9c6a8f94067e22f455a7bf52c28b5ae68195e3d38e849cb",
-    "custom_components/djconnect/music_canvas_runtime.py": "250ff12ff46a721a1d59c50f6ec89f0971452f62aaa9cc540f41b2b129cdb8ae",
+    "custom_components/djconnect/music_canvas_runtime.py": "e77662d02822ca4b14b39dec54562a5bc179ccf5b65259df982c3cd094e7b4e7",
     "custom_components/djconnect/music_discovery.py": "495358961d8ac6cd650fbc6de0b62e92f11b1c602495ea2ab45960faf1ba3cc7",
     "custom_components/djconnect/music_dna.py": "2a156af01df7ea2699808b9a93ffb9e07f0c5c79ce78a62663d623a68e9ba21e",
     "custom_components/djconnect/music_intent.py": "8b04f7b0925d288b29aadf2d70032e76c3f37b3952ad1054f54bfe0bad412960",
@@ -434,9 +434,9 @@
     "source_intent": "personal_music_recommendations",
     "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
     "image_subject_uri": "spotify:album:BBBBBBBBBBBBBBBBBBBBBB",
-    "image_captured_at": 1795687592.0889256,
-    "image_reference_expires_at": 1795709192.0889256,
-    "image_expires_at": 1795688492.2565207,
+    "image_captured_at": 1795688963.3154545,
+    "image_reference_expires_at": 1795710563.3154545,
+    "image_expires_at": 1795689863.5076368,
     "image_attribution": {
       "provider": "spotify",
       "media_uri": "spotify:album:BBBBBBBBBBBBBBBBBBBBBB",
@@ -449,7 +449,7 @@
     "enabled": true,
     "generation": 0,
     "clear_requested_at": null,
-    "updated_at": "2026-11-26T10:06:32.103260+00:00",
+    "updated_at": "2026-11-26T10:29:23.333192+00:00",
     "profile": {
       "summary": "Je Music DNA bevat nu 3m luistertijd; 1 recente track(s); 1 artiest(en); genres zoals jazz.",
       "favorite_genres": [
@@ -464,9 +464,9 @@
           "uri": "spotify:artist:CCCCCCCCCCCCCCCCCCCCCC",
           "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
           "image_subject_uri": "spotify:artist:CCCCCCCCCCCCCCCCCCCCCC",
-          "image_captured_at": 1795687592.0892658,
-          "image_reference_expires_at": 1795709192.0892658,
-          "image_expires_at": 1795688492.1067376,
+          "image_captured_at": 1795688963.3157973,
+          "image_reference_expires_at": 1795710563.3157973,
+          "image_expires_at": 1795689863.3362648,
           "image_attribution": {
             "provider": "spotify",
             "media_uri": "spotify:artist:CCCCCCCCCCCCCCCCCCCCCC",
@@ -543,9 +543,9 @@
           "duration_ms": 180000,
           "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
           "image_subject_uri": "spotify:track:AAAAAAAAAAAAAAAAAAAAAA",
-          "image_captured_at": 1795687592.0889256,
-          "image_reference_expires_at": 1795709192.0889256,
-          "image_expires_at": 1795688492.1065989,
+          "image_captured_at": 1795688963.3154545,
+          "image_reference_expires_at": 1795710563.3154545,
+          "image_expires_at": 1795689863.3361475,
           "image_attribution": {
             "provider": "spotify",
             "media_uri": "spotify:album:BBBBBBBBBBBBBBBBBBBBBB",
@@ -568,9 +568,9 @@
             "album_uri": "spotify:album:BBBBBBBBBBBBBBBBBBBBBB",
             "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
             "image_subject_uri": "spotify:track:AAAAAAAAAAAAAAAAAAAAAA",
-            "image_captured_at": 1795687592.0889256,
-            "image_reference_expires_at": 1795709192.0889256,
-            "image_expires_at": 1795688492.1065989,
+            "image_captured_at": 1795688963.3154545,
+            "image_reference_expires_at": 1795710563.3154545,
+            "image_expires_at": 1795689863.3361475,
             "image_attribution": {
               "provider": "spotify",
               "media_uri": "spotify:album:BBBBBBBBBBBBBBBBBBBBBB",
@@ -592,9 +592,9 @@
             "album_uri": "spotify:album:BBBBBBBBBBBBBBBBBBBBBB",
             "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
             "image_subject_uri": "spotify:track:AAAAAAAAAAAAAAAAAAAAAA",
-            "image_captured_at": 1795687592.0889256,
-            "image_reference_expires_at": 1795709192.0889256,
-            "image_expires_at": 1795688492.1065989,
+            "image_captured_at": 1795688963.3154545,
+            "image_reference_expires_at": 1795710563.3154545,
+            "image_expires_at": 1795689863.3361475,
             "image_attribution": {
               "provider": "spotify",
               "media_uri": "spotify:album:BBBBBBBBBBBBBBBBBBBBBB",
@@ -616,9 +616,9 @@
             "album_uri": "spotify:album:BBBBBBBBBBBBBBBBBBBBBB",
             "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
             "image_subject_uri": "spotify:track:AAAAAAAAAAAAAAAAAAAAAA",
-            "image_captured_at": 1795687592.0889256,
-            "image_reference_expires_at": 1795709192.0889256,
-            "image_expires_at": 1795688492.1065989,
+            "image_captured_at": 1795688963.3154545,
+            "image_reference_expires_at": 1795710563.3154545,
+            "image_expires_at": 1795689863.3361475,
             "image_attribution": {
               "provider": "spotify",
               "media_uri": "spotify:album:BBBBBBBBBBBBBBBBBBBBBB",
@@ -640,9 +640,9 @@
             ],
             "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
             "image_subject_uri": "spotify:artist:CCCCCCCCCCCCCCCCCCCCCC",
-            "image_captured_at": 1795687592.0892658,
-            "image_reference_expires_at": 1795709192.0892658,
-            "image_expires_at": 1795688492.1067376,
+            "image_captured_at": 1795688963.3157973,
+            "image_reference_expires_at": 1795710563.3157973,
+            "image_expires_at": 1795689863.3362648,
             "image_attribution": {
               "provider": "spotify",
               "media_uri": "spotify:artist:CCCCCCCCCCCCCCCCCCCCCC",
@@ -662,9 +662,9 @@
             ],
             "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
             "image_subject_uri": "spotify:artist:CCCCCCCCCCCCCCCCCCCCCC",
-            "image_captured_at": 1795687592.0892658,
-            "image_reference_expires_at": 1795709192.0892658,
-            "image_expires_at": 1795688492.1067376,
+            "image_captured_at": 1795688963.3157973,
+            "image_reference_expires_at": 1795710563.3157973,
+            "image_expires_at": 1795689863.3362648,
             "image_attribution": {
               "provider": "spotify",
               "media_uri": "spotify:artist:CCCCCCCCCCCCCCCCCCCCCC",
@@ -684,9 +684,9 @@
             ],
             "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
             "image_subject_uri": "spotify:artist:CCCCCCCCCCCCCCCCCCCCCC",
-            "image_captured_at": 1795687592.0892658,
-            "image_reference_expires_at": 1795709192.0892658,
-            "image_expires_at": 1795688492.1067376,
+            "image_captured_at": 1795688963.3157973,
+            "image_reference_expires_at": 1795710563.3157973,
+            "image_expires_at": 1795689863.3362648,
             "image_attribution": {
               "provider": "spotify",
               "media_uri": "spotify:artist:CCCCCCCCCCCCCCCCCCCCCC",
@@ -697,7 +697,7 @@
       },
       "snapshot_history": [
         {
-          "captured_at": "2026-11-26T10:06:32+00:00",
+          "captured_at": "2026-11-26T10:29:23+00:00",
           "source": "spotify",
           "sources": [
             "spotify_recently_played",
@@ -740,7 +740,7 @@
             "label": "Spotify recent/top profile snapshots",
             "enabled": true,
             "count": 1,
-            "last_updated": "2026-11-26T10:06:32+00:00"
+            "last_updated": "2026-11-26T10:29:23+00:00"
           },
           {
             "id": "recommendation_feedback",
@@ -781,8 +781,8 @@
           "opt_out_preserves_clear": true
         }
       },
-      "last_profile_refresh": "2026-11-26T10:06:32+00:00",
-      "consent_updated_at": "2026-11-26T10:06:32.050952+00:00"
+      "last_profile_refresh": "2026-11-26T10:29:23+00:00",
+      "consent_updated_at": "2026-11-26T10:29:23.280236+00:00"
     },
     "sources": [
       {
@@ -799,7 +799,7 @@
     "harness": "scripts/verification/verify_discovery_artwork_http.py",
     "harness_sha256": "b8498a652d3ba411ae310b1ffbc2a6426a3a3e2c6d6a6c471e88177616bba8cc",
     "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
-    "raw_receipt_sha256": "31ddf0c179264ab9fc7067c0b6a648fff3e32893cf4f9cde8be3551eb1404f78",
+    "raw_receipt_sha256": "cb9b7936c2bad962726b571ec644d02cba94384dfe556cdd4985db8f6a4b3249",
     "raw_receipt": {
       "assignment": "DJC-CORE-DISCOVERY-ARTWORK-CONTINUITY-V1-20261012",
       "base": "90fa0463bb40c705c41d4025dc53aee4de514c79",
@@ -997,7 +997,7 @@
         "custom_components/djconnect/music_canvas_assets/SourceSerif4-Semibold.ttf": "8b16c167eda4efc1d3fceda28eeeedb673e770330ea82521fc699e08c4cd4391",
         "custom_components/djconnect/music_canvas_http.py": "8b9912f18ced60cd181b2858fa05e1fb8bbc966ac9bc5b96314ffbedce7ce388",
         "custom_components/djconnect/music_canvas_render.py": "a1494d294c52b986e9c6a8f94067e22f455a7bf52c28b5ae68195e3d38e849cb",
-        "custom_components/djconnect/music_canvas_runtime.py": "250ff12ff46a721a1d59c50f6ec89f0971452f62aaa9cc540f41b2b129cdb8ae",
+        "custom_components/djconnect/music_canvas_runtime.py": "e77662d02822ca4b14b39dec54562a5bc179ccf5b65259df982c3cd094e7b4e7",
         "custom_components/djconnect/music_discovery.py": "495358961d8ac6cd650fbc6de0b62e92f11b1c602495ea2ab45960faf1ba3cc7",
         "custom_components/djconnect/music_dna.py": "2a156af01df7ea2699808b9a93ffb9e07f0c5c79ce78a62663d623a68e9ba21e",
         "custom_components/djconnect/music_intent.py": "8b04f7b0925d288b29aadf2d70032e76c3f37b3952ad1054f54bfe0bad412960",
@@ -1178,7 +1178,7 @@
         "success": true,
         "enabled": true,
         "revision": 1,
-        "generated_at": "2026-11-26T10:06:32.127152+00:00",
+        "generated_at": "2026-11-26T10:29:23.356364+00:00",
         "ttl_seconds": 1800,
         "source": "music_dna",
         "music_dna_key": "profile:artwork-profile",
@@ -1207,7 +1207,7 @@
                   "has_artwork"
                 ],
                 "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
-                "image_expires_at": 1795688492.127528,
+                "image_expires_at": 1795689863.3567755,
                 "image_attribution": {
                   "provider": "spotify",
                   "media_uri": "spotify:album:BBBBBBBBBBBBBBBBBBBBBB",
@@ -1239,7 +1239,7 @@
                   "spotify_top_artists"
                 ],
                 "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
-                "image_expires_at": 1795688492.127591,
+                "image_expires_at": 1795689863.356844,
                 "image_attribution": {
                   "provider": "spotify",
                   "media_uri": "spotify:artist:CCCCCCCCCCCCCCCCCCCCCC",
@@ -1844,7 +1844,7 @@
         "enabled": true,
         "generation": 0,
         "clear_requested_at": null,
-        "updated_at": "2026-11-26T10:06:32.103260+00:00",
+        "updated_at": "2026-11-26T10:29:23.333192+00:00",
         "profile": {
           "summary": "Je Music DNA bevat nu 3m luistertijd; 1 recente track(s); 1 artiest(en); genres zoals jazz.",
           "favorite_genres": [
@@ -1859,9 +1859,9 @@
               "uri": "spotify:artist:CCCCCCCCCCCCCCCCCCCCCC",
               "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
               "image_subject_uri": "spotify:artist:CCCCCCCCCCCCCCCCCCCCCC",
-              "image_captured_at": 1795687592.0892658,
-              "image_reference_expires_at": 1795709192.0892658,
-              "image_expires_at": 1795688492.1067376,
+              "image_captured_at": 1795688963.3157973,
+              "image_reference_expires_at": 1795710563.3157973,
+              "image_expires_at": 1795689863.3362648,
               "image_attribution": {
                 "provider": "spotify",
                 "media_uri": "spotify:artist:CCCCCCCCCCCCCCCCCCCCCC",
@@ -1938,9 +1938,9 @@
               "duration_ms": 180000,
               "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
               "image_subject_uri": "spotify:track:AAAAAAAAAAAAAAAAAAAAAA",
-              "image_captured_at": 1795687592.0889256,
-              "image_reference_expires_at": 1795709192.0889256,
-              "image_expires_at": 1795688492.1065989,
+              "image_captured_at": 1795688963.3154545,
+              "image_reference_expires_at": 1795710563.3154545,
+              "image_expires_at": 1795689863.3361475,
               "image_attribution": {
                 "provider": "spotify",
                 "media_uri": "spotify:album:BBBBBBBBBBBBBBBBBBBBBB",
@@ -1963,9 +1963,9 @@
                 "album_uri": "spotify:album:BBBBBBBBBBBBBBBBBBBBBB",
                 "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
                 "image_subject_uri": "spotify:track:AAAAAAAAAAAAAAAAAAAAAA",
-                "image_captured_at": 1795687592.0889256,
-                "image_reference_expires_at": 1795709192.0889256,
-                "image_expires_at": 1795688492.1065989,
+                "image_captured_at": 1795688963.3154545,
+                "image_reference_expires_at": 1795710563.3154545,
+                "image_expires_at": 1795689863.3361475,
                 "image_attribution": {
                   "provider": "spotify",
                   "media_uri": "spotify:album:BBBBBBBBBBBBBBBBBBBBBB",
@@ -1987,9 +1987,9 @@
                 "album_uri": "spotify:album:BBBBBBBBBBBBBBBBBBBBBB",
                 "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
                 "image_subject_uri": "spotify:track:AAAAAAAAAAAAAAAAAAAAAA",
-                "image_captured_at": 1795687592.0889256,
-                "image_reference_expires_at": 1795709192.0889256,
-                "image_expires_at": 1795688492.1065989,
+                "image_captured_at": 1795688963.3154545,
+                "image_reference_expires_at": 1795710563.3154545,
+                "image_expires_at": 1795689863.3361475,
                 "image_attribution": {
                   "provider": "spotify",
                   "media_uri": "spotify:album:BBBBBBBBBBBBBBBBBBBBBB",
@@ -2011,9 +2011,9 @@
                 "album_uri": "spotify:album:BBBBBBBBBBBBBBBBBBBBBB",
                 "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
                 "image_subject_uri": "spotify:track:AAAAAAAAAAAAAAAAAAAAAA",
-                "image_captured_at": 1795687592.0889256,
-                "image_reference_expires_at": 1795709192.0889256,
-                "image_expires_at": 1795688492.1065989,
+                "image_captured_at": 1795688963.3154545,
+                "image_reference_expires_at": 1795710563.3154545,
+                "image_expires_at": 1795689863.3361475,
                 "image_attribution": {
                   "provider": "spotify",
                   "media_uri": "spotify:album:BBBBBBBBBBBBBBBBBBBBBB",
@@ -2035,9 +2035,9 @@
                 ],
                 "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
                 "image_subject_uri": "spotify:artist:CCCCCCCCCCCCCCCCCCCCCC",
-                "image_captured_at": 1795687592.0892658,
-                "image_reference_expires_at": 1795709192.0892658,
-                "image_expires_at": 1795688492.1067376,
+                "image_captured_at": 1795688963.3157973,
+                "image_reference_expires_at": 1795710563.3157973,
+                "image_expires_at": 1795689863.3362648,
                 "image_attribution": {
                   "provider": "spotify",
                   "media_uri": "spotify:artist:CCCCCCCCCCCCCCCCCCCCCC",
@@ -2057,9 +2057,9 @@
                 ],
                 "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
                 "image_subject_uri": "spotify:artist:CCCCCCCCCCCCCCCCCCCCCC",
-                "image_captured_at": 1795687592.0892658,
-                "image_reference_expires_at": 1795709192.0892658,
-                "image_expires_at": 1795688492.1067376,
+                "image_captured_at": 1795688963.3157973,
+                "image_reference_expires_at": 1795710563.3157973,
+                "image_expires_at": 1795689863.3362648,
                 "image_attribution": {
                   "provider": "spotify",
                   "media_uri": "spotify:artist:CCCCCCCCCCCCCCCCCCCCCC",
@@ -2079,9 +2079,9 @@
                 ],
                 "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
                 "image_subject_uri": "spotify:artist:CCCCCCCCCCCCCCCCCCCCCC",
-                "image_captured_at": 1795687592.0892658,
-                "image_reference_expires_at": 1795709192.0892658,
-                "image_expires_at": 1795688492.1067376,
+                "image_captured_at": 1795688963.3157973,
+                "image_reference_expires_at": 1795710563.3157973,
+                "image_expires_at": 1795689863.3362648,
                 "image_attribution": {
                   "provider": "spotify",
                   "media_uri": "spotify:artist:CCCCCCCCCCCCCCCCCCCCCC",
@@ -2092,7 +2092,7 @@
           },
           "snapshot_history": [
             {
-              "captured_at": "2026-11-26T10:06:32+00:00",
+              "captured_at": "2026-11-26T10:29:23+00:00",
               "source": "spotify",
               "sources": [
                 "spotify_recently_played",
@@ -2135,7 +2135,7 @@
                 "label": "Spotify recent/top profile snapshots",
                 "enabled": true,
                 "count": 1,
-                "last_updated": "2026-11-26T10:06:32+00:00"
+                "last_updated": "2026-11-26T10:29:23+00:00"
               },
               {
                 "id": "recommendation_feedback",
@@ -2176,8 +2176,8 @@
               "opt_out_preserves_clear": true
             }
           },
-          "last_profile_refresh": "2026-11-26T10:06:32+00:00",
-          "consent_updated_at": "2026-11-26T10:06:32.050952+00:00"
+          "last_profile_refresh": "2026-11-26T10:29:23+00:00",
+          "consent_updated_at": "2026-11-26T10:29:23.280236+00:00"
         },
         "sources": [
           {
@@ -2195,9 +2195,9 @@
         "source_intent": "personal_music_recommendations",
         "image_url": "/api/djconnect/v1/image_proxy/disc-<opaque-redacted>",
         "image_subject_uri": "spotify:album:BBBBBBBBBBBBBBBBBBBBBB",
-        "image_captured_at": 1795687592.0889256,
-        "image_reference_expires_at": 1795709192.0889256,
-        "image_expires_at": 1795688492.2565207,
+        "image_captured_at": 1795688963.3154545,
+        "image_reference_expires_at": 1795710563.3154545,
+        "image_expires_at": 1795689863.5076368,
         "image_attribution": {
           "provider": "spotify",
           "media_uri": "spotify:album:BBBBBBBBBBBBBBBBBBBBBB",
@@ -2283,7 +2283,7 @@
         }
       }
     },
-    "run_log_sha256": "748e071c1789153cc2aaaadc062e3c76c3804891f2fb6ff7912430e19a75ff20",
+    "run_log_sha256": "c6554b2cb99f788d48cdbbab1488cf5bddc4e3c07cd7cac7f1e16dc0725747a1",
     "source_before_after_equal": true,
     "scope": "ACTUAL_ISOLATED_HA_WITH_DECLARED_SYNTHETIC_INPUTS; NO_INSTALLED_NATIVE_PROVIDER_EDITORIAL_ACCEPTANCE"
   }

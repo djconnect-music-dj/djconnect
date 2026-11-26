@@ -9,7 +9,7 @@
       "predecessor": "examples/client_contracts/artist_collections_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--aa49e678.json",
       "predecessor_sha256": "4ed507d026208a7ffd3b61ad1a55907698c649768b394c18c09ac8770d00916f",
       "current": "examples/client_contracts/artist_collections_v1/selected-release-20261126-aa49e678.json",
-      "current_sha256": "b0ef86667296d095f42a6ea910fa3eb90ca9b907bd2fcd5bbc22071f9940e47b",
+      "current_sha256": "21ec04de01c261fd8d923fa4efc391501c2745f74b445e2cf21faa29ff614b83",
       "field_provenance": {
         "harness_pins": "actual executed current harness/helper map",
         "receipt": "actual new raw receipt",
@@ -22,7 +22,7 @@
       "predecessor": "examples/client_contracts/ask_dj_recording_production_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--f6f8c4d8.json",
       "predecessor_sha256": "916a1494d5c4fa1b8462f7ce1d2da9d551adae3a192d302790e154634885c948",
       "current": "examples/client_contracts/ask_dj_recording_production_v1/selected-release-20261126-f6f8c4d8.json",
-      "current_sha256": "f1718ded503cb4f8d1fdce07e4b3da55f16127bee9e7c45d2ffebe1c2211d471",
+      "current_sha256": "3064c89d9c98f467d0bdc4b9da6e67d1e7ada5e3a9e30b94333aa83284bd81a0",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -36,7 +36,7 @@
       "predecessor": "examples/client_contracts/bulletin_manual_speech_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--279bd2dc.json",
       "predecessor_sha256": "9d7e98c6423367af835d2df61da23075a60965e10ccd8455f6afa76e04bfa643",
       "current": "examples/client_contracts/bulletin_manual_speech_v1/selected-release-20261126-279bd2dc.json",
-      "current_sha256": "b75f015dc4facd8b0cb75b5b26cdf70a929fc4d60cb93caa29cdbf8b076525be",
+      "current_sha256": "fe0fca4d5310dfc118138552be3346b7183a9a1c166320ea0b001807093502c0",
       "field_provenance": {
         "harness_pins": "actual executed current harness/helper map",
         "receipt": "actual new raw receipt",
@@ -49,7 +49,7 @@
       "predecessor": "examples/client_contracts/for_you_late_confirmation_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--8b5dc650.json",
       "predecessor_sha256": "7ea749197d6b8ca64a825f224059d65a53532eb9c118c2b439a7eb65900246d4",
       "current": "examples/client_contracts/for_you_late_confirmation_v1/selected-release-20261126-8b5dc650.json",
-      "current_sha256": "2379fe3542e8474ae8ad31100748598083618842d4cf4d74a3f67a21ade81816",
+      "current_sha256": "44532ae5546e1bb6acf7fd763f0e05bc1bd46781baebb5b31637f81ba49fc99a",
       "field_provenance": {
         "harness_pins": "actual executed current harness/helper map",
         "receipt": "actual new raw receipt",
@@ -62,7 +62,7 @@
       "predecessor": "examples/client_contracts/installation_management_preparation_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--0c47be5d.json",
       "predecessor_sha256": "7684ae2418d7a7f6a865cfe578543c9ce453c6e8283b1a23e26daed635212963",
       "current": "examples/client_contracts/installation_management_preparation_v1/selected-release-20261126-0c47be5d.json",
-      "current_sha256": "6ee671f46256818bd12ce7cb3e57262b6c9bac7da8693d02120a905abd80da5e",
+      "current_sha256": "4df4a7725571a3f78bebe83ead4c29e8984511e8e5bef01e31a7407c4c338796",
       "field_provenance": {
         "actual_HA_auth_users_tokens_middleware": "actual raw field",
         "cases": "actual raw field",
@@ -78,7 +78,7 @@
       "predecessor": "examples/client_contracts/live_impression_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--6ec59f7d.json",
       "predecessor_sha256": "909cd5203abcba8c096da4a2cdda604934d127983533ecda22eea0e0661f66ff",
       "current": "examples/client_contracts/live_impression_v1/selected-release-20261126-6ec59f7d.json",
-      "current_sha256": "29a458bed3e6200e089a3051690d2afe577de777592d00087f6fc4a9180e17a4",
+      "current_sha256": "014528c650dea8b4f0d1a6d6d267b743db2d2acb2ce7be08aef354b5b40583aa",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -94,7 +94,7 @@
       "predecessor": "examples/client_contracts/passive_field_expiry_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--6ba8b7cf.json",
       "predecessor_sha256": "5480dafeee9de292b55280edca73a068fcdcc1c5ad2de8b124ff98ba222b1ce9",
       "current": "examples/client_contracts/passive_field_expiry_v1/selected-release-20261126-6ba8b7cf.json",
-      "current_sha256": "67dab673373e2c18a62d7898e97fa20c7a227ae2e11108258ebbdf4ee21a7a31",
+      "current_sha256": "34dd67160e2723850f13dd0e2253607ef3eb546c47801aaa480c526d21eda149",
       "field_provenance": {
         "harness_pins": "actual executed current harness/helper map",
         "receipt": "actual new raw receipt",
@@ -107,7 +107,7 @@
       "predecessor": "examples/client_contracts/profile_spotify_reconnect_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--0464d3ed.json",
       "predecessor_sha256": "8c22f2a55888a4187fd7452e670d8f4583d4931e8ca83f772b732c6e9093d532",
       "current": "examples/client_contracts/profile_spotify_reconnect_v1/selected-release-20261126-0464d3ed.json",
-      "current_sha256": "f8d7c547b092b228ebdf411e19e3eb96eb36e10d2714dc488244273ef37ab98b",
+      "current_sha256": "b609df1b1c1d107261b5cff980e92bd0657dc15989177b521296847bd983b23e",
       "field_provenance": {
         "canonical_view_probe": "actual independent authority-view probe",
         "harness_pins": "actual executed current harness/helper map",
@@ -122,7 +122,7 @@
       "predecessor": "examples/client_contracts/session_for_you_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--930e45a2.json",
       "predecessor_sha256": "2fd224fb555246104eb66a63058c3dd53cc2a48e18c0167252bddf705d3aaca7",
       "current": "examples/client_contracts/session_for_you_v1/selected-release-20261126-930e45a2.json",
-      "current_sha256": "1ce62ad8db3c5becf64536a3d76948f338631ed481039b25e6a4b5fc54e0b6ec",
+      "current_sha256": "1692007d8a1155b875d643fe88af3337bd8c566236e9046a41b8cfff3861f8fe",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -136,7 +136,7 @@
       "predecessor": "examples/client_contracts/spotify_volume_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--8da8bb8d.json",
       "predecessor_sha256": "4ef0c29349440c3ae53c931a04105558255e665400e281333f18dd841718d3c8",
       "current": "examples/client_contracts/spotify_volume_v1/selected-release-20261126-8da8bb8d.json",
-      "current_sha256": "d60a6f9e372eb08c3a8c86b1ea06fef11eaae974b732246981c1ee81ce4702b4",
+      "current_sha256": "5e65cb9ea2d9ecef0d27d1a24ecaaed3104e6ff085258ee986b06f650d539934",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -150,7 +150,7 @@
       "predecessor": "examples/client_contracts/band_members_story_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--d8b24b29.json",
       "predecessor_sha256": "4abfe00422948fe635064472d7ab07a9d665f2dfd14fdd317dc0c0b59c98ccee",
       "current": "examples/client_contracts/band_members_story_v1/selected-release-20261126-d8b24b29.json",
-      "current_sha256": "1f42875f75143a12a58cd595bf318e0c83cb5326ec1ca82f1babfe308ff34a92",
+      "current_sha256": "9a0442bd146734c49c11a979aa33585548857fe60391c572c4d7d71899e2a0b2",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -164,7 +164,7 @@
       "predecessor": "examples/client_contracts/ask_dj_question_continuity_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--efc4221d.json",
       "predecessor_sha256": "616695382c60241b23c0c338d11a250233679e70066f1cacc1b131caaadb7432",
       "current": "examples/client_contracts/ask_dj_question_continuity_v1/selected-release-20261126-efc4221d.json",
-      "current_sha256": "f8f82126e280f53378653906a3f3de0dd502a7cfda40d30c9972bb5c539e5e3e",
+      "current_sha256": "92e590a57f786b410d85ba145d2f0b18ed3e97e389f0b84c7483b5b04fbdf76b",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -178,7 +178,7 @@
       "predecessor": "examples/client_contracts/session_conversation_history/vibecast-white-guests-20261125-ngs-20261125-20261125--04cf842e.json",
       "predecessor_sha256": "5e687676b7f54a4a6ae68c3d3d7e34428ee293414e48e122bf7987a845a07629",
       "current": "examples/client_contracts/session_conversation_history/selected-release-20261126-04cf842e.json",
-      "current_sha256": "82c57a4b6efda927a334c608324634d66ba9aae3410ace6e8961cf297b7b89d9",
+      "current_sha256": "deb4301356c96a245ecb93318c5215157ba2e34990bdcaefebb2de36c1ff3882",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -192,7 +192,7 @@
       "predecessor": "examples/client_contracts/installation_once_metadata_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--d7ff76da.json",
       "predecessor_sha256": "80e2b7599e1de2a6b5a47fd5233df7c8a4fb4b581b0c13729ffaadab913b9f4b",
       "current": "examples/client_contracts/installation_once_metadata_v1/selected-release-20261126-d7ff76da.json",
-      "current_sha256": "12a52d7ff97839cba4a3802c0b1b891572eddf9e49aa478b7bef16f91852c053",
+      "current_sha256": "fa38577a2ba6feee81a9b0119e8babce532fd7e02c20b0d086e75597931aa08e",
       "field_provenance": {
         "actual_key_or_sign_effect": "actual raw field",
         "cases": "actual raw field",
@@ -208,7 +208,7 @@
       "predecessor": "examples/client_contracts/installation_principal_data_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--64ab9cf1.json",
       "predecessor_sha256": "a41f0dfd62ae12706b5ca07b7016e1847a346ff4c950109c023e0efd54065388",
       "current": "examples/client_contracts/installation_principal_data_v1/selected-release-20261126-64ab9cf1.json",
-      "current_sha256": "76c2d465f273c95dc2812f8744b442fb53ca712559a67b806e6535737597d7f5",
+      "current_sha256": "c27d0df99c77f5f00150a53ef4383a12ff605e237d5352c0ffe6673fdf0a51c4",
       "field_provenance": {
         "cases": "actual raw field",
         "preceding_source_origin_cases": "actual raw field",
@@ -222,7 +222,7 @@
       "predecessor": "examples/client_contracts/passive_observation_sequence_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--17960ce6.json",
       "predecessor_sha256": "5fb769e9582f2806d77f64dd805109d98aef0d4b16cf3ef7369c259064c190db",
       "current": "examples/client_contracts/passive_observation_sequence_v1/selected-release-20261126-17960ce6.json",
-      "current_sha256": "c43f2d21bc64d7d97a4ee46481227d16ae3f075fdb8016974fccb6c353b8e3fe",
+      "current_sha256": "8197bf12ef897bb10c2618c2af239c2b4c3b332477a0aece31727caed84154a5",
       "field_provenance": {
         "harness_pins": "actual executed current harness/helper map",
         "receipt": "actual new raw receipt",
@@ -235,7 +235,7 @@
       "predecessor": "examples/client_contracts/personal_dj_artist_story_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--ef5df2b2.json",
       "predecessor_sha256": "b6eea1904d3b6873a12e419ec65e05fc1f7764204e7b26c13a0bf0e214c7df5d",
       "current": "examples/client_contracts/personal_dj_artist_story_v1/selected-release-20261126-ef5df2b2.json",
-      "current_sha256": "f7a2d9c9ec6422f59e2304f1a45c786ca2f8722035a8e7425f8e1c7e1895a739",
+      "current_sha256": "953245473d82ad9c8ebe7ec9e5052127ed04e3da4c8254da64a2090fd34530e5",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -249,7 +249,7 @@
       "predecessor": "examples/client_contracts/settings_confirmation_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--fc590876.json",
       "predecessor_sha256": "7f9f5b4bc796f2fdc0ebb4be6f1840ce375cd36eaf1939ec1d87c16b359f0fa9",
       "current": "examples/client_contracts/settings_confirmation_v1/selected-release-20261126-fc590876.json",
-      "current_sha256": "ff13b1d666af81b587c736076a4646917d59e68da405d26ab9d6206c29a0f986",
+      "current_sha256": "8fee3724aedf54692121bd1467d48c22ec695034fa449cae924788c66b20f5d3",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -263,7 +263,7 @@
       "predecessor": "examples/client_contracts/surface_push_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--c3a825b4.json",
       "predecessor_sha256": "7540c342d61b00e1ddaad0d34a88e68d64d559f55d5e3f53a4aeefb5de7e308c",
       "current": "examples/client_contracts/surface_push_v1/selected-release-20261126-c3a825b4.json",
-      "current_sha256": "e8f60a46eabd289eebac38b8545392f496b1f14abd410f2630faf5c468e69c70",
+      "current_sha256": "e516d678a6c94089a9f691662fbdfebe72c1e19f0ccaf9927e6d88d1d844bac9",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -277,7 +277,7 @@
       "predecessor": "examples/client_contracts/source_origin_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--0f1af7c7.json",
       "predecessor_sha256": "6599265e56b1938e8650039b5a24616343df4cc8f49c522a7ac94e28ae3f27ea",
       "current": "examples/client_contracts/source_origin_v1/selected-release-20261126-0f1af7c7.json",
-      "current_sha256": "ce4592460bffd4f6f7a7c7a816546c90dd8b20f6217a7b2494d999376655f5d3",
+      "current_sha256": "b9c8161e0ed56ae06bcb1a4784e34afa47571007d32f21f33c1bc5da3539f68a",
       "field_provenance": {
         "af201_native_mapping": "actual raw field",
         "cases": "actual raw field",
@@ -292,7 +292,7 @@
       "predecessor": "examples/client_contracts/ask_dj_help_context_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--6c1d4a34.json",
       "predecessor_sha256": "0cff0ee0eede910c523dcb9c2371db8dc4f4a97ecf990ced91d650c148a28aba",
       "current": "examples/client_contracts/ask_dj_help_context_v1/selected-release-20261126-6c1d4a34.json",
-      "current_sha256": "9134ffb83a74e60ef4aab1cbcca9120e83413ec9b1a9052c6abe2a157f88d7db",
+      "current_sha256": "57ab6e70eb8a267ed76d54af008a76c9572ddd4b014b8d9b61234a116a631163",
       "field_provenance": {
         "cases": "actual raw field",
         "external_provider_calls": "actual raw field",
@@ -308,7 +308,7 @@
       "predecessor": "examples/client_contracts/current_metadata_history_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--98b259cd.json",
       "predecessor_sha256": "608508c64a361fd65e9697da17c6d5974f108b92c96620d59dd9789c20e3d61b",
       "current": "examples/client_contracts/current_metadata_history_v1/selected-release-20261126-98b259cd.json",
-      "current_sha256": "631ff39678ab020bcc8e23e70abe883e9775bff3f400434b8576f642af1d3fc3",
+      "current_sha256": "ff7a44768998924aca14db70a7361ae28b752f2cfa5abac609a44de5a3d51cfb",
       "field_provenance": {
         "harness_pins": "actual executed current harness/helper map",
         "receipt": "actual new raw receipt",
@@ -321,7 +321,7 @@
       "predecessor": "examples/client_contracts/session_for_you_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--cc896eb3.json",
       "predecessor_sha256": "7745ac77ad1f588c86f268b867e2d36ba0ef838acb9c36fbbb702041fc89e065",
       "current": "examples/client_contracts/session_for_you_v1/selected-release-20261126-cc896eb3.json",
-      "current_sha256": "00fd1906c1ea059c5de994a52d71318a01bad81fe68db62a440baab3d780b05f",
+      "current_sha256": "591950002155fa0f0c1655c668ddd8a191e3db9c79e74aff7f136cc8477843b0",
       "field_provenance": {
         "cases": "same named actual case subset",
         "examples": "actual extension.refresh_examples",
@@ -340,7 +340,7 @@
       "predecessor": "examples/client_contracts/session_for_you_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--c8527e8f.json",
       "predecessor_sha256": "fdc636636c2242644b27a2670e77d4d52d6b6d5163feddd01116db20b7562f9b",
       "current": "examples/client_contracts/session_for_you_v1/selected-release-20261126-c8527e8f.json",
-      "current_sha256": "39623c1e71eb7e07f0d9071c0baad613524c8bff8454870399339f6198ef324c",
+      "current_sha256": "6ab7bca6d208f5c266ff80ba8f625aafaed39978bffe6244af15b88a927cfc32",
       "field_provenance": {
         "cases": "same named actual case subset",
         "examples": "actual extension.output_readback_examples",
@@ -358,7 +358,7 @@
       "predecessor": "examples/client_contracts/passive_progress_v3/vibecast-white-guests-20261125-ngs-20261125-20261125--b0749363.json",
       "predecessor_sha256": "996ee5ab838a1692e85d37a17f4f0bd446518d0601061d23c58a609f7edf769e",
       "current": "examples/client_contracts/passive_progress_v3/selected-release-20261126-b0749363.json",
-      "current_sha256": "a62559bc2d09462c1a1c2174767e4e41a3b85645154a6232d6c9d6ecfe050bb7",
+      "current_sha256": "dd418a8d45bd0a556c848a455260deef20709eda344c570adf584a915595c2e5",
       "field_provenance": {
         "receipt": "actual new raw receipt",
         "source_before_after_equal": "full361 manifest comparison",
@@ -370,7 +370,7 @@
       "predecessor": "examples/client_contracts/session_forecast_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--9c140be1.json",
       "predecessor_sha256": "95d9a40b6d212b3308e852a3af508b0a973097030cf48e7e7a1ec721070a1481",
       "current": "examples/client_contracts/session_forecast_v1/selected-release-20261126-9c140be1.json",
-      "current_sha256": "586759c9bf4a7acebd324a28bda9ac9350cc967bd47f3ef33243dea29c2982b2",
+      "current_sha256": "0a60a83329fb3a3176f4b2ae01dcd31d6200e4fc24b3c59ad955edb83a0aabad",
       "field_provenance": {
         "HA_dev_writes": "actual raw field",
         "cases": "actual raw field",
@@ -385,7 +385,7 @@
       "predecessor": "examples/client_contracts/session_private_catalogue_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--e5f5356d.json",
       "predecessor_sha256": "459247479ee9ba2b5c9aa9089a793a293f53a27f66f747de9fec612f88f91622",
       "current": "examples/client_contracts/session_private_catalogue_v1/selected-release-20261126-e5f5356d.json",
-      "current_sha256": "4b9af7615cd7f74f405e3d9a7130ff447f4f5120ec6bd9b73692ffe33c052fb2",
+      "current_sha256": "ebea7772814b7392aa12f2b062782461207f2b62d1ef78e365e5ebbdcf3b4b46",
       "field_provenance": {
         "harness_pins": "actual executed current harness/helper map",
         "receipt": "actual new raw receipt",
@@ -398,7 +398,7 @@
       "predecessor": "examples/client_contracts/surface_push_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--c3a825b4.json",
       "predecessor_sha256": "7540c342d61b00e1ddaad0d34a88e68d64d559f55d5e3f53a4aeefb5de7e308c",
       "current": "examples/client_contracts/surface_push_v1/selected-release-20261126-c3a825b4.json",
-      "current_sha256": "e8f60a46eabd289eebac38b8545392f496b1f14abd410f2630faf5c468e69c70",
+      "current_sha256": "e516d678a6c94089a9f691662fbdfebe72c1e19f0ccaf9927e6d88d1d844bac9",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -412,7 +412,7 @@
       "predecessor": "examples/client_contracts/vibescape_visual_director_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--23245091.json",
       "predecessor_sha256": "3f8e3baa6fe3c4d7af52d4bb25ef1be6c1c0f52e9707c095fcf4db918b7f93d7",
       "current": "examples/client_contracts/vibescape_visual_director_v1/selected-release-20261126-23245091.json",
-      "current_sha256": "fb4b940d128e970c75b60cca8b308b81249568cb6ca54b55cf17a34ed533878e",
+      "current_sha256": "2cc1236a07330fea74efec31638b2fc045928b526d7ba691739c656162853e15",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -426,7 +426,7 @@
       "predecessor": "examples/client_contracts/ask_dj_recent_list_presentation_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--7c51686a.json",
       "predecessor_sha256": "a784395cc0bf3b6ace6898be27a9a8080361e2a05565803bf8c12030c08bc831",
       "current": "examples/client_contracts/ask_dj_recent_list_presentation_v1/selected-release-20261126-7c51686a.json",
-      "current_sha256": "cc5cfe272823decc82572882f3d49df78ed109ab058e56862b5154c31f38582f",
+      "current_sha256": "95f7d37293fde0e751c49f6fa6fbfb19c2c5d3e7a7f76a5398350b71a32f367e",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -440,7 +440,7 @@
       "predecessor": "examples/client_contracts/dj_bulletin_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--8661943f.json",
       "predecessor_sha256": "c1f8aa11ce7267a880117b511adb4289cd17b0dfcfa9a3c105047c3606932906",
       "current": "examples/client_contracts/dj_bulletin_v1/selected-release-20261126-8661943f.json",
-      "current_sha256": "d3b404107bf66ffcdebe59473e8b9de44f06efba737c27b82de5d794df88484d",
+      "current_sha256": "f1b00eec2d83153254db7199bc303fb38d80162a5c22efb64bd65a9e15a4ff2a",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -454,7 +454,7 @@
       "predecessor": "examples/client_contracts/session_conversation_history/vibecast-white-guests-20261125-ngs-20261125-20261125--8831a0c3.json",
       "predecessor_sha256": "fdc06ea89584cfc37fb03c53cd7b4383d33d19107837cde6541c5048ef9a1fb7",
       "current": "examples/client_contracts/session_conversation_history/selected-release-20261126-8831a0c3.json",
-      "current_sha256": "2a0815c9619bb9f16c799326839a1f922204e87ef92eea1198165319ac045b22",
+      "current_sha256": "ebc5fd853720e4a6d24be9b6023b6ef7d986b436c87c6d18cd0d6ccaf42c19eb",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -468,7 +468,7 @@
       "predecessor": "examples/client_contracts/track_insight/vibecast-white-guests-20261125-ngs-20261125-20261125--22a66460.json",
       "predecessor_sha256": "aea822819cf154adfca18df20e8010b8b8f093e0c75c90f419e3ee095ad3ed0d",
       "current": "examples/client_contracts/track_insight/selected-release-20261126-22a66460.json",
-      "current_sha256": "3a47b7f0868c7359d352479908b557f656385ba747799a29125f52f6a843cb60",
+      "current_sha256": "b80aa75ddad22c40ba167f9b173a0eb90473f3cbfdc8b0db51c273d462a358a1",
       "field_provenance": {
         "cases": "actual raw field",
         "harness_sha256": "executed harness bytes",
@@ -486,7 +486,7 @@
       "predecessor": "examples/client_contracts/direct_rich_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--16605d51.json",
       "predecessor_sha256": "23f53f7376896d1e5b8a82b7f07f59a4f300cf92e407947bbb96cf0f3acc52ea",
       "current": "examples/client_contracts/direct_rich_v1/selected-release-20261126-16605d51.json",
-      "current_sha256": "1f28b34d563069d76f863367c61cc4d4a6f7dc2b190df216b99821519ee8945f",
+      "current_sha256": "b54852a6e62ae5559aa1a30bc0f152e64fd47f9e3f755f87489414955f1fc1c2",
       "field_provenance": {
         "actual_operator_enrollment_native_clock_or_APNs_GO": "actual raw field",
         "host_wake_runtime": "actual raw field",
@@ -500,7 +500,7 @@
       "predecessor": "examples/client_contracts/direct_rich_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--262c786e.json",
       "predecessor_sha256": "2f0c4e1dee1119bfc77e4f899be856e61aecee34699e034cf5dda4d8a9e384da",
       "current": "examples/client_contracts/direct_rich_v1/selected-release-20261126-262c786e.json",
-      "current_sha256": "adca323edec2d973eee24a93eacbc3719192798dc16498ec318655c8987984b5",
+      "current_sha256": "092d4a4da00166ceaaf7f380b9732de1af1a44dcaef767b9ed5797643a3dba96",
       "field_provenance": {
         "actual_operator_enrollment_native_clock_or_APNs_GO": "actual raw field",
         "cases": "actual raw field",
@@ -522,7 +522,7 @@
       "predecessor": "examples/client_contracts/discovery_context_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--d097706b.json",
       "predecessor_sha256": "53b0a577aaeb4d8f957e50f7857dd58ff9cb0436b29f3b9e4086ad17164bcc5a",
       "current": "examples/client_contracts/discovery_context_v1/selected-release-20261126-d097706b.json",
-      "current_sha256": "a8ab0ba7e9634d6dff0adff8c1728b9894ce3cfbb76dde3006c11f3e88e8cd1d",
+      "current_sha256": "b6f4f60cbadf47c6ec7d7b5432e351bbbf59c7a39d0e0190ebc1cb2172815705",
       "field_provenance": {
         "harness_pins": "actual executed current harness/helper map",
         "native_installed_acceptance": "explicit unexecuted provider/device boundary",
@@ -536,7 +536,7 @@
       "predecessor": "examples/client_contracts/installation_custody_once_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--90957e06.json",
       "predecessor_sha256": "3d0ec5d119725cc19395260207bd8d994c78d2c0a212de6c79c6a9873dda6d4b",
       "current": "examples/client_contracts/installation_custody_once_v1/selected-release-20261126-90957e06.json",
-      "current_sha256": "460bf089f02a85e3115d397782e00f8543b6ad9a67fd54b5e6d8c72f2aaf7ebc",
+      "current_sha256": "39f3c64d2c6dcbe688d0bb308431bfd28ca5d90f8bda377f49d156fcc9c07086",
       "field_provenance": {
         "actual_key_generation_signing_registry_provider_or_native_effect": "actual raw field",
         "cases": "actual raw field",
@@ -550,7 +550,7 @@
       "predecessor": "examples/client_contracts/music_announcement_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--cccb64fe.json",
       "predecessor_sha256": "e15a9c5c30343a4262be742a33aedb56e450d84ce7d9b76221980ec2a9bdd41e",
       "current": "examples/client_contracts/music_announcement_v1/selected-release-20261126-cccb64fe.json",
-      "current_sha256": "06302250347cbcfd33d0f078617d446df70f72e82f58e0f15041396225edbaa7",
+      "current_sha256": "8b272bab430978516363ed2fb13fd288bc8e9b5eae943fca0bb433e300bbfbb2",
       "field_provenance": {
         "harness": "executed command",
         "harness_sha256": "executed harness bytes",
@@ -564,7 +564,7 @@
       "predecessor": "examples/client_contracts/music_dna_artwork_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--65c5ead3.json",
       "predecessor_sha256": "311b1137022dda8823212f16c8c909c00ce17758a858842767ac43a9f9f1b054",
       "current": "examples/client_contracts/music_dna_artwork_v1/selected-release-20261126-65c5ead3.json",
-      "current_sha256": "f2a0188f4256862530cdd5a775281a4ad75ea668e4c7ab3a965af35f37bd19ee",
+      "current_sha256": "432943879fa21a86981fa7ae318ab3ae0944c84bacf8354d1e5df3b8dda0a9ca",
       "field_provenance": {
         "cases": "actual raw field",
         "installed": "actual raw field",
@@ -580,7 +580,7 @@
       "predecessor": "examples/client_contracts/passive_retained_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--bdf4b770.json",
       "predecessor_sha256": "96a0f1554d9d510d3fbba45d61e5755a8c7ff7fc32b671787b9ea0b3276d8a82",
       "current": "examples/client_contracts/passive_retained_v1/selected-release-20261126-bdf4b770.json",
-      "current_sha256": "614ac3e32ef558b2e72717265446f5c2d7c6d276c95006e14ecb1d704f49778b",
+      "current_sha256": "24b3ddddc670f69ad7fbeef6fcc2f10e847ef3072592f3da89e89f2a4fd41f0a",
       "field_provenance": {
         "receipt": "actual new raw receipt",
         "source_before_after_equal": "full361 manifest comparison",
@@ -592,7 +592,7 @@
       "predecessor": "examples/client_contracts/requested_moments_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--d30364f3.json",
       "predecessor_sha256": "d823a0e52ccc7e9059099e575b91e0cd4cd99f1ee1ae5976d59e697439c4c4b4",
       "current": "examples/client_contracts/requested_moments_v1/selected-release-20261126-d30364f3.json",
-      "current_sha256": "3f413b19d673adf2ab7424a01ba3b977807d798e810dc07f8f5ff51b6df0147a",
+      "current_sha256": "6a60f57167b585d29cb70418be2ce12ca08cd94a807e5e4270f6466d6072ef52",
       "field_provenance": {
         "editorial_acceptance": "explicit unqualified editorial boundary",
         "harness_pins": "actual executed current harness/helper map",
@@ -610,7 +610,7 @@
       "predecessor": "examples/client_contracts/for_you_original_dna_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--d262f072.json",
       "predecessor_sha256": "98677378f33ff2247e98c0878bc99fbd2045012992f577f0d63604b741f9f40c",
       "current": "examples/client_contracts/for_you_original_dna_v1/selected-release-20261126-d262f072.json",
-      "current_sha256": "b771cc87a45a156c9a21ce58eda9b5c994326a2ebdbff04bfd37a45ef3b76bd5",
+      "current_sha256": "774d7d042ae2f5d41a666310cd54d569a74dffc710da8c8eccb87d169394e3cc",
       "field_provenance": {
         "harness_pins": "actual executed current harness/helper map",
         "receipt": "actual new raw receipt",
@@ -623,7 +623,7 @@
       "predecessor": "examples/client_contracts/spotify_scope_evidence_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--cdcb1b5b.json",
       "predecessor_sha256": "c4de614a8f2e46751f14de8ca6c7cda069eabc89cfc6bc8243ae13c3cdc66cf9",
       "current": "examples/client_contracts/spotify_scope_evidence_v1/selected-release-20261126-cdcb1b5b.json",
-      "current_sha256": "c4baec87b0bd1e8756caa68e0f192999d937bc1a659b5747037005bc1e56a463",
+      "current_sha256": "093e7d8dc6dba94a799145196ec562867e3c0ea2657a6fdbf309e915e17ed5aa",
       "field_provenance": {
         "native_installed_acceptance": "explicit unexecuted provider/device boundary",
         "receipt": "actual new raw receipt",
@@ -636,7 +636,7 @@
       "predecessor": "examples/client_contracts/passive_surface_registration_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--9fdac8f1.json",
       "predecessor_sha256": "7a05d0caeecf2eeaa877ed2c738a74b53fbd826a33b4cdcbe81d03b025626643",
       "current": "examples/client_contracts/passive_surface_registration_v1/selected-release-20261126-9fdac8f1.json",
-      "current_sha256": "01e54bd9f3fd966ec585cb3d678000848f63bcf81fce753173a8ba06c59b26f6",
+      "current_sha256": "3210dd9396462a1e8b3d0c8140d609a818cae03ed40642393ec73d5509bb55fc",
       "field_provenance": {
         "actual_temporary_entry_rotation_failed_await_ABA_stays_retired": "actual raw field",
         "cases": "actual raw field",
@@ -653,7 +653,7 @@
       "predecessor": "examples/client_contracts/music_origin_v1/vibecast-white-guests-20261125-ngs-20261125-20261125--15edebf2.json",
       "predecessor_sha256": "c2794297a39cb399c42afe12b30f342bd2f2190f1e2cbe4f539ba8d7ec8b4f0e",
       "current": "examples/client_contracts/music_origin_v1/selected-release-20261126-15edebf2.json",
-      "current_sha256": "31479abb2a220c263a0f33f28a16f84d8be73046908bed60d7276c437cf1dc80",
+      "current_sha256": "f58f5d9654784cea0dc8901dde451610ec9d26eceee71a03ae660d9f0ae4248a",
       "field_provenance": {
         "editorial": "explicit unqualified editorial boundary",
         "harness_pins": "actual executed current harness/helper map",

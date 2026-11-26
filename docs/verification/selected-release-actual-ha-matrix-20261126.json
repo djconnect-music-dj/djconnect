@@ -1,5 +1,5 @@
 {
-  "candidate": "ee0baa8891e8550dedc42dac4cdadab3340aebe6",
+  "candidate": "45bfcfc54950255ae0a32c88243e847440d025e1",
   "scope": "Actual isolated HA SDK/Core TLS/SQL with synthetic provider/device seams",
   "execution_transport": "READ_ONLY_CANDIDATE_NETWORK_NONE",
   "source_before_after_equal": true,
@@ -198,7 +198,7 @@
     "custom_components/djconnect/music_canvas_assets/SourceSerif4-Semibold.ttf": "8b16c167eda4efc1d3fceda28eeeedb673e770330ea82521fc699e08c4cd4391",
     "custom_components/djconnect/music_canvas_http.py": "8b9912f18ced60cd181b2858fa05e1fb8bbc966ac9bc5b96314ffbedce7ce388",
     "custom_components/djconnect/music_canvas_render.py": "a1494d294c52b986e9c6a8f94067e22f455a7bf52c28b5ae68195e3d38e849cb",
-    "custom_components/djconnect/music_canvas_runtime.py": "250ff12ff46a721a1d59c50f6ec89f0971452f62aaa9cc540f41b2b129cdb8ae",
+    "custom_components/djconnect/music_canvas_runtime.py": "e77662d02822ca4b14b39dec54562a5bc179ccf5b65259df982c3cd094e7b4e7",
     "custom_components/djconnect/music_discovery.py": "495358961d8ac6cd650fbc6de0b62e92f11b1c602495ea2ab45960faf1ba3cc7",
     "custom_components/djconnect/music_dna.py": "2a156af01df7ea2699808b9a93ffb9e07f0c5c79ce78a62663d623a68e9ba21e",
     "custom_components/djconnect/music_intent.py": "8b04f7b0925d288b29aadf2d70032e76c3f37b3952ad1054f54bfe0bad412960",
@@ -374,7 +374,7 @@
       "harness_sha256": "5d36f90bac1d6412a29aeea055d57053cddba991ba39e58b3753092ff99b75f7",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 12.421,
+      "seconds": 9.946,
       "output": "verify_archive_deletion_http",
       "command": [
         "docker",
@@ -383,7 +383,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-0",
+        "djc-selected-Z4Klrx-0",
         "--network",
         "none",
         "--read-only",
@@ -414,12 +414,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_archive_deletion_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_archive_deletion_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_archive_deletion_http.py"
       ],
-      "started_at": "2026-11-26T10:06:11.267079+00:00",
-      "finished_at": "2026-11-26T10:06:23.687729+00:00",
+      "started_at": "2026-11-26T10:29:07.048985+00:00",
+      "finished_at": "2026-11-26T10:29:16.995180+00:00",
       "log_sha256": "2be7f6b3f522c15f5cb266fc7ef26bf7288ea228c051c893a0bbcc51b482a7f5"
     },
     {
@@ -427,7 +427,7 @@
       "harness_sha256": "d0e3bbf5aaa5a900dacd9db571b145c78501dadf1a86e115ebd6002e5ab3d89b",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 8.443,
+      "seconds": 6.489,
       "output": "verify_artist_collections_http",
       "command": [
         "docker",
@@ -436,7 +436,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-1",
+        "djc-selected-Z4Klrx-1",
         "--network",
         "none",
         "--read-only",
@@ -467,12 +467,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_artist_collections_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_artist_collections_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_artist_collections_http.py"
       ],
-      "started_at": "2026-11-26T10:06:11.267354+00:00",
-      "finished_at": "2026-11-26T10:06:19.709856+00:00",
+      "started_at": "2026-11-26T10:29:07.049334+00:00",
+      "finished_at": "2026-11-26T10:29:13.538768+00:00",
       "log_sha256": "e8201e09832de9bdd3dc7b2bc301a519cc1ca8b86de1c8d094b70f806527019a"
     },
     {
@@ -480,7 +480,7 @@
       "harness_sha256": "a3b313c7e2778d00e0e7775f13b187e34afb8eda42e92dd87af704b38675a053",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 9.804,
+      "seconds": 7.413,
       "output": "verify_band_story_photo_http",
       "command": [
         "docker",
@@ -489,7 +489,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-2",
+        "djc-selected-Z4Klrx-2",
         "--network",
         "none",
         "--read-only",
@@ -520,12 +520,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_band_story_photo_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_band_story_photo_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_band_story_photo_http.py"
       ],
-      "started_at": "2026-11-26T10:06:11.273631+00:00",
-      "finished_at": "2026-11-26T10:06:21.077690+00:00",
+      "started_at": "2026-11-26T10:29:07.050418+00:00",
+      "finished_at": "2026-11-26T10:29:14.463900+00:00",
       "log_sha256": "3e894b02dcc6915077a9ea09ceee2b19b5d96e46706be80fc2557e69269bd21e"
     },
     {
@@ -533,7 +533,7 @@
       "harness_sha256": "715e37f42d43d96f9282874283e582365d2769856110b0f6035009326cf19998",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 7.367,
+      "seconds": 6.015,
       "output": "verify_bulletin_manual_speech_http",
       "command": [
         "docker",
@@ -542,7 +542,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-3",
+        "djc-selected-Z4Klrx-3",
         "--network",
         "none",
         "--read-only",
@@ -573,12 +573,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_bulletin_manual_speech_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_bulletin_manual_speech_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_bulletin_manual_speech_http.py"
       ],
-      "started_at": "2026-11-26T10:06:19.710731+00:00",
-      "finished_at": "2026-11-26T10:06:27.077715+00:00",
+      "started_at": "2026-11-26T10:29:13.539409+00:00",
+      "finished_at": "2026-11-26T10:29:19.554053+00:00",
       "log_sha256": "8b7c03f21f48543b912ca45dd3a9c5b37ef30452bcb71c2c7024b90fca7c6180"
     },
     {
@@ -586,7 +586,7 @@
       "harness_sha256": "f9aa3c3b4e85fded40e1f63f6b0b02d413764e63ce9eb654025f2b266b9ae16b",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 10.268,
+      "seconds": 8.093,
       "output": "verify_content_deletion_http",
       "command": [
         "docker",
@@ -595,7 +595,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-4",
+        "djc-selected-Z4Klrx-4",
         "--network",
         "none",
         "--read-only",
@@ -626,12 +626,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_content_deletion_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_content_deletion_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_content_deletion_http.py"
       ],
-      "started_at": "2026-11-26T10:06:21.078273+00:00",
-      "finished_at": "2026-11-26T10:06:31.346559+00:00",
+      "started_at": "2026-11-26T10:29:14.464496+00:00",
+      "finished_at": "2026-11-26T10:29:22.557813+00:00",
       "log_sha256": "68a7dbca6e2628f7344c447b4987dc7b13525bba857fe49249b5431a3333133c"
     },
     {
@@ -639,7 +639,7 @@
       "harness_sha256": "a5293884f7e82e7ded4ee21f9af674b420093da4ca67eda7eec6649a56c473f0",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 5.147,
+      "seconds": 3.616,
       "output": "verify_current_metadata_history_http",
       "command": [
         "docker",
@@ -648,7 +648,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-5",
+        "djc-selected-Z4Klrx-5",
         "--network",
         "none",
         "--read-only",
@@ -679,12 +679,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_current_metadata_history_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_current_metadata_history_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_current_metadata_history_http.py"
       ],
-      "started_at": "2026-11-26T10:06:23.689906+00:00",
-      "finished_at": "2026-11-26T10:06:28.837372+00:00",
+      "started_at": "2026-11-26T10:29:16.995718+00:00",
+      "finished_at": "2026-11-26T10:29:20.611773+00:00",
       "log_sha256": "b44cdad5b4d4169b0e052aac53abbb3163d8f072a347bac44742ac3e4faa7cfd"
     },
     {
@@ -692,7 +692,7 @@
       "harness_sha256": "0fa8d41564c70b7e7a1404731d58adba80357dbe91e3262dbff8a58bee900b6b",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 5.658,
+      "seconds": 4.693,
       "output": "verify_current_track_insight_http",
       "command": [
         "docker",
@@ -701,7 +701,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-6",
+        "djc-selected-Z4Klrx-6",
         "--network",
         "none",
         "--read-only",
@@ -732,12 +732,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_current_track_insight_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_current_track_insight_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_current_track_insight_http.py"
       ],
-      "started_at": "2026-11-26T10:06:27.078413+00:00",
-      "finished_at": "2026-11-26T10:06:32.735975+00:00",
+      "started_at": "2026-11-26T10:29:19.554599+00:00",
+      "finished_at": "2026-11-26T10:29:24.247937+00:00",
       "log_sha256": "3561c6f33898ea20803eb463c14f4ec63246073ce3780de6185144b5bc063ca1"
     },
     {
@@ -745,7 +745,7 @@
       "harness_sha256": "b8498a652d3ba411ae310b1ffbc2a6426a3a3e2c6d6a6c471e88177616bba8cc",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 19.537,
+      "seconds": 19.696,
       "output": "verify_discovery_artwork_http",
       "command": [
         "docker",
@@ -754,7 +754,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-7",
+        "djc-selected-Z4Klrx-7",
         "--network",
         "none",
         "--read-only",
@@ -785,20 +785,20 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_discovery_artwork_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_discovery_artwork_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_discovery_artwork_http.py"
       ],
-      "started_at": "2026-11-26T10:06:28.837983+00:00",
-      "finished_at": "2026-11-26T10:06:48.375330+00:00",
-      "log_sha256": "748e071c1789153cc2aaaadc062e3c76c3804891f2fb6ff7912430e19a75ff20"
+      "started_at": "2026-11-26T10:29:20.612392+00:00",
+      "finished_at": "2026-11-26T10:29:40.308114+00:00",
+      "log_sha256": "c6554b2cb99f788d48cdbbab1488cf5bddc4e3c07cd7cac7f1e16dc0725747a1"
     },
     {
       "harness": "scripts/verification/verify_discovery_play_http.py",
       "harness_sha256": "87f2c09d40b0bf7e207ae16b7a8fd710874ae3c90ea6b9bd6e04933c724b580f",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 3.511,
+      "seconds": 3.145,
       "output": "verify_discovery_play_http",
       "command": [
         "docker",
@@ -807,7 +807,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-8",
+        "djc-selected-Z4Klrx-8",
         "--network",
         "none",
         "--read-only",
@@ -838,12 +838,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_discovery_play_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_discovery_play_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_discovery_play_http.py"
       ],
-      "started_at": "2026-11-26T10:06:31.347383+00:00",
-      "finished_at": "2026-11-26T10:06:34.858724+00:00",
+      "started_at": "2026-11-26T10:29:22.558358+00:00",
+      "finished_at": "2026-11-26T10:29:25.703069+00:00",
       "log_sha256": "4ab13bf15237a515356921e3ad69508a9ede0f6ee611f9cf9edb97677137841e"
     },
     {
@@ -851,7 +851,7 @@
       "harness_sha256": "e17e39225a9e2803924a576d23565276c00c309e3a1c2c3b8c04c860f5c51d5a",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 3.334,
+      "seconds": 2.964,
       "output": "verify_durable_pair_registration_http",
       "command": [
         "docker",
@@ -860,7 +860,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-9",
+        "djc-selected-Z4Klrx-9",
         "--network",
         "none",
         "--read-only",
@@ -891,12 +891,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_durable_pair_registration_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_durable_pair_registration_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_durable_pair_registration_http.py"
       ],
-      "started_at": "2026-11-26T10:06:32.736808+00:00",
-      "finished_at": "2026-11-26T10:06:36.070956+00:00",
+      "started_at": "2026-11-26T10:29:24.248508+00:00",
+      "finished_at": "2026-11-26T10:29:27.212557+00:00",
       "log_sha256": "1b0b27a1874c06ae8e07a8bcd5ec4f1e73db60da6fd7e7c1b98b911626bad87f"
     },
     {
@@ -904,7 +904,7 @@
       "harness_sha256": "dd4966e49fb00980a03a609bff65158df4208b4465d02eded69e20d2bfa06b35",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 5.323,
+      "seconds": 4.846,
       "output": "verify_for_you_dna_snapshot_http",
       "command": [
         "docker",
@@ -913,7 +913,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-10",
+        "djc-selected-Z4Klrx-10",
         "--network",
         "none",
         "--read-only",
@@ -944,12 +944,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_for_you_dna_snapshot_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_for_you_dna_snapshot_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_for_you_dna_snapshot_http.py"
       ],
-      "started_at": "2026-11-26T10:06:34.859302+00:00",
-      "finished_at": "2026-11-26T10:06:40.182613+00:00",
+      "started_at": "2026-11-26T10:29:25.703569+00:00",
+      "finished_at": "2026-11-26T10:29:30.549422+00:00",
       "log_sha256": "c9197a297c54d9458dffbc40e67493d535bb3a76870e216d4f482dec91db84f1"
     },
     {
@@ -957,7 +957,7 @@
       "harness_sha256": "4f422f6d0dce72ce6ea097a2765774aba41bc5c4ba0edff964370f0bf0c30d43",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 6.405,
+      "seconds": 6.341,
       "output": "verify_for_you_late_confirmation_http",
       "command": [
         "docker",
@@ -966,7 +966,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-11",
+        "djc-selected-Z4Klrx-11",
         "--network",
         "none",
         "--read-only",
@@ -997,12 +997,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_for_you_late_confirmation_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_for_you_late_confirmation_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_for_you_late_confirmation_http.py"
       ],
-      "started_at": "2026-11-26T10:06:36.071410+00:00",
-      "finished_at": "2026-11-26T10:06:42.476713+00:00",
+      "started_at": "2026-11-26T10:29:27.213094+00:00",
+      "finished_at": "2026-11-26T10:29:33.554013+00:00",
       "log_sha256": "d588af124b9505deb1f448e6c72fac0eda65933d8343cff06c47500982cc0bd7"
     },
     {
@@ -1010,7 +1010,7 @@
       "harness_sha256": "cc9dd7960bceefe2cda61aa4a5e3e2f2f918624e9cb487be44d0ed9a085d7679",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 5.069,
+      "seconds": 5.197,
       "output": "verify_for_you_output_readback_http",
       "command": [
         "docker",
@@ -1019,7 +1019,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-12",
+        "djc-selected-Z4Klrx-12",
         "--network",
         "none",
         "--read-only",
@@ -1050,12 +1050,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_for_you_output_readback_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_for_you_output_readback_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_for_you_output_readback_http.py"
       ],
-      "started_at": "2026-11-26T10:06:40.183173+00:00",
-      "finished_at": "2026-11-26T10:06:45.252520+00:00",
+      "started_at": "2026-11-26T10:29:30.549987+00:00",
+      "finished_at": "2026-11-26T10:29:35.747226+00:00",
       "log_sha256": "905a6972052f574783cc49ae27c6ae5333fb333d9b0f87cf4b9706087d8b461d"
     },
     {
@@ -1063,7 +1063,7 @@
       "harness_sha256": "4237862169ebd5b763c85f9da870949a501b8bed76c8558562d6d1f962d407f4",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 5.186,
+      "seconds": 5.004,
       "output": "verify_for_you_refresh_http",
       "command": [
         "docker",
@@ -1072,7 +1072,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-13",
+        "djc-selected-Z4Klrx-13",
         "--network",
         "none",
         "--read-only",
@@ -1103,12 +1103,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_for_you_refresh_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_for_you_refresh_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_for_you_refresh_http.py"
       ],
-      "started_at": "2026-11-26T10:06:42.477117+00:00",
-      "finished_at": "2026-11-26T10:06:47.662964+00:00",
+      "started_at": "2026-11-26T10:29:33.554552+00:00",
+      "finished_at": "2026-11-26T10:29:38.558907+00:00",
       "log_sha256": "890df0d8eee016de0e1b9ec2ef7221c2eee6f704f923c86761b3a6d98969f3ac"
     },
     {
@@ -1116,7 +1116,7 @@
       "harness_sha256": "3691408b723c30f14f4873287197ff6ad0ebe85f6b9ea2a89d715d01cbbc6d4e",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 6.049,
+      "seconds": 4.955,
       "output": "verify_help_live_context_http",
       "command": [
         "docker",
@@ -1125,7 +1125,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-14",
+        "djc-selected-Z4Klrx-14",
         "--network",
         "none",
         "--read-only",
@@ -1156,12 +1156,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_help_live_context_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_help_live_context_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_help_live_context_http.py"
       ],
-      "started_at": "2026-11-26T10:06:45.252942+00:00",
-      "finished_at": "2026-11-26T10:06:51.302322+00:00",
+      "started_at": "2026-11-26T10:29:35.747769+00:00",
+      "finished_at": "2026-11-26T10:29:40.703019+00:00",
       "log_sha256": "25fcf8b26507a0aea979b13557d2201a5b66e0743a358d022d6c7316cfc5bac9"
     },
     {
@@ -1169,7 +1169,7 @@
       "harness_sha256": "e7f97797d089a6b8f57a2e2316a3fae2e81f80a68230e388266734974cfe8854",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 6.688,
+      "seconds": 3.496,
       "output": "verify_host_wake_management_actual_ha",
       "command": [
         "docker",
@@ -1178,7 +1178,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-15",
+        "djc-selected-Z4Klrx-15",
         "--network",
         "none",
         "--read-only",
@@ -1209,12 +1209,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_host_wake_management_actual_ha,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_host_wake_management_actual_ha,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_host_wake_management_actual_ha.py"
       ],
-      "started_at": "2026-11-26T10:06:47.663338+00:00",
-      "finished_at": "2026-11-26T10:06:54.351134+00:00",
+      "started_at": "2026-11-26T10:29:38.559491+00:00",
+      "finished_at": "2026-11-26T10:29:42.055783+00:00",
       "log_sha256": "153fdc39d14d07e5807de54c48988ff89eec48999ef4d04c44244ff084229222"
     },
     {
@@ -1222,7 +1222,7 @@
       "harness_sha256": "c1c5798dc446ae344d4f626e573deac43e3f82d5e16592716a498b88f16a6a54",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 6.78,
+      "seconds": 3.56,
       "output": "verify_host_wake_runtime_actual_ha",
       "command": [
         "docker",
@@ -1231,7 +1231,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-16",
+        "djc-selected-Z4Klrx-16",
         "--network",
         "none",
         "--read-only",
@@ -1262,12 +1262,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_host_wake_runtime_actual_ha,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_host_wake_runtime_actual_ha,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_host_wake_runtime_actual_ha.py"
       ],
-      "started_at": "2026-11-26T10:06:48.376067+00:00",
-      "finished_at": "2026-11-26T10:06:55.156164+00:00",
+      "started_at": "2026-11-26T10:29:40.308643+00:00",
+      "finished_at": "2026-11-26T10:29:43.868313+00:00",
       "log_sha256": "153fdc39d14d07e5807de54c48988ff89eec48999ef4d04c44244ff084229222"
     },
     {
@@ -1275,7 +1275,7 @@
       "harness_sha256": "764b6815d6b20fe2476439e3c9d8e53797b6ea1af1662c1e101de91fdea432d1",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 10.239,
+      "seconds": 4.006,
       "output": "verify_installation_custody_once_ha",
       "command": [
         "docker",
@@ -1284,7 +1284,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-17",
+        "djc-selected-Z4Klrx-17",
         "--network",
         "none",
         "--read-only",
@@ -1315,12 +1315,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_installation_custody_once_ha,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_installation_custody_once_ha,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_installation_custody_once_ha.py"
       ],
-      "started_at": "2026-11-26T10:06:51.303001+00:00",
-      "finished_at": "2026-11-26T10:07:01.542157+00:00",
+      "started_at": "2026-11-26T10:29:40.703658+00:00",
+      "finished_at": "2026-11-26T10:29:44.710154+00:00",
       "log_sha256": "8e490b4d2ff323820125245385a79f996ff7b40c6d377d3efeba2f27a6a12e8b"
     },
     {
@@ -1328,7 +1328,7 @@
       "harness_sha256": "8df270f8df4b9a5bb09bd5601de583c90ab0ed5112a65f3bd37498c7ab7e36c5",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 5.763,
+      "seconds": 3.231,
       "output": "verify_installation_management_ha",
       "command": [
         "docker",
@@ -1337,7 +1337,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-18",
+        "djc-selected-Z4Klrx-18",
         "--network",
         "none",
         "--read-only",
@@ -1368,12 +1368,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_installation_management_ha,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_installation_management_ha,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_installation_management_ha.py"
       ],
-      "started_at": "2026-11-26T10:06:54.351758+00:00",
-      "finished_at": "2026-11-26T10:07:00.114472+00:00",
+      "started_at": "2026-11-26T10:29:42.056418+00:00",
+      "finished_at": "2026-11-26T10:29:45.287242+00:00",
       "log_sha256": "c4523569049b05111093d0df868b08ec54bce72720a17380653dc9885769a181"
     },
     {
@@ -1381,7 +1381,7 @@
       "harness_sha256": "3d942a49de07c4f86a2be7c6cf588c31c6a86a8c2cd88e85d1b1e7cd369e5dfe",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 8.674,
+      "seconds": 3.762,
       "output": "verify_installation_once_journal_ha",
       "command": [
         "docker",
@@ -1390,7 +1390,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-19",
+        "djc-selected-Z4Klrx-19",
         "--network",
         "none",
         "--read-only",
@@ -1421,12 +1421,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_installation_once_journal_ha,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_installation_once_journal_ha,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_installation_once_journal_ha.py"
       ],
-      "started_at": "2026-11-26T10:06:55.156757+00:00",
-      "finished_at": "2026-11-26T10:07:03.830718+00:00",
+      "started_at": "2026-11-26T10:29:43.869000+00:00",
+      "finished_at": "2026-11-26T10:29:47.630837+00:00",
       "log_sha256": "8e490b4d2ff323820125245385a79f996ff7b40c6d377d3efeba2f27a6a12e8b"
     },
     {
@@ -1434,7 +1434,7 @@
       "harness_sha256": "01bb57a41d2c3debc7dc8e6ac4252077f626fd8c4a330656dc7a104af19d3b48",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 9.873,
+      "seconds": 3.693,
       "output": "verify_installation_principal_data_ha",
       "command": [
         "docker",
@@ -1443,7 +1443,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-20",
+        "djc-selected-Z4Klrx-20",
         "--network",
         "none",
         "--read-only",
@@ -1474,12 +1474,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_installation_principal_data_ha,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_installation_principal_data_ha,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_installation_principal_data_ha.py"
       ],
-      "started_at": "2026-11-26T10:07:00.115037+00:00",
-      "finished_at": "2026-11-26T10:07:09.987900+00:00",
+      "started_at": "2026-11-26T10:29:44.711083+00:00",
+      "finished_at": "2026-11-26T10:29:48.403714+00:00",
       "log_sha256": "8e490b4d2ff323820125245385a79f996ff7b40c6d377d3efeba2f27a6a12e8b"
     },
     {
@@ -1487,7 +1487,7 @@
       "harness_sha256": "93e9ba3009412c08fb35cf8f7f1bd5d43854f93342a7d9f4b6ac9fd28bf8e2eb",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 14.302,
+      "seconds": 5.628,
       "output": "verify_music_announcement_http",
       "command": [
         "docker",
@@ -1496,7 +1496,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-21",
+        "djc-selected-Z4Klrx-21",
         "--network",
         "none",
         "--read-only",
@@ -1527,12 +1527,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_music_announcement_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_music_announcement_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_music_announcement_http.py"
       ],
-      "started_at": "2026-11-26T10:07:01.542846+00:00",
-      "finished_at": "2026-11-26T10:07:15.844993+00:00",
+      "started_at": "2026-11-26T10:29:45.287799+00:00",
+      "finished_at": "2026-11-26T10:29:50.915399+00:00",
       "log_sha256": "b7c51d0ca3e7a23c699e68e0572648e3dd3a2779d340cc0f1547ff23e3dc6a5e"
     },
     {
@@ -1540,7 +1540,7 @@
       "harness_sha256": "a00b440d6b79823b6f902502b15fbb1b6ea19455070ed32a95a494024f101314",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 12.665,
+      "seconds": 5.074,
       "output": "verify_news_bulletin_http",
       "command": [
         "docker",
@@ -1549,7 +1549,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-22",
+        "djc-selected-Z4Klrx-22",
         "--network",
         "none",
         "--read-only",
@@ -1580,12 +1580,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_news_bulletin_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_news_bulletin_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_news_bulletin_http.py"
       ],
-      "started_at": "2026-11-26T10:07:03.831290+00:00",
-      "finished_at": "2026-11-26T10:07:16.496673+00:00",
+      "started_at": "2026-11-26T10:29:47.631375+00:00",
+      "finished_at": "2026-11-26T10:29:52.705547+00:00",
       "log_sha256": "7f09626286e7edb24f851c90952e203055a7c5acd7453a8a2ddb4306bdad97ca"
     },
     {
@@ -1593,7 +1593,7 @@
       "harness_sha256": "52be88c51b899800f0a8b4d9cd45008720e27d379f807ae3178a9cb5a94967cf",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 31.304,
+      "seconds": 28.214,
       "output": "verify_passive_field_expiry_http",
       "command": [
         "docker",
@@ -1602,7 +1602,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-23",
+        "djc-selected-Z4Klrx-23",
         "--network",
         "none",
         "--read-only",
@@ -1633,20 +1633,20 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_passive_field_expiry_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_passive_field_expiry_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_passive_field_expiry_http.py"
       ],
-      "started_at": "2026-11-26T10:07:09.988492+00:00",
-      "finished_at": "2026-11-26T10:07:41.292560+00:00",
-      "log_sha256": "77428c06c690373f69dbbf6e2863db4c88a0349cd9861b5bd54bb1688ff0df55"
+      "started_at": "2026-11-26T10:29:48.404361+00:00",
+      "finished_at": "2026-11-26T10:30:16.618708+00:00",
+      "log_sha256": "a416d572f289fdcb231543174a4a20fbfcc209c37b12e083e82bf656089c8de6"
     },
     {
       "harness": "scripts/verification/verify_passive_observation_http.py",
       "harness_sha256": "89a31758fb00a768ca0812e182fdfb4428f70567d99a43a8b7711aa3539990ff",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 6.567,
+      "seconds": 3.36,
       "output": "verify_passive_observation_http",
       "command": [
         "docker",
@@ -1655,7 +1655,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-24",
+        "djc-selected-Z4Klrx-24",
         "--network",
         "none",
         "--read-only",
@@ -1686,12 +1686,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_passive_observation_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_passive_observation_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_passive_observation_http.py"
       ],
-      "started_at": "2026-11-26T10:07:15.845780+00:00",
-      "finished_at": "2026-11-26T10:07:22.412303+00:00",
+      "started_at": "2026-11-26T10:29:50.916055+00:00",
+      "finished_at": "2026-11-26T10:29:54.276357+00:00",
       "log_sha256": "651e225f79425452b9564950ad140d41bba32a5390ffde9f32fb1acdfdaa8c11"
     },
     {
@@ -1699,7 +1699,7 @@
       "harness_sha256": "a1f7619e8743ddb1d57f8375b10fd7bee8cf9a7302d1d46a2543158a4e066d73",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 5.802,
+      "seconds": 3.315,
       "output": "verify_passive_progress_http",
       "command": [
         "docker",
@@ -1708,7 +1708,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-25",
+        "djc-selected-Z4Klrx-25",
         "--network",
         "none",
         "--read-only",
@@ -1739,12 +1739,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_passive_progress_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_passive_progress_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_passive_progress_http.py"
       ],
-      "started_at": "2026-11-26T10:07:16.497320+00:00",
-      "finished_at": "2026-11-26T10:07:22.299402+00:00",
+      "started_at": "2026-11-26T10:29:52.706042+00:00",
+      "finished_at": "2026-11-26T10:29:56.020654+00:00",
       "log_sha256": "810d29cbb1040b9a1ed047791781065fdaa574e945a6f4ef532175b821c52e3c"
     },
     {
@@ -1752,7 +1752,7 @@
       "harness_sha256": "455ebeab5ad06df3ce7f1b879b612ceb2d4a33a514e955ce72d647e25f9f0916",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 4.734,
+      "seconds": 3.34,
       "output": "verify_passive_retained_http",
       "command": [
         "docker",
@@ -1761,7 +1761,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-26",
+        "djc-selected-Z4Klrx-26",
         "--network",
         "none",
         "--read-only",
@@ -1792,12 +1792,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_passive_retained_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_passive_retained_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_passive_retained_http.py"
       ],
-      "started_at": "2026-11-26T10:07:22.300179+00:00",
-      "finished_at": "2026-11-26T10:07:27.034238+00:00",
+      "started_at": "2026-11-26T10:29:54.276896+00:00",
+      "finished_at": "2026-11-26T10:29:57.616697+00:00",
       "log_sha256": "cecd56ece32cc8204f3b7ccf7761a187779bc0ff488d582e5c07dd37ce9d736d"
     },
     {
@@ -1805,7 +1805,7 @@
       "harness_sha256": "7890f0088e418f62095618cfae89f68d8a1c4682139d9ee44a2eff752b8d9202",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 3.797,
+      "seconds": 2.564,
       "output": "verify_passive_surface_registration_http",
       "command": [
         "docker",
@@ -1814,7 +1814,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-27",
+        "djc-selected-Z4Klrx-27",
         "--network",
         "none",
         "--read-only",
@@ -1845,12 +1845,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_passive_surface_registration_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_passive_surface_registration_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_passive_surface_registration_http.py"
       ],
-      "started_at": "2026-11-26T10:07:22.412849+00:00",
-      "finished_at": "2026-11-26T10:07:26.209836+00:00",
+      "started_at": "2026-11-26T10:29:56.021234+00:00",
+      "finished_at": "2026-11-26T10:29:58.585303+00:00",
       "log_sha256": "1b0b27a1874c06ae8e07a8bcd5ec4f1e73db60da6fd7e7c1b98b911626bad87f"
     },
     {
@@ -1858,7 +1858,7 @@
       "harness_sha256": "d917a1e5972141ff02afca382ec0722e5c28397722ba95c779f4deeb2c72e598",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 6.064,
+      "seconds": 5.165,
       "output": "verify_persona_story_integration_http",
       "command": [
         "docker",
@@ -1867,7 +1867,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-28",
+        "djc-selected-Z4Klrx-28",
         "--network",
         "none",
         "--read-only",
@@ -1898,12 +1898,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_persona_story_integration_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_persona_story_integration_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_persona_story_integration_http.py"
       ],
-      "started_at": "2026-11-26T10:07:26.210398+00:00",
-      "finished_at": "2026-11-26T10:07:32.273976+00:00",
+      "started_at": "2026-11-26T10:29:57.617263+00:00",
+      "finished_at": "2026-11-26T10:30:02.781827+00:00",
       "log_sha256": "68a7dbca6e2628f7344c447b4987dc7b13525bba857fe49249b5431a3333133c"
     },
     {
@@ -1911,7 +1911,7 @@
       "harness_sha256": "c25dfabe663f0956595b781352148b243fb3a3733430400a41a88a279dcfc2c7",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 5.707,
+      "seconds": 5.063,
       "output": "verify_private_bulletin_http",
       "command": [
         "docker",
@@ -1920,7 +1920,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-29",
+        "djc-selected-Z4Klrx-29",
         "--network",
         "none",
         "--read-only",
@@ -1951,12 +1951,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_private_bulletin_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_private_bulletin_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_private_bulletin_http.py"
       ],
-      "started_at": "2026-11-26T10:07:27.034893+00:00",
-      "finished_at": "2026-11-26T10:07:32.742336+00:00",
+      "started_at": "2026-11-26T10:29:58.585975+00:00",
+      "finished_at": "2026-11-26T10:30:03.649376+00:00",
       "log_sha256": "7f09626286e7edb24f851c90952e203055a7c5acd7453a8a2ddb4306bdad97ca"
     },
     {
@@ -1964,7 +1964,7 @@
       "harness_sha256": "c2c0e05b8380d034c4e19c5686498ca7bf7363fe0a5a809511f6a86d3d23dca7",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 3.348,
+      "seconds": 3.29,
       "output": "verify_profile_spotify_discovery_http",
       "command": [
         "docker",
@@ -1973,7 +1973,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-30",
+        "djc-selected-Z4Klrx-30",
         "--network",
         "none",
         "--read-only",
@@ -2004,12 +2004,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_profile_spotify_discovery_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_profile_spotify_discovery_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_profile_spotify_discovery_http.py"
       ],
-      "started_at": "2026-11-26T10:07:32.274633+00:00",
-      "finished_at": "2026-11-26T10:07:35.622229+00:00",
+      "started_at": "2026-11-26T10:30:02.782462+00:00",
+      "finished_at": "2026-11-26T10:30:06.072817+00:00",
       "log_sha256": "210c65ec5884572ebda850b4861bf742fdc1927ae9c881a9c2f06bffb00f3e70"
     },
     {
@@ -2017,7 +2017,7 @@
       "harness_sha256": "e352ec366654b36135e2118824fc47229a5b03ff172545e09b083bf88832397c",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 3.164,
+      "seconds": 3.459,
       "output": "verify_profile_spotify_reconnect_http",
       "command": [
         "docker",
@@ -2026,7 +2026,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-31",
+        "djc-selected-Z4Klrx-31",
         "--network",
         "none",
         "--read-only",
@@ -2057,12 +2057,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_profile_spotify_reconnect_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_profile_spotify_reconnect_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_profile_spotify_reconnect_http.py"
       ],
-      "started_at": "2026-11-26T10:07:32.742983+00:00",
-      "finished_at": "2026-11-26T10:07:35.906754+00:00",
+      "started_at": "2026-11-26T10:30:03.650037+00:00",
+      "finished_at": "2026-11-26T10:30:07.109259+00:00",
       "log_sha256": "be24d08760267c37d994d3c61e78d31c338a3b0e853565cada4129a2baaa70ee"
     },
     {
@@ -2070,7 +2070,7 @@
       "harness_sha256": "5de25ab2f836bb3753f0abb699d0003d4c491327c2e0fd2640d64325a3a8adfd",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 5.502,
+      "seconds": 5.268,
       "output": "verify_question_continuity_http",
       "command": [
         "docker",
@@ -2079,7 +2079,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-32",
+        "djc-selected-Z4Klrx-32",
         "--network",
         "none",
         "--read-only",
@@ -2110,12 +2110,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_question_continuity_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_question_continuity_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_question_continuity_http.py"
       ],
-      "started_at": "2026-11-26T10:07:35.622933+00:00",
-      "finished_at": "2026-11-26T10:07:41.124616+00:00",
+      "started_at": "2026-11-26T10:30:06.073436+00:00",
+      "finished_at": "2026-11-26T10:30:11.341227+00:00",
       "log_sha256": "5db7619d6b8dfbfee01880e5ce063e94b8ba3dc86f2005f3317fc927e160882b"
     },
     {
@@ -2123,7 +2123,7 @@
       "harness_sha256": "cae6f9d843519f9ff04ad50a472ef10f9019e8300574870605da27bd5c9d7c83",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 3.939,
+      "seconds": 3.81,
       "output": "verify_queue_forecast_http",
       "command": [
         "docker",
@@ -2132,7 +2132,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-33",
+        "djc-selected-Z4Klrx-33",
         "--network",
         "none",
         "--read-only",
@@ -2163,12 +2163,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_queue_forecast_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_queue_forecast_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_queue_forecast_http.py"
       ],
-      "started_at": "2026-11-26T10:07:35.907419+00:00",
-      "finished_at": "2026-11-26T10:07:39.846297+00:00",
+      "started_at": "2026-11-26T10:30:07.109867+00:00",
+      "finished_at": "2026-11-26T10:30:10.919990+00:00",
       "log_sha256": "7dd537c07812719a952a9e57b64c0785e5be87f2a44c840f84c0e1fec8b02044"
     },
     {
@@ -2176,7 +2176,7 @@
       "harness_sha256": "94d617ffeb43cd9e926cfb04554ab089a67a86102894306d7b6c526282eb78cb",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 5.624,
+      "seconds": 5.361,
       "output": "verify_recent_list_presentation_http",
       "command": [
         "docker",
@@ -2185,7 +2185,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-34",
+        "djc-selected-Z4Klrx-34",
         "--network",
         "none",
         "--read-only",
@@ -2216,12 +2216,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_recent_list_presentation_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_recent_list_presentation_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_recent_list_presentation_http.py"
       ],
-      "started_at": "2026-11-26T10:07:39.846963+00:00",
-      "finished_at": "2026-11-26T10:07:45.470724+00:00",
+      "started_at": "2026-11-26T10:30:10.920678+00:00",
+      "finished_at": "2026-11-26T10:30:16.281993+00:00",
       "log_sha256": "e897314711038f41af3544ed42c1e59303f10585f16a633414cea0f68b678528"
     },
     {
@@ -2229,7 +2229,7 @@
       "harness_sha256": "6f8381730395e0f58589acbbda1c9c67fe2d79ce58a0d9988a9d0d9d5534da6d",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 5.753,
+      "seconds": 5.243,
       "output": "verify_recording_production_http",
       "command": [
         "docker",
@@ -2238,7 +2238,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-35",
+        "djc-selected-Z4Klrx-35",
         "--network",
         "none",
         "--read-only",
@@ -2269,12 +2269,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_recording_production_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_recording_production_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_recording_production_http.py"
       ],
-      "started_at": "2026-11-26T10:07:41.125381+00:00",
-      "finished_at": "2026-11-26T10:07:46.878468+00:00",
+      "started_at": "2026-11-26T10:30:11.341749+00:00",
+      "finished_at": "2026-11-26T10:30:16.585161+00:00",
       "log_sha256": "45909dd218a68032c7f028a1e127ede9f5505096e86ca3ceb5437dc59ee74e35"
     },
     {
@@ -2282,7 +2282,7 @@
       "harness_sha256": "01c4276f5fff9e8d36d83c87626a01fb1205ac3e3dbe18335ef7b41f7bdc9a76",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 5.827,
+      "seconds": 5.044,
       "output": "verify_session_for_you_http",
       "command": [
         "docker",
@@ -2291,7 +2291,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-36",
+        "djc-selected-Z4Klrx-36",
         "--network",
         "none",
         "--read-only",
@@ -2322,12 +2322,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_session_for_you_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_session_for_you_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_session_for_you_http.py"
       ],
-      "started_at": "2026-11-26T10:07:41.293248+00:00",
-      "finished_at": "2026-11-26T10:07:47.119908+00:00",
+      "started_at": "2026-11-26T10:30:16.282695+00:00",
+      "finished_at": "2026-11-26T10:30:21.326572+00:00",
       "log_sha256": "c19ad336d4faa37e7da0dd5ec00166d6ae04b7390e000e066ccbd69c26341e7a"
     },
     {
@@ -2335,7 +2335,7 @@
       "harness_sha256": "753f6b898488274b2980b00bd0d97d8135d36d1266bdec4f1de0e0fb1ade4688",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 5.302,
+      "seconds": 4.686,
       "output": "verify_session_private_catalogue_http",
       "command": [
         "docker",
@@ -2344,7 +2344,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-37",
+        "djc-selected-Z4Klrx-37",
         "--network",
         "none",
         "--read-only",
@@ -2375,12 +2375,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_session_private_catalogue_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_session_private_catalogue_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_session_private_catalogue_http.py"
       ],
-      "started_at": "2026-11-26T10:07:45.471315+00:00",
-      "finished_at": "2026-11-26T10:07:50.773260+00:00",
+      "started_at": "2026-11-26T10:30:16.585876+00:00",
+      "finished_at": "2026-11-26T10:30:21.271668+00:00",
       "log_sha256": "f8f1a3e37f29c2c00017f48b70123a7bcb2ee2516bdad71cb63c4aa1bc00c35b"
     },
     {
@@ -2388,7 +2388,7 @@
       "harness_sha256": "7f75d5227e57957a21f30cb93a650f25675495affbf71460d3087a9ecaa455cf",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 5.36,
+      "seconds": 4.504,
       "output": "verify_session_speech_http",
       "command": [
         "docker",
@@ -2397,7 +2397,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-38",
+        "djc-selected-Z4Klrx-38",
         "--network",
         "none",
         "--read-only",
@@ -2428,12 +2428,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_session_speech_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_session_speech_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_session_speech_http.py"
       ],
-      "started_at": "2026-11-26T10:07:46.879039+00:00",
-      "finished_at": "2026-11-26T10:07:52.238872+00:00",
+      "started_at": "2026-11-26T10:30:16.619320+00:00",
+      "finished_at": "2026-11-26T10:30:21.123076+00:00",
       "log_sha256": "bfd7235f31e0b814f164a4b1d24a5ccf4c5d2d8e1502b02fc910f69cb706de93"
     },
     {
@@ -2441,7 +2441,7 @@
       "harness_sha256": "b0443d10afa301a87e2154c75f6c7be232ff8a42978e75a2760df49bae33b6e6",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 5.779,
+      "seconds": 4.896,
       "output": "verify_settings_confirmation_http",
       "command": [
         "docker",
@@ -2450,7 +2450,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-39",
+        "djc-selected-Z4Klrx-39",
         "--network",
         "none",
         "--read-only",
@@ -2481,12 +2481,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_settings_confirmation_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_settings_confirmation_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_settings_confirmation_http.py"
       ],
-      "started_at": "2026-11-26T10:07:47.120575+00:00",
-      "finished_at": "2026-11-26T10:07:52.899963+00:00",
+      "started_at": "2026-11-26T10:30:21.123623+00:00",
+      "finished_at": "2026-11-26T10:30:26.020091+00:00",
       "log_sha256": "412a3510e55b68bc6e78e2c90b79ad4ea048d6a6d86d18aa0e6db2cced4c2297"
     },
     {
@@ -2494,7 +2494,7 @@
       "harness_sha256": "d9d07e7b7a191daa6737ed7f7dde519e2bda2cf82d86a431292b08796523acfb",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 3.893,
+      "seconds": 3.284,
       "output": "verify_source_origin_http",
       "command": [
         "docker",
@@ -2503,7 +2503,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-40",
+        "djc-selected-Z4Klrx-40",
         "--network",
         "none",
         "--read-only",
@@ -2534,12 +2534,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_source_origin_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_source_origin_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_source_origin_http.py"
       ],
-      "started_at": "2026-11-26T10:07:50.773944+00:00",
-      "finished_at": "2026-11-26T10:07:54.667139+00:00",
+      "started_at": "2026-11-26T10:30:21.272174+00:00",
+      "finished_at": "2026-11-26T10:30:24.556600+00:00",
       "log_sha256": "8e490b4d2ff323820125245385a79f996ff7b40c6d377d3efeba2f27a6a12e8b"
     },
     {
@@ -2547,7 +2547,7 @@
       "harness_sha256": "f596843683cfc17f3efadd6fa3067fc91cd5e05bf79d89a9ccfc3bf4bab19c95",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 2.62,
+      "seconds": 2.33,
       "output": "verify_spotify_scope_evidence_http",
       "command": [
         "docker",
@@ -2556,7 +2556,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-41",
+        "djc-selected-Z4Klrx-41",
         "--network",
         "none",
         "--read-only",
@@ -2587,12 +2587,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_spotify_scope_evidence_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_spotify_scope_evidence_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_spotify_scope_evidence_http.py"
       ],
-      "started_at": "2026-11-26T10:07:52.239547+00:00",
-      "finished_at": "2026-11-26T10:07:54.859847+00:00",
+      "started_at": "2026-11-26T10:30:21.327108+00:00",
+      "finished_at": "2026-11-26T10:30:23.657446+00:00",
       "log_sha256": "1a69bfa1e93c20150f8aa91724a21794992c93584501315cd184c9bf9197c07c"
     },
     {
@@ -2600,7 +2600,7 @@
       "harness_sha256": "130d0b8e18626c60929da516e24923e5e612d813ef0f0156509414702f041fc7",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 5.906,
+      "seconds": 4.697,
       "output": "verify_spotify_volume_action_http",
       "command": [
         "docker",
@@ -2609,7 +2609,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-42",
+        "djc-selected-Z4Klrx-42",
         "--network",
         "none",
         "--read-only",
@@ -2640,12 +2640,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_spotify_volume_action_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_spotify_volume_action_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_spotify_volume_action_http.py"
       ],
-      "started_at": "2026-11-26T10:07:52.900630+00:00",
-      "finished_at": "2026-11-26T10:07:58.806525+00:00",
+      "started_at": "2026-11-26T10:30:23.657981+00:00",
+      "finished_at": "2026-11-26T10:30:28.354858+00:00",
       "log_sha256": "80043855961e2826cb7261d8fdde51d832bcc62a0acd6a6ddb8358c833805a86"
     },
     {
@@ -2653,7 +2653,7 @@
       "harness_sha256": "304502846d817893c7d1486ed67db56070393e5c7c3846569e177de1c1a79a1d",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 68.037,
+      "seconds": 66.815,
       "output": "verify_surface_widget_adoption_v3",
       "command": [
         "docker",
@@ -2662,7 +2662,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-43",
+        "djc-selected-Z4Klrx-43",
         "--network",
         "none",
         "--read-only",
@@ -2693,12 +2693,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_surface_widget_adoption_v3,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_surface_widget_adoption_v3,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_surface_widget_adoption_v3.py"
       ],
-      "started_at": "2026-11-26T10:07:54.667846+00:00",
-      "finished_at": "2026-11-26T10:09:02.704381+00:00",
+      "started_at": "2026-11-26T10:30:24.557089+00:00",
+      "finished_at": "2026-11-26T10:31:31.371734+00:00",
       "log_sha256": "9ae3aa60973e13da805f8c79b620d26f8b6ee4eb975118925d55ef24341ceb88"
     },
     {
@@ -2706,7 +2706,7 @@
       "harness_sha256": "4664d05119c4c948e539a035f22d7df285e32840e8556152f20668a7a6cb8474",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 6.123,
+      "seconds": 5.1,
       "output": "verify_vibescape_http",
       "command": [
         "docker",
@@ -2715,7 +2715,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-44",
+        "djc-selected-Z4Klrx-44",
         "--network",
         "none",
         "--read-only",
@@ -2746,12 +2746,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_vibescape_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_vibescape_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_vibescape_http.py"
       ],
-      "started_at": "2026-11-26T10:07:54.860751+00:00",
-      "finished_at": "2026-11-26T10:08:00.983465+00:00",
+      "started_at": "2026-11-26T10:30:26.020625+00:00",
+      "finished_at": "2026-11-26T10:30:31.120413+00:00",
       "log_sha256": "ea5a47f549f20d64ade66c80345190271842e300724a6be5feab6d9b377f2bb6"
     },
     {
@@ -2759,7 +2759,7 @@
       "harness_sha256": "2937977a48b28cb5d3f8adc485c4ded1039464b4a793955ef10f8b82db0249e9",
       "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
       "exit_code": 0,
-      "seconds": 5.244,
+      "seconds": 4.956,
       "output": "verify_live_impression_http",
       "command": [
         "docker",
@@ -2768,7 +2768,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-45",
+        "djc-selected-Z4Klrx-45",
         "--network",
         "none",
         "--read-only",
@@ -2799,12 +2799,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_live_impression_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_live_impression_http,target=/lab",
         "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
         "/candidate/scripts/verification/verify_live_impression_http.py"
       ],
-      "started_at": "2026-11-26T10:07:58.807228+00:00",
-      "finished_at": "2026-11-26T10:08:04.050880+00:00",
+      "started_at": "2026-11-26T10:30:28.355420+00:00",
+      "finished_at": "2026-11-26T10:30:33.311725+00:00",
       "log_sha256": "3e894b02dcc6915077a9ea09ceee2b19b5d96e46706be80fc2557e69269bd21e"
     },
     {
@@ -2812,7 +2812,7 @@
       "harness_sha256": "7bd1508824b0d4bdadade97f68a466e14c3d244c30902b22ac89ecc60e3f64cc",
       "image": "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
       "exit_code": 0,
-      "seconds": 4.282,
+      "seconds": 4.708,
       "output": "verify_requested_moments_http",
       "command": [
         "docker",
@@ -2821,7 +2821,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-46",
+        "djc-selected-Z4Klrx-46",
         "--network",
         "none",
         "--read-only",
@@ -2852,12 +2852,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_requested_moments_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_requested_moments_http,target=/lab",
         "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
         "/candidate/scripts/verification/verify_requested_moments_http.py"
       ],
-      "started_at": "2026-11-26T10:08:00.984173+00:00",
-      "finished_at": "2026-11-26T10:08:05.266047+00:00",
+      "started_at": "2026-11-26T10:30:31.120985+00:00",
+      "finished_at": "2026-11-26T10:30:35.829481+00:00",
       "log_sha256": "1f75ff396f654d548688737ea9df6e350058c62640153900e6355ee23156c72a"
     },
     {
@@ -2865,7 +2865,7 @@
       "harness_sha256": "d52aed7ea24fc5ebd876caa7e48bd3828346fa81cf9703a01323e673e053ab70",
       "image": "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
       "exit_code": 0,
-      "seconds": 4.459,
+      "seconds": 4.84,
       "output": "verify_music_origin_http",
       "command": [
         "docker",
@@ -2874,7 +2874,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-47",
+        "djc-selected-Z4Klrx-47",
         "--network",
         "none",
         "--read-only",
@@ -2905,12 +2905,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_music_origin_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_music_origin_http,target=/lab",
         "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
         "/candidate/scripts/verification/verify_music_origin_http.py"
       ],
-      "started_at": "2026-11-26T10:08:04.051501+00:00",
-      "finished_at": "2026-11-26T10:08:08.510680+00:00",
+      "started_at": "2026-11-26T10:30:33.312267+00:00",
+      "finished_at": "2026-11-26T10:30:38.151967+00:00",
       "log_sha256": "849ba2a46cac7afbdf13971deccebc0989c0f762d1f9b7bb3850f97983c7c2f1"
     },
     {
@@ -2918,7 +2918,7 @@
       "harness_sha256": "8bb367beb46bbc9bec2e89eabe51b55e9aedef6efa6314e68e3e0cf6c15ce4df",
       "image": "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
       "exit_code": 0,
-      "seconds": 15.424,
+      "seconds": 14.887,
       "output": "verify_music_canvas_http",
       "command": [
         "docker",
@@ -2927,7 +2927,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-48",
+        "djc-selected-Z4Klrx-48",
         "--network",
         "none",
         "--read-only",
@@ -2958,12 +2958,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_music_canvas_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_music_canvas_http,target=/lab",
         "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
         "/candidate/scripts/verification/verify_music_canvas_http.py"
       ],
-      "started_at": "2026-11-26T10:08:05.266822+00:00",
-      "finished_at": "2026-11-26T10:08:20.690394+00:00",
+      "started_at": "2026-11-26T10:30:35.829997+00:00",
+      "finished_at": "2026-11-26T10:30:50.716506+00:00",
       "log_sha256": "fa9ce556db13cf8ad4c1611c7df62689b00ca2df586d76671f4187220b323b56"
     },
     {
@@ -2971,7 +2971,7 @@
       "harness_sha256": "1538806305673f5df40af6e056c166f8ff0bd6f03cc72de118053c7a2881308f",
       "image": "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
       "exit_code": 0,
-      "seconds": 17.036,
+      "seconds": 16.535,
       "output": "verify_native_voice_actual_ha",
       "command": [
         "docker",
@@ -2980,7 +2980,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-49",
+        "djc-selected-Z4Klrx-49",
         "--network",
         "none",
         "--read-only",
@@ -3011,12 +3011,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_native_voice_actual_ha,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_native_voice_actual_ha,target=/lab",
         "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
         "/candidate/scripts/verification/verify_native_voice_actual_ha.py"
       ],
-      "started_at": "2026-11-26T10:08:08.511420+00:00",
-      "finished_at": "2026-11-26T10:08:25.547129+00:00",
+      "started_at": "2026-11-26T10:30:38.152710+00:00",
+      "finished_at": "2026-11-26T10:30:54.687904+00:00",
       "log_sha256": "7e44b46afabeb2d5f8f049643a0d4d258b5973ed9ffa9d82b0b11b490956b629"
     },
     {
@@ -3024,7 +3024,7 @@
       "harness_sha256": "c75b0bdbee215771646a1f178324fc76b5c4c0a399d31d519a0062c4d2ec349e",
       "image": "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
       "exit_code": 0,
-      "seconds": 4.476,
+      "seconds": 3.5,
       "output": "verify_native_voice_for_you_actual_ha",
       "command": [
         "docker",
@@ -3033,7 +3033,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-50",
+        "djc-selected-Z4Klrx-50",
         "--network",
         "none",
         "--read-only",
@@ -3064,12 +3064,12 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_native_voice_for_you_actual_ha,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_native_voice_for_you_actual_ha,target=/lab",
         "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
         "/candidate/scripts/verification/verify_native_voice_for_you_actual_ha.py"
       ],
-      "started_at": "2026-11-26T10:08:20.690966+00:00",
-      "finished_at": "2026-11-26T10:08:25.166847+00:00",
+      "started_at": "2026-11-26T10:30:50.717113+00:00",
+      "finished_at": "2026-11-26T10:30:54.216643+00:00",
       "log_sha256": "e3699850d0be292ffd3c9cb2b1028b52399aeed119b30c8d2597dcd064862ad7"
     },
     {
@@ -3077,7 +3077,7 @@
       "harness_sha256": "2c9db901a3f3b984bb1aa237ac00240ad406bc8b5157535b057259520076f4cc",
       "image": "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
       "exit_code": 0,
-      "seconds": 9.319,
+      "seconds": 8.604,
       "output": "verify_shared_guest_actual_ha",
       "command": [
         "docker",
@@ -3086,7 +3086,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-51",
+        "djc-selected-Z4Klrx-51",
         "--network",
         "none",
         "--read-only",
@@ -3117,20 +3117,20 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_shared_guest_actual_ha,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_shared_guest_actual_ha,target=/lab",
         "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
         "/candidate/scripts/verification/verify_shared_guest_actual_ha.py"
       ],
-      "started_at": "2026-11-26T10:08:25.167551+00:00",
-      "finished_at": "2026-11-26T10:08:34.486662+00:00",
-      "log_sha256": "b28c7b6c1b7a0d3f074df37737e42de9641897db4b3db0afe0d4862b30387c61"
+      "started_at": "2026-11-26T10:30:54.217338+00:00",
+      "finished_at": "2026-11-26T10:31:02.821441+00:00",
+      "log_sha256": "386679b43dfba2ba3ab192b4489ad97392b7f722f7230848bacb44ade80450be"
     },
     {
       "harness": "scripts/verification/verify_display_admission_http.py",
       "harness_sha256": "7fda98745f6246d623fd4a3b3f6255d74fd67774f16587919b042eb1df26c803",
       "image": "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
       "exit_code": 0,
-      "seconds": 3.611,
+      "seconds": 3.031,
       "output": "verify_display_admission_http",
       "command": [
         "docker",
@@ -3139,7 +3139,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-52",
+        "djc-selected-Z4Klrx-52",
         "--network",
         "none",
         "--read-only",
@@ -3170,20 +3170,20 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_display_admission_http,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_display_admission_http,target=/lab",
         "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
         "/candidate/scripts/verification/verify_display_admission_http.py"
       ],
-      "started_at": "2026-11-26T10:08:25.547676+00:00",
-      "finished_at": "2026-11-26T10:08:29.159049+00:00",
-      "log_sha256": "2fb07156f862644fe5cb61c21373d38005d65f9212577a4eeddaae70ef642e4e"
+      "started_at": "2026-11-26T10:30:54.688512+00:00",
+      "finished_at": "2026-11-26T10:30:57.719337+00:00",
+      "log_sha256": "f4c13da4f3209a37334dc3659bc7180150f51e304bb579c6c33c00528a822ea3"
     },
     {
       "harness": "scripts/verification/verify_display_http_adapter.py",
       "harness_sha256": "59252d2e6c1add369140ada7903a31f0e172b566f68eb3bc0e70425c22f725da",
       "image": "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
       "exit_code": 0,
-      "seconds": 2.121,
+      "seconds": 2.139,
       "output": "verify_display_http_adapter",
       "command": [
         "docker",
@@ -3192,7 +3192,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-53",
+        "djc-selected-Z4Klrx-53",
         "--network",
         "none",
         "--read-only",
@@ -3223,13 +3223,13 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_display_http_adapter,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_display_http_adapter,target=/lab",
         "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
         "/candidate/scripts/verification/verify_display_http_adapter.py"
       ],
-      "started_at": "2026-11-26T10:08:29.159629+00:00",
-      "finished_at": "2026-11-26T10:08:31.280456+00:00",
-      "log_sha256": "a62989da80cafc62e376b2bd9f12799eb021ea9db8c42bd6db3dda1eaabb8f09"
+      "started_at": "2026-11-26T10:30:57.719832+00:00",
+      "finished_at": "2026-11-26T10:30:59.859294+00:00",
+      "log_sha256": "cce8680b0799b5652f3ea3ddce3772b7278bff56f605d1e7dbfb395d4d83a168"
     }
   ],
   "additional_executions": [
@@ -3238,7 +3238,7 @@
       "harness_sha256": "4a1425b5fd953108cbcb679a3bcb4de3a7b6daf618f65bd802bde8db701e4a5a",
       "image": "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
       "exit_code": 0,
-      "seconds": 3.934,
+      "seconds": 3.257,
       "output": "verify_native_widget_winner_actual_ha",
       "command": [
         "docker",
@@ -3247,7 +3247,7 @@
         "--pull",
         "never",
         "--name",
-        "djc-selected-0hc7bG-54",
+        "djc-selected-Z4Klrx-54",
         "--network",
         "none",
         "--read-only",
@@ -3278,13 +3278,13 @@
         "--mount",
         "type=bind,source=<candidate>,target=/candidate,readonly",
         "--mount",
-        "type=bind,source=<candidate>/../selected-release-matrix.0hc7bG/verify_native_widget_winner_actual_ha,target=/lab",
+        "type=bind,source=<candidate>/../selected-release-lint-matrix.Z4Klrx/verify_native_widget_winner_actual_ha,target=/lab",
         "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
         "/candidate/scripts/verification/verify_native_widget_winner_actual_ha.py"
       ],
-      "started_at": "2026-11-26T10:08:31.280975+00:00",
-      "finished_at": "2026-11-26T10:08:35.215472+00:00",
-      "log_sha256": "1b5e2a3110b304098a31375a95d4bd9023da02f4a8ee7142b7ec34ba0c058065"
+      "started_at": "2026-11-26T10:30:59.859847+00:00",
+      "finished_at": "2026-11-26T10:31:03.116782+00:00",
+      "log_sha256": "cbcf1955ef74bdcea16870390bc0633a064da41ed93862e0f8ff9457f2fb65c1"
     }
   ]
 }

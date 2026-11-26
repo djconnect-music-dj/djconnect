@@ -196,7 +196,7 @@
       "custom_components/djconnect/music_canvas_adapters.py": "45badf8bc4b1c64c2d7ca162b0a966c12531faf694e0208b93b1f5021de7b6aa",
       "custom_components/djconnect/music_canvas_http.py": "8b9912f18ced60cd181b2858fa05e1fb8bbc966ac9bc5b96314ffbedce7ce388",
       "custom_components/djconnect/music_canvas_render.py": "a1494d294c52b986e9c6a8f94067e22f455a7bf52c28b5ae68195e3d38e849cb",
-      "custom_components/djconnect/music_canvas_runtime.py": "250ff12ff46a721a1d59c50f6ec89f0971452f62aaa9cc540f41b2b129cdb8ae",
+      "custom_components/djconnect/music_canvas_runtime.py": "e77662d02822ca4b14b39dec54562a5bc179ccf5b65259df982c3cd094e7b4e7",
       "custom_components/djconnect/music_discovery.py": "495358961d8ac6cd650fbc6de0b62e92f11b1c602495ea2ab45960faf1ba3cc7",
       "custom_components/djconnect/music_dna.py": "2a156af01df7ea2699808b9a93ffb9e07f0c5c79ce78a62663d623a68e9ba21e",
       "custom_components/djconnect/music_intent.py": "8b04f7b0925d288b29aadf2d70032e76c3f37b3952ad1054f54bfe0bad412960",
@@ -406,7 +406,7 @@
               "user-read-recently-played",
               "user-top-read"
             ],
-            "observed_at": "2026-11-26T10:07:54.365694+00:00",
+            "observed_at": "2026-11-26T10:30:23.226287+00:00",
             "source": "authorization_code",
             "status": "known",
             "version": 1
@@ -440,7 +440,7 @@
             "granted_scopes": [
               "user-read-playback-state"
             ],
-            "observed_at": "2026-11-26T10:07:54.371513+00:00",
+            "observed_at": "2026-11-26T10:30:23.230586+00:00",
             "source": "authorization_code",
             "status": "known",
             "version": 1
@@ -481,7 +481,7 @@
           "granted_scope_evidence": {
             "client_id_sha256": "3ba3f5f43b92602683c19aee62a20342b084dd5971ddd33808d81a328879a547",
             "granted_scopes": null,
-            "observed_at": "2026-11-26T10:07:54.375822+00:00",
+            "observed_at": "2026-11-26T10:30:23.234031+00:00",
             "source": "authorization_code",
             "status": "unknown",
             "version": 1
@@ -511,7 +511,7 @@
           "granted_scope_evidence": {
             "client_id_sha256": "3ba3f5f43b92602683c19aee62a20342b084dd5971ddd33808d81a328879a547",
             "granted_scopes": null,
-            "observed_at": "2026-11-26T10:07:54.379388+00:00",
+            "observed_at": "2026-11-26T10:30:23.237766+00:00",
             "source": "authorization_code",
             "status": "unknown",
             "version": 1
@@ -541,7 +541,7 @@
           "granted_scope_evidence": {
             "client_id_sha256": "3ba3f5f43b92602683c19aee62a20342b084dd5971ddd33808d81a328879a547",
             "granted_scopes": [],
-            "observed_at": "2026-11-26T10:07:54.383485+00:00",
+            "observed_at": "2026-11-26T10:30:23.242823+00:00",
             "source": "authorization_code",
             "status": "known",
             "version": 1
@@ -583,7 +583,7 @@
           "granted_scope_evidence": {
             "client_id_sha256": "3ba3f5f43b92602683c19aee62a20342b084dd5971ddd33808d81a328879a547",
             "granted_scopes": null,
-            "observed_at": "2026-11-26T10:07:54.394080+00:00",
+            "observed_at": "2026-11-26T10:30:23.249375+00:00",
             "source": "authorization_code",
             "status": "unknown",
             "version": 1
@@ -626,7 +626,7 @@
             "version": 1,
             "status": "known",
             "source": "authorization_code",
-            "observed_at": "2026-11-26T10:07:54.424044+00:00",
+            "observed_at": "2026-11-26T10:30:23.277631+00:00",
             "client_id_sha256": "3ba3f5f43b92602683c19aee62a20342b084dd5971ddd33808d81a328879a547",
             "granted_scopes": [
               "user-read-playback-state",
@@ -668,7 +668,7 @@
             "version": 1,
             "status": "unknown",
             "source": "authorization_code",
-            "observed_at": "2026-11-26T10:07:54.425370+00:00",
+            "observed_at": "2026-11-26T10:30:23.278347+00:00",
             "client_id_sha256": "3ba3f5f43b92602683c19aee62a20342b084dd5971ddd33808d81a328879a547",
             "granted_scopes": null
           },
@@ -700,7 +700,7 @@
             "version": 1,
             "status": "known",
             "source": "refresh_token",
-            "observed_at": "2026-11-26T10:07:54.426118+00:00",
+            "observed_at": "2026-11-26T10:30:23.278879+00:00",
             "client_id_sha256": "3ba3f5f43b92602683c19aee62a20342b084dd5971ddd33808d81a328879a547",
             "granted_scopes": [
               "user-read-playback-state"
@@ -745,7 +745,7 @@
             "version": 1,
             "status": "known",
             "source": "refresh_token",
-            "observed_at": "2026-11-26T10:07:54.426118+00:00",
+            "observed_at": "2026-11-26T10:30:23.278879+00:00",
             "client_id_sha256": "3ba3f5f43b92602683c19aee62a20342b084dd5971ddd33808d81a328879a547",
             "granted_scopes": [
               "user-read-playback-state"
@@ -800,7 +800,7 @@
             "version": 1,
             "status": "known",
             "source": "refresh_token",
-            "observed_at": "2026-11-26T10:07:54.430560+00:00",
+            "observed_at": "2026-11-26T10:30:23.282729+00:00",
             "client_id_sha256": "3ba3f5f43b92602683c19aee62a20342b084dd5971ddd33808d81a328879a547",
             "granted_scopes": [
               "user-read-playback-state",
@@ -1022,7 +1022,7 @@
     "custom_components/djconnect/music_canvas_assets/SourceSerif4-Semibold.ttf": "8b16c167eda4efc1d3fceda28eeeedb673e770330ea82521fc699e08c4cd4391",
     "custom_components/djconnect/music_canvas_http.py": "8b9912f18ced60cd181b2858fa05e1fb8bbc966ac9bc5b96314ffbedce7ce388",
     "custom_components/djconnect/music_canvas_render.py": "a1494d294c52b986e9c6a8f94067e22f455a7bf52c28b5ae68195e3d38e849cb",
-    "custom_components/djconnect/music_canvas_runtime.py": "250ff12ff46a721a1d59c50f6ec89f0971452f62aaa9cc540f41b2b129cdb8ae",
+    "custom_components/djconnect/music_canvas_runtime.py": "e77662d02822ca4b14b39dec54562a5bc179ccf5b65259df982c3cd094e7b4e7",
     "custom_components/djconnect/music_discovery.py": "495358961d8ac6cd650fbc6de0b62e92f11b1c602495ea2ab45960faf1ba3cc7",
     "custom_components/djconnect/music_dna.py": "2a156af01df7ea2699808b9a93ffb9e07f0c5c79ce78a62663d623a68e9ba21e",
     "custom_components/djconnect/music_intent.py": "8b04f7b0925d288b29aadf2d70032e76c3f37b3952ad1054f54bfe0bad412960",
@@ -1197,7 +1197,7 @@
     "harness": "scripts/verification/verify_spotify_scope_evidence_http.py",
     "harness_sha256": "f596843683cfc17f3efadd6fa3067fc91cd5e05bf79d89a9ccfc3bf4bab19c95",
     "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
-    "raw_receipt_sha256": "c41a9bf5d059c8ae94962a2eafba44be17955eefed73ef0674a46f15ddb92153",
+    "raw_receipt_sha256": "f3e46c1f91e132b641daaf69a33a20aacab5c055a3a95a56f5549fa6d02de3da",
     "run_log_sha256": "1a69bfa1e93c20150f8aa91724a21794992c93584501315cd184c9bf9197c07c",
     "source_before_after_equal": true,
     "scope": "ACTUAL_ISOLATED_HA_WITH_DECLARED_SYNTHETIC_INPUTS; NO_INSTALLED_NATIVE_PROVIDER_EDITORIAL_ACCEPTANCE"

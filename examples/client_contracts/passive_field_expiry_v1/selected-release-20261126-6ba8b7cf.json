@@ -9,7 +9,7 @@
     "same_binding": true,
     "same_generation": true,
     "same_delivery_sequence": true,
-    "waited_real_seconds": 24.759107637405396,
+    "waited_real_seconds": 24.89608578681946,
     "no_new_backend_observation": true,
     "changed_fields": [
       "as_of",
@@ -23,17 +23,17 @@
     "before": {
       "success": true,
       "contract_version": 1,
-      "grant_id": "PWRuIBmigi70-S6fekvhcFfEnBinlG6b",
+      "grant_id": "RjBnL9V01iJZ6YvKd8TgtX9gU1K-hGpm",
       "passive_session": {
         "schema_version": 3,
         "surface": "widget",
-        "binding_id": "bf07670b82424b1745e010a37c002d7f",
-        "generation": "2d3e581cddab81f78a833eef423c0606",
-        "session_id": "session-eb4db6b56236445da9ee251c5a9d9051",
+        "binding_id": "79f3c82060f3e38fee6a1b476b8d17dc",
+        "generation": "908dddb9b7904dd806982c97ffc6082f",
+        "session_id": "session-fcad65d409eb49cdab3ae0888dc33e9c",
         "delivery_sequence": 13,
-        "as_of": "2026-11-26T10:07:16.026876+00:00",
-        "observed_at": "2026-11-26T10:07:16.025249+00:00",
-        "expires_at": "2026-11-26T10:09:16.025249+00:00",
+        "as_of": "2026-11-26T10:29:51.267522+00:00",
+        "observed_at": "2026-11-26T10:29:51.266018+00:00",
+        "expires_at": "2026-11-26T10:31:51.266018+00:00",
         "state": "active",
         "playback_state": "idle",
         "cache_policy": {
@@ -51,17 +51,17 @@
         "persona": "home_dj",
         "navigation": {
           "kind": "open_session",
-          "session_id": "session-eb4db6b56236445da9ee251c5a9d9051"
+          "session_id": "session-fcad65d409eb49cdab3ae0888dc33e9c"
         },
-        "revision": "10af10569beafc91a3b164c0622e5d08",
+        "revision": "1534abab538552a7bb33566d395160af",
         "contribution": {
-          "moment_id": "moment-1f0b773b3709bad5afddde192a997565",
-          "published_at": "2026-11-26T10:07:15.736178+00:00",
+          "moment_id": "moment-fc9896bce625a873893d7d32cdc9229a",
+          "published_at": "2026-11-26T10:29:51.113850+00:00",
           "text": "Welkom, fijn dat je er bent! Ik ben je Home DJ: warm en nieuwsgierig gezelschap. Met Groove houd ik mijn bijdragen ontspannen en vloeiend. Je koos Gebalanceerd: ik wissel bijdragen af met ruimte voor de muziek. Veel luisterplezier!",
           "persona": "home_dj",
           "source_attribution": {},
           "usage_basis": "runtime_authored_direction",
-          "expires_at": "2026-11-26T10:07:40.736178+00:00",
+          "expires_at": "2026-11-26T10:30:16.113850+00:00",
           "rights": {
             "passive_cache": true,
             "os_snapshot": true,
@@ -88,17 +88,17 @@
     "after": {
       "success": true,
       "contract_version": 1,
-      "grant_id": "PWRuIBmigi70-S6fekvhcFfEnBinlG6b",
+      "grant_id": "RjBnL9V01iJZ6YvKd8TgtX9gU1K-hGpm",
       "passive_session": {
         "schema_version": 3,
         "surface": "widget",
-        "binding_id": "bf07670b82424b1745e010a37c002d7f",
-        "generation": "2d3e581cddab81f78a833eef423c0606",
-        "session_id": "session-eb4db6b56236445da9ee251c5a9d9051",
+        "binding_id": "79f3c82060f3e38fee6a1b476b8d17dc",
+        "generation": "908dddb9b7904dd806982c97ffc6082f",
+        "session_id": "session-fcad65d409eb49cdab3ae0888dc33e9c",
         "delivery_sequence": 13,
-        "as_of": "2026-11-26T10:07:40.807672+00:00",
-        "observed_at": "2026-11-26T10:07:16.025249+00:00",
-        "expires_at": "2026-11-26T10:09:16.025249+00:00",
+        "as_of": "2026-11-26T10:30:16.178603+00:00",
+        "observed_at": "2026-11-26T10:29:51.266018+00:00",
+        "expires_at": "2026-11-26T10:31:51.266018+00:00",
         "state": "active",
         "playback_state": "idle",
         "cache_policy": {
@@ -116,9 +116,9 @@
         "persona": "home_dj",
         "navigation": {
           "kind": "open_session",
-          "session_id": "session-eb4db6b56236445da9ee251c5a9d9051"
+          "session_id": "session-fcad65d409eb49cdab3ae0888dc33e9c"
         },
-        "revision": "10af10569beafc91a3b164c0622e5d08",
+        "revision": "1534abab538552a7bb33566d395160af",
         "contribution": null,
         "now_playing": null,
         "artwork": [],
@@ -164,7 +164,7 @@
       "custom_components/djconnect/request_auth.py": "f7fab1417869e350bcfd28e23bc48d6de34d53c22550c952f8e1490a0574c031",
       "custom_components/djconnect/icon.png": "4e91b019e423f8dd03b87aefc2e2fef04ecc6645f48f5bb8c431f94d2018da3e",
       "custom_components/djconnect/guest_admission.py": "7f2c56a636f06c4197a670a804f3697cc6abd3396bf532609d94480d0d891ee3",
-      "custom_components/djconnect/music_canvas_runtime.py": "250ff12ff46a721a1d59c50f6ec89f0971452f62aaa9cc540f41b2b129cdb8ae",
+      "custom_components/djconnect/music_canvas_runtime.py": "e77662d02822ca4b14b39dec54562a5bc179ccf5b65259df982c3cd094e7b4e7",
       "custom_components/djconnect/client_retirement.py": "42bb54178f5c1655e600b21a6ccc954811d37e2a1f91f5318f7b97da6d69bca3",
       "custom_components/djconnect/native_widget_consent.py": "72bac2d9a8d96a8558133401fb1f85f572e349c4b8ad1c53f4089586a8581e72",
       "custom_components/djconnect/display_projection.py": "c02fc4149ad3f08d7be2b0ecd9067e355b42ab7cbfd2a2ca079a379e5a4c7778",
@@ -704,7 +704,7 @@
     "custom_components/djconnect/music_canvas_assets/SourceSerif4-Semibold.ttf": "8b16c167eda4efc1d3fceda28eeeedb673e770330ea82521fc699e08c4cd4391",
     "custom_components/djconnect/music_canvas_http.py": "8b9912f18ced60cd181b2858fa05e1fb8bbc966ac9bc5b96314ffbedce7ce388",
     "custom_components/djconnect/music_canvas_render.py": "a1494d294c52b986e9c6a8f94067e22f455a7bf52c28b5ae68195e3d38e849cb",
-    "custom_components/djconnect/music_canvas_runtime.py": "250ff12ff46a721a1d59c50f6ec89f0971452f62aaa9cc540f41b2b129cdb8ae",
+    "custom_components/djconnect/music_canvas_runtime.py": "e77662d02822ca4b14b39dec54562a5bc179ccf5b65259df982c3cd094e7b4e7",
     "custom_components/djconnect/music_discovery.py": "495358961d8ac6cd650fbc6de0b62e92f11b1c602495ea2ab45960faf1ba3cc7",
     "custom_components/djconnect/music_dna.py": "2a156af01df7ea2699808b9a93ffb9e07f0c5c79ce78a62663d623a68e9ba21e",
     "custom_components/djconnect/music_intent.py": "8b04f7b0925d288b29aadf2d70032e76c3f37b3952ad1054f54bfe0bad412960",
@@ -879,8 +879,8 @@
     "harness": "scripts/verification/verify_passive_field_expiry_http.py",
     "harness_sha256": "52be88c51b899800f0a8b4d9cd45008720e27d379f807ae3178a9cb5a94967cf",
     "image": "sha256:1b64d38f38d922bf9d59336451fd6453e1d614f934456af4ee3d2a51061be3a4",
-    "raw_receipt_sha256": "630170af4c3f731b3e39808a1dec381d415add50fb97a81a5c1dd270b3419ae9",
-    "run_log_sha256": "77428c06c690373f69dbbf6e2863db4c88a0349cd9861b5bd54bb1688ff0df55",
+    "raw_receipt_sha256": "387e651bf3143eb3273916dfe6e2e32e1ac9ec740c2e84ff511f9a2456c581a7",
+    "run_log_sha256": "a416d572f289fdcb231543174a4a20fbfcc209c37b12e083e82bf656089c8de6",
     "source_before_after_equal": true,
     "scope": "ACTUAL_ISOLATED_HA_WITH_DECLARED_SYNTHETIC_INPUTS; NO_INSTALLED_NATIVE_PROVIDER_EDITORIAL_ACCEPTANCE"
   }
