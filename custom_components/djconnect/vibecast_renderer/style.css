@@ -55,6 +55,23 @@ header { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); g
 #vibescape-scene { position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none }
 #vibescape-scene[hidden],#live-guest-count[hidden] { display:none }
 .vibescape-mode .session-panels { display:none }
+/* Feather contrast around the text without filtering the moving canvas. */
+@media (forced-colors:none) {
+  .vibescape-mode.shared-flow-live .stage { overflow:visible }
+  .vibescape-mode :is(header,.now-playing,.renderer-footer) {
+    text-shadow:0 1px 3px #050812df, 0 0 .55em #050812c4;
+  }
+  .vibescape-mode :is(.header-clock,.now-playing .track,.now-playing > .artist,.now-playing > .album-name) {
+    position:relative; z-index:0; inline-size:fit-content; max-inline-size:100%;
+  }
+  .vibescape-mode :is(.header-clock,#time,#artist,#album) { color:#fff }
+  .vibescape-mode #clock-date { opacity:.94 }
+  .vibescape-mode :is(.header-clock,.now-playing .track,.now-playing > .artist,.now-playing > .album-name):not([hidden]):not(:empty)::before {
+    content:""; position:absolute; z-index:-1; pointer-events:none;
+    inset:-.65em -1.8em;
+    background:radial-gradient(ellipse closest-side,#05081288 0%,#05081268 52%,#05081200 100%);
+  }
+}
 #live-guest-count { white-space:nowrap; font-size:clamp(.85rem,1.7vw,1.2rem); letter-spacing:normal }
 .live-guest-icon { display:inline-block; margin-inline-end:.35em; filter:brightness(0) invert(1) }
 .guest-participation[hidden] { display:none }
