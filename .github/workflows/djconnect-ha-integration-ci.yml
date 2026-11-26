@@ -67,7 +67,7 @@ jobs:
     name: Software Assurance governance
     permissions:
       contents: read
-    uses: djconnect-music-dj/djconnect-shared-workflows/.github/workflows/software-assurance-governance-5f12.yml@4025a68add8ba98f1f2e0307d7f3998e45c0d9ef
+    uses: djconnect-music-dj/djconnect-shared-workflows/.github/workflows/software-assurance-governance-5f12.yml@6e23f410e573343bea44bba58800ecde2059ebab
     with:
       execution_profile: balanced
       owner: djconnect-music-dj/djconnect
@@ -170,7 +170,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v5
-      - uses: home-assistant/actions/hassfest@86d4564712fa02543c808e3a693dd04f9d3f8361 # master governed exception
+      - uses: home-assistant/actions/hassfest@9e9565e68f5a70d874202871f4c4064d23814235 # master governed exception
 
   hacs:
     if: inputs.run-hacs
