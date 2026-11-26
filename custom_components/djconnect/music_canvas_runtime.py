@@ -30,7 +30,8 @@ class CanvasRuntime:
         self.asset_lock = asyncio.Lock()
         self.cadence = Cadence()
         self.jobs = {}
-        self.mood_refreshes = {}
+        self.refreshes = {}
+        self.screen_setting_revisions = {}
         self.states = {}
         self.leases = {}
         self.claims = {}
@@ -57,14 +58,14 @@ class CanvasRuntime:
     def stop(self, _event=None):
         self.stopped = True
         self.unsubscribe()
-        for task in (*self.jobs.values(), *self.mood_refreshes.values()):
+        for task in (*self.jobs.values(), *self.refreshes.values()):
             task.cancel()
         self.leases.clear()
 
     async def shutdown(self):
         """Drain work before its persistence owner is closed on final unload."""
         self.stop()
-        await asyncio.gather(*self.jobs.values(), *self.mood_refreshes.values(), return_exceptions=True)
+        await asyncio.gather(*self.jobs.values(), *self.refreshes.values(), return_exceptions=True)
         async with self.lock, self.effect_lock:
             pass
 
@@ -87,15 +88,15 @@ class CanvasRuntime:
                     observed = "busy"
                 else:
                     observed = self.states.get(key, device["state"])
-            preview = device.get("preview") if key in selected and device.get("preview_owner") == owner \
-                and not device.get("forgetting") else None
+            preview = (device.get("preview") if key in selected and device.get("preview_owner") == owner
+                       and not device.get("forgetting") else None)
             devices.append({
                 "id": key, "name": device["name"], "adapter": device["adapter"],
                 "state": observed,
                 "screen": device["screen"], "remote_cleanup": device["adapter"] == "samsung"
                     and device.get("cleanup_supported") is True,
                 "preview_available": bool(preview),
-                "preview_revision": digest(preview) if preview else None,
+                "preview_revision": digest([owner, key, preview]) if preview else None,
                 "shared_profiles": sum(key in x["preferences"]["selected_targets"] for x in state["profiles"].values()),
                 "forgetting": device.get("forgetting") is True,
             })
@@ -105,21 +106,41 @@ class CanvasRuntime:
     async def update(self, owner, binding, data, authorize):
         async with self.lock, self.effect_lock:
             def apply(state):
-                revision = profile(state, owner)["revision"]
+                before = profile(state, owner)
                 result = apply_update(state, owner, binding, data, time.time())
-                return result, profile(state, owner)["revision"] != revision
+                changed = profile(state, owner)["revision"] != before["revision"]
+                affected = set()
+                if changed:
+                    old, new = before["preferences"], result["preferences"]
+                    for target in new["selected_targets"]:
+                        if target not in old["selected_targets"]:
+                            continue
+                        device = state["devices"][target]
+                        if (screen_presentation(old, target, device) != screen_presentation(new, target, device)
+                                or screen_cadence(old, target) != screen_cadence(new, target)):
+                            affected.add(target)
+                return result, changed, affected
 
-            result, changed = await self.repository.mutate(apply, authorize)
+            result, changed, affected = await self.repository.mutate(apply, authorize)
             if not changed:
                 return result
             self.revisions[owner] = result["revision"]
+            revisions = self.screen_setting_revisions.setdefault(owner, {})
+            for target in revisions.keys() - set(result["preferences"]["selected_targets"]):
+                revisions.pop(target)
+            for target in affected:
+                revisions[target] = result["revision"]
+                if self.claims.get(target, owner) == owner:
+                    self.next_probe.pop(target, None)
             for target, claimant in tuple(self.claims.items()):
                 if claimant == owner:
                     self.revoke(target)
             # Revisions fence in-flight work immediately; no execute retry.
             task = self.jobs.get(owner)
-            if task:
+            if task and not task.done() and not task.cancelling():
                 task.cancel()
+            if affected and result["preferences"]["enabled"]:
+                self.schedule_refresh(owner)
             return result
 
     async def operation(self, owner, binding, operation, authorize):
@@ -264,6 +285,7 @@ class CanvasRuntime:
     async def purge_owner(self, owner):
         async with self.lock, self.effect_lock:
             self.revisions[owner] = -1
+            self.screen_setting_revisions.pop(owner, None)
             task = self.jobs.get(owner)
             if task:
                 task.cancel()
@@ -276,7 +298,7 @@ class CanvasRuntime:
                 state["operations"] = {k: v for k, v in state["operations"].items() if v.get("owner") != owner}
                 for device in state["devices"].values():
                     if device.get("preview_owner") == owner:
-                        for key in ("preview", "preview_owner", "source_image", "presentation", "preview_matte_size", "provenance"):
+                        for key in ("preview", "preview_owner", "source_image", "source_context", "preview_matte_size", "presentation", "provenance"):
                             device.pop(key, None)
             await self.repository.mutate(purge, lambda: not self.stopped)
             await self.cleanup_assets()
@@ -318,19 +340,23 @@ class CanvasRuntime:
             return
         # A cloud frame that has not fetched the superseded image must use the new one.
         self.leases = {key: lease for key, lease in self.leases.items() if lease["owner"] != owner}
-        if owner not in self.mood_refreshes:
-            self.mood_refreshes[owner] = self.hass.async_create_task(
-                self.refresh_mood(owner), eager_start=False)
+        self.schedule_refresh(owner)
 
-    async def refresh_mood(self, owner):
+    def schedule_refresh(self, owner):
+        if not self.stopped and owner not in self.refreshes:
+            self.refreshes[owner] = self.hass.async_create_task(
+                self.refresh_owner(owner), eager_start=False)
+
+    async def refresh_owner(self, owner):
         try:
             job = self.jobs.get(owner)
             if job is not None and not job.done():
-                job.cancel()
+                if not job.cancelling():
+                    job.cancel()
                 await asyncio.gather(job, return_exceptions=True)
             await self.tick(refresh_owner=owner)
         finally:
-            self.mood_refreshes.pop(owner, None)
+            self.refreshes.pop(owner, None)
 
     async def tick(self, _now=None, *, refresh_owner=None):
         if self.stopped or (refresh_owner is None and self.lock.locked()):
@@ -369,7 +395,7 @@ class CanvasRuntime:
                 if refresh_owner is not None:
                     if owner != refresh_owner:
                         continue
-                elif owner in self.mood_refreshes:
+                elif owner in self.refreshes:
                     continue
                 self.revisions[owner] = config["revision"]
                 active = manager.current_active(owner) if manager else None
@@ -492,16 +518,18 @@ class CanvasRuntime:
             presentation = screen_presentation(prefs, target, device)
             matte_size = screen_matte_size(prefs, target, presentation[1])
             cadence = screen_cadence(prefs, target)
-            previous_presentation = device.get("presentation")
-            if isinstance(previous_presentation, list) and len(previous_presentation) == 2:
-                previous_presentation = [*previous_presentation, False]
-            cached = device.get("source_image") if (device.get("preview_owner") == owner
-                and (device.get("provenance") or {}).get("source_track") == source_track
-                and (previous_presentation != list(presentation)
-                     or device.get("preview_matte_size", DEFAULT_MATTE_SIZE) != matte_size)
-                 and not self.cadence.mood_changed(key, mood_revision)) else None
-            if not cached and not self.cadence.due(key, occurrence, cadence, time.monotonic(), mood_revision):
+            settings_revision = self.screen_setting_revisions.get(owner, {}).get(target, 0)
+            if not self.cadence.due(key, occurrence, cadence, time.monotonic(), mood_revision, settings_revision):
                 continue
+            previous_source = device.get("source_context") or {}
+            cached = device.get("source_image") if (
+                self.cadence.settings_changed(key, settings_revision)
+                and not self.cadence.mood_changed(key, mood_revision)
+                and device.get("preview_owner") == owner
+                and previous_source.get("session_id") == active.session_id
+                and previous_source.get("mood_revision") == mood_revision
+                and previous_source.get("track_title")) else None
+            art_title = previous_source["track_title"] if cached else playback.title
             if device["adapter"] == "samsung":
                 if self.next_probe.get(target, 0) > time.monotonic():
                     continue
@@ -525,30 +553,29 @@ class CanvasRuntime:
                     self.states[target] = exc.code if isinstance(exc, CanvasError) else "unavailable"
                     continue
             self.claims[target] = owner
-            groups.setdefault((screen["width"], screen["height"], cached, cadence == "track", presentation, matte_size),
-                              []).append((target, device, key))
+            groups.setdefault((screen["width"], screen["height"], cached, cadence == "track", presentation,
+                               art_title, matte_size), []).append((target, device, key, settings_revision))
         if not groups:
             return
 
         pending_attempts = {}
         generated = {}
         try:
-            for (width, height, cached, per_track, presentation, matte_size), targets in groups.items():
+            for (width, height, cached, per_track, presentation, art_title, matte_size), targets in groups.items():
                 composition, matte, show_title = presentation
                 def current_scope():
                     return scope_current(per_track)
                 need(current_scope(), "canvas_context_changed", 409)
                 if not cached and not render.generation_available(self.hass):
-                    for target, _, _ in targets:
+                    for target, _, _, _ in targets:
                         self.states[target] = "image_provider_required"
                     continue
-                for target, _, key in targets:
+                for target, _, key, settings_revision in targets:
                     self.states[target] = "preparing"
-                    # At most one attempt per cadence, including unknown provider outcome.
-                    if not cached:
-                        attempt = (occurrence, time.monotonic(), mood_revision)
-                        pending_attempts[key] = attempt
-                        self.cadence.mark(key, *attempt)
+                    # At most one attempt per cadence or accepted change, including an unknown outcome.
+                    attempt = (occurrence, time.monotonic(), mood_revision, settings_revision)
+                    pending_attempts[key] = attempt
+                    self.cadence.mark(key, *attempt)
                 generation_key = (width, height, per_track, composition)
                 if cached:
                     raw = await self.hass.async_add_executor_job((self.asset_root/cached).read_bytes)
@@ -569,9 +596,10 @@ class CanvasRuntime:
                 need(current_scope(), "canvas_context_changed", 409)
                 art = await self.hass.async_add_executor_job(
                     render.compose, raw, width, height, composition, matte,
-                    playback.title if show_title else None, matte_size)
+                    art_title if show_title else None, matte_size)
                 filename = hashlib.sha256(art).hexdigest()+".jpg"
                 source_file = cached or hashlib.sha256(raw).hexdigest()+".jpg"
+                artwork_source = {"session_id": active.session_id, "mood_revision": mood_revision, "track_title": art_title}
                 self.inflight_files.add(filename)
                 self.inflight_files.add(source_file)
                 def save():
@@ -587,13 +615,14 @@ class CanvasRuntime:
                 try:
                     async with self.asset_lock:
                         await self.protocol(save)
-                    for target, device, key in targets:
+                    for target, device, key, _ in targets:
                         # Once delivery starts it may have had a physical effect,
                         # even if the acknowledgement or profile is withdrawn.
                         pending_attempts.pop(key, None)
                         try:
                             await self.deliver(owner, config, active, target, device, filename, art, current_scope,
-                                               source_file, source_track=source_track)
+                                               source_file, artwork_source=artwork_source,
+                                               source_track=(device.get("provenance") or {}).get("source_track") if cached else source_track)
                         except CanvasError as exc:
                             self.states[target] = exc.code
                         except Exception:
@@ -607,7 +636,7 @@ class CanvasRuntime:
             raise
         except Exception as exc:
             for targets in groups.values():
-                for target, _, _ in targets:
+                for target, _, _, _ in targets:
                     self.states[target] = exc.code if isinstance(exc, CanvasError) else "unavailable"
         finally:
             if self.revisions.get(owner) != config["revision"]:
@@ -653,7 +682,7 @@ class CanvasRuntime:
         return await self.await_effect_completion(asyncio.create_task(cleanup_and_record()))
 
     async def deliver(self, owner, config, active, target, device, filename, art, scope_current, source_file,
-                      *, source_track=None):
+                      *, artwork_source=None, source_track=None):
         async with self.effect_lock:
             current = await self.repository.read()
             def authorized():
@@ -715,6 +744,7 @@ class CanvasRuntime:
                 row["preview"] = filename
                 row["preview_owner"] = owner
                 row["source_image"] = source_file
+                row["source_context"] = artwork_source
                 presentation = screen_presentation(config["preferences"], target, device)
                 row["presentation"] = list(presentation)
                 row["preview_matte_size"] = screen_matte_size(config["preferences"], target, presentation[1])

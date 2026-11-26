@@ -144,9 +144,9 @@ class CanvasMoodRefreshTests(unittest.IsolatedAsyncioTestCase):
                  patch.object(canvas.render, "generate", image_provider), \
                  patch.object(canvas.render, "compose", side_effect=lambda raw, *_: raw):
                 runtime.session_mood_changed(owner)
-                refresh = runtime.mood_refreshes[owner]
+                refresh = runtime.refreshes[owner]
                 runtime.session_mood_changed(owner)
-                self.assertIs(refresh, runtime.mood_refreshes[owner])
+                self.assertIs(refresh, runtime.refreshes[owner])
                 await refresh
                 await runtime.jobs[owner]
                 self.assertTrue(stale.cancelled())
@@ -659,12 +659,12 @@ class CanvasDomainTests(unittest.TestCase):
         import hashlib
         import json
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/mood-refresh-20261126-actual-ha.json").read_text())
+        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/screen-settings-refresh-20261126-actual-ha.json").read_text())
         self.assertEqual(len(proof["source_pins"]), 361)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), expected, name)
         self.assertTrue(proof["source_before_after_equal"])
-        matrix = json.loads((root/"docs/verification/music-canvas-mood-actual-ha-matrix-20261126.json").read_text())
+        matrix = json.loads((root/"docs/verification/music-canvas-screen-settings-actual-ha-matrix-20261126.json").read_text())
         self.assertEqual(matrix["source_pins"], proof["source_pins"])
         self.assertTrue(matrix["source_before_after_equal"])
         self.assertEqual(len(matrix["results"]), 54)
@@ -693,7 +693,10 @@ class CanvasDomainTests(unittest.TestCase):
                       "preserve_reload_retains_runtime_final_unload_recreates_it",
                       "asset_configuration_uses_localized_ha_errors",
                       "late_private_preview_after_forget_is_denied",
-                      "cancelled_private_save_drains_and_releases_all_references"):
+                      "cancelled_private_save_drains_and_releases_all_references",
+                      "settings_wake_without_tick_and_cadence_only_reuploads",
+                      "queued_screen_settings_use_latest_mood_for_samsung_and_switchbot",
+                      "preview_revision_changes_only_with_owner_artwork"):
             self.assertTrue(actual[field], field)
         self.assertEqual(actual["real_model_calls"], 0)
         self.assertEqual(actual["physical_hardware"], "NOT_RUN")

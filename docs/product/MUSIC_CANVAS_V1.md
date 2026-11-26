@@ -101,6 +101,7 @@ Keuzes exact: **`Ieder nummer · Ieder kwartier · Ieder half uur · Ieder uur`*
 - Tijdsinterval: pas op de beurt context/generatie starten voor de dan spelende muziek. Niet toch per track genereren en afbeeldingen onzichtbaar weggooien.
 - Bij activering/nieuwe sessie geldt de directe eerste generatie, daarna de cadence. Bij pauze/geen actieve muziek geen periodieke nieuwe werken; hervatten zonder achterstallige wissels inhalen.
 - Een bevestigde wijziging van de Session mood start direct nieuw artwork voor alle actieve schermen met een actueel spelend nummer. Elk scherm hervat daarna zijn eigen wisselinterval.
+- Een gewijzigde scherminstelling rendert het beeld direct opnieuw en stuurt het naar dat scherm. Als de sessiemood intussen verandert, gebruikt Music Canvas het nieuwste moodbeeld.
 - Bevries context/track bij de gekozen renderopdracht. In per-trackmodus mag inmiddels achterhaalde track niet alsnog verschijnen; intervalmodus mag zijn gekozen moment interpreteren zonder iedere volgende track als nieuwe opdracht te behandelen. Session-/profiel-/settings-/device-epochwijzigingen hebben altijd de afgesproken geldigheidscontrole.
 - Geen onbegrensde wachtrij; per device maximaal lopend werk plus nieuwste relevante intent. E-paper/cloudlatentie respecteren; gemiste termijnen niet inhalen.
 - Werkende tv's niet laten wachten op een traag/offline frame. Technische uitvoertijd is geen garantie op seconde-exact synchroon beeld.
