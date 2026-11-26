@@ -12,7 +12,7 @@ import time
 
 from .music_canvas import (
     Cadence, CanvasError, apply_update, digest, finish_forget, need, profile, reserve_forget, screen_cadence,
-    DEFAULT_MATTE_SIZE, screen_matte_size, screen_presentation,
+    screen_matte_size, screen_presentation,
 )
 from .persistence import persistence_service
 from .persistence.music_canvas import CanvasRepository
