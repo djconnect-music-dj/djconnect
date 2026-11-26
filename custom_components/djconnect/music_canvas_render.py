@@ -7,7 +7,7 @@ from pathlib import Path
 from .music_canvas import DEFAULT_MATTE_SIZE, need
 
 MAX_IMAGE = 24 * 1024 * 1024
-TITLE_FONT = Path(__file__).with_name("music_canvas_assets") / "InterVariable.ttf"
+TITLE_FONT = Path(__file__).with_name("music_canvas_assets") / "SourceSerif4-Semibold.ttf"
 
 
 def art_prompt(title, mood, composition, width, height, *, latitude=None, month=None, alternative=None):
@@ -134,12 +134,12 @@ def _draw_title(canvas, image, position, matte, background, title):
         return
     size = min(round(min(canvas.size) * 0.035), round(band_height * 0.72))
     font = ImageFont.truetype(str(TITLE_FONT), max(8, size))
-    stroke = max(1, round(font.size * 0.08)) if matte == "off" else 0
+    stroke = max(1, round(font.size * 0.045)) if matte == "off" else 0
     length = draw.textlength(title, font=font)
     available = max_width - 2 * stroke
     if length > available:
         font = font.font_variant(size=max(8, int(font.size * available / length)))
-        stroke = max(1, round(font.size * 0.08)) if matte == "off" else 0
+        stroke = max(1, round(font.size * 0.045)) if matte == "off" else 0
     if draw.textlength(title, font=font) + 2 * stroke > max_width:
         while title and draw.textlength(title + "…", font=font) + 2 * stroke > max_width:
             title = title[:-1]
