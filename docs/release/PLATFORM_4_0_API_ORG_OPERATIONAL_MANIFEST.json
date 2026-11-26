@@ -2,26 +2,26 @@
   "schema_version": 1,
   "kind": "platform_release_operational_manifest",
   "status": "APPROVED_DEPLOYMENT_DISPATCH_PENDING",
-  "manifest_id": "release-4.1.0-api-worker-35deb66",
+  "manifest_id": "release-4.1.0-api-worker-3d80057",
   "generated_at": "2026-11-26",
   "platform_version": "4.1",
   "release_version": "4.1.0",
   "release_profile": "INTERNAL_RELEASE",
   "approval": {
     "state": "APPROVED",
-    "authority_record": "Peter explicitly requested the production API rollout in Codex thread 01a20e46-be6f-7610-97c7-5bc7c6ccf8b3.",
+    "authority_record": "Peter requested a production-ready API without a single-build Apple App Attest restriction, authorized API PR 286, and requested rollout in Codex thread 01a20e46-be6f-7610-97c7-5bc7c6ccf8b3.",
     "approved_statement": "Deploy the qualified API 4.1.0 artifact bound in this manifest using the protected production workflow."
   },
   "repositories": [
     {
       "repository": "djconnect-music-dj/djconnect-api",
       "repository_id": 1275206655,
-      "source_sha": "35deb66b319221e2e38aaf2a57c95a0598af6a6f",
-      "tree": "fc256662ddb69e2dcaa18957a55db6688fa82516",
+      "source_sha": "3d80057d161e9b85f4b999c0371970939ce56bc6",
+      "tree": "5029aa356dfc01dd3d13fa97d7602c684dd530be",
       "version": "4.1.0",
-      "validate_run": "45597445676",
-      "artifact_run": "45597870116",
-      "release_evidence_run": "45597870670"
+      "validate_run": "45903465306",
+      "artifact_run": "45903753264",
+      "release_evidence_run": "45903753881"
     }
   ],
   "required_targets": [
@@ -33,34 +33,22 @@
   "artifact_bindings": [
     {
       "target": "cloudflare_workers_production",
-      "artifact_id": "15014630524",
-      "artifact_sha256": "8423e25c2d5f3976c9fe0ac810602b425985bafdbd564ff1ec9e14ca579673e5"
+      "artifact_id": "15156484415",
+      "artifact_sha256": "120eb1a4d3b6601301567a5c1b80dc1cbd852aef8990a875ed1939481d6295d2"
     }
   ],
   "live_baseline": {
     "version": "4.1.0",
-    "source_sha": "0c298a9e3e11d8fc6aaada089b4096b3b4d9ecd9",
-    "cloudflare_deployment_version_id": "cb114c00-6483-4720-a37f-8ae283f01c88",
+    "source_sha": "35deb66b319221e2e38aaf2a57c95a0598af6a6f",
+    "cloudflare_deployment_version_id": "9a4bd9f8-9957-4a13-a700-6935795875bc",
     "health_check": "PASS",
     "deployment_identity_source": "Protected read-only Cloudflare deployment status at 100% and public health, confirmed before and after reading the D1 ledger.",
-    "read_only_preflight_run": "45896673270",
+    "read_only_preflight_run": "45903511632",
     "read_only_preflight_result": "PASS"
   },
   "next_authorized_action": "Recheck the active production baseline with the protected read-only workflow, dispatch the exact artifact with the protected production workflow, then run separate post-deployment smoke and verify live health.",
   "migration_boundary": {
-    "preflight_pending": [
-      "0014_native_installation_publisher.sql",
-      "0015_native_installation_surface_roles.sql",
-      "0016_native_installation_apple_key.sql",
-      "0017_native_installation_role_challenges.sql",
-      "0018_native_installation_unique_apple_identity.sql"
-    ],
-    "pending_sha256": {
-      "0014_native_installation_publisher.sql": "bd7f14801ae960f200ac959f20ba351aa9184839845400f7297e5af76139fed3",
-      "0015_native_installation_surface_roles.sql": "42ee202234bc5edd153b1d3169a9cd3489dbe83acb3693ebe88a2842af139e5e",
-      "0016_native_installation_apple_key.sql": "58424fc807c75c7e91c41abb68e2cf5331c6e4b650c615474861d2eaa75dac5b",
-      "0017_native_installation_role_challenges.sql": "9cba75a3c56b6d8d65c75f76315ca478651b10f43bffb95c1a42a449a48f439a",
-      "0018_native_installation_unique_apple_identity.sql": "09d58084362f9697c91ac362273c99ccd336c4a04f9afc0ce4c8d8f2d833427d"
-    }
+    "preflight_pending": [],
+    "pending_sha256": {}
   }
 }
