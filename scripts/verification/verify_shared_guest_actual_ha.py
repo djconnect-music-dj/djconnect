@@ -269,6 +269,10 @@ async def qualify(hass, manager, history, request, client):
     party_host = {'session_id':sid,'share_id':party['share_id']}
     party_display = {key:party[key] for key in ('issuer_epoch','display_id')}
     share = manager._display_admission._shares[party['share_id']]
+    assert share.party_requests
+    policy = await post('participation','owner/configure', {**party_host, 'policy':{
+        'information':True,'requests':'disabled','max_pending':3,'screen_focus':False}}, owner=True)
+    assert policy['policy']['requests'] == 'auto_queue'
     await manager.async_update_playback_projection(owner_profile_id='profile-a', session_id=sid,
         state='playing', media_identity=current_uri, title='Fixture track', artist='Fixture artist')
     queue.clear()
