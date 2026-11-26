@@ -151,19 +151,19 @@ async def qualify(hass, manager, history, request, client):
         expected_revision=latest["revision"], patch={"selected_targets": list(targets), "cadence": "1800"}))
     assert code == 200, selected
     session = await manager.async_start(owner_profile_id="profile-a", selected_mood="chill", locale="nl")
-    await manager.async_update_playback_projection(owner_profile_id="profile-a", session_id=session.session_id,
-        state="playing", media_identity="fixture-recording", title="Synthetic liquid shapes", artist="Fixture",
-        duration_ms=240000, position_ms=1000)
     generations, deliveries = [], []
     from custom_components.djconnect.music_canvas_render import samsung_preview_jpeg
     manual_preview = samsung_preview_jpeg(fixture_image.getvalue())
     paired = inspect.getclosurevars(request).nonlocals
 
-    async def read_preview(target):
+    async def read_preview(target, revision=None):
         async with client.post(base + "preview", headers=paired["headers"], json={
             **paired["identity"], "contract_version": 1, "target_id": target,
+            **({"preview_revision": revision} if revision else {}),
         }) as response:
-            assert response.status == 200 and response.content_type == "image/jpeg", response.status
+            assert response.status == 200 and response.content_type == "image/jpeg", (
+                response.status, await response.text(), runtime.effect_lock.locked(), runtime.states.get(target)
+            )
             return await response.read()
 
     observed_content = {}
@@ -171,7 +171,9 @@ async def qualify(hass, manager, history, request, client):
     failing = set()
     async def generate(_hass, prompt):
         generations.append(prompt)
-        return fixture_image.getvalue()
+        image = io.BytesIO()
+        Image.new("RGB", (640, 640), (150, 90, len(generations) % 256)).save(image, "PNG")
+        return image.getvalue()
     def hardware(device, action, **kwargs):
         if action == "preview":
             shown = observed_content.get(device["id"], "manual-art")
@@ -210,13 +212,10 @@ async def qualify(hass, manager, history, request, client):
          patch.object(adapters, "deliver_switchbot", cloud):
         initial, code = await call("read")
         initial_tv = next(target for target in initial["targets"] if target["id"] == "samsung:fixture-b")
-        assert code == 200 and initial_tv["preview_available"] and initial_tv["preview_revision"] is None
+        assert code == 200 and initial["frame_matching_matte"] is True
+        assert initial_tv["preview_available"] and initial_tv["preview_revision"] is None
         assert await read_preview("samsung:fixture-b") == manual_preview
         assert not generations and not deliveries, "a preview triggered Canvas output"
-        await runtime.tick()
-        await runtime.jobs["profile-a"]
-        assert not generations, "debounce skipped"
-        await asyncio.sleep(5.1)
         first_generation = asyncio.Event()
 
         async def wait_for_settings(_hass, _prompt):
@@ -224,9 +223,11 @@ async def qualify(hass, manager, history, request, client):
             await asyncio.Future()
 
         with patch.object(render, "generate", wait_for_settings):
-            await runtime.tick()
+            await manager.async_update_playback_projection(owner_profile_id="profile-a", session_id=session.session_id,
+                state="playing", media_identity="fixture-recording", title="Synthetic liquid shapes", artist="Fixture",
+                duration_ms=240000, position_ms=1000)
+            await asyncio.wait_for(first_generation.wait(), 4)
             original_job = runtime.jobs["profile-a"]
-            await asyncio.wait_for(first_generation.wait(), 5)
             current, code = await call("read")
             assert code == 200
             unchanged, code = await call("update", dict(binding=binding, operation_id=str(uuid.uuid4()),
@@ -266,7 +267,7 @@ async def qualify(hass, manager, history, request, client):
             raise AssertionError("cross-Profile preview exposed")
         except CanvasError as exc:
             assert exc.status == 404
-        # A presentation change deterministically reuses current source bytes.
+        # A presentation change generates fresh artwork for the affected screen.
         failing.add("samsung:fixture-a")
         latest, code = await call("read")
         assert code == 200 and latest["per_screen_composition_and_cadence"] is True
@@ -279,20 +280,23 @@ async def qualify(hass, manager, history, request, client):
             expected_revision=latest["revision"], patch={
                 "matte": "contrast", "show_track_title": True,
                 "presentation_overrides": {"samsung:fixture-b": {
-                    "matte": "matching", "show_track_title": True, "composition": "full", "cadence": "900"}},
+                    "matte": "matching", "match_frame": True, "frame_finish": "teak",
+                    "show_track_title": True, "composition": "full", "cadence": "900"}},
             }))
         assert code == 200 and changed["preferences"]["show_track_title"] is True
         await await_canvas_refresh()
-        assert len(generations) == 2, "matte change regenerated instead of composing"
+        assert len(generations) == 3, "presentation change did not generate new artwork"
         assert runtime.states["samsung:fixture-a"] == "canvas_device_offline"
         assert runtime.states["samsung:fixture-b"] == "displayed", "one offline screen blocked another"
         updated_devices = (await runtime.repository.read())["devices"]
         titled = updated_devices["samsung:fixture-b"]
         untitled = rendered["devices"]["samsung:fixture-b"]
-        assert titled["presentation"] == ["full", "matching", True]
-        assert titled["preview"] != untitled["preview"] and titled["source_image"] == untitled["source_image"]
+        assert titled["presentation"] == ["full", "frame:teak", True]
+        assert titled["preview"] != untitled["preview"] and titled["source_image"] != untitled["source_image"]
         latest, code = await call("read")
         assert code == 200
+        matched_style = latest["preferences"]["presentation_overrides"]["samsung:fixture-b"]
+        assert matched_style["match_frame"] and matched_style["frame_finish"] == "teak"
         after_preview = next(target for target in latest["targets"] if target["id"] == "samsung:fixture-b")
         assert after_preview["preview_available"] and after_preview["preview_revision"] is None
         assert await read_preview("samsung:fixture-b") != previous_image
@@ -310,19 +314,21 @@ async def qualify(hass, manager, history, request, client):
         intervals = {call.args[0][2]: call.args[2] for call in due.call_args_list}
         assert intervals["samsung:fixture-b"] == "900"
         assert intervals["switchbot:fixture-p"] == "1800"
-        failing.clear()
-        runtime.next_probe.clear()  # Isolate later cases from the deliberate offline backoff.
         tv = "samsung:fixture-b"
         frame = "switchbot:fixture-p"
         prefs = latest["preferences"]["presentation_overrides"]
         changed_settings = {"presentation_overrides": {tv: {**prefs[tv], "cadence": "1800"}}}
         previous_uploads = deliveries.count((tv, "upload"))
+        before_cadence_generations = len(generations)
         changed, code = await call("update", dict(binding=binding, operation_id=str(uuid.uuid4()),
             expected_revision=latest["revision"], patch=changed_settings))
         assert code == 200
         await await_canvas_refresh()
         assert deliveries.count((tv, "upload")) == previous_uploads + 1
-        assert len(generations) == 2, "cadence-only change did not recompose current art"
+        assert len(generations) == before_cadence_generations + 1, (before_cadence_generations, len(generations))
+
+        failing.clear()
+        runtime.next_probe.clear()
 
         # A setting queued before a mood change must render against the accepted new mood.
         previous_generations = len(generations)
@@ -331,7 +337,8 @@ async def qualify(hass, manager, history, request, client):
         async with runtime.generation_lock:
             changed, code = await call("update", dict(binding=binding, operation_id=str(uuid.uuid4()),
                 expected_revision=changed["revision"], patch={"presentation_overrides": {
-                    tv: {**changed["preferences"]["presentation_overrides"][tv], "matte": "off"},
+                    tv: {**changed["preferences"]["presentation_overrides"][tv],
+                         "matte": "off", "match_frame": False},
                     frame: {"matte": "matching", "show_track_title": True},
                 }}))
             assert code == 200
@@ -381,10 +388,19 @@ async def qualify(hass, manager, history, request, client):
                 assert code == 200 and recovered == receipt
                 await await_canvas_refresh()
                 assert len(new_prompts) == index + 1
-                image = await read_preview(tv)
                 if index < 2:
+                    pending, code = await call("read")
+                    pending_target = next(item for item in pending["targets"] if item["id"] == tv)
+                    revision = pending_target["artwork_preview_revision"]
+                    assert code == 200 and pending_target["artwork_request_pending"] and revision
+                    assert not pending_target["can_request_artwork"]
+                    image = await read_preview(tv, revision)
+                    confirmed, code = await call("read")
+                    confirmed_target = next(item for item in confirmed["targets"] if item["id"] == tv)
+                    assert code == 200 and confirmed_target["can_request_artwork"]
                     assert image != original_art
                 else:
+                    image = await read_preview(tv)
                     assert image == original_art and runtime.states[tv] == "canvas_alternative_unchanged"
                 original_art = image
         assert deliveries.count((tv, "upload")) == baseline_uploads + 2
@@ -463,7 +479,9 @@ async def qualify(hass, manager, history, request, client):
                     state="playing", media_identity="transition-"+mode, title="Next track "+mode,
                     artist="Fixture", duration_ms=240000, position_ms=1000)
                 return await generate(_hass, prompt)
-            with patch.object(render, "generate", transition), patch.object(runtime.cadence, "due", lambda *args: True):
+            with patch.object(render, "generate", transition), \
+                 patch.object(runtime.cadence, "due", lambda *args: True), \
+                 patch.object(runtime, "playback_changed"):
                 await runtime.run("profile-a", manager.current_active("profile-a"), config, state)
             after_select = sum(action == "select" for _, action in deliveries)
             assert after_select-before_select == (1 if mode == "1800" else 0), (mode, runtime.states)
@@ -561,7 +579,6 @@ async def qualify(hass, manager, history, request, client):
             artist="Fixture", duration_ms=240000, position_ms=1000)
         await runtime.tick()
         await runtime.jobs["profile-a"]
-        await asyncio.sleep(5.1)  # Let the new observation pass the stable-track debounce.
         # This scenario tests Session withdrawal, independent of cadence and
         # presentation changes. Keep one ready synthetic screen on this owner
         # and leave its current preview in custody until the real run ends.
@@ -878,10 +895,13 @@ async def qualify(hass, manager, history, request, client):
             "ha_admin_sets_switchbot_portrait_geometry_without_profile_grant_or_upload": True,
             "ha_admin_can_enable_and_disable_switchbot_rotation_without_upload": True,
             "samsung_off_no_upload": True, "synthetic_image_generations": len(generations),
-            "shared_samsung_generation": True, "matte_reuses_source": True, "track_title_reuses_source": True,
+            "shared_samsung_generation": True, "presentation_change_generates_new_artwork": True,
             "screen_presentation_is_independent_with_switchbot_default_off": True,
             "screen_composition_and_cadence_applied_independently": True,
             "settings_wake_without_tick_and_cadence_only_reuploads": True,
+            "first_render_starts_without_track_debounce": True,
+            "frame_finish_roundtrips_and_generates_new_artwork": True,
+            "new_artwork_pending_until_confirmed_preview_readback": True,
             "queued_screen_settings_use_latest_mood_for_samsung_and_switchbot": True,
             "preview_revision_changes_only_with_owner_artwork": True,
             "samsung_preview_reads_current_art_without_canvas_generation_or_upload": True,
