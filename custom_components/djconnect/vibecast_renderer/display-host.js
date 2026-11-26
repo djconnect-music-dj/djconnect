@@ -274,7 +274,7 @@ window.DJCDisplayHost=function(transport){
         scheduleArtworkExpiry(pending);
         const timeout=setTimeout(()=>controller.abort(),10000);
         try{
-          const response=await fetch("/api/djconnect/v1/display/artwork",{method:"POST",credentials:"omit",cache:"no-store",redirect:"error",
+          const response=await fetch(displayURL("artwork"),{method:"POST",credentials:"omit",cache:"no-store",redirect:"error",
             headers:{"Content-Type":"application/json",Authorization:"Bearer "+grant.grant_token},
             body:JSON.stringify({contract_version:1,...binding(),reference:cover.reference}),signal:controller.signal});
           const size=Number(response.headers.get("Content-Length")),mime=response.headers.get("Content-Type");
