@@ -567,7 +567,7 @@ class CanvasTrackArtworkTests(unittest.IsolatedAsyncioTestCase):
         config["preferences"].update(selected_targets=[target], cadence="track")
         broadcast = types.SimpleNamespace()
         active = types.SimpleNamespace(session_id="session", runtime_state="active",
-                                       selected_mood="chill", broadcast=broadcast)
+                                       selected_mood="chill", mood_revision=0, broadcast=broadcast)
         manager = types.SimpleNamespace(_history_source_contexts={}, _visual_ending=set(),
                                         current_active=lambda _: active)
         store = types.SimpleNamespace(authority_revision=0)
@@ -615,12 +615,14 @@ class CanvasTrackArtworkTests(unittest.IsolatedAsyncioTestCase):
                 config["preferences"]["presentation_overrides"][target] = {
                     "matte": "contrast", "show_track_title": True,
                 }
+                runtime.screen_setting_revisions[owner] = {target: 1}
                 await play("first", "Promise")
                 self.assertEqual(state["devices"][target]["source_image"], first)
                 self.assertEqual(generate.await_count, 1)
 
                 runtime.leases.clear()
                 config["preferences"]["presentation_overrides"][target]["matte"] = "matching"
+                runtime.screen_setting_revisions[owner][target] += 1
                 await play("second", "Beginners")
                 self.assertEqual(generate.await_count, 2)
                 self.assertIn('"title": "Beginners"', generate.await_args.args[1])
@@ -706,12 +708,12 @@ class CanvasDomainTests(unittest.TestCase):
         import hashlib
         import json
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/serif-title-20261126-actual-ha.json").read_text())
+        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/selected-release-20261126-actual-ha.json").read_text())
         self.assertEqual(len(proof["source_pins"]), 361)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), expected, name)
         self.assertTrue(proof["source_before_after_equal"])
-        matrix = json.loads((root/"docs/verification/music-canvas-serif-title-actual-ha-matrix-20261126.json").read_text())
+        matrix = json.loads((root/"docs/verification/selected-release-actual-ha-matrix-20261126.json").read_text())
         self.assertEqual(matrix["source_pins"], proof["source_pins"])
         self.assertTrue(matrix["source_before_after_equal"])
         self.assertEqual(len(matrix["results"]), 54)

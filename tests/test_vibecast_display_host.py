@@ -178,7 +178,7 @@ for(const scenario of ["late-pending","late-admitted","revoked","disconnected","
       partyEnabled=false;
       await advance(72000);
       assert.equal(qr.hidden,true);
-      assert.equal(qr.children[1].src,undefined);
+      assert.equal(qr.children[0].src,undefined);
       partyEnabled=true;
       await advance(75000);
       assert.equal(qr.hidden,false);

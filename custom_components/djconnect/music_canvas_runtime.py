@@ -640,6 +640,7 @@ class CanvasRuntime:
                 and device.get("preview_owner") == owner
                 and previous_source.get("session_id") == active.session_id
                 and previous_source.get("mood_revision") == mood_revision
+                and (cadence != "track" or (device.get("provenance") or {}).get("source_track") == source_track)
                 and previous_source.get("track_title")) else None
             art_title = previous_source["track_title"] if cached else playback.title
             if device["adapter"] == "samsung":
