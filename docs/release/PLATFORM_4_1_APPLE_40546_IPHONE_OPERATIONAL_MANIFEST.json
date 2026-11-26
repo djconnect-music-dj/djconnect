@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "kind": "platform_release_operational_manifest",
+  "manifest_id": "release-apple-internal-4.1.0-40546",
+  "status": "APPROVED_DEPLOYMENT_DISPATCH_PENDING",
+  "platform_version": "4.1",
+  "release_version": "4.1.0",
+  "release_profile": "INTERNAL_RELEASE",
+  "approval": {
+    "state": "APPROVED",
+    "approved_at": "2026-11-26T18:20:33Z",
+    "approved_statement": "Keur iPhone en Watch goed",
+    "effect": "Private installation of build 40546, exact asset 797148601, on the configured iPhone 17 Pro and paired Apple Watch through the existing protected relay after target preflight."
+  },
+  "repositories": [
+    {
+      "repository": "djconnect-music-dj/djconnect-app",
+      "source_sha": "3740379af39b375590ece9f0854e1b2a276d4a95",
+      "version": "4.1.0",
+      "build_number": "40546"
+    }
+  ],
+  "artifact_bindings": [
+    {
+      "target": "apple_private_device",
+      "target_device": "iphone",
+      "artifact_id": "797148601",
+      "artifact_sha256": "b7a0d935c52afcf346d7ecd50ae037a992d136db594bfb07d8298840eefc5867",
+      "github_repository_id": 1444773078,
+      "github_release_asset_id": 797148601,
+      "signing": "local_developer_provisioning_required",
+      "paired_watch_validation": "required"
+    }
+  ],
+  "deployment_constraints": {
+    "dispatch_now": [
+      "iphone"
+    ],
+    "iphone_and_watch": "COMBINED_ROUTE_REQUIRED_TARGET_PREFLIGHT_REQUIRED",
+    "paired_watch_validation": "required",
+    "iphone_only_route": "NOT_QUALIFIED"
+  }
+}
