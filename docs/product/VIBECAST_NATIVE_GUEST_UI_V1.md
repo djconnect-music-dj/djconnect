@@ -15,7 +15,7 @@ All changed behavior requires golden and end-to-end regression coverage.
 
 Guest v1 is native in the DJConnect app, text-only. The owner explicitly allows
 guest Ask DJ model usage. No new responsive guest web application is selected.
-Existing historical web guest support is not silently removed by this increment.
+The interactive guest web route is retired. The QR landing page opens DJConnect on iPhone or iPad.
 Core's existing host policy, request budgets and effect guards remain in force.
 
 The guest-enabled function is named **VibeCast Live**. At share start the host
@@ -47,12 +47,10 @@ The fragment is at most 2048 characters, ha_url at most 1024. Existing producer
 identifiers are base64url ASCII `[A-Za-z0-9_-]`: epoch43, invitation_id32,
 invitation_secret43 characters. No secret prefix is added.
 
-The native scanner accepts the same canonical public QR URL directly. On macOS,
-the guest can instead type the host and 12-character code shown next to the Live
-QR and explicitly confirm Join. The code is an alternate representation of the
-same one-time invitation. Core issues it from 60 random bits, applies the same
-origin and attempt budget, and consumes both representations together. The app
-posts it directly to that HTTPS installation via `participation/redeem-code`.
+Guests join on iPhone or iPad by scanning the QR shown on the TV, using the
+DJConnect scanner or the system Camera followed by the native-open landing.
+Both paths require explicit confirmation in DJConnect. The display offers only
+the QR, and the Mac app has no guest join entry point.
 
 Reuse the current 120-second invitation lifetime. QR changes subtly every two
 minutes; ordinary snapshots do not rotate it. Redemption remains single-use,

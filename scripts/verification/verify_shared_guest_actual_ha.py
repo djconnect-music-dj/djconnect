@@ -98,12 +98,14 @@ async def qualify(hass, manager, history, request, client):
     assert context['capabilities']['music_dna'] is False and 'profile_id' not in json.dumps(context)
     cases.append({'scenario':'actual_paired_host_separate_guest_and_display_tokens_closed_origin_single_use', 'status':'PASS'})
     page = await client.get('/djconnect/vibecast/guest')
-    assert page.status == 200 and 'frame-ancestors' in page.headers['Content-Security-Policy']
-    assert 'guest_token' not in (await page.text()).split('<script>')[0]
+    assert page.status == 404
+    manual = await client.post('/api/djconnect/v1/participation/redeem-code',
+                               headers={'Origin': selected}, json={'contract_version': 1, 'code': 'ABCDEFGHJKLM'})
+    assert manual.status == 404
     qr = await post('participation','display/invitation', {k:display[k] for k in ('issuer_epoch','display_id')},
                     token=display['grant_token'])
     assert qr['qr_data_uri'].startswith('data:image/svg+xml;base64,')
-    cases.append({'scenario':'registered_generated_guest_shell_and_real_segno_display_invitation','status':'PASS'})
+    cases.append({'scenario':'retired_web_shell_and_manual_code_with_real_segno_display_invitation','status':'PASS'})
 
     native_entry = harness.owning_harness.entry('shared-native-entry', {
         'client_type':'conversation_agent','device_id':'djconnect-conversation-agent',

@@ -116,8 +116,8 @@ window.DJCDisplayHost=function(transport){
     for(const reference of artwork.keys())removeArtwork(reference);
     publishArtwork();
   }
-  const participationLabels={en:"Scan to join the music conversation",nl:"Scan om mee te praten over de muziek",de:"Scannen und über die Musik mitreden",fr:"Scanne pour parler de la musique",es:"Escanea para hablar de la música"};
-  let guestPanel=null,guestQR=null,guestManual=null,guestCode=null,guestAddress=null,guestPollGeneration=-1,guestQRDeadline=0;
+  const participationLabels={en:"Scan with an iPhone or iPad to join VibeCast Party",nl:"Scan met een iPhone of iPad om deel te nemen aan VibeCast Party",de:"Mit einem iPhone oder iPad scannen, um VibeCast Party beizutreten",fr:"Scanne avec un iPhone ou un iPad pour rejoindre VibeCast Party",es:"Escanea con un iPhone o iPad para unirte a VibeCast Party"};
+  let guestPanel=null,guestQR=null,guestPollGeneration=-1,guestQRDeadline=0;
   let sharedPhoto=null,sharedPhotoWanted=null,failedSharedPhotoRevision=null;
   function clearSharedPhoto(){
     sharedPhotoWanted=null;
@@ -152,7 +152,6 @@ window.DJCDisplayHost=function(transport){
   function hideGuestInvitation(){
     if(!guestPanel)return;
     guestPanel.hidden=true;guestQR.removeAttribute("src");
-    guestCode.textContent="";guestAddress.textContent="";guestManual.hidden=true;
   }
   function clearParticipation(){
     failedSharedPhotoRevision=null;clearSharedPhoto();
@@ -187,20 +186,8 @@ window.DJCDisplayHost=function(transport){
       if(!guestPanel){
         guestPanel=document.createElement("aside");guestPanel.className="guest-participation";
         guestQR=document.createElement("img");guestQR.width=128;guestQR.height=128;
-        guestManual=document.createElement("div");guestManual.className="guest-manual-entry";guestManual.hidden=true;
-        guestCode=document.createElement("strong");guestAddress=document.createElement("span");
-        guestManual.append(guestCode,guestAddress);
-        guestPanel.append(guestManual,guestQR);document.body.append(guestPanel);
+        guestPanel.append(guestQR);document.body.append(guestPanel);
       }
-      let manualAddress="";
-      if(/^[2-9A-HJ-NP-Z]{4}(?:-[2-9A-HJ-NP-Z]{4}){2}$/.test(invitation.manual_code)){
-        try{
-          const address=new URL(invitation.manual_origin);
-          if(address.protocol==="https:" && address.origin===invitation.manual_origin)manualAddress=address.host;
-        }catch(_){}
-      }
-      guestCode.textContent=manualAddress?invitation.manual_code:"";
-      guestAddress.textContent=manualAddress;guestManual.hidden=!manualAddress;
       guestQR.alt=participationLabels[effectiveLocale]||participationLabels.en;
       if(guestQR.getAttribute("src")!==invitation.qr_data_uri)guestQR.src=invitation.qr_data_uri;
       guestQRDeadline=started+invitation.expires_in*1000;guestPanel.hidden=now()>=guestQRDeadline;
