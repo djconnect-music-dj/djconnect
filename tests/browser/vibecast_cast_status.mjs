@@ -13,7 +13,7 @@ function harness() {
  class WS{constructor(url){this.url=url;sockets.push(this);}close(){if(this.onclose)this.onclose();}}
  class CustomEvent{constructor(type,options={}){this.type=type;this.detail=options.detail;}}
  const document={createElement:make,documentElement:{lang:'en',style:{setProperty(){},removeProperty(){}}},body:{classList:{toggle(){}}},querySelector:()=>null,getElementById(id){if(!elements.has(id))elements.set(id,make());return elements.get(id);}};
- const sandbox={Date:Clock,window,document,navigator:{language:'en'},CustomEvent,WebSocket:WS,URL,URLSearchParams,console};
+ const sandbox={Date:Clock,performance:{now:()=>offset},window,document,navigator:{language:'en'},CustomEvent,WebSocket:WS,URL,URLSearchParams,console};
  vm.createContext(sandbox);vm.runInContext(fs.readFileSync(new URL('renderer.js',folder),'utf8'),sandbox);vm.runInContext(fs.readFileSync(new URL('cast-host.js',folder),'utf8'),sandbox);
  return {advance(ms){offset+=ms;},window,elements,sockets,sent,timers,options,ready(){ready=true;cafListeners.get('ready')();},message(value,id='sender-a'){receive({data:value,senderId:id});},frame(ws,value){ws.onmessage({data:JSON.stringify(value)});},expire(ms){for(const [id,t] of [...timers])if(t.ms===ms){timers.delete(id);t.cb();}},disconnect(id){cafListeners.get('disconnected')({senderId:id});}};
 }

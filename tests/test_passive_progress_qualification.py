@@ -21,7 +21,7 @@ class PassiveProgressQualificationTests(unittest.TestCase):
         self.assertEqual(set(receipt['cases'].values()), {'PASS'})
         self.assertEqual((receipt['real_provider_calls'], receipt['model_provider_calls']), (0, 0))
         self.assertEqual(receipt['native_widget_shared_cache_physical_acceptance'], 'NOT_RUN')
-        wire = json.loads((folder/'vibecast-white-guests-20261125-actual-wire.json').read_text())
+        wire = json.loads((folder/'selected-release-20261126-actual-wire.json').read_text())
         self.assertEqual(wire['examples'], receipt['examples'])
         self.assertEqual(wire['capabilities'], receipt['capability'])
         self.assertEqual(wire['request_contract']['image_query']['projection_version'], '3')
