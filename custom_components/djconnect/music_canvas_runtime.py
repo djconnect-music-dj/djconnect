@@ -30,6 +30,7 @@ class CanvasRuntime:
         self.asset_lock = asyncio.Lock()
         self.cadence = Cadence()
         self.jobs = {}
+        self.mood_refreshes = {}
         self.states = {}
         self.leases = {}
         self.claims = {}
@@ -56,14 +57,14 @@ class CanvasRuntime:
     def stop(self, _event=None):
         self.stopped = True
         self.unsubscribe()
-        for task in self.jobs.values():
+        for task in (*self.jobs.values(), *self.mood_refreshes.values()):
             task.cancel()
         self.leases.clear()
 
     async def shutdown(self):
         """Drain work before its persistence owner is closed on final unload."""
         self.stop()
-        await asyncio.gather(*self.jobs.values(), return_exceptions=True)
+        await asyncio.gather(*self.jobs.values(), *self.mood_refreshes.values(), return_exceptions=True)
         async with self.lock, self.effect_lock:
             pass
 
@@ -309,12 +310,29 @@ class CanvasRuntime:
                             path.unlink(missing_ok=True)
             await self.protocol(clean)
 
-    async def tick(self, _now=None):
-        if self.stopped or self.lock.locked():
+    def session_mood_changed(self, owner):
+        if not self.stopped and owner not in self.mood_refreshes:
+            self.mood_refreshes[owner] = self.hass.async_create_task(
+                self.refresh_mood(owner), eager_start=False)
+
+    async def refresh_mood(self, owner):
+        try:
+            job = self.jobs.get(owner)
+            if job is not None and not job.done():
+                job.cancel()
+                await asyncio.gather(job, return_exceptions=True)
+            await self.tick(refresh_owner=owner)
+        finally:
+            self.mood_refreshes.pop(owner, None)
+
+    async def tick(self, _now=None, *, refresh_owner=None):
+        if self.stopped or (refresh_owner is None and self.lock.locked()):
             return
         async with self.lock:
+            if self.stopped:
+                return
             state = await self.repository.read()
-            if time.monotonic()-self.last_discovery >= 60:
+            if refresh_owner is None and time.monotonic()-self.last_discovery >= 60:
                 self.last_discovery = time.monotonic()
                 try:
                     discovered = await adapters.discover(self.hass)
@@ -341,6 +359,11 @@ class CanvasRuntime:
             manager = self.hass.data.get("djconnect", {}).get("session_runtime_manager")
             storage = profile_storage(self.hass)
             for owner, config in state["profiles"].items():
+                if refresh_owner is not None:
+                    if owner != refresh_owner:
+                        continue
+                elif owner in self.mood_refreshes:
+                    continue
                 self.revisions[owner] = config["revision"]
                 active = manager.current_active(owner) if manager else None
                 person = storage.household.profiles.get(owner)
@@ -360,7 +383,8 @@ class CanvasRuntime:
                     continue
                 if not task or task.done():
                     self.jobs[owner] = self.hass.async_create_task(self.safe_run(owner, active, config, state))
-            await self.cleanup_assets()
+            if refresh_owner is None:
+                await self.cleanup_assets()
 
     async def safe_run(self, owner, active, config, state):
         try:
@@ -401,7 +425,10 @@ class CanvasRuntime:
         manager = self.hass.data["djconnect"].get("session_runtime_manager")
         storage = profile_storage(self.hass)
         authority_revision = storage.authority_revision
+        if manager.current_active(owner) is not active:
+            return
         prefs = config["preferences"]
+        mood_revision = active.mood_revision
         sample = active.broadcast.passive_observation
         if not sample or time.monotonic()-sample[0] > 30 or sample[2].state != "playing":
             return
@@ -460,8 +487,9 @@ class CanvasRuntime:
             if isinstance(previous_presentation, list) and len(previous_presentation) == 2:
                 previous_presentation = [*previous_presentation, False]
             cached = device.get("source_image") if (device.get("preview_owner") == owner
-                and previous_presentation != list(presentation)) else None
-            if not cached and not self.cadence.due(key, occurrence, cadence, time.monotonic()):
+                and previous_presentation != list(presentation)
+                and not self.cadence.mood_changed(key, mood_revision)) else None
+            if not cached and not self.cadence.due(key, occurrence, cadence, time.monotonic(), mood_revision):
                 continue
             if device["adapter"] == "samsung":
                 if self.next_probe.get(target, 0) > time.monotonic():
@@ -507,7 +535,7 @@ class CanvasRuntime:
                     self.states[target] = "preparing"
                     # At most one attempt per cadence, including unknown provider outcome.
                     if not cached:
-                        attempt = (occurrence, time.monotonic())
+                        attempt = (occurrence, time.monotonic(), mood_revision)
                         pending_attempts[key] = attempt
                         self.cadence.mark(key, *attempt)
                 generation_key = (width, height, per_track, composition)

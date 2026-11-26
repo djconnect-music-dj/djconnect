@@ -5,6 +5,7 @@ import io
 from pathlib import Path
 import sys
 import tempfile
+import time
 import types
 import unittest
 from unittest.mock import AsyncMock, Mock, patch
@@ -84,6 +85,76 @@ class CanvasSwitchBotRotationTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(signer.call_count, len(commands))
                 self.assertTrue(all(p["parameter"] == "oldest" for p in payloads
                                     if p and p["command"] == "deleteImage"))
+
+
+class CanvasMoodRefreshTests(unittest.IsolatedAsyncioTestCase):
+    async def test_mood_change_replaces_all_screens_without_waiting_for_cadence(self):
+        from custom_components.djconnect import music_canvas_runtime as canvas
+        from custom_components.djconnect.domain.profile.models import ProfileState
+
+        owner, session = "profile", "session"
+        state = fresh_state()
+        config = state["profiles"][owner] = profile(state, owner)
+        config["preferences"].update(enabled=True, selected_targets=["tv", "frame"],
+                                     cadence_overrides={"tv": "track", "frame": "3600"})
+        for target, width, height, orientation in (("tv", 640, 360, "landscape"), ("frame", 360, 640, "portrait")):
+            state["devices"][target] = {
+                "adapter": "samsung", "epoch": 1, "state": "ready", "owned_content": [],
+                "screen": dict(width=width, height=height, orientation=orientation),
+                "preview_owner": owner, "presentation": ["full", "off", False],
+                "source_image": "previous-mood.jpg",
+            }
+        playback = types.SimpleNamespace(item_id="track", title="Still Playing", state="playing")
+        active = types.SimpleNamespace(session_id=session, selected_mood="party", mood_revision=1,
+            runtime_state="active", broadcast=types.SimpleNamespace(
+                passive_observation=(time.monotonic(), time.time(), playback)))
+        manager = types.SimpleNamespace(current_active=lambda _: active, _history_source_contexts={}, _visual_ending=set())
+        storage = types.SimpleNamespace(authority_revision=1, household=types.SimpleNamespace(
+            profiles={owner: types.SimpleNamespace(state=ProfileState.ACTIVE)}))
+        with tempfile.TemporaryDirectory() as folder:
+            hass = types.SimpleNamespace(
+                config=types.SimpleNamespace(path=lambda *parts: str(Path(folder, *parts))),
+                data={"djconnect": {"session_runtime_manager": manager}},
+                async_create_task=lambda job, **_: asyncio.create_task(job),
+                async_add_executor_job=AsyncMock(side_effect=lambda work, *args: work(*args)),
+            )
+            with patch.object(canvas, "persistence_service"):
+                runtime = canvas.CanvasRuntime(hass)
+            runtime.repository = types.SimpleNamespace(read=AsyncMock(return_value=state))
+            runtime.observe_samsung = AsyncMock()
+            runtime.deliver = AsyncMock()
+            previous = digest([session, playback.item_id])
+            for target in state["devices"]:
+                key = (owner, session, target)
+                runtime.cadence.due(key, previous, "track", time.monotonic()-5)
+                runtime.cadence.mark(key, previous, time.monotonic())
+
+            stale = asyncio.create_task(asyncio.Event().wait())
+            runtime.jobs[owner] = stale
+            image_provider = AsyncMock(side_effect=[b"new landscape", b"new portrait"])
+            with patch.dict(sys.modules, {"custom_components.djconnect.profile_context":
+                            types.SimpleNamespace(profile_storage=lambda _: storage)}), \
+                 patch.object(canvas.render, "generation_available", return_value=True), \
+                 patch.object(canvas.render, "generate", image_provider), \
+                 patch.object(canvas.render, "compose", side_effect=lambda raw, *_: raw):
+                runtime.session_mood_changed(owner)
+                refresh = runtime.mood_refreshes[owner]
+                runtime.session_mood_changed(owner)
+                self.assertIs(refresh, runtime.mood_refreshes[owner])
+                await refresh
+                await runtime.jobs[owner]
+                self.assertTrue(stale.cancelled())
+                self.assertEqual([call.args[3] for call in runtime.deliver.await_args_list], ["tv", "frame"])
+                self.assertEqual(image_provider.await_count, 2)
+                for call in image_provider.await_args_list:
+                    self.assertIn("expressive, richly layered", call.args[1])
+                    self.assertIn("Still Playing", call.args[1])
+
+                for device in state["devices"].values():
+                    device["presentation"] = ["central", "off", False]
+                await runtime.run(owner, active, config, state)
+                self.assertEqual(image_provider.await_count, 2)
+                self.assertEqual(runtime.deliver.await_count, 2)
 
 
 class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
@@ -441,12 +512,12 @@ class CanvasDomainTests(unittest.TestCase):
         import hashlib
         import json
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/vibecast-white-guests-20261125-actual-ha.json").read_text())
+        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/mood-refresh-20261126-actual-ha.json").read_text())
         self.assertEqual(len(proof["source_pins"]), 361)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), expected, name)
         self.assertTrue(proof["source_before_after_equal"])
-        matrix = json.loads((root/"docs/verification/vibecast-white-guests-actual-ha-matrix-20261125.json").read_text())
+        matrix = json.loads((root/"docs/verification/music-canvas-mood-actual-ha-matrix-20261126.json").read_text())
         self.assertEqual(matrix["source_pins"], proof["source_pins"])
         self.assertTrue(matrix["source_before_after_equal"])
         self.assertEqual(len(matrix["results"]), 54)

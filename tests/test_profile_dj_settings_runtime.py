@@ -7,8 +7,9 @@ from pathlib import Path
 import sqlite3
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from tests.test_persistence_platform import PersistenceService, SQLitePersistenceProvider
 from tests.test_profile_dj_settings_persistence import operation
@@ -72,7 +73,13 @@ class ProfileSettingsRuntimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(row, ('party',))
 
     async def test_session_only_mood_leaves_profile_defaults_and_rejects_stale_revision(self):
+        accepted_moods = []
+        refresh = Mock(side_effect=lambda owner: accepted_moods.append(self.manager.current_active(owner).selected_mood))
+        self.manager._hass = SimpleNamespace(data={self.r.DOMAIN: {
+            "music_canvas": SimpleNamespace(session_mood_changed=refresh),
+        }})
         await self.choose({'mood': 'groove'})
+        refresh.assert_called_once_with('owner')
         active = self.manager.current_active('owner')
         before = await self.repo.async_read('owner', authorize=lambda: True)
         updated = await self.manager.async_update_mood(
@@ -88,6 +95,11 @@ class ProfileSettingsRuntimeTests(unittest.IsolatedAsyncioTestCase):
                 owner_profile_id='owner', session_id=active.session_id, selected_mood='chill',
                 expected_revision=active.mood_revision, authorize=lambda: True)
         self.assertIs(self.manager.current_active('owner'), updated)
+        self.assertEqual(refresh.call_count, 2)
+        await self.manager.async_update_mood(
+            owner_profile_id='owner', session_id=updated.session_id, selected_mood='party',
+            expected_revision=updated.mood_revision, authorize=lambda: True)
+        self.assertEqual(accepted_moods, ['groove', 'party'])
 
     async def test_sql_failure_keeps_runtime_and_defaults_old_then_retry_once(self):
         with closing(sqlite3.connect(self.path)) as connection:

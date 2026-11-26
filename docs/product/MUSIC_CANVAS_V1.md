@@ -100,7 +100,7 @@ Keuzes exact: **`Ieder nummer · Ieder kwartier · Ieder half uur · Ieder uur`*
 - Ieder nummer: confirmed/stable trackwissel, kort debounce tegen snel skippen; coalesce naar nieuwste relevante track. Geen generatie voor iedere voorbijgaande skip.
 - Tijdsinterval: pas op de beurt context/generatie starten voor de dan spelende muziek. Niet toch per track genereren en afbeeldingen onzichtbaar weggooien.
 - Bij activering/nieuwe sessie geldt de directe eerste generatie, daarna de cadence. Bij pauze/geen actieve muziek geen periodieke nieuwe werken; hervatten zonder achterstallige wissels inhalen.
-- Mood bepaalt nooit cadence. Zelfde frame kan langer blijven terwijl tracks wisselen: dat is expliciet doelgedrag bij intervalkeuze.
+- Een bevestigde wijziging van de Session mood start direct nieuw artwork voor alle actieve schermen met een actueel spelend nummer. Elk scherm hervat daarna zijn eigen wisselinterval.
 - Bevries context/track bij de gekozen renderopdracht. In per-trackmodus mag inmiddels achterhaalde track niet alsnog verschijnen; intervalmodus mag zijn gekozen moment interpreteren zonder iedere volgende track als nieuwe opdracht te behandelen. Session-/profiel-/settings-/device-epochwijzigingen hebben altijd de afgesproken geldigheidscontrole.
 - Geen onbegrensde wachtrij; per device maximaal lopend werk plus nieuwste relevante intent. E-paper/cloudlatentie respecteren; gemiste termijnen niet inhalen.
 - Werkende tv's niet laten wachten op een traag/offline frame. Technische uitvoertijd is geen garantie op seconde-exact synchroon beeld.
