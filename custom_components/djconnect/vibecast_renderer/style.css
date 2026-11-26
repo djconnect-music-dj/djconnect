@@ -529,6 +529,10 @@ main { height:auto; min-width:0 }
 .horizon-panel:has(#requested-tracks:not([hidden])) > :is(#horizon-preview,#horizon-card) { display:none }
 #requested-tracks ul { margin:0; padding-inline-start:1.1em }
 #requested-tracks li { margin-block:.4em; overflow-wrap:anywhere }
+.requested-track-scheduled {
+  display:inline-block; margin-inline-start:.6em; padding:.15em .52em;
+  border-radius:1em; background:rgba(255,255,255,.14); font-size:.7em; white-space:nowrap;
+}
 #horizon-preview:not([hidden]) + #horizon-card { margin-top:.7rem }
 .horizon-preview-track { display:flex; align-items:flex-start; gap:.65rem; overflow-wrap:anywhere }
 .horizon-preview-track > img { flex:none; width:clamp(3rem,6vw,5rem); aspect-ratio:1; object-fit:cover; border-radius:.65rem }

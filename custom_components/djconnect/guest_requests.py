@@ -111,6 +111,9 @@ class SongRequest:
         return {'request_id':self.request_id, 'title':self.title, 'artist':self.artist,
                 'state':self.state, 'basis':self.basis}
 
+    def queue_row(self):
+        return {'title': self.title, 'artist': self.artist, 'scheduled': self.state == 'queue_confirmed'}
+
 
 class GuestRequestState:
     def __init__(self, admission):

@@ -35,8 +35,7 @@ def display_status(guests, share_id):
     if enabled and share is not None and share.party_requests:
         result['requested_tracks'] = {
             'expires_at': share.requested_until,
-            'items': [{'title': record.title, 'artist': record.artist}
-                      for record in guests.requests.pending(share)],
+            'items': [record.queue_row() for record in guests.requests.pending(share)],
         }
     return result
 
