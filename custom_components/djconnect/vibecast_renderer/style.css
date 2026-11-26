@@ -86,10 +86,6 @@ header { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); g
   z-index:40; display:flex; align-items:center; gap:.75rem; margin:0; padding:.55rem; border-radius:.75rem; background:#17172de8;
 }
 .guest-participation img { display:block; width:min(128px,25vw); height:auto; background:#fff }
-.guest-manual-entry[hidden] { display:none }
-.guest-manual-entry { display:grid; gap:.3rem; padding-inline:.4rem; text-align:center; color:white }
-.guest-manual-entry strong { font:700 clamp(.85rem,1.75vw,1.4rem)/1.2 ui-monospace,monospace; white-space:nowrap }
-.guest-manual-entry span { max-width:18rem; font-size:.8rem; overflow-wrap:anywhere }
 #session-change-popup[hidden] { display:none }
 #session-change-popup {
   position:fixed; z-index:45; bottom:2rem; bottom:calc(2rem + env(safe-area-inset-bottom,0px));

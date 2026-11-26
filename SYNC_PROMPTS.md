@@ -1,3 +1,7 @@
+## 2026-11-26 — VibeCast Party joins by QR on iPhone and iPad
+
+Guests scan the TV QR using DJConnect or Camera and explicitly confirm on iPhone or iPad. Apple removes all Mac guest entry points and pasted invitations. Core removes address/code issuance and redemption and retires its interactive browser guest route. The shared TV renderer shows the QR alone. The receiver consumes the qualified shared renderer and retains the native-open landing. See [native guest UI v1](docs/product/VIBECAST_NATIVE_GUEST_UI_V1.md) and the [guest participation contract](docs/technical/VIBECAST_GUEST_PARTICIPATION_V1.md).
+
 ## 2026-11-23 — Generic disclaimer moves to Help
 
 Owner explicitly removes the permanent “Je DJ kan zich vergissen” line from ordinary Apple Ask DJ/Session surfaces and places that generic explanation in Help instead. This overrides prior composer placement only; specific source/uncertainty claims remain unchanged. See native guest/UI product refinement.

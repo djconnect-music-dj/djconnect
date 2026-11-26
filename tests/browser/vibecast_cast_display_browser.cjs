@@ -144,11 +144,9 @@ async function run(name,engine){
   assert.equal(await page.locator('#live-guest-count .live-guest-icon')
     .evaluate(icon=>getComputedStyle(icon).filter),'brightness(0) invert(1)');
   assert.equal(await page.locator('.session-status #state').isVisible(),false);
-  assert.equal(await page.locator('.guest-manual-entry strong').innerText(),'ABCD-EFGH-JKLM');
-  assert.equal(await page.locator('.guest-manual-entry span').innerText(),'ha.example.net');
+  assert.equal(await page.locator('.guest-participation > :not(img)').count(),0);
+  assert.equal(await page.locator('.guest-participation').textContent(),'');
   const qr=await page.locator('.guest-participation img').boundingBox();
-  const code=await page.locator('.guest-manual-entry').boundingBox();
-  assert.ok(code.x+code.width<qr.x);
   const footer=await page.locator('.renderer-footer').boundingBox();
   assert.ok(qr.x+qr.width>page.viewportSize().width-40 && qr.y+qr.height>footer.y-30);
   assert.ok(qr.y+qr.height<=footer.y,'Guest QR must stay above the footer');
@@ -167,7 +165,7 @@ async function run(name,engine){
   assert.equal(await page.locator('#receiver-brand-label').innerText(),'DJConnect VibeCast');
   assert.equal(await horizonPreview.isVisible(),false);
   assert.equal(await page.locator('.guest-participation').isVisible(),false);
-  assert.equal(await page.locator('.guest-manual-entry strong').textContent(),'');
+  assert.equal(await page.locator('.guest-participation img').getAttribute('src'),null);
   for(let i=0;leaveCalls===0&&i<50;i++)await new Promise(resolve=>setTimeout(resolve,20));
   assert.equal(leaveCalls,1);assert.equal(claimCalls,1);assert.deepEqual(errors,[]);
   return{engine:name,claim_calls:claimCalls,collect_calls:collectCalls,leave_calls:leaveCalls,preflights,actual_route_paths:[...new Set(calls)],page_errors:errors,passed:true};
