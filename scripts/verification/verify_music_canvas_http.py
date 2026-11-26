@@ -2,6 +2,7 @@
 from __future__ import annotations
 import asyncio
 from copy import deepcopy
+import inspect
 import json
 import os
 from pathlib import Path
@@ -154,6 +155,17 @@ async def qualify(hass, manager, history, request, client):
         state="playing", media_identity="fixture-recording", title="Synthetic liquid shapes", artist="Fixture",
         duration_ms=240000, position_ms=1000)
     generations, deliveries = [], []
+    from custom_components.djconnect.music_canvas_render import samsung_preview_jpeg
+    manual_preview = samsung_preview_jpeg(fixture_image.getvalue())
+    paired = inspect.getclosurevars(request).nonlocals
+
+    async def read_preview(target):
+        async with client.post(base + "preview", headers=paired["headers"], json={
+            **paired["identity"], "contract_version": 1, "target_id": target,
+        }) as response:
+            assert response.status == 200 and response.content_type == "image/jpeg", response.status
+            return await response.read()
+
     observed_content = {}
     upload_serial = [0]
     failing = set()
@@ -161,6 +173,12 @@ async def qualify(hass, manager, history, request, client):
         generations.append(prompt)
         return fixture_image.getvalue()
     def hardware(device, action, **kwargs):
+        if action == "preview":
+            shown = observed_content.get(device["id"], "manual-art")
+            assert shown not in device["owned_content"] or shown == kwargs["content_id"]
+            if shown == kwargs["content_id"]:
+                return {"image": kwargs["preview_file"].read_bytes()}
+            return {"image": manual_preview}
         deliveries.append((device["id"], action))
         if device["id"] in failing:
             raise CanvasError("canvas_device_offline", 503)
@@ -190,6 +208,11 @@ async def qualify(hass, manager, history, request, client):
     with patch.object(render, "generation_available", lambda _hass: True), \
          patch.object(render, "generate", generate), patch.object(adapters, "samsung_action", hardware), \
          patch.object(adapters, "deliver_switchbot", cloud):
+        initial, code = await call("read")
+        initial_tv = next(target for target in initial["targets"] if target["id"] == "samsung:fixture-b")
+        assert code == 200 and initial_tv["preview_available"] and initial_tv["preview_revision"] is None
+        assert await read_preview("samsung:fixture-b") == manual_preview
+        assert not generations and not deliveries, "a preview triggered Canvas output"
         await runtime.tick()
         await runtime.jobs["profile-a"]
         assert not generations, "debounce skipped"
@@ -248,7 +271,10 @@ async def qualify(hass, manager, history, request, client):
         latest, code = await call("read")
         assert code == 200 and latest["per_screen_composition_and_cadence"] is True
         before_preview = next(target for target in latest["targets"] if target["id"] == "samsung:fixture-b")
-        assert before_preview["preview_available"] and len(before_preview["preview_revision"]) == 64
+        assert before_preview["preview_available"] and before_preview["preview_revision"] is None
+        previous_image = await read_preview("samsung:fixture-b")
+        previous_frame = next(target for target in latest["targets"] if target["id"] == "switchbot:fixture-p")
+        assert previous_frame["preview_available"] and len(previous_frame["preview_revision"]) == 64
         changed, code = await call("update", dict(binding=binding, operation_id=str(uuid.uuid4()),
             expected_revision=latest["revision"], patch={
                 "matte": "contrast", "show_track_title": True,
@@ -268,7 +294,14 @@ async def qualify(hass, manager, history, request, client):
         latest, code = await call("read")
         assert code == 200
         after_preview = next(target for target in latest["targets"] if target["id"] == "samsung:fixture-b")
-        assert after_preview["preview_available"] and after_preview["preview_revision"] != before_preview["preview_revision"]
+        assert after_preview["preview_available"] and after_preview["preview_revision"] is None
+        assert await read_preview("samsung:fixture-b") != previous_image
+        live_id = observed_content["samsung:fixture-b"]
+        observed_content["samsung:fixture-b"] = "manual-art"
+        assert await read_preview("samsung:fixture-b") == manual_preview
+        observed_content["samsung:fixture-b"] = live_id
+        after_frame = next(target for target in latest["targets"] if target["id"] == "switchbot:fixture-p")
+        assert after_frame["preview_revision"] == previous_frame["preview_revision"]
         assert updated_devices["switchbot:fixture-p"]["presentation"] == ["central", "off", False]
         assert updated_devices["switchbot:fixture-p"]["preview"] == rendered["devices"]["switchbot:fixture-p"]["preview"]
         with patch.object(runtime.cadence, "due", wraps=runtime.cadence.due) as due:
@@ -790,6 +823,7 @@ async def qualify(hass, manager, history, request, client):
             "settings_wake_without_tick_and_cadence_only_reuploads": True,
             "queued_screen_settings_use_latest_mood_for_samsung_and_switchbot": True,
             "preview_revision_changes_only_with_owner_artwork": True,
+            "samsung_preview_reads_current_art_without_canvas_generation_or_upload": True,
             "cross_profile_preview_denied": True, "offline_target_isolated": True,
             "late_model_after_session_end_denied": True, "admin_deletion_withdraws_management": True,
             "settings_update_resumes_before_delivery_and_noop_preserves_live_job": True,

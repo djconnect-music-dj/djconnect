@@ -68,7 +68,12 @@ fields and return private no-store responses. Every request has
   Requires actual linked HA-administrator authority, checked again at commit and
   effects. Ordinary selection is Profile-local; forgetting is installation-wide.
 * `preview`: target_id. Authenticated bytes for a currently selected target only;
-  no external source/token URLs are exposed to the client.
+  no external source/token URLs are exposed to the client. Samsung reads the
+  currently displayed Art Mode item. It returns the matching Profile-owned local
+  file if bound to that item, otherwise an available thumbnail from the same TV.
+  A changed item, unverified upload, or a different Profile's owned content
+  cannot supply the preview. Samsung uses no fixed preview revision so an open
+  app can follow manual changes. SwitchBot retains its committed preview revision.
 
 Preferences: enabled=false, selected_targets=[], composition=central,
 matte=off, cadence=1800; composition central/free/full, matte off/matching/contrast,

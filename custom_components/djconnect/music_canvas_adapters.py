@@ -111,11 +111,62 @@ def _art_peer_sha256(art):
     return sha256(certificate).hexdigest()
 
 
-def samsung_action(device, action, *, content=None, content_id=None, displayed_content_id=None):
+def _samsung_current_preview(art, device, owned_preview_id, preview_file):
+    from samsungtvws.exceptions import ResponseError
+    from .music_canvas_render import samsung_preview_jpeg
+
+    current = art.get_current()
+    shown = current.get("content_id") if isinstance(current, dict) else None
+    need(isinstance(shown, str) and re.fullmatch(r"[A-Za-z0-9_.-]{1,128}", shown),
+         "canvas_preview_unavailable", 404)
+    need(shown not in device["owned_content"] or shown == owned_preview_id,
+         "canvas_preview_unavailable", 404)
+    if shown == owned_preview_id and preview_file is not None and preview_file.is_file():
+        jpeg = preview_file.read_bytes()
+    else:
+        # The library takes a second socket address and byte lengths from the TV.
+        # Limit this read to the original peer and one small, bounded thumbnail.
+        open_socket, receive = art._open_d2d_socket, art._recv_exact
+        read_file = art._recv_d2d_file
+
+        def open_same_peer(info):
+            peer = art.connection.sock.getpeername()[0]
+            need(ip_address(info["ip"]) == ip_address(peer), "canvas_preview_unavailable", 404)
+            return open_socket(info)
+
+        def receive_bounded(sock, size):
+            need(0 < size <= 2 * 1024 * 1024, "canvas_preview_unavailable", 404)
+            return receive(sock, size)
+
+        def receive_one(sock):
+            name, data, index, total = read_file(sock)
+            need(total == 1, "canvas_preview_unavailable", 404)
+            return name, data, index, total
+
+        art._open_d2d_socket = open_same_peer
+        art._recv_exact = receive_bounded
+        art._recv_d2d_file = receive_one
+        try:
+            thumbnails = art.get_thumbnail_list(shown)
+        except ResponseError:
+            thumbnails = art.get_thumbnail(shown, as_dict=True)
+        need(isinstance(thumbnails, dict), "canvas_preview_unavailable", 404)
+        image = next((data for key, data in thumbnails.items() if isinstance(key, str)
+                      and (key == shown or key.rpartition(".")[0] == shown)), None)
+        jpeg = samsung_preview_jpeg(image)
+
+    after = art.get_current()
+    need(isinstance(after, dict) and after.get("content_id") == shown and art.get_artmode() == "on",
+         "canvas_preview_unavailable", 404)
+    return {"image": jpeg}
+
+
+def samsung_action(device, action, *, content=None, content_id=None, displayed_content_id=None,
+                   preview_file=None):
     """Blocking protocol library is confined to an executor and one connection."""
     from samsungtvws import SamsungTVWS
     remote = SamsungTVWS(device["host"], port=8002, token=device.get("token"),
-                         timeout=10, name="DJConnect Music Canvas")
+                         timeout=3 if action == "preview" else 10, name="DJConnect Music Canvas")
     art = remote.art()
     try:
         if action == "pair":
@@ -140,6 +191,8 @@ def samsung_action(device, action, *, content=None, content_id=None, displayed_c
             need(_art_peer_sha256(art) == pin, "canvas_pairing_denied", 409)
         # Never call set_artmode, power, remote keys, HDMI, volume or sound APIs.
         need(art.get_artmode() == "on", "canvas_manual_takeover", 409)
+        if action == "preview":
+            return _samsung_current_preview(art, device, content_id, preview_file)
         if action == "upload":
             uploaded = art.upload(content, matte="none", portrait_matte="none", file_type="jpg")
             need(type(uploaded) is str and bool(uploaded), "canvas_upload_unknown", 503)
