@@ -510,6 +510,17 @@ def _registration_payload(
         or not push_environment
     ):
         return {}
+    categories = ["ask_dj"]
+    # Watch Moment consent is owned by the separate signed preference operation.
+    # Older native hosts omit categories and keep the Ask DJ default.
+    if client_type in {"ios", "macos"} and "categories" in payload:
+        requested = payload["categories"]
+        if not isinstance(requested, list) or len(requested) > 2 or any(
+            not isinstance(category, str) or category not in {"ask_dj", "dj_moments_v1"}
+            for category in requested
+        ):
+            return {}
+        categories = list(dict.fromkeys(requested))
     bundle_id = _clean_text(payload.get("app_bundle_id"), 200)
     return {
         "ha_install_id": ensure_ha_install_id(runtime),
@@ -521,8 +532,7 @@ def _registration_payload(
         "app_bundle_id": bundle_id,
         "app_version": _clean_text(payload.get("app_version"), 64),
         "locale": _clean_text(payload.get("locale"), 32),
-        # Moment preferences require a separately signed, versioned operation.
-        "categories": ["ask_dj"],
+        "categories": categories,
     }
 
 
