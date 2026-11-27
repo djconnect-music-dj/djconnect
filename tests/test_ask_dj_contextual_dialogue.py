@@ -52,6 +52,26 @@ def _research_generation_fixture(projection, answer):
 
 
 class SharedDialogueTest(unittest.IsolatedAsyncioTestCase):
+    async def test_push_publication_runs_once_after_the_original_reply_commit(self):
+        from custom_components.djconnect.ask_dj import service
+
+        publications = []
+        async def owner():
+            return None
+        async def delegate(*args):
+            return {"success": True, "text": "A repeated musical phrase."}
+        def committed(response, is_current):
+            is_current()
+            publications.append((response["history_revision"], response["assistant_message"]["id"]))
+
+        payload = {"client_message_id": "reply-push-regression", "text": "What is an ostinato?"}
+        options = dict(profile_id="profile-a", history_manager=self.history, delegate=delegate,
+                       validate_owner=owner, on_committed_response=committed)
+        result = await service.async_exchange(self.hass, self.runtime, payload, **options)
+        repeated = await service.async_exchange(self.hass, self.runtime, payload, **options)
+        self.assertEqual(publications, [(result["history_revision"], result["assistant_message"]["id"])])
+        self.assertTrue(repeated["deduplicated"])
+
     async def _assert_final_commit_rejects_withdrawn_frame(self, change):
         from custom_components.djconnect.ask_dj import service
         archived = await self.fixture.manager.async_start(owner_profile_id='profile-a', locale='en')

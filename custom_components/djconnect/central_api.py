@@ -126,6 +126,7 @@ async def async_post(
     payload: dict[str, Any],
     *,
     timeout: int = DEFAULT_TIMEOUT_SECONDS,
+    retry: bool = True,
 ) -> dict[str, Any]:
     """POST a sanitized JSON payload to the central DJConnect API."""
     token = _install_token(runtime)
@@ -140,7 +141,7 @@ async def async_post(
     body = dict(payload)
     body["ha_install_id"] = install_id
     _assert_safe_payload(body)
-    return await _post_json(hass, runtime, path, body, token=token, timeout=timeout)
+    return await _post_json(hass, runtime, path, body, token=token, timeout=timeout, retry=retry)
 
 
 async def _post_json(
@@ -151,6 +152,7 @@ async def _post_json(
     *,
     token: str | None,
     timeout: int = DEFAULT_TIMEOUT_SECONDS,
+    retry: bool = True,
 ) -> dict[str, Any]:
     """POST JSON to the central API with optional bearer auth."""
     _assert_safe_payload(payload)
@@ -160,7 +162,8 @@ async def _post_json(
         headers["Authorization"] = f"Bearer {token}"
     session = async_get_clientsession(hass)
     last_error = "central_api_unavailable"
-    for attempt in range(MAX_ATTEMPTS):
+    attempts = MAX_ATTEMPTS if retry else 1
+    for attempt in range(attempts):
         try:
             async with session.post(url, json=payload, headers=headers, timeout=timeout) as response:
                 data = await _response_json(response)
@@ -187,7 +190,7 @@ async def _post_json(
                 path,
                 exc.__class__.__name__,
             )
-        if attempt + 1 < MAX_ATTEMPTS:
+        if attempt + 1 < attempts:
             await asyncio.sleep(0.25)
     return {"success": False, "error": last_error}
 

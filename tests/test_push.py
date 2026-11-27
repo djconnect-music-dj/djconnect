@@ -158,6 +158,34 @@ class PushTest(unittest.TestCase):
         self.assertTrue(accepted["success"])
         self.assertEqual(len(hass.session.calls), 1)
 
+    def test_committed_ask_dj_reply_targets_one_background_device_without_replay(self) -> None:
+        class TimeoutSession(FakeSession):
+            def post(self, url, **kwargs):
+                super().post(url, **kwargs)
+                raise TimeoutError
+
+        hass = types.SimpleNamespace(session=TimeoutSession())
+        runtime = self._runtime()
+        kwargs = dict(user_id=None, device_id="djconnect-ios-ABCDEFGHIJKL", client_type="ios",
+                      history_revision=12, needs_confirmation=True)
+        asyncio.run(self.push.async_send_ask_dj_device_event(hass, runtime, **kwargs, is_current=lambda: False))
+        self.assertFalse(hass.session.calls)
+        runtime.device_status = {"app_state": "active"}
+        self.push._remember_client_activity(runtime, kwargs["device_id"], "ios")
+        asyncio.run(self.push.async_send_ask_dj_device_event(hass, runtime, **kwargs, is_current=lambda: True))
+        self.assertFalse(hass.session.calls)
+        runtime.device_status = {"app_state": "background"}
+        self.push._remember_client_activity(runtime, kwargs["device_id"], "ios")
+        asyncio.run(self.push.async_send_ask_dj_device_event(hass, runtime, **kwargs, is_current=lambda: True))
+        self.assertEqual(len(hass.session.calls), 1)
+        request = hass.session.calls[0]
+        self.assertTrue(request["url"].endswith("/v1/push/event"))
+        self.assertEqual(request["json"]["target_device_id"], kwargs["device_id"])
+        self.assertEqual(request["json"]["client_types"], ["ios"])
+        self.assertEqual(request["json"]["ha_user_hash"], self.push._hash_value(None))
+        self.assertEqual(request["json"]["event_type"], "ask_dj_device_confirm")
+        self.assertEqual(request["json"]["history_revision"], 12)
+
     def test_register_bootstraps_install_token_with_pairing_proof(self) -> None:
         hass = types.SimpleNamespace(session=FakeSession(), config_entries=types.SimpleNamespace())
         hass.config_entries.async_update_entry = lambda entry, **kwargs: setattr(entry, "options", kwargs["options"])
