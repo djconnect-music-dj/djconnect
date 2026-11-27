@@ -5,6 +5,7 @@ import hashlib
 import logging
 import re
 import time
+from collections.abc import Callable
 from typing import Any
 
 from .central_api import (
@@ -266,6 +267,36 @@ async def async_bootstrap(
         "error": "bootstrap_proof_unavailable",
         "last_push_error": "bootstrap_proof_unavailable",
     }
+
+
+async def async_send_ask_dj_device_event(
+    hass: Any,
+    runtime: Any,
+    *,
+    user_id: str | None,
+    device_id: str,
+    client_type: str,
+    history_revision: int,
+    needs_confirmation: bool,
+    is_current: Callable[[], bool],
+) -> None:
+    """Notify only the paired device that requested this committed reply."""
+    if not _device_id_matches_client_type(device_id, client_type) or type(history_revision) is not int or history_revision < 1:
+        return
+    event = EVENT_ASK_DJ_CONFIRM if needs_confirmation else EVENT_ASK_DJ_RESPONSE
+    if not is_current() or not should_send_push(
+        runtime, user_id=user_id, event_type=event, source_device_id=device_id,
+        client_type=client_type, explicit_user_request=True,
+    ).get("send"):
+        return
+    payload = build_relay_event_payload(runtime, user_id=user_id, event_type=event, history_revision=history_revision)
+    payload.update(ha_user_hash=_hash_value(user_id), target_device_id=device_id, client_types=[client_type])
+    # Older relays reject these event names instead of ignoring the target.
+    payload["event_type"] = "ask_dj_device_confirm" if needs_confirmation else "ask_dj_device_response"
+    try:
+        await async_central_post(hass, runtime, "/v1/push/event", payload, retry=False, timeout=5)
+    except DJConnectCentralApiError:
+        return
 
 
 async def async_send_event(

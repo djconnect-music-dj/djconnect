@@ -2330,29 +2330,29 @@ in the HACS integration.
 If a client status payload reports usable foreground/recent-active state, HA
 suppresses Ask DJ pushes back to that active client. HA rate-limits Ask DJ push
 events per HA user and device/client to at most one push per 30 seconds and five
-pushes per ten minutes. HA sends only the central API event payload below to
-`POST /v1/push/event`; the central API is responsible for APNs payload
+pushes per ten minutes. Newly committed replies and confirmation requests go
+through `POST /v1/push/event` as `ask_dj_device_response` or
+`ask_dj_device_confirm`. This addressed form requires a valid installation
+credential, the registered HA user hash, one client type, the exact originating
+device ID in `target_device_id`, and the committed history revision. Only a
+unique current registration with Ask DJ consent is eligible. Older relays
+reject the new event names. The central API is responsible for APNs payload
 construction. APNs alert text is selected from the registered client locale when
 available. Supported central relay languages are `en`, `nl`, `de`, `fr` and
 `es`; unsupported locales fall back to English. APNs payload keys, event values
 and `open_target` values are protocol fields and are never localized.
 
-Central API event payload shape for `ask_dj_response`:
+Central API event payload shape for `ask_dj_device_response`:
 
 ```json
 {
   "ha_install_id": "ha_...",
   "ha_user_hash": "...",
-  "event_type": "ask_dj_response",
+  "event_type": "ask_dj_device_response",
   "open_target": "ask_dj",
   "history_revision": 123,
-  "client_message_id": "client-1",
-  "announcement": {
-    "delivery": "both",
-    "audio_available": true,
-    "speaker_delivery": "attempted"
-  },
-  "client_types": ["ios", "macos", "watchos"]
+  "target_device_id": "djconnect-ios-ABCDEFGHIJKL",
+  "client_types": ["ios"]
 }
 ```
 

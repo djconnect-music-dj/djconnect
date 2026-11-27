@@ -2005,6 +2005,31 @@ class _AskDjMessageRequest:
         except ValueError:
             return (_error_payload("session_context_changed"), 409)
 
+    def _notify_committed_response(self, result, validate_current):
+        if self._ha_service_runtime is not None or self._mood_transition is not None:
+            return
+        create_task = getattr(self.hass, "async_create_background_task", None)
+        if not callable(create_task) or self.client_type not in {"ios", "macos", "watchos"}:
+            return
+        from .push import async_send_ask_dj_device_event
+
+        def is_current():
+            try:
+                validate_current()
+            except Exception:
+                return False
+            return True
+
+        task = async_send_ask_dj_device_event(
+            self.hass, self.bound_runtime, user_id=self.user_id, device_id=self.context.device_id,
+            client_type=self.client_type, history_revision=result.get("history_revision"),
+            needs_confirmation=bool(result.get("confirmation_actions")), is_current=is_current,
+        )
+        try:
+            create_task(task, "djconnect-ask-dj-device-push")
+        except RuntimeError:
+            task.close()
+
     async def _run_exchange(self):
         result = await self.exchange(
             self.hass,
@@ -2017,6 +2042,7 @@ class _AskDjMessageRequest:
             validate_immediate=self.validate_immediate,
             client_device_id=self.context.device_id,
             profile=self.context.profile,
+            on_committed_response=self._notify_committed_response,
             persist_history=self.persist_history
             and self.context.privacy_policy.allow_history_persistence
             and resolve_profile_privacy_policy(

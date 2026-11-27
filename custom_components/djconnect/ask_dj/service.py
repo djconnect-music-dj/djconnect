@@ -97,7 +97,7 @@ async def _live_reference(manager, profile, target):
 
 async def async_exchange(hass, runtime, payload, *, profile_id, history_manager, delegate,
                          validate_owner, persist_history=True, profile=None, validate_immediate=None,
-                         client_device_id="", actor=None, participant_request=False):
+                         client_device_id="", actor=None, participant_request=False, on_committed_response=None):
     """Reserve a bounded turn, execute without broad locks, commit through existing owners."""
     if actor is not None:
         from ..guest_conversation import GuestConversationActor, actor_for
@@ -590,8 +590,8 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
                 turn.delivery_validators.append(reply_archive)
                 turn_record[REPLY_MEDIA_KEY] = reply_media
         ids = []
+        new = persist_history and saved is None
         if persist_history:
-            new = saved is None
             async def persistence_guard():
                 # SessionRuntimeManager owns its short lock here; never reacquire it.
                 if metadata_archive is not None:
@@ -789,6 +789,8 @@ async def async_exchange(hass, runtime, payload, *, profile_id, history_manager,
         response_admission.validate_now = response_now
         future.set_result((deepcopy(response), response_admission))
         history_manager.dialogue.remember_catalogue_read(turn, response, future)
+        if new and on_committed_response is not None and response.get("success") and not response.get("deduplicated"):
+            on_committed_response(response, response_now)
         if actor is not None:
             from ..guest_conversation import GuestServiceResult
             return GuestServiceResult(response, response_now)
