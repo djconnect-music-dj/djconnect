@@ -51,3 +51,17 @@ privacy/identity/rebinding, legacy decoding and zero audio/model/provider I/O.
 Golden owner bindings, real isolated HA, independent exact reviews and normal
 protected source/Finalization gates precede a producer pin. Apple native route
 selection, actual speech and full #129 closure remain separately open.
+
+## AI backend connection status
+
+Paired iPhone, iPad and macOS status can include the additive
+`llm_backend_status` field. It combines the configured Assist conversation agent,
+any explicitly selected structured AI Task and the selected Home Assistant image
+generator. It reads current configuration and recent outcomes from ordinary
+feature requests. Opening the connection popover makes no model or image call.
+Provider errors are limited to actionable states. Raw messages, prompts, account
+details and provider identifiers stay on the server. `active` requires recent
+success on the configured routes. `configured` means the current setup is
+present and still awaiting that evidence. The other states are `billing`,
+`unavailable` and `configuration_required`. An absent field means status
+is unavailable.

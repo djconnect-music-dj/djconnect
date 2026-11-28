@@ -95,8 +95,8 @@ fields and return private no-store responses. Every request has
 A selected target can report `canvas_image_provider_billing` when the image
 provider rejects API billing or quota, or `canvas_image_provider_failed` for
 other provider failures and timeouts. These states contain no provider error
-text or account identifiers. The Apple connection popover explains the
-corresponding recovery action.
+text or account identifiers. The Apple connection popover includes image-provider
+outcomes in its combined AI-backend status.
 
 Preferences: enabled=false, selected_targets=[], composition=central,
 matte=off, cadence=1800; composition central/free/full, matte off/matching/contrast,

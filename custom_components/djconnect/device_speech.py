@@ -201,5 +201,10 @@ def append_snapshot(response, hass, runtime, *, device_id, client_type,
         projected = snapshot(hass, runtime, locale=locale, owner=owner)
         if authorized():
             response["device_speech"] = projected
+        if binding is not None and client_type in {"ios", "macos"}:
+            from .pipeline import current_llm_backend_status
+            llm_status = current_llm_backend_status(hass, runtime.config)
+            if authorized():
+                response["llm_backend_status"] = llm_status
     except Exception:
         return  # Discovery cannot fail an otherwise compatible legacy status.

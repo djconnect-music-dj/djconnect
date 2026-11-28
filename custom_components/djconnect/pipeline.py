@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import json
+import time
 from typing import Any
 
 from homeassistant.core import HomeAssistant
@@ -14,6 +15,124 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 _ROOT_LOGGER = logging.getLogger("custom_components.djconnect")
+
+
+def llm_failure_state(error):
+    """Translate actual provider evidence to a closed status; discard raw details."""
+    billing = {"billing_not_active", "billing_hard_limit_reached", "insufficient_quota"}
+    candidates = (error, error.__cause__, error.__context__) if isinstance(error, Exception) else (error,)
+    for candidate in candidates:
+        if candidate is None:
+            continue
+        code = getattr(candidate, "code", None)
+        message = str(candidate).lower()
+        if (isinstance(code, str) and code in billing) or (
+                "account is not active" in message and "billing" in message):
+            return "billing"
+    return "unavailable"
+
+
+def llm_backend_observation_key(entity):
+    entry = getattr(entity, "entry", None)
+    identifier = getattr(entity, "entity_id", None)
+    if entry is None or not isinstance(identifier, str):
+        return None
+    return identifier, id(entity), getattr(entry, "modified_at", None)
+
+
+def observe_llm_backend(hass, route, entity, key, state):
+    """Observe only actual results from the original configuration."""
+    if key is None or llm_backend_observation_key(entity) != key:
+        return
+    observations = hass.data.setdefault("djconnect", {}).setdefault("llm_backend_observations", {})
+    slot = (route, key[0])
+    if slot not in observations and len(observations) >= 64:
+        del observations[min(observations, key=lambda item: observations[item][1])]
+    observations[slot] = key, time.monotonic(), state
+
+
+def _loaded_llm_agent(hass, agent_id):
+    from homeassistant.components.conversation import DATA_COMPONENT, async_get_agent
+
+    if (not isinstance(agent_id, str) or not agent_id.startswith("conversation.")
+            or DATA_COMPONENT not in hass.data or "conversation_agent" not in hass.data):
+        return None
+    agent = async_get_agent(hass, agent_id)
+    return agent if llm_backend_observation_key(agent) is not None else None
+
+
+def current_llm_backend_status(hass, config):
+    """Aggregate configured chat, typed AI tasks and image generation. No probes."""
+    from homeassistant.components.assist_pipeline.pipeline import KEY_ASSIST_PIPELINE
+    from homeassistant.components.ai_task.const import AITaskEntityFeature
+    from .ask_dj.dialogue import DialogueError, qualify_agent
+    from .music_canvas_render import selected_image_provider
+    from .structured_playback import TASK_CONFIG, capture_task
+
+    agent_id = _assist_context(hass, config).get("agent_id") if KEY_ASSIST_PIPELINE in hass.data else None
+    agent = _loaded_llm_agent(hass, agent_id)
+    settings_needed = agent is None
+    if agent is not None:
+        try:
+            settings_needed = qualify_agent(hass, agent_id) is not agent
+        except DialogueError:
+            settings_needed = True
+    routes = [("conversation", agent)]
+    if config.get(TASK_CONFIG):
+        try:
+            task = capture_task(hass, agent_id, config[TASK_CONFIG], loaded_only=True)
+        except DialogueError:
+            settings_needed = True
+        else:
+            routes.append(("structured", task.entity))
+    image_id, image = selected_image_provider(hass)
+    if image_id:
+        if image is None or not image.available or not image.supported_features & AITaskEntityFeature.GENERATE_IMAGE:
+            settings_needed = True
+        else:
+            routes.append(("image", image))
+
+    observations = hass.data.get("djconnect", {}).get("llm_backend_observations", {})
+    now = time.monotonic()
+    states = set()
+    for route, entity in routes:
+        key = llm_backend_observation_key(entity)
+        observed = observations.get((route, key[0])) if key is not None else None
+        if entity is not None and not getattr(entity, "available", True):
+            states.add("unavailable")
+        elif observed and observed[0] == key and now - observed[1] <= 3600:
+            states.add(observed[2])
+        else:
+            states.add("configured")
+    if "billing" in states:
+        return "billing"
+    if settings_needed:
+        return "configuration_required"
+    if "unavailable" in states:
+        return "unavailable"
+    return "active" if states == {"active"} else "configured"
+
+
+async def _call_observed_conversation(hass, data):
+    try:
+        agent = _loaded_llm_agent(hass, data.get("agent_id"))
+    except (AttributeError, ImportError):
+        agent = None  # Legacy SDK-only callers do not produce provider evidence.
+    key = llm_backend_observation_key(agent)
+    try:
+        result = await hass.services.async_call(
+            "conversation", "process", data, blocking=True, return_response=True)
+    except Exception as exc:
+        observe_llm_backend(hass, "conversation", agent, key, llm_failure_state(exc))
+        raise
+    response = result.get("response") if isinstance(result, dict) else None
+    if agent is not None and isinstance(response, dict):
+        if response.get("response_type") == "error":
+            speech = _speech_from_response(response)
+            observe_llm_backend(hass, "conversation", agent, key, llm_failure_state(speech))
+        elif response.get("response_type") in {"action_done", "query_answer"}:
+            observe_llm_backend(hass, "conversation", agent, key, "active")
+    return result
 
 
 async def process_text_with_assist(
@@ -63,8 +182,7 @@ async def correct_stt_text_with_assist(
         if current_turn.get() is not None:
             result = await call_conversation_process_with_agent_retry(hass, data)
         else:
-            result = await hass.services.async_call("conversation", "process", data,
-                blocking=True, return_response=True)
+            result = await _call_observed_conversation(hass, data)
         response = (result or {}).get("response") or {}
         corrected = _speech_from_response(response)
         block_reason = _stt_correction_block_reason(original, corrected)
@@ -358,13 +476,7 @@ async def _call_conversation_process_transport(
 ) -> dict[str, Any]:
     """Legacy non-model transport may retry; qualified dialogue never changes agents."""
     try:
-        return await hass.services.async_call(
-            "conversation",
-            "process",
-            data,
-            blocking=True,
-            return_response=True,
-        )
+        return await _call_observed_conversation(hass, data)
     except Exception as exc:  # noqa: BLE001
         if not allow_agent_fallback or not data.get("agent_id") or not _looks_like_invalid_agent_id_error(exc):
             raise
@@ -376,13 +488,7 @@ async def _call_conversation_process_transport(
             "Retrying DJConnect conversation.process without invalid agent_id=%s",
             data.get("agent_id"),
         )
-        return await hass.services.async_call(
-            "conversation",
-            "process",
-            retry_data,
-            blocking=True,
-            return_response=True,
-        )
+        return await _call_observed_conversation(hass, retry_data)
 
 
 def _djconnect_assist_prompt(
