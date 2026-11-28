@@ -209,6 +209,11 @@ class CanvasRuntime:
                     for target in new["selected_targets"]:
                         if target not in old["selected_targets"] or not old["enabled"]:
                             affected.add(target)
+                            device = state["devices"][target]
+                            if (new["enabled"] and device["adapter"] == "samsung"
+                                    and self.claims.get(target, owner) == owner):
+                                # A fresh check explicitly takes control of this screen.
+                                device.update(manual_takeover=False, last_selected_content=None)
                             continue
                         device = state["devices"][target]
                         old_style = screen_presentation(old, target, device)
@@ -862,10 +867,10 @@ class CanvasRuntime:
                         def authorized():
                             return scope_current(cadence == "track") and self.registry_art_current(row)
 
+                        current_content = await self.observe_samsung(owner, row, authorized)
                         if len(row["owned_content"]) == 2:
-                            device = await self.reconcile_samsung_uploads(row, authorized)
-                        else:
-                            await self.observe_samsung(row, authorized)
+                            device = await self.reconcile_samsung_uploads(
+                                row, authorized, current_content=current_content)
                 except asyncio.CancelledError:
                     raise
                 except Exception as exc:
@@ -1029,37 +1034,71 @@ class CanvasRuntime:
                 for key, attempt in pending_attempts.items():
                     self.cadence.release(key, attempt)
 
-    async def observe_samsung(self, device, authorize):
-        """Respect manual artwork until an admin explicitly reconnects Canvas."""
+    async def observe_samsung(self, owner, device, authorize):
+        """Uncheck this screen after a confirmed external artwork selection."""
         import functools
         need(authorize() and self.registry_art_current(device), "canvas_context_changed", 409)
         observed = await self.protocol(functools.partial(adapters.samsung_action, device, "observe"))
         need(authorize() and self.registry_art_current(device), "canvas_context_changed", 409)
-        expected = device.get("last_selected_content")
         current = observed.get("current")
-        if expected and (not isinstance(current, dict) or current.get("content_id") != expected):
-            await self.repository.mutate(
-                lambda state: state["devices"][device["id"]].update(manual_takeover=True), authorize)
-            raise CanvasError("canvas_manual_takeover", 409)
+        content_id = current.get("content_id") if isinstance(current, dict) else None
+        expected = device.get("last_selected_content")
+        if not isinstance(content_id, str) or not content_id:
+            need(not expected, "canvas_target_unavailable", 503)
+            return None
+        if expected and content_id != expected:
+            target = device["id"]
 
-    async def reconcile_samsung_uploads(self, device, authorize):
+            def pause(state):
+                row = state["devices"].get(target)
+                need(row and row["epoch"] == device["epoch"] and row.get("last_selected_content") == expected,
+                     "canvas_context_changed", 409)
+                row["manual_takeover"] = True
+                config = profile(state, owner)
+                prefs = config["preferences"]
+                if target in prefs["selected_targets"]:
+                    prefs["selected_targets"].remove(target)
+                    if cadence := prefs["cadence_overrides"].pop(target, None):
+                        style = prefs["presentation_overrides"].setdefault(
+                            target, {"matte": prefs["matte"], "show_track_title": prefs["show_track_title"]})
+                        style.setdefault("cadence", cadence)
+                    prefs["enabled"] = bool(prefs["selected_targets"])
+                    config["revision"] += 1
+                    state["profiles"][owner] = config
+                return config["revision"]
+
+            self.revisions[owner] = await self.repository.mutate(pause, authorize)
+            self.revoke(target)
+            self.pending_playback.add(owner)
+            raise CanvasError("canvas_manual_takeover", 409)
+        return content_id
+
+    async def reconcile_samsung_uploads(self, device, authorize, *, current_content=None):
         """Retire an older owned upload after the TV confirms the latest one."""
         import functools
-        previous, latest = device["owned_content"]
+        owned = device["owned_content"]
+        previous, latest = owned
+        resumed = current_content is not None and not device.get("last_selected_content")
+        if resumed:
+            previous = next(item for item in owned if item != current_content)
+            cleanup_scope = {"preserve_current_content_id": current_content}
+        else:
+            cleanup_scope = {"displayed_content_id": latest}
         need(authorize(), "canvas_context_changed", 409)
 
         async def cleanup_and_record():
             need(authorize(), "canvas_context_changed", 409)
             result = await self.protocol(functools.partial(
-                adapters.samsung_action, device, "cleanup", content_id=previous, displayed_content_id=latest))
+                adapters.samsung_action, device, "cleanup", content_id=previous, **cleanup_scope))
             need(result["deleted"], "canvas_cleanup_required", 409)
 
             def record(state):
                 row = state["devices"].get(device["id"])
-                need(row and row["epoch"] == device["epoch"] and row["owned_content"] == [previous, latest]
+                need(row and row["epoch"] == device["epoch"] and row["owned_content"] == owned
                      and not row.get("forgetting"), "canvas_context_changed", 409)
                 row["owned_content"].remove(previous)
-                row["last_selected_content"] = latest
+                if not resumed:
+                    row["last_selected_content"] = latest
                 row["cleanup_supported"] = True
                 return deepcopy(row)
 
@@ -1080,7 +1119,7 @@ class CanvasRuntime:
             self.states[target] = "delivering"
             if device["adapter"] == "samsung":
                 import functools
-                await self.observe_samsung(device, authorized)
+                await self.observe_samsung(owner, device, authorized)
                 need(len(device["owned_content"]) < 2, "canvas_cleanup_required", 409)
                 def reserve_upload(state):
                     state["devices"][target]["upload_pending"] = True
