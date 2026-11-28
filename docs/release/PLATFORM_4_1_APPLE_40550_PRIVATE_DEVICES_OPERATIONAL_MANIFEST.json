@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "kind": "platform_release_operational_manifest",
+  "manifest_id": "release-apple-internal-4.1.0-40550-private-devices",
+  "status": "APPROVED_DEPLOYMENT_DISPATCH_PENDING",
+  "platform_version": "4.1",
+  "release_version": "4.1.0",
+  "release_profile": "INTERNAL_RELEASE",
+  "approval": {
+    "state": "APPROVED",
+    "effect": "Private installation of build 40550 on the iPad Pro and Mac mini.",
+    "authority_record": "Peter approved the exact 40550 private packages 804928550 and 804928554 for iPad Pro and Mac mini in Codex thread 01a20e46-be6f-7610-97c7-5bc7c6ccf8b3 on 2026-11-28."
+  },
+  "repositories": [
+    {
+      "repository": "djconnect-music-dj/djconnect-app",
+      "source_sha": "88fb492962d9401530cba9aef9f99ece5b8be30a",
+      "version": "4.1.0",
+      "build_number": "40550"
+    }
+  ],
+  "artifact_bindings": [
+    {
+      "target": "apple_private_device",
+      "target_device": "ipad",
+      "artifact_id": "804928550",
+      "artifact_sha256": "a58c5508268aeefb36f29fdda4d91424b426604e7a9ade3bf4bf36a35a5c06ea",
+      "github_repository_id": 1444773078,
+      "github_release_asset_id": 804928550,
+      "signing": "local_developer_provisioning_required"
+    },
+    {
+      "target": "apple_private_device",
+      "target_device": "macmini",
+      "artifact_id": "804928554",
+      "artifact_sha256": "278448f9a6338dd8b306e5724567308a9cd1c71b31f66a0658036168da3a44f5",
+      "github_repository_id": 1444773078,
+      "github_release_asset_id": 804928554,
+      "signing": "local_developer_provisioning_required",
+      "paired_watch_validation": "disabled"
+    }
+  ],
+  "deployment_constraints": {
+    "dispatch_now": [
+      "ipad",
+      "macmini"
+    ],
+    "paired_watch_validation": "disabled",
+    "mac_installation": "Independent Mac mini relay only."
+  }
+}
