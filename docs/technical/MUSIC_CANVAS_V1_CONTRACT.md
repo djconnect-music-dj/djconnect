@@ -92,6 +92,12 @@ fields and return private no-store responses. Every request has
   cannot supply the preview. In regular live preview, Samsung follows manual
   changes. SwitchBot retains its committed preview revision.
 
+A selected target can report `canvas_image_provider_billing` when the image
+provider rejects API billing or quota, or `canvas_image_provider_failed` for
+other provider failures and timeouts. These states contain no provider error
+text or account identifiers. The Apple connection popover explains the
+corresponding recovery action.
+
 Preferences: enabled=false, selected_targets=[], composition=central,
 matte=off, cadence=1800; composition central/free/full, matte off/matching/contrast,
 cadence track/900/1800/3600 are the Profile defaults.
@@ -124,9 +130,10 @@ Screen dimensions and orientation carry provenance; unknown values remain unknow
 
 ## Runtime and safety
 
-Core owns a single lifecycle scheduler. One model call may run at once, with
-a conservative installation budget of 48 attempts per rolling hour. An unknown
-provider outcome consumes its attempt. SwitchBot keeps at most two outstanding
+Core owns a single lifecycle scheduler. Up to three image requests can run at
+once within the installation budget of 48 attempts per rolling hour. Identical
+generation inputs share a provider call. An unknown provider outcome consumes
+its attempt. SwitchBot keeps at most two outstanding
 file leases per target and 32 installation-wide; backpressure preserves the last
 good work and coalesces later music instead of generating discarded images. An accepted playing track is immediately eligible. For per-track screens, Core
 can prepare the next Spotify queue entry during the last 45 seconds. It retains
@@ -137,9 +144,11 @@ renders the confirmed playing track immediately. An accepted Session
 mood revision wakes the scheduler and triggers a fresh generation for every
 eligible target, independently of its cadence or current track. The attempt
 starts a new cadence window. Superseded work cannot publish after acceptance.
-Paused/ended/stale observations do not generate. No backlog catchup. One bounded generation runs at
-a time; equal target profiles share bytes. Target arbitration reserves a physical
-device for one active Profile; a competing Profile receives busy, never last-wins.
+Paused, ended and stale observations do not generate. Each screen independently
+checks availability and delivers its artwork. Other screens continue during
+a slow or failed screen operation. Operations for the same device stay serial.
+Installation-wide changes wait for outstanding device effects. Target arbitration reserves a
+physical device for one active Profile. A competing Profile receives busy.
 Every await is fenced against original Profile, Session, revision and device
 epoch. Disable/end/forget cancel future work and prohibit late delivery.
 
