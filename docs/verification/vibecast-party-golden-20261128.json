@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "result": "PASS",
+  "source_product_manifest": "docs/verification/push-rollout-product-manifest-20261128.json",
+  "harness": "scripts/verification/verify_party_request_golden.py",
+  "harness_sha256": "ab476ccc2dadbf75d118a317c57e7cc27da38301fc983d56170b4ee96f1f4418",
+  "shared_harness_sha256": "79b16c10c573ea926dcdf83741b604685dae1d5e8e8f896670950c16ad7a4610",
+  "fixture_sha256": "b52b6280cfc20d46b87710432847063c514404286e6f769a1c23846bc502dbdb",
+  "image": "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
+  "execution": "isolated container with synthetic Catalogue and Spotify responses",
+  "scenarios": 17,
+  "passed": 17,
+  "provider_traffic": "none",
+  "physical_device": "NOT_RUN"
+}

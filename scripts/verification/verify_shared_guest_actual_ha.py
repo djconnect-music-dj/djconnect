@@ -18,7 +18,7 @@ from unittest.mock import patch
 import verify_requested_moments_http as harness
 
 
-async def qualify(hass, manager, history, request, client):
+async def qualify(hass, manager, history, request, client, *, party_request_golden=None):
     from homeassistant.components import conversation
     from homeassistant.config_entries import ConfigEntryState
     from homeassistant.core import Context
@@ -237,6 +237,9 @@ async def qualify(hass, manager, history, request, client):
         assert observed['request']['state'] == 'actually_playing' and len(writes) == 1
         await post('participation','ask',{**binding,'text':'wat is mijn music dna',
             'client_message_id':'private-denied'}, token=token, expected=403)
+    golden = None
+    if party_request_golden is not None:
+        golden = await party_request_golden(hass, manager, client, post, host, selected, requested_uri)
     assert json.dumps(history.data, sort_keys=True) == before
     assert current_guest.get() is None and current_request.get() is None
     assert manager.current_active('profile-a').session_id == sid
@@ -330,6 +333,7 @@ async def qualify(hass, manager, history, request, client):
     cases.append({'scenario':'paired_party_automatically_queues_two_guest_requests_and_projects_only_unplayed',
                   'status':'PASS'})
     return {'requests':cases,'actual_ha':True,'actual_tls':True,'common_application_service':True,
+            **({'party_request_golden': golden} if golden is not None else {}),
             'provider_io':'DECLARED_SYNTHETIC','fixture_model_calls':len(model_calls),'queue_posts':len(writes),'physical_satellite':'NOT_RUN',
             'installed':'NOT_RUN','real_provider':'NOT_RUN','editorial_acceptance':'OPEN'}
 
