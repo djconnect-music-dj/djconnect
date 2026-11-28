@@ -2,26 +2,26 @@
   "schema_version": 1,
   "kind": "platform_release_operational_manifest",
   "status": "APPROVED_DEPLOYMENT_DISPATCH_PENDING",
-  "manifest_id": "release-4.1.0-api-worker-a2683b00",
-  "generated_at": "2026-11-28T12:09:05Z",
+  "manifest_id": "release-4.1.0-api-worker-a565bc5b",
+  "generated_at": "2026-11-28T14:56:42Z",
   "platform_version": "4.1",
   "release_version": "4.1.0",
   "release_profile": "INTERNAL_RELEASE",
   "approval": {
     "state": "APPROVED",
-    "authority_record": "Peter requested merging and deploying the latest versions of all DJConnect components in Codex thread 01a20e46-be6f-7610-97c7-5bc7c6ccf8b3 on 2026-11-28, including the API production release.",
+    "authority_record": "Peter requested the production rollout of API, Core and Apple and end-to-end verification in Codex thread 01a20e46-be6f-7610-97c7-5bc7c6ccf8b3 on 2026-11-28.",
     "approved_statement": "Deploy the qualified API 4.1.0 artifact bound in this manifest using the protected production workflow."
   },
   "repositories": [
     {
       "repository": "djconnect-music-dj/djconnect-api",
       "repository_id": 1275206655,
-      "source_sha": "a2683b003a0617bea9bd11091dc04afc6439344c",
-      "tree": "f4411b4c9b887d24fbf69b43cb141ef60f51453d",
+      "source_sha": "a565bc5b104afc1b392674367e828f2285d44015",
+      "tree": "23d425351ccd6edbac5734e77d614474b2508ee6",
       "version": "4.1.0",
-      "validate_run": "46142577190",
-      "artifact_run": "46142748061",
-      "release_evidence_run": "46142748348"
+      "validate_run": "46156910002",
+      "artifact_run": "46157074867",
+      "release_evidence_run": "46157075138"
     }
   ],
   "required_targets": [
@@ -33,17 +33,17 @@
   "artifact_bindings": [
     {
       "target": "cloudflare_workers_production",
-      "artifact_id": "15262636990",
-      "artifact_sha256": "b7411792c7b452b3eb144a82b44bed1658c85df466a1fc6e3c22284c08716730"
+      "artifact_id": "15268007926",
+      "artifact_sha256": "7f15a9f6680cdadf2537a1fbede39d107d6035f1de3c4a1f806fd793300f6a04"
     }
   ],
   "live_baseline": {
     "version": "4.1.0",
-    "source_sha": "3d80057d161e9b85f4b999c0371970939ce56bc6",
-    "cloudflare_deployment_version_id": "7a3d0bc7-84b7-4620-ae84-694fc5490d0f",
+    "source_sha": "a2683b003a0617bea9bd11091dc04afc6439344c",
+    "cloudflare_deployment_version_id": "b31cb1a3-6b37-424a-b876-05422c45ed32",
     "health_check": "PASS",
     "deployment_identity_source": "Protected read-only Cloudflare deployment status at 100% and public health, confirmed before and after reading the D1 ledger.",
-    "read_only_preflight_run": "46143029815",
+    "read_only_preflight_run": "46157163470",
     "read_only_preflight_result": "PASS"
   },
   "next_authorized_action": "Recheck the active production baseline with the protected read-only workflow, dispatch the exact artifact with the protected production workflow, then run separate post-deployment smoke and verify live health.",
