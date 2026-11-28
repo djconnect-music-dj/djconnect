@@ -192,7 +192,7 @@
   "custom_components/djconnect/music_canvas_assets/SourceSerif4-Semibold.ttf": "8b16c167eda4efc1d3fceda28eeeedb673e770330ea82521fc699e08c4cd4391",
   "custom_components/djconnect/music_canvas_http.py": "2e654ffa68f6deb069fa6191ecb366ebe84125c8deed25aaa007b8b626de3bb6",
   "custom_components/djconnect/music_canvas_render.py": "5e7ce7babb594429d511ebca738c732e4f367e9f5eb55f7bdc790bf77029e228",
-  "custom_components/djconnect/music_canvas_runtime.py": "3dc93aa2ecd6f19f33fecf8203da1905fd299b0f092655a21bc660cc23d9339e",
+  "custom_components/djconnect/music_canvas_runtime.py": "55dda58d64362f38c9687694755596ffe2bd554312c596843f39dcf6f07de18a",
   "custom_components/djconnect/music_discovery.py": "495358961d8ac6cd650fbc6de0b62e92f11b1c602495ea2ab45960faf1ba3cc7",
   "custom_components/djconnect/music_dna.py": "2a156af01df7ea2699808b9a93ffb9e07f0c5c79ce78a62663d623a68e9ba21e",
   "custom_components/djconnect/music_intent.py": "8b04f7b0925d288b29aadf2d70032e76c3f37b3952ad1054f54bfe0bad412960",

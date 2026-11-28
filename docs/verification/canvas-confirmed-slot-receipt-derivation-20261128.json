@@ -1,0 +1,669 @@
+{
+  "mode": "canvas-confirmed-slot",
+  "source_before_after_equal": true,
+  "product_files": 361,
+  "all54_executions_success": true,
+  "bindings": [
+    {
+      "test": "test_artist_collections_qualification.ArtistCollectionsQualificationTests.test_original_paired_http_offer_proof_matches_current_source",
+      "predecessor": "examples/client_contracts/artist_collections_v1/canvas-screen-resume-20261128-aa49e678.json",
+      "predecessor_sha256": "237a7beec234dc3e44afd30a329796f32ec6ff5af7825709f469bfc344f4ab7d",
+      "current": "examples/client_contracts/artist_collections_v1/canvas-confirmed-slot-20261128-aa49e678.json",
+      "current_sha256": "a95424fa1548ece16daf0ee269e5da0d6dc00c0dd1ac693cbbc53c8f768c4524",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_ask_dj_recording_production.RecordingProductionTests.test_current_actual_ha_receipt_binds_all_products_without_quality_or_native_claim",
+      "predecessor": "examples/client_contracts/ask_dj_recording_production_v1/canvas-screen-resume-20261128-f6f8c4d8.json",
+      "predecessor_sha256": "443c6048dde6491aa6e149f19b6810b140f851583d62f2d5193244319432fdff",
+      "current": "examples/client_contracts/ask_dj_recording_production_v1/canvas-confirmed-slot-20261128-f6f8c4d8.json",
+      "current_sha256": "59019b363860afe8c9fccfb3afbeead595cd25948957ba6ab386dbe7f5ca0ba6",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_bulletin_manual_speech_contract.BulletinManualSpeechContractTests.test_actual_paired_manual_use_denial_and_withdrawal_join_current_source",
+      "predecessor": "examples/client_contracts/bulletin_manual_speech_v1/canvas-screen-resume-20261128-279bd2dc.json",
+      "predecessor_sha256": "5f9100408b4875c833d8b396750eea70f6f9426f1c735ff3e734d2379852888c",
+      "current": "examples/client_contracts/bulletin_manual_speech_v1/canvas-confirmed-slot-20261128-279bd2dc.json",
+      "current_sha256": "754524ff9acfc56142e64c2a0d94fdc9df740098dc98c17719361b29510f9266",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_for_you_late_confirmation_contract.ForYouLateConfirmationContractTests.test_original_source_sample_confirms_same_mix_without_second_dispatch",
+      "predecessor": "examples/client_contracts/for_you_late_confirmation_v1/canvas-screen-resume-20261128-8b5dc650.json",
+      "predecessor_sha256": "39c16c51776e7baf7ece548d212c6ea36ac4681af3fb7fb9a3c375f9b6ba9897",
+      "current": "examples/client_contracts/for_you_late_confirmation_v1/canvas-confirmed-slot-20261128-8b5dc650.json",
+      "current_sha256": "0be225c1f02bf3af3007d674089532a721b0acd8a06c7df261b9873fdfa9a1b3",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_installation_management.ManagementGrammarTests.test_original_actual_HA_receipt_binds_current_source_and_boundaries",
+      "predecessor": "examples/client_contracts/installation_management_preparation_v1/canvas-screen-resume-20261128-0c47be5d.json",
+      "predecessor_sha256": "d38467f9e7aad3cdcf2fa0b46b6bca7bace0bee5589efc56179de68e8debc819",
+      "current": "examples/client_contracts/installation_management_preparation_v1/canvas-confirmed-slot-20261128-0c47be5d.json",
+      "current_sha256": "3f4a308c846ec6313d43d375e1ee1c6a60f1326d907b107d6f31aaabed0f0bbb",
+      "field_provenance": {
+        "actual_HA_auth_users_tokens_middleware": "actual raw field",
+        "cases": "actual raw field",
+        "classification": "actual raw field",
+        "native_or_push_acceptance": "actual raw field",
+        "provider_or_device_effect": "actual raw field",
+        "real_service_key_or_custody_effect": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_live_impression.LiveImpressionTest.test_tracked_actual_ha_http_receipt_binds_final_source_and_declared_fixture_scope",
+      "predecessor": "examples/client_contracts/live_impression_v1/canvas-screen-resume-20261128-6ec59f7d.json",
+      "predecessor_sha256": "0307936f7514233861889ee063b0bfd7795b51881694306523e87f755441b80d",
+      "current": "examples/client_contracts/live_impression_v1/canvas-confirmed-slot-20261128-6ec59f7d.json",
+      "current_sha256": "b6fa41da834ebfe7e083bf75d158e598a0c074c2336f95995d7b74d65a3fffc1",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "raw_selected_file_count": "actual raw selected-file count",
+        "raw_selected_product_count": "actual raw selected-product count",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_passive_field_expiry_contract.PassiveFieldExpiryContractTests.test_actual_original_frame_survives_only_shorter_field_expiry",
+      "predecessor": "examples/client_contracts/passive_field_expiry_v1/canvas-screen-resume-20261128-6ba8b7cf.json",
+      "predecessor_sha256": "90f21a7ccc01969801a105347acb109d7c0a8d5ef6cc340eb8f5e8a49b6e568b",
+      "current": "examples/client_contracts/passive_field_expiry_v1/canvas-confirmed-slot-20261128-6ba8b7cf.json",
+      "current_sha256": "cce0275c8f76d310ffe587d781b4eb7a4c1038887c154d48f5dd93888034b3c6",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_profile_spotify_reconnect_qualification.ProfileSpotifyReconnectQualificationTests.test_current_source_has_profile_owned_callback_and_shared_caller_proof",
+      "predecessor": "examples/client_contracts/profile_spotify_reconnect_v1/canvas-screen-resume-20261128-0464d3ed.json",
+      "predecessor_sha256": "1d733c8bd173d66d7a75a70ed80a708dfc069554e8d7b280fcdc24115e1baa29",
+      "current": "examples/client_contracts/profile_spotify_reconnect_v1/canvas-confirmed-slot-20261128-0464d3ed.json",
+      "current_sha256": "8fab891844df190b581b52697c82120dfbf341676c9751d493b482183eaca4cf",
+      "field_provenance": {
+        "canonical_view_probe": "actual independent authority-view probe",
+        "harness_pins": "actual executed current harness/helper map",
+        "native_installed_acceptance": "explicit unexecuted provider/device boundary",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_session_first_play.FirstPlayWireEvidenceTests.test_current_for_you_source_and_frozen_legacy_first_play_evidence_are_distinct",
+      "predecessor": "examples/client_contracts/session_for_you_v1/canvas-screen-resume-20261128-930e45a2.json",
+      "predecessor_sha256": "505ec4ddc6de5f3935c2a6a0a42766177cf24d6d4a9aba699e0470bb716b4de1",
+      "current": "examples/client_contracts/session_for_you_v1/canvas-confirmed-slot-20261128-930e45a2.json",
+      "current_sha256": "3042d527620ced68bce50f572ea52fcb25dac8c69d3bd5056263a7b23e2eab26",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_spotify_volume_action_errors.SpotifyVolumeActionErrorTests.test_actual_paired_ha_volume_receipt_binds_the_current_product_and_verifier",
+      "predecessor": "examples/client_contracts/spotify_volume_v1/canvas-screen-resume-20261128-8da8bb8d.json",
+      "predecessor_sha256": "2aa0c0ee3d7a3f76820a6be3684a707e1e9b65a94528793e712e91b8a07266a8",
+      "current": "examples/client_contracts/spotify_volume_v1/canvas-confirmed-slot-20261128-8da8bb8d.json",
+      "current_sha256": "5e0878fca90c058cf4c39caad1730edadb1e52f5093c64e3407fcfe751d278ea",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_ask_dj_band_story.BandStoryActualHAEvidenceTests.test_current_source_and_original_ha_receipt_are_exact_and_not_editorial_acceptance",
+      "predecessor": "examples/client_contracts/band_members_story_v1/canvas-screen-resume-20261128-d8b24b29.json",
+      "predecessor_sha256": "d215ba9d165f63813537cad50570660ce3b5a72e01bf60a0980e4a708b377328",
+      "current": "examples/client_contracts/band_members_story_v1/canvas-confirmed-slot-20261128-d8b24b29.json",
+      "current_sha256": "2c483960f2ef52665b1179a577fd2a23b5d3071cd4ce9d31ee63679f341cb20f",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_ask_dj_question_continuity.QuestionContinuityTests.test_current_actual_ha_proof_keeps_all_dates_choices_and_conflicts_bound",
+      "predecessor": "examples/client_contracts/ask_dj_question_continuity_v1/canvas-screen-resume-20261128-efc4221d.json",
+      "predecessor_sha256": "6d2b8d78d7b1a19398fb944663546107f2a103474b1ed3b48498ea389436fea3",
+      "current": "examples/client_contracts/ask_dj_question_continuity_v1/canvas-confirmed-slot-20261128-efc4221d.json",
+      "current_sha256": "bf62644b068b1afbbc2d5b0e59a22e5cf09ed0791ff9fd99369a08fe9190f959",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_history_deletion_api.PairedHistoryDeleteTests.test_actual_ha_wire_fixture_binds_current_source_without_claiming_installation",
+      "predecessor": "examples/client_contracts/session_conversation_history/canvas-screen-resume-20261128-04cf842e.json",
+      "predecessor_sha256": "37ca67699e59c6c6a82855b116f7a6165d80b62fcf819b76ecdccf3da8fcc392",
+      "current": "examples/client_contracts/session_conversation_history/canvas-confirmed-slot-20261128-04cf842e.json",
+      "current_sha256": "9571442ed20eda08dd41ddd41bde314d29c610fd87c2bb4e70cd2ba5a2525581",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_installation_once_journal.OriginalActualOnceProofTests.test_current_HA_originals_and_parent_missing_journal_remain_exact",
+      "predecessor": "examples/client_contracts/installation_once_metadata_v1/canvas-screen-resume-20261128-d7ff76da.json",
+      "predecessor_sha256": "3d551e4686a02cec6892b79963050dbc0bb12a91266aaa23b3314d84f85d01da",
+      "current": "examples/client_contracts/installation_once_metadata_v1/canvas-confirmed-slot-20261128-d7ff76da.json",
+      "current_sha256": "b0da57616733d89a5cd4ccfa3929cb24246af856be90034af31cd47af35f3aa4",
+      "field_provenance": {
+        "actual_key_or_sign_effect": "actual raw field",
+        "cases": "actual raw field",
+        "current_harness_sha256": "executed harness bytes",
+        "preceding_installation_codec_cases": "actual raw field",
+        "preceding_source_origin_cases": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_installation_principal_data.InstallationPrincipalDataTests.test_actual_HA_original_codec_and_same_final_harness_parent_RED_remain_exact",
+      "predecessor": "examples/client_contracts/installation_principal_data_v1/canvas-screen-resume-20261128-64ab9cf1.json",
+      "predecessor_sha256": "d38aee1b2fb3f822405d6e2cfec0c3cc3e141115d59917a48ad0788c0d1f1cdf",
+      "current": "examples/client_contracts/installation_principal_data_v1/canvas-confirmed-slot-20261128-64ab9cf1.json",
+      "current_sha256": "848aeb025c564341f38536535748fc8f734cfb8fdc2d2bc9a19617499daf3075",
+      "field_provenance": {
+        "cases": "actual raw field",
+        "preceding_source_origin_cases": "actual raw field",
+        "registry_CAS_or_once_or_signer_qualification": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_passive_observation_contract.PassiveObservationContractTests.test_original_grant_frames_and_nonrenewing_reads_match_current_source",
+      "predecessor": "examples/client_contracts/passive_observation_sequence_v1/canvas-screen-resume-20261128-17960ce6.json",
+      "predecessor_sha256": "1bcccf5383d78b645284c9fa12d971c53915c308285c98ee152cba552fb2981a",
+      "current": "examples/client_contracts/passive_observation_sequence_v1/canvas-confirmed-slot-20261128-17960ce6.json",
+      "current_sha256": "00d5296c4d76b5af09723a6c629dcb917e74205a73b429e3311b8cdcc2449b36",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_persona_story_actual_ha.PersonaStoryActualHATest.test_current_source_and_verifiers_are_bound_to_the_original_actual_ha_trace",
+      "predecessor": "examples/client_contracts/personal_dj_artist_story_v1/canvas-screen-resume-20261128-ef5df2b2.json",
+      "predecessor_sha256": "b96b684891be7f851d8dcc507d7162a68e88bddc01b4e332ddf68e202796ae45",
+      "current": "examples/client_contracts/personal_dj_artist_story_v1/canvas-confirmed-slot-20261128-ef5df2b2.json",
+      "current_sha256": "553a0a69699cc0376f438a187322be74d92bc1609e64173838a998ad70bb6214",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_settings_confirmation.SettingsConfirmationTests.test_actual_ha_fixture_pins_source_and_declares_native_install_boundary",
+      "predecessor": "examples/client_contracts/settings_confirmation_v1/canvas-screen-resume-20261128-fc590876.json",
+      "predecessor_sha256": "5e2858372040a74558c286974296c4b55325a0eebf5a6e9cc4c029809394e30f",
+      "current": "examples/client_contracts/settings_confirmation_v1/canvas-confirmed-slot-20261128-fc590876.json",
+      "current_sha256": "45d1f7f3632bcce0f76de9c7124ac17fcee1b52580be9885d69bf2337eedfc27",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_surface_push_context_v3.OriginalClockActualHAProofTests.test_new_v3_actual_fixture_matches_current_product_and_harness",
+      "predecessor": "examples/client_contracts/surface_push_v1/canvas-screen-resume-20261128-c3a825b4.json",
+      "predecessor_sha256": "cbcb9fafab08676894bb9e8fb428cbc0ac11109f80132392c04d89f1ec9c6de0",
+      "current": "examples/client_contracts/surface_push_v1/canvas-confirmed-slot-20261128-c3a825b4.json",
+      "current_sha256": "644779e22b88d417badcba69d150577def1978d07970158b1babcea0fcca41a9",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_surface_source_origin.SourceOriginActualProofTests.test_current_source_joins_original_actual_HA_and_same_harness_parent_failure",
+      "predecessor": "examples/client_contracts/source_origin_v1/canvas-screen-resume-20261128-0f1af7c7.json",
+      "predecessor_sha256": "f427307903c2b00298a85615f88f80050cde80928e3c61d44d1677443055e6fd",
+      "current": "examples/client_contracts/source_origin_v1/canvas-confirmed-slot-20261128-0f1af7c7.json",
+      "current_sha256": "d29445316db6e4641c40f5f42a023b2901f5ae146cd03e08612ecaa8aea71287",
+      "field_provenance": {
+        "af201_native_mapping": "actual raw field",
+        "cases": "actual raw field",
+        "installed_native_provider": "actual raw field",
+        "source_origin_DATA_only": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_ask_dj_help_live_observation.HelpObservationTests.test_original_actual_ha_wire_binds_all_current_products_without_native_claim",
+      "predecessor": "examples/client_contracts/ask_dj_help_context_v1/canvas-screen-resume-20261128-6c1d4a34.json",
+      "predecessor_sha256": "8c2c9718832cf175e4679bb30cd784792a7131d4e5f9b049e5e98c068a963db7",
+      "current": "examples/client_contracts/ask_dj_help_context_v1/canvas-confirmed-slot-20261128-6c1d4a34.json",
+      "current_sha256": "8a35ff6f90fa7ba367d8ee8e49174b6059dcd20d7decf221a060841186ed97a3",
+      "field_provenance": {
+        "cases": "actual raw field",
+        "external_provider_calls": "actual raw field",
+        "installed_native_audio_or_physical_acceptance": "actual raw field",
+        "model_calls": "actual raw field",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_hashes": "entire361 candidate product manifest verified before and after actual executions",
+        "status": "actual raw field"
+      }
+    },
+    {
+      "test": "test_current_metadata_history_qualification.CurrentMetadataHistoryQualificationTests.test_current_source_has_real_paired_cross_device_store_proof",
+      "predecessor": "examples/client_contracts/current_metadata_history_v1/canvas-screen-resume-20261128-98b259cd.json",
+      "predecessor_sha256": "972248c5dacb2904079034dff670b441965f8d801176b9de06f3790918ff2192",
+      "current": "examples/client_contracts/current_metadata_history_v1/canvas-confirmed-slot-20261128-98b259cd.json",
+      "current_sha256": "aa7edcaf008faf360de59c25ab604cd766024fbc44ab1f0394eb13684c69bcb8",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_for_you_refresh_contract.ForYouRefreshContractTests.test_original_ha_fixture_matches_the_current_producer_and_harness",
+      "predecessor": "examples/client_contracts/session_for_you_v1/canvas-screen-resume-20261128-cc896eb3.json",
+      "predecessor_sha256": "a96b6ef0b0f14ec1466112932c3a9e1ec0eef8bb647b748d23f4d17c0e501db6",
+      "current": "examples/client_contracts/session_for_you_v1/canvas-confirmed-slot-20261128-cc896eb3.json",
+      "current_sha256": "b722c0ece00928d433a6d176965dbf595200ed90ab9338f8b3c3bba49b0cfaf2",
+      "field_provenance": {
+        "cases": "same named actual case subset",
+        "examples": "actual extension.refresh_examples",
+        "fixture_only": "declared network-none synthetic fixture inputs",
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "installed_native_audible_apns": "actual extension.native_installed_acceptance",
+        "real_model_calls": "actual extension.model_provider_calls",
+        "real_provider_calls": "actual extension.real_provider_calls",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions",
+        "source_unchanged": "actual raw field"
+      }
+    },
+    {
+      "test": "test_for_you_refresh_contract.ForYouRefreshContractTests.test_output_readback_proof_is_exact_and_keeps_unconfirmed_effects_closed",
+      "predecessor": "examples/client_contracts/session_for_you_v1/canvas-screen-resume-20261128-c8527e8f.json",
+      "predecessor_sha256": "385187c29de969797f7365e714f9cd76a2bcf7ce5fe96e6454095f0540fb2fc1",
+      "current": "examples/client_contracts/session_for_you_v1/canvas-confirmed-slot-20261128-c8527e8f.json",
+      "current_sha256": "d64097de622507356a30bcc5e1190038f47ce986c615dffcc4236584f118bd13",
+      "field_provenance": {
+        "cases": "same named actual case subset",
+        "examples": "actual extension.output_readback_examples",
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "installed_native_audible_apns": "actual extension.native_installed_acceptance",
+        "real_model_calls": "actual extension.model_provider_calls",
+        "real_provider_calls": "actual extension.real_provider_calls",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions",
+        "source_unchanged": "actual raw field"
+      }
+    },
+    {
+      "test": "test_passive_progress_qualification.PassiveProgressQualificationTests.test_actual_http_receipt_is_bound_to_current_source_and_harnesses",
+      "predecessor": "examples/client_contracts/passive_progress_v3/canvas-screen-resume-20261128-b0749363.json",
+      "predecessor_sha256": "e8094e9335c907858febf13fedb52a1ab3475eebe1ee6b36daa04d6c97253465",
+      "current": "examples/client_contracts/passive_progress_v3/canvas-confirmed-slot-20261128-b0749363.json",
+      "current_sha256": "969f4766aa8ebfa047792488fa6be26fdc1229a0bd2bd44ca1835384ffe0bc36",
+      "field_provenance": {
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_queue_forecast.QueueProjectionTests.test_actual_ha_receipt_pins_current_source_and_declares_visible_acceptance_open",
+      "predecessor": "examples/client_contracts/session_forecast_v1/canvas-screen-resume-20261128-9c140be1.json",
+      "predecessor_sha256": "dbcfbd7f2874b429fe553e9f2ef074a0a3836771d821b9699fb86204364bce04",
+      "current": "examples/client_contracts/session_forecast_v1/canvas-confirmed-slot-20261128-9c140be1.json",
+      "current_sha256": "d458ca7fb40cbd121583c4163a5e2f4ade802266122c5ebd46d167e45c27af76",
+      "field_provenance": {
+        "HA_dev_writes": "actual raw field",
+        "cases": "actual raw field",
+        "native_acceptance": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "stale_results": "actual raw field",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_session_private_catalogue_qualification.SessionPrivateCatalogueQualificationTests.test_actual_original_session_wire_omits_partial_history_objects",
+      "predecessor": "examples/client_contracts/session_private_catalogue_v1/canvas-screen-resume-20261128-e5f5356d.json",
+      "predecessor_sha256": "e3ebd590de21121ec5dbccb288e62b8e08c7faf1798559b4db1d9c8cf481330b",
+      "current": "examples/client_contracts/session_private_catalogue_v1/canvas-confirmed-slot-20261128-e5f5356d.json",
+      "current_sha256": "9a3eff336113f6fb69a013f201c75cabd22c9f67b54f118897b6def557d3252d",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_surface_widget_adoption.WidgetActualHAContractTests.test_original_actual_ha_widget_source_join_preserves_closed_acceptance_boundary",
+      "predecessor": "examples/client_contracts/surface_push_v1/canvas-screen-resume-20261128-c3a825b4.json",
+      "predecessor_sha256": "cbcb9fafab08676894bb9e8fb428cbc0ac11109f80132392c04d89f1ec9c6de0",
+      "current": "examples/client_contracts/surface_push_v1/canvas-confirmed-slot-20261128-c3a825b4.json",
+      "current_sha256": "644779e22b88d417badcba69d150577def1978d07970158b1babcea0fcca41a9",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_visual_director_contract.VisualDirectorContractTests.test_actual_registered_wire_pins_current_producer_and_declares_boundary",
+      "predecessor": "examples/client_contracts/vibescape_visual_director_v1/canvas-screen-resume-20261128-23245091.json",
+      "predecessor_sha256": "91bbc7145334b0dae815c7024779d8ed2ed69a0d850d339d412a358c23c2c825",
+      "current": "examples/client_contracts/vibescape_visual_director_v1/canvas-confirmed-slot-20261128-23245091.json",
+      "current_sha256": "3a60ad0b01efd61a5988011e9630a80842cd20c43f41c967006ad2df08be6ad0",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_ask_dj_recent_presentation.RecentDisplayHistoryTests.test_current_actual_ha_original_receipt_matches_display_and_all_products",
+      "predecessor": "examples/client_contracts/ask_dj_recent_list_presentation_v1/canvas-screen-resume-20261128-7c51686a.json",
+      "predecessor_sha256": "d11f0609601a3f7dcc7eeecb038d8a3e0ce53f27c93dfaecc654a575da68037e",
+      "current": "examples/client_contracts/ask_dj_recent_list_presentation_v1/canvas-confirmed-slot-20261128-7c51686a.json",
+      "current_sha256": "4509a6fa64fe07a154a2a86011bd75be544ddd4d4a4775ca4bab79db294df778",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_bulletin_contract.BulletinWireContractTests.test_actual_wire_pins_current_source_and_original_admissions_without_native_claim",
+      "predecessor": "examples/client_contracts/dj_bulletin_v1/canvas-screen-resume-20261128-8661943f.json",
+      "predecessor_sha256": "f54c431f14dfa04496fa88d693aa431c49313f2a398082527e11396ebeb33e65",
+      "current": "examples/client_contracts/dj_bulletin_v1/canvas-confirmed-slot-20261128-8661943f.json",
+      "current_sha256": "485bb4ecea3078de23aa0b7adc431b0eeafa1ccc0dbc839f30e6973d9ee8aa50",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_content_deletion_api.PairedContentDeleteTests.test_actual_wire_fixture_source_and_receipt_bindings",
+      "predecessor": "examples/client_contracts/session_conversation_history/canvas-screen-resume-20261128-8831a0c3.json",
+      "predecessor_sha256": "c6ff9cea0eaa3b189681a162eed7ed0ad410672e6ab14f6274ebb724e9fc6bef",
+      "current": "examples/client_contracts/session_conversation_history/canvas-confirmed-slot-20261128-8831a0c3.json",
+      "current_sha256": "7adb57ccb0a1951824888e49fb001d38725279946a1fa16b98d2b7acf42993b1",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_current_track_insight.CurrentTrackInsightTests.test_actual_ha_current_fixture_binds_current_source_without_install_or_model_claim",
+      "predecessor": "examples/client_contracts/track_insight/canvas-screen-resume-20261128-22a66460.json",
+      "predecessor_sha256": "3ff52b4fcd3809c88a5705653d1e535f41a336421b8b22efc7d0020055561014",
+      "current": "examples/client_contracts/track_insight/canvas-confirmed-slot-20261128-22a66460.json",
+      "current_sha256": "5ac0c3dc645c6cff921a922a5efa52a3e570fbe9aec6932ebd44c441d25093f0",
+      "field_provenance": {
+        "cases": "actual raw field",
+        "harness_sha256": "executed harness bytes",
+        "installed": "actual raw field",
+        "model_provider_calls": "actual raw field",
+        "model_reply_fixture_calls": "actual raw field",
+        "native": "actual raw field",
+        "qualification": "actual raw field",
+        "source_files_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "source_unchanged": "actual raw field"
+      }
+    },
+    {
+      "test": "test_direct_rich_actual_ha.DirectRichOriginalActualHATests.test_actual_host_wake_HTTP_Broadcast_SQL_originals_bind_current_source",
+      "predecessor": "examples/client_contracts/direct_rich_v1/canvas-screen-resume-20261128-16605d51.json",
+      "predecessor_sha256": "c1aea178966c421906accef63f811798cd939c511fc45831dbfb6c2c5dfe737a",
+      "current": "examples/client_contracts/direct_rich_v1/canvas-confirmed-slot-20261128-16605d51.json",
+      "current_sha256": "eb703dffbc1ff4b7ca27c2c6ed791cdb7c4dea275d2fd30bd3440f427dca5a40",
+      "field_provenance": {
+        "actual_operator_enrollment_native_clock_or_APNs_GO": "actual raw field",
+        "host_wake_runtime": "actual raw field",
+        "schema_version": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "status": "actual raw field"
+      }
+    },
+    {
+      "test": "test_direct_rich_actual_ha.DirectRichOriginalActualHATests.test_original_actual_HTTP_SQL_and_asset_proof_matches_entire_current_product",
+      "predecessor": "examples/client_contracts/direct_rich_v1/canvas-screen-resume-20261128-262c786e.json",
+      "predecessor_sha256": "75929474d8d5fd881566030a50f752ecc695f35092e437709b59b00b03a97f9b",
+      "current": "examples/client_contracts/direct_rich_v1/canvas-confirmed-slot-20261128-262c786e.json",
+      "current_sha256": "e6a94bd2e4ac7a01e7b992fcb096a1dc2aeb2d2583c91fb4d229699e71430dbd",
+      "field_provenance": {
+        "actual_operator_enrollment_native_clock_or_APNs_GO": "actual raw field",
+        "cases": "actual raw field",
+        "classification": "actual raw field",
+        "current_harness_sha256": "executed harness bytes",
+        "ha_credentials_issued": "actual raw field",
+        "host_wake_management": "actual raw field",
+        "model_calls": "actual raw field",
+        "ordinary_pairing": "actual raw field",
+        "original_prepared_covers": "actual raw field",
+        "read_reissues": "actual raw field",
+        "schema_version": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "status": "actual raw field"
+      }
+    },
+    {
+      "test": "test_discovery_context_qualification.DiscoveryContextQualificationTests.test_current_source_has_actual_original_card_transport_and_diagnosis_evidence",
+      "predecessor": "examples/client_contracts/discovery_context_v1/canvas-screen-resume-20261128-d097706b.json",
+      "predecessor_sha256": "0e3ba34580c525235f00191003083bf898ce64c42b1e3259d732e24ff4d6597a",
+      "current": "examples/client_contracts/discovery_context_v1/canvas-confirmed-slot-20261128-d097706b.json",
+      "current_sha256": "d5bab2bf8c17bd892a99b7d9bf912cf7b9cdbb476f5c7f64e77b62806788ffa8",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "native_installed_acceptance": "explicit unexecuted provider/device boundary",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_installation_custody_once.CustodyOriginalHaProofTests.test_actual_HA_original_source_and_harness_remain_exact_metadata_only",
+      "predecessor": "examples/client_contracts/installation_custody_once_v1/canvas-screen-resume-20261128-90957e06.json",
+      "predecessor_sha256": "c49bfd79a0957d43a5d0fe061119c2b1ef1a0de7f067597adf3352c64965767e",
+      "current": "examples/client_contracts/installation_custody_once_v1/canvas-confirmed-slot-20261128-90957e06.json",
+      "current_sha256": "2a500ee8e1aa4c161ef5b408f708a019d81dfa84d84d8ca0f0830655210715c8",
+      "field_provenance": {
+        "actual_key_generation_signing_registry_provider_or_native_effect": "actual raw field",
+        "cases": "actual raw field",
+        "preceding_installation_once_cases": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_music_announcement_contract.AnnouncementContractTests.test_current_producer_and_manual_replay_match_original_actual_ha",
+      "predecessor": "examples/client_contracts/music_announcement_v1/canvas-screen-resume-20261128-cccb64fe.json",
+      "predecessor_sha256": "43529cc9b80c27f270b5a38b9517da0c5887427ac45a2e59a99dc32211ffe4f3",
+      "current": "examples/client_contracts/music_announcement_v1/canvas-confirmed-slot-20261128-cccb64fe.json",
+      "current_sha256": "c815ec90d841f31dcafbcd6fc8b4e09c226f2bc72da307c7740c11ce3a254a39",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_music_dna_artwork.MusicDNAArtworkTest.test_actual_ha_fixture_binds_current_producer_and_original_clocks",
+      "predecessor": "examples/client_contracts/music_dna_artwork_v1/canvas-screen-resume-20261128-65c5ead3.json",
+      "predecessor_sha256": "89eed9e021486b00c2cf383939724a12b7f67feff79eb2be5693a278b3bf07d3",
+      "current": "examples/client_contracts/music_dna_artwork_v1/canvas-confirmed-slot-20261128-65c5ead3.json",
+      "current_sha256": "edc422c58177c23f588e3e48870288d954a167a2268a726325a08abaa1910a10",
+      "field_provenance": {
+        "cases": "actual raw field",
+        "installed": "actual raw field",
+        "integration_source_hashes": "entire361 candidate product manifest verified before and after actual executions",
+        "live_spotify": "actual raw field",
+        "music_dna_exact_album": "actual raw field",
+        "music_dna_profile": "actual raw field",
+        "native": "actual raw field"
+      }
+    },
+    {
+      "test": "test_passive_retained_qualification.PassiveRetainedQualificationTests.test_current_receipt_binds_original_purpose_and_all_product_bytes",
+      "predecessor": "examples/client_contracts/passive_retained_v1/canvas-screen-resume-20261128-bdf4b770.json",
+      "predecessor_sha256": "a50be4136be43a2ab0f4802657e8767cf342f0f73b82fff58426f1c71152adfe",
+      "current": "examples/client_contracts/passive_retained_v1/canvas-confirmed-slot-20261128-bdf4b770.json",
+      "current_sha256": "f0fedcef24b1f4abfe01a4d63adc5b166304a8228d283ba5d4a106b31fc9b030",
+      "field_provenance": {
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_requested_moments.RequestedMomentsTest.test_actual_verified_https_gate_binds_exact_current_source_and_declared_scope",
+      "predecessor": "examples/client_contracts/requested_moments_v1/canvas-screen-resume-20261128-d30364f3.json",
+      "predecessor_sha256": "555f106ada9988c60d866f2477d9c595524645bb71ef8eef2afb793bd4cd58da",
+      "current": "examples/client_contracts/requested_moments_v1/canvas-confirmed-slot-20261128-d30364f3.json",
+      "current_sha256": "ccd56b8634baef2fb94be133fcaf0d361caa5922ac91f22469f67fcbe237ba04",
+      "field_provenance": {
+        "editorial_acceptance": "explicit unqualified editorial boundary",
+        "harness_pins": "actual executed current harness/helper map",
+        "installed": "explicit unexecuted provider/device boundary",
+        "live_model": "explicit unexecuted provider/device boundary",
+        "native": "explicit unexecuted provider/device boundary",
+        "raw_receipt_sha256": "canonical actual raw receipt without trailing newline",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_session_start_dna.OriginalDnaHTTPContractTests.test_actual_cached_offer_keeps_original_committed_basis_and_lease",
+      "predecessor": "examples/client_contracts/for_you_original_dna_v1/canvas-screen-resume-20261128-d262f072.json",
+      "predecessor_sha256": "d75265181e9446a61747e4db6cc74dd3dbf9bbd1d887c79e1486aceea77aa3d4",
+      "current": "examples/client_contracts/for_you_original_dna_v1/canvas-confirmed-slot-20261128-d262f072.json",
+      "current_sha256": "646fd9d35b0b055cebeded692249d8f753933b1f79b93c48508db55a165e1439",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_spotify_scope_qualification.SpotifyScopeQualificationTests.test_actual_callback_configflow_refresh_and_store_bind_current_source",
+      "predecessor": "examples/client_contracts/spotify_scope_evidence_v1/canvas-screen-resume-20261128-cdcb1b5b.json",
+      "predecessor_sha256": "39339459069018dfc746e8f4f6e1ebbcdda9b691f7b6e6c91b0d342ff46018af",
+      "current": "examples/client_contracts/spotify_scope_evidence_v1/canvas-confirmed-slot-20261128-cdcb1b5b.json",
+      "current_sha256": "6e638ddd098aa5f07c8b10593c322cd8f28dad8ee423826c9ed151ab659fe374",
+      "field_provenance": {
+        "native_installed_acceptance": "explicit unexecuted provider/device boundary",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_surface_registration.PassiveRegistrationTests.test_actual_HA_fixture_joins_exact_product_and_closed_acceptance",
+      "predecessor": "examples/client_contracts/passive_surface_registration_v1/canvas-screen-resume-20261128-9fdac8f1.json",
+      "predecessor_sha256": "685f84a8f2f362700792f9dc10d11b0809416883c46871b8832cdfd379a95652",
+      "current": "examples/client_contracts/passive_surface_registration_v1/canvas-confirmed-slot-20261128-9fdac8f1.json",
+      "current_sha256": "0d8eaae6a0f4bf73a9df2b98b1284d5f213db2bd9e35e51f30cbec0c5653129a",
+      "field_provenance": {
+        "actual_temporary_entry_rotation_failed_await_ABA_stays_retired": "actual raw field",
+        "cases": "actual raw field",
+        "external_provider_calls": "actual raw field",
+        "model_calls": "actual raw field",
+        "positive_purpose_commit_native_installed_provider": "actual raw field",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_hashes": "entire361 candidate product manifest verified before and after actual executions",
+        "status": "actual raw field"
+      }
+    },
+    {
+      "test": "test_music_origin.MusicOriginActualHAProofTest.test_actual_origin_and_freeform_receipt_bind_current_source",
+      "predecessor": "examples/client_contracts/music_origin_v1/canvas-screen-resume-20261128-15edebf2.json",
+      "predecessor_sha256": "c187c87784cd09e4f4a20b28308156126e1859f06099aad698b64c526d20a4f2",
+      "current": "examples/client_contracts/music_origin_v1/canvas-confirmed-slot-20261128-15edebf2.json",
+      "current_sha256": "433f17adcd994d1cd699368c8e87781f7efd20b3176914055ade8a2175b69434",
+      "field_provenance": {
+        "editorial": "explicit unqualified editorial boundary",
+        "harness_pins": "actual executed current harness/helper map",
+        "installed": "explicit unexecuted provider/device boundary",
+        "raw_receipt_sha256": "canonical actual raw receipt without trailing newline",
+        "real_provider": "explicit unexecuted provider/device boundary",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    }
+  ]
+}

@@ -972,12 +972,12 @@ class CanvasDomainTests(unittest.TestCase):
         import hashlib
         import json
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/canvas-screen-resume-20261128-actual-ha.json").read_text())
+        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/canvas-confirmed-slot-20261128-actual-ha.json").read_text())
         self.assertEqual(len(proof["source_pins"]), 361)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), expected, name)
         self.assertTrue(proof["source_before_after_equal"])
-        matrix = json.loads((root/"docs/verification/canvas-screen-resume-actual-ha-matrix-20261128.json").read_text())
+        matrix = json.loads((root/"docs/verification/canvas-confirmed-slot-actual-ha-matrix-20261128.json").read_text())
         self.assertEqual(matrix["source_pins"], proof["source_pins"])
         self.assertTrue(matrix["source_before_after_equal"])
         self.assertEqual(len(matrix["results"]), 54)
