@@ -1,0 +1,669 @@
+{
+  "mode": "llm-backend-status",
+  "source_before_after_equal": true,
+  "product_files": 361,
+  "all54_executions_success": true,
+  "bindings": [
+    {
+      "test": "test_artist_collections_qualification.ArtistCollectionsQualificationTests.test_original_paired_http_offer_proof_matches_current_source",
+      "predecessor": "examples/client_contracts/artist_collections_v1/music-canvas-parallel-20261128-aa49e678.json",
+      "predecessor_sha256": "470c33598599eaacff0dc513b7b90ae2cfa76d6897ed88127d66862959765d12",
+      "current": "examples/client_contracts/artist_collections_v1/llm-backend-status-20261128-aa49e678.json",
+      "current_sha256": "987e2e564fa40b6531e933fc2d924d7d2e97db394852bde44a712f7d263a9e53",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_ask_dj_recording_production.RecordingProductionTests.test_current_actual_ha_receipt_binds_all_products_without_quality_or_native_claim",
+      "predecessor": "examples/client_contracts/ask_dj_recording_production_v1/music-canvas-parallel-20261128-f6f8c4d8.json",
+      "predecessor_sha256": "60359477c44fd83509ab997add13906973dab5c3a4f969f3857fdd3c61a8f0f0",
+      "current": "examples/client_contracts/ask_dj_recording_production_v1/llm-backend-status-20261128-f6f8c4d8.json",
+      "current_sha256": "e16c8b842409578c7448f57fcb0c12475e53933340bc285e30a111c717aac978",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_bulletin_manual_speech_contract.BulletinManualSpeechContractTests.test_actual_paired_manual_use_denial_and_withdrawal_join_current_source",
+      "predecessor": "examples/client_contracts/bulletin_manual_speech_v1/music-canvas-parallel-20261128-279bd2dc.json",
+      "predecessor_sha256": "719b7bb107719e2f6da84af21c85153c1f31dde64399d1add2994d5ec78f89b2",
+      "current": "examples/client_contracts/bulletin_manual_speech_v1/llm-backend-status-20261128-279bd2dc.json",
+      "current_sha256": "a37714c13d0c61cc5cc2adcf399c983583ad57155f24a0197bef25f8fb9f124f",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_for_you_late_confirmation_contract.ForYouLateConfirmationContractTests.test_original_source_sample_confirms_same_mix_without_second_dispatch",
+      "predecessor": "examples/client_contracts/for_you_late_confirmation_v1/music-canvas-parallel-20261128-8b5dc650.json",
+      "predecessor_sha256": "a0ed1d9265ac4247339167bbfba01565c530de091f52b3d02df4c20ed35101ee",
+      "current": "examples/client_contracts/for_you_late_confirmation_v1/llm-backend-status-20261128-8b5dc650.json",
+      "current_sha256": "7df5de644c3f67705d7cd46f088d18e648bf6372eee3d0d26e9b044c14a8e8e6",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_installation_management.ManagementGrammarTests.test_original_actual_HA_receipt_binds_current_source_and_boundaries",
+      "predecessor": "examples/client_contracts/installation_management_preparation_v1/music-canvas-parallel-20261128-0c47be5d.json",
+      "predecessor_sha256": "831e57b6bdfdd320f92aaf965777ad1b49ce61a5a95d8d58d89903a0ee908e39",
+      "current": "examples/client_contracts/installation_management_preparation_v1/llm-backend-status-20261128-0c47be5d.json",
+      "current_sha256": "f77e5917021573e6701e8f4749e75333fef820b89b6b068a26fc8e6dbdcedda0",
+      "field_provenance": {
+        "actual_HA_auth_users_tokens_middleware": "actual raw field",
+        "cases": "actual raw field",
+        "classification": "actual raw field",
+        "native_or_push_acceptance": "actual raw field",
+        "provider_or_device_effect": "actual raw field",
+        "real_service_key_or_custody_effect": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_live_impression.LiveImpressionTest.test_tracked_actual_ha_http_receipt_binds_final_source_and_declared_fixture_scope",
+      "predecessor": "examples/client_contracts/live_impression_v1/music-canvas-parallel-20261128-6ec59f7d.json",
+      "predecessor_sha256": "7e4e30323e9ba7396935186a7191884badb255e9985695a128feb83e470392f2",
+      "current": "examples/client_contracts/live_impression_v1/llm-backend-status-20261128-6ec59f7d.json",
+      "current_sha256": "13b1172993710db05ad38065419b2269d59f216e14d993b8ae6b16f42c0ab468",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "raw_selected_file_count": "actual raw selected-file count",
+        "raw_selected_product_count": "actual raw selected-product count",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_passive_field_expiry_contract.PassiveFieldExpiryContractTests.test_actual_original_frame_survives_only_shorter_field_expiry",
+      "predecessor": "examples/client_contracts/passive_field_expiry_v1/music-canvas-parallel-20261128-6ba8b7cf.json",
+      "predecessor_sha256": "7aa0d0df71850d5d999423bc37006a57af003a3ecb9e72d579782d561768f7d8",
+      "current": "examples/client_contracts/passive_field_expiry_v1/llm-backend-status-20261128-6ba8b7cf.json",
+      "current_sha256": "e9983cccc5544345e196285c47d848d00b965db1b4323edd49766cb6c6765d41",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_profile_spotify_reconnect_qualification.ProfileSpotifyReconnectQualificationTests.test_current_source_has_profile_owned_callback_and_shared_caller_proof",
+      "predecessor": "examples/client_contracts/profile_spotify_reconnect_v1/music-canvas-parallel-20261128-0464d3ed.json",
+      "predecessor_sha256": "79ce4191b86b77180d62e249fe86f540c2fbc46fa7d985888c389765e192cd55",
+      "current": "examples/client_contracts/profile_spotify_reconnect_v1/llm-backend-status-20261128-0464d3ed.json",
+      "current_sha256": "11b63862754557cf0ffe3853b3cb17802cd1d0e4548c1ade0e849216f5699664",
+      "field_provenance": {
+        "canonical_view_probe": "actual independent authority-view probe",
+        "harness_pins": "actual executed current harness/helper map",
+        "native_installed_acceptance": "explicit unexecuted provider/device boundary",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_session_first_play.FirstPlayWireEvidenceTests.test_current_for_you_source_and_frozen_legacy_first_play_evidence_are_distinct",
+      "predecessor": "examples/client_contracts/session_for_you_v1/music-canvas-parallel-20261128-930e45a2.json",
+      "predecessor_sha256": "d3011cd6f50b98005b21ff989e3cf77132177da007a47c041ca025b1e39cbaf5",
+      "current": "examples/client_contracts/session_for_you_v1/llm-backend-status-20261128-930e45a2.json",
+      "current_sha256": "9a8366f4821356cd0ce95d399533784f61682ebbbd7eb953bd95cb397e2e488f",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_spotify_volume_action_errors.SpotifyVolumeActionErrorTests.test_actual_paired_ha_volume_receipt_binds_the_current_product_and_verifier",
+      "predecessor": "examples/client_contracts/spotify_volume_v1/music-canvas-parallel-20261128-8da8bb8d.json",
+      "predecessor_sha256": "c019fb822bd2de20fd05030265c4e9db196038b53e9008867a720b0af673480b",
+      "current": "examples/client_contracts/spotify_volume_v1/llm-backend-status-20261128-8da8bb8d.json",
+      "current_sha256": "933629397f621f744b4c78f7f349715bd48ff3120f70d7543fae90695ca65e4f",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_ask_dj_band_story.BandStoryActualHAEvidenceTests.test_current_source_and_original_ha_receipt_are_exact_and_not_editorial_acceptance",
+      "predecessor": "examples/client_contracts/band_members_story_v1/music-canvas-parallel-20261128-d8b24b29.json",
+      "predecessor_sha256": "342410be74e813e6e4121016acda612da5a29496777c731091a54cfa37907a3d",
+      "current": "examples/client_contracts/band_members_story_v1/llm-backend-status-20261128-d8b24b29.json",
+      "current_sha256": "1038a35f4a46b77f6fa86b80c59c5e365650f4e55ab8b3ca96ae6ce8b6a8368a",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_ask_dj_question_continuity.QuestionContinuityTests.test_current_actual_ha_proof_keeps_all_dates_choices_and_conflicts_bound",
+      "predecessor": "examples/client_contracts/ask_dj_question_continuity_v1/music-canvas-parallel-20261128-efc4221d.json",
+      "predecessor_sha256": "e051187241271578f5996c640bc3b2e88cec46c3da25ea70b427419ebe1321c7",
+      "current": "examples/client_contracts/ask_dj_question_continuity_v1/llm-backend-status-20261128-efc4221d.json",
+      "current_sha256": "e5ef42e48e9808678e55946f4d40c480829c9f5747cba70a0828f487ad0c5dca",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_history_deletion_api.PairedHistoryDeleteTests.test_actual_ha_wire_fixture_binds_current_source_without_claiming_installation",
+      "predecessor": "examples/client_contracts/session_conversation_history/music-canvas-parallel-20261128-04cf842e.json",
+      "predecessor_sha256": "52b593ae4e36aa2661d2e73a482c93d41895441d420f1a11401760f4fb761541",
+      "current": "examples/client_contracts/session_conversation_history/llm-backend-status-20261128-04cf842e.json",
+      "current_sha256": "5a22af76d5c7d7f786b0a64ede86ce5c4d4a45002ba7f5bb3ee78f25f0050ade",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_installation_once_journal.OriginalActualOnceProofTests.test_current_HA_originals_and_parent_missing_journal_remain_exact",
+      "predecessor": "examples/client_contracts/installation_once_metadata_v1/music-canvas-parallel-20261128-d7ff76da.json",
+      "predecessor_sha256": "2da390b52f16d44c424fca9eb26f967cb91e8daa4b9f5ce9e2ec712ab492f468",
+      "current": "examples/client_contracts/installation_once_metadata_v1/llm-backend-status-20261128-d7ff76da.json",
+      "current_sha256": "2d2b64a0a168c120432ca768523614da281482a93462ed525d6401b750051272",
+      "field_provenance": {
+        "actual_key_or_sign_effect": "actual raw field",
+        "cases": "actual raw field",
+        "current_harness_sha256": "executed harness bytes",
+        "preceding_installation_codec_cases": "actual raw field",
+        "preceding_source_origin_cases": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_installation_principal_data.InstallationPrincipalDataTests.test_actual_HA_original_codec_and_same_final_harness_parent_RED_remain_exact",
+      "predecessor": "examples/client_contracts/installation_principal_data_v1/music-canvas-parallel-20261128-64ab9cf1.json",
+      "predecessor_sha256": "4a2c56061b302448ee39a9423068870f20cd66bb7430c60490af5fec84a17686",
+      "current": "examples/client_contracts/installation_principal_data_v1/llm-backend-status-20261128-64ab9cf1.json",
+      "current_sha256": "d742978c02169fd6d8faab2ad8f8160d1ceb546cd2b35852e1c654938f1fa7c1",
+      "field_provenance": {
+        "cases": "actual raw field",
+        "preceding_source_origin_cases": "actual raw field",
+        "registry_CAS_or_once_or_signer_qualification": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_passive_observation_contract.PassiveObservationContractTests.test_original_grant_frames_and_nonrenewing_reads_match_current_source",
+      "predecessor": "examples/client_contracts/passive_observation_sequence_v1/music-canvas-parallel-20261128-17960ce6.json",
+      "predecessor_sha256": "15e05b2dd26d0a5886be9f3e2989a15c3563e6a44a6949af1474190a40e73550",
+      "current": "examples/client_contracts/passive_observation_sequence_v1/llm-backend-status-20261128-17960ce6.json",
+      "current_sha256": "e822b2bc991436b6665f529d7a439a9c83c9f18e5b95aeea6d577ff7491be675",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_persona_story_actual_ha.PersonaStoryActualHATest.test_current_source_and_verifiers_are_bound_to_the_original_actual_ha_trace",
+      "predecessor": "examples/client_contracts/personal_dj_artist_story_v1/music-canvas-parallel-20261128-ef5df2b2.json",
+      "predecessor_sha256": "c874efa9a294f1d412d5ea9690f58795641dfee957d33d204856d9ed1fd52ec2",
+      "current": "examples/client_contracts/personal_dj_artist_story_v1/llm-backend-status-20261128-ef5df2b2.json",
+      "current_sha256": "4dc7e66e231c6a4ec9506463c70720a27b00a4485d1617e4a4d7847175b83ee9",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_settings_confirmation.SettingsConfirmationTests.test_actual_ha_fixture_pins_source_and_declares_native_install_boundary",
+      "predecessor": "examples/client_contracts/settings_confirmation_v1/music-canvas-parallel-20261128-fc590876.json",
+      "predecessor_sha256": "a3960ff2d6ba93087d3c0aa398f8f0d5ba51d89b3c51d0f588fcc91288079e37",
+      "current": "examples/client_contracts/settings_confirmation_v1/llm-backend-status-20261128-fc590876.json",
+      "current_sha256": "49508cb679c5758543e9bd2a1b27107cf01ae687b9afbb5a62ccb65f3b2dcbe2",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_surface_push_context_v3.OriginalClockActualHAProofTests.test_new_v3_actual_fixture_matches_current_product_and_harness",
+      "predecessor": "examples/client_contracts/surface_push_v1/music-canvas-parallel-20261128-c3a825b4.json",
+      "predecessor_sha256": "7688953c96ab91f58972ea9ad14001ce3ddb8e7e43943b328490015f9718620d",
+      "current": "examples/client_contracts/surface_push_v1/llm-backend-status-20261128-c3a825b4.json",
+      "current_sha256": "ded80211b5e3b521262297a3c6cffad1f88e8dff634e86ac51c31610e0cbc5e4",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_surface_source_origin.SourceOriginActualProofTests.test_current_source_joins_original_actual_HA_and_same_harness_parent_failure",
+      "predecessor": "examples/client_contracts/source_origin_v1/music-canvas-parallel-20261128-0f1af7c7.json",
+      "predecessor_sha256": "3c152a611953704dcc304c850c010df13882ab44bcc96c40c0c5f209eb5be0ab",
+      "current": "examples/client_contracts/source_origin_v1/llm-backend-status-20261128-0f1af7c7.json",
+      "current_sha256": "d96214eb3d6a8ea402c00ccf08de4a38e1645251a9752fc34cdc498e0c551735",
+      "field_provenance": {
+        "af201_native_mapping": "actual raw field",
+        "cases": "actual raw field",
+        "installed_native_provider": "actual raw field",
+        "source_origin_DATA_only": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_ask_dj_help_live_observation.HelpObservationTests.test_original_actual_ha_wire_binds_all_current_products_without_native_claim",
+      "predecessor": "examples/client_contracts/ask_dj_help_context_v1/music-canvas-parallel-20261128-6c1d4a34.json",
+      "predecessor_sha256": "315df29198ec01c5093c0e91f76b528f6799163c256997b95940723f47b8a0f5",
+      "current": "examples/client_contracts/ask_dj_help_context_v1/llm-backend-status-20261128-6c1d4a34.json",
+      "current_sha256": "169f34890ed824cd4adfc83998d5959b5b6611404f1bad467a9f1fbd22f5ac40",
+      "field_provenance": {
+        "cases": "actual raw field",
+        "external_provider_calls": "actual raw field",
+        "installed_native_audio_or_physical_acceptance": "actual raw field",
+        "model_calls": "actual raw field",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_hashes": "entire361 candidate product manifest verified before and after actual executions",
+        "status": "actual raw field"
+      }
+    },
+    {
+      "test": "test_current_metadata_history_qualification.CurrentMetadataHistoryQualificationTests.test_current_source_has_real_paired_cross_device_store_proof",
+      "predecessor": "examples/client_contracts/current_metadata_history_v1/music-canvas-parallel-20261128-98b259cd.json",
+      "predecessor_sha256": "ae64eebdf6793ebb089a4294056356c7bae37a133fdd5db9e105483691bd008f",
+      "current": "examples/client_contracts/current_metadata_history_v1/llm-backend-status-20261128-98b259cd.json",
+      "current_sha256": "f3eb6939e7ec292b2dd430a922dbc3d4aa2a1ea4b9278b67172b067958389a18",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_for_you_refresh_contract.ForYouRefreshContractTests.test_original_ha_fixture_matches_the_current_producer_and_harness",
+      "predecessor": "examples/client_contracts/session_for_you_v1/music-canvas-parallel-20261128-cc896eb3.json",
+      "predecessor_sha256": "1a9b72b338131979c9f94e5956580e87eab9b99d8e278912be2df6181e8355c3",
+      "current": "examples/client_contracts/session_for_you_v1/llm-backend-status-20261128-cc896eb3.json",
+      "current_sha256": "2261e43b6a6fe0cc84b57c8f1e94eb9718586e21ceb776eb8fc1e457a6011312",
+      "field_provenance": {
+        "cases": "same named actual case subset",
+        "examples": "actual extension.refresh_examples",
+        "fixture_only": "declared network-none synthetic fixture inputs",
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "installed_native_audible_apns": "actual extension.native_installed_acceptance",
+        "real_model_calls": "actual extension.model_provider_calls",
+        "real_provider_calls": "actual extension.real_provider_calls",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions",
+        "source_unchanged": "actual raw field"
+      }
+    },
+    {
+      "test": "test_for_you_refresh_contract.ForYouRefreshContractTests.test_output_readback_proof_is_exact_and_keeps_unconfirmed_effects_closed",
+      "predecessor": "examples/client_contracts/session_for_you_v1/music-canvas-parallel-20261128-c8527e8f.json",
+      "predecessor_sha256": "921670151c9f4fcfc294a79c485932ea27972d573f7b5fc4eafca84dca1dd06e",
+      "current": "examples/client_contracts/session_for_you_v1/llm-backend-status-20261128-c8527e8f.json",
+      "current_sha256": "fecdf695880a1c36b92c3c51b0f63734845f1131103c3a13b2ddc855c62861e2",
+      "field_provenance": {
+        "cases": "same named actual case subset",
+        "examples": "actual extension.output_readback_examples",
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "installed_native_audible_apns": "actual extension.native_installed_acceptance",
+        "real_model_calls": "actual extension.model_provider_calls",
+        "real_provider_calls": "actual extension.real_provider_calls",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions",
+        "source_unchanged": "actual raw field"
+      }
+    },
+    {
+      "test": "test_passive_progress_qualification.PassiveProgressQualificationTests.test_actual_http_receipt_is_bound_to_current_source_and_harnesses",
+      "predecessor": "examples/client_contracts/passive_progress_v3/music-canvas-parallel-20261128-b0749363.json",
+      "predecessor_sha256": "78876673a050f6045a66f9b1250a94b0d90937cfea8af89435751f0255e82c0e",
+      "current": "examples/client_contracts/passive_progress_v3/llm-backend-status-20261128-b0749363.json",
+      "current_sha256": "ded21d0f50e0327885a73d078378cb830cea9507e58d4ba79cf4e460b34e5e12",
+      "field_provenance": {
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_queue_forecast.QueueProjectionTests.test_actual_ha_receipt_pins_current_source_and_declares_visible_acceptance_open",
+      "predecessor": "examples/client_contracts/session_forecast_v1/music-canvas-parallel-20261128-9c140be1.json",
+      "predecessor_sha256": "31cd4c89945e2a4fd4f56cfd61876e68fc5da5e4f913ec7cb08d2d1dbe2b94c7",
+      "current": "examples/client_contracts/session_forecast_v1/llm-backend-status-20261128-9c140be1.json",
+      "current_sha256": "d7a866c0d7aa5c57e720efffb2f61954770ba67a74d496d685b02838b454c5fb",
+      "field_provenance": {
+        "HA_dev_writes": "actual raw field",
+        "cases": "actual raw field",
+        "native_acceptance": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "stale_results": "actual raw field",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_session_private_catalogue_qualification.SessionPrivateCatalogueQualificationTests.test_actual_original_session_wire_omits_partial_history_objects",
+      "predecessor": "examples/client_contracts/session_private_catalogue_v1/music-canvas-parallel-20261128-e5f5356d.json",
+      "predecessor_sha256": "87cc5d8684b75f5bf91fc057ccaca3aae886912546700fc16b3f2c7a83dae1c3",
+      "current": "examples/client_contracts/session_private_catalogue_v1/llm-backend-status-20261128-e5f5356d.json",
+      "current_sha256": "a0825468cb0830c2beab3b6b1469f29c0337105ce5946701c1adccef32849f37",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_surface_widget_adoption.WidgetActualHAContractTests.test_original_actual_ha_widget_source_join_preserves_closed_acceptance_boundary",
+      "predecessor": "examples/client_contracts/surface_push_v1/music-canvas-parallel-20261128-c3a825b4.json",
+      "predecessor_sha256": "7688953c96ab91f58972ea9ad14001ce3ddb8e7e43943b328490015f9718620d",
+      "current": "examples/client_contracts/surface_push_v1/llm-backend-status-20261128-c3a825b4.json",
+      "current_sha256": "ded80211b5e3b521262297a3c6cffad1f88e8dff634e86ac51c31610e0cbc5e4",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_visual_director_contract.VisualDirectorContractTests.test_actual_registered_wire_pins_current_producer_and_declares_boundary",
+      "predecessor": "examples/client_contracts/vibescape_visual_director_v1/music-canvas-parallel-20261128-23245091.json",
+      "predecessor_sha256": "238537c76890cc78060a510711520241e4789de8f69d444fc4b72e190a97b33b",
+      "current": "examples/client_contracts/vibescape_visual_director_v1/llm-backend-status-20261128-23245091.json",
+      "current_sha256": "0b391a1d856e45ab31d81f4c1463fb28b549265bc8504b417a767a1fcc31d24a",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_ask_dj_recent_presentation.RecentDisplayHistoryTests.test_current_actual_ha_original_receipt_matches_display_and_all_products",
+      "predecessor": "examples/client_contracts/ask_dj_recent_list_presentation_v1/music-canvas-parallel-20261128-7c51686a.json",
+      "predecessor_sha256": "44b7af4f880d1c7102a3a7ddd0f4f7874295a1b1fea4d5580ed8382b6073ffc7",
+      "current": "examples/client_contracts/ask_dj_recent_list_presentation_v1/llm-backend-status-20261128-7c51686a.json",
+      "current_sha256": "f5cdf077a30640d6adf9cd5aab38451f7b6660069bdf534d04b82ca4a7534d39",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_bulletin_contract.BulletinWireContractTests.test_actual_wire_pins_current_source_and_original_admissions_without_native_claim",
+      "predecessor": "examples/client_contracts/dj_bulletin_v1/music-canvas-parallel-20261128-8661943f.json",
+      "predecessor_sha256": "f8d61e87768b8df0354533e1d51d5677cceb2913b238de98061dc7c34f6c8dfe",
+      "current": "examples/client_contracts/dj_bulletin_v1/llm-backend-status-20261128-8661943f.json",
+      "current_sha256": "617741daf6119838d0865f5025445b7d26f63e013752cecbb6fbdfe6903e96b4",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_content_deletion_api.PairedContentDeleteTests.test_actual_wire_fixture_source_and_receipt_bindings",
+      "predecessor": "examples/client_contracts/session_conversation_history/music-canvas-parallel-20261128-8831a0c3.json",
+      "predecessor_sha256": "84e5ad8442e9ae3ad247096b9eb38b07230d7de2967e63efe4c1e61476bc7522",
+      "current": "examples/client_contracts/session_conversation_history/llm-backend-status-20261128-8831a0c3.json",
+      "current_sha256": "3ae9e9467d41f614369659119d88de3ce7ad527dc4e732be207fe480afc9fca4",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_current_track_insight.CurrentTrackInsightTests.test_actual_ha_current_fixture_binds_current_source_without_install_or_model_claim",
+      "predecessor": "examples/client_contracts/track_insight/music-canvas-parallel-20261128-22a66460.json",
+      "predecessor_sha256": "75315b81bc3fd9eb95e44b2df87ddac8b19ae0c53b43e3996b9f6ed99f40a7c7",
+      "current": "examples/client_contracts/track_insight/llm-backend-status-20261128-22a66460.json",
+      "current_sha256": "5b6ad50109ad4a5e085486f826d7b2b027027d5fa2ef25513c82556c7fac5cd6",
+      "field_provenance": {
+        "cases": "actual raw field",
+        "harness_sha256": "executed harness bytes",
+        "installed": "actual raw field",
+        "model_provider_calls": "actual raw field",
+        "model_reply_fixture_calls": "actual raw field",
+        "native": "actual raw field",
+        "qualification": "actual raw field",
+        "source_files_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "source_unchanged": "actual raw field"
+      }
+    },
+    {
+      "test": "test_direct_rich_actual_ha.DirectRichOriginalActualHATests.test_actual_host_wake_HTTP_Broadcast_SQL_originals_bind_current_source",
+      "predecessor": "examples/client_contracts/direct_rich_v1/music-canvas-parallel-20261128-16605d51.json",
+      "predecessor_sha256": "515c887483a6801c327513d9dd674bb89e599132523cfacb0d17d056047bc17a",
+      "current": "examples/client_contracts/direct_rich_v1/llm-backend-status-20261128-16605d51.json",
+      "current_sha256": "0391286ee4f5f8b2abcb82354236fc33a192fbf550ad79fea296e275e7567d9c",
+      "field_provenance": {
+        "actual_operator_enrollment_native_clock_or_APNs_GO": "actual raw field",
+        "host_wake_runtime": "actual raw field",
+        "schema_version": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "status": "actual raw field"
+      }
+    },
+    {
+      "test": "test_direct_rich_actual_ha.DirectRichOriginalActualHATests.test_original_actual_HTTP_SQL_and_asset_proof_matches_entire_current_product",
+      "predecessor": "examples/client_contracts/direct_rich_v1/music-canvas-parallel-20261128-262c786e.json",
+      "predecessor_sha256": "0e59c2410cfbcb8ea180cf4cf869c4d5202c079ae1f765430a61bad7f76a3408",
+      "current": "examples/client_contracts/direct_rich_v1/llm-backend-status-20261128-262c786e.json",
+      "current_sha256": "ffe0f7ec820c50515db6172fc26a0edcbac03b26e1d75cb513ed5c3ca171929f",
+      "field_provenance": {
+        "actual_operator_enrollment_native_clock_or_APNs_GO": "actual raw field",
+        "cases": "actual raw field",
+        "classification": "actual raw field",
+        "current_harness_sha256": "executed harness bytes",
+        "ha_credentials_issued": "actual raw field",
+        "host_wake_management": "actual raw field",
+        "model_calls": "actual raw field",
+        "ordinary_pairing": "actual raw field",
+        "original_prepared_covers": "actual raw field",
+        "read_reissues": "actual raw field",
+        "schema_version": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "status": "actual raw field"
+      }
+    },
+    {
+      "test": "test_discovery_context_qualification.DiscoveryContextQualificationTests.test_current_source_has_actual_original_card_transport_and_diagnosis_evidence",
+      "predecessor": "examples/client_contracts/discovery_context_v1/music-canvas-parallel-20261128-d097706b.json",
+      "predecessor_sha256": "13827e8737baf18167fc8b375a027560569f063dc69abe6613a3672b10ba343e",
+      "current": "examples/client_contracts/discovery_context_v1/llm-backend-status-20261128-d097706b.json",
+      "current_sha256": "e035b31fb0b6b74a9e75a12d154120013c76d2d60a52ff2cb332fc07102555cd",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "native_installed_acceptance": "explicit unexecuted provider/device boundary",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_installation_custody_once.CustodyOriginalHaProofTests.test_actual_HA_original_source_and_harness_remain_exact_metadata_only",
+      "predecessor": "examples/client_contracts/installation_custody_once_v1/music-canvas-parallel-20261128-90957e06.json",
+      "predecessor_sha256": "7c049b3825fed7f6a47d3fe2811a1d57905af071584db99d313104caca0d7012",
+      "current": "examples/client_contracts/installation_custody_once_v1/llm-backend-status-20261128-90957e06.json",
+      "current_sha256": "61acd4dd6c50fd72150905f9a0fecce415bda7150ae95c7c0b2a7576bd180c59",
+      "field_provenance": {
+        "actual_key_generation_signing_registry_provider_or_native_effect": "actual raw field",
+        "cases": "actual raw field",
+        "preceding_installation_once_cases": "actual raw field",
+        "source_sha256": "entire361 candidate product manifest verified before and after actual executions",
+        "state": "actual raw field"
+      }
+    },
+    {
+      "test": "test_music_announcement_contract.AnnouncementContractTests.test_current_producer_and_manual_replay_match_original_actual_ha",
+      "predecessor": "examples/client_contracts/music_announcement_v1/music-canvas-parallel-20261128-cccb64fe.json",
+      "predecessor_sha256": "441535874d63cfad89fef11f5a0ca4da52eb40c20851e5ba791afc9b67122807",
+      "current": "examples/client_contracts/music_announcement_v1/llm-backend-status-20261128-cccb64fe.json",
+      "current_sha256": "82d68e9f047415f4f5a02dbc2e39bd8b6d103f7303dc13b6c4b2c0a7381ec122",
+      "field_provenance": {
+        "harness": "executed command",
+        "harness_sha256": "executed harness bytes",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_music_dna_artwork.MusicDNAArtworkTest.test_actual_ha_fixture_binds_current_producer_and_original_clocks",
+      "predecessor": "examples/client_contracts/music_dna_artwork_v1/music-canvas-parallel-20261128-65c5ead3.json",
+      "predecessor_sha256": "b1cc2cba8b428d897219875459feddb39da7e0c8c55be0d77c4b0ab2f8749633",
+      "current": "examples/client_contracts/music_dna_artwork_v1/llm-backend-status-20261128-65c5ead3.json",
+      "current_sha256": "912151e1cef5eefb10acf2c67d4f6694cb0a9095e0d3b82936eb6ff699a88bfb",
+      "field_provenance": {
+        "cases": "actual raw field",
+        "installed": "actual raw field",
+        "integration_source_hashes": "entire361 candidate product manifest verified before and after actual executions",
+        "live_spotify": "actual raw field",
+        "music_dna_exact_album": "actual raw field",
+        "music_dna_profile": "actual raw field",
+        "native": "actual raw field"
+      }
+    },
+    {
+      "test": "test_passive_retained_qualification.PassiveRetainedQualificationTests.test_current_receipt_binds_original_purpose_and_all_product_bytes",
+      "predecessor": "examples/client_contracts/passive_retained_v1/music-canvas-parallel-20261128-bdf4b770.json",
+      "predecessor_sha256": "a6029b2f5ccafcbb2ee9b584bb8bfcbde529d7e8d3380b899d6233469b4eea4a",
+      "current": "examples/client_contracts/passive_retained_v1/llm-backend-status-20261128-bdf4b770.json",
+      "current_sha256": "fc9dee4e0aa8cfab16507e015bf48ec960f862d782620f98d76a4571fa2fda3d",
+      "field_provenance": {
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_requested_moments.RequestedMomentsTest.test_actual_verified_https_gate_binds_exact_current_source_and_declared_scope",
+      "predecessor": "examples/client_contracts/requested_moments_v1/music-canvas-parallel-20261128-d30364f3.json",
+      "predecessor_sha256": "ea01343397f61f55379ec8a09ae8c63822fd040b3a6fbdecbb955523a3b1b0e4",
+      "current": "examples/client_contracts/requested_moments_v1/llm-backend-status-20261128-d30364f3.json",
+      "current_sha256": "8d3622dfb1a35c57b1eb82b9585912559699c8fe7afeef14d9908b8161e8e875",
+      "field_provenance": {
+        "editorial_acceptance": "explicit unqualified editorial boundary",
+        "harness_pins": "actual executed current harness/helper map",
+        "installed": "explicit unexecuted provider/device boundary",
+        "live_model": "explicit unexecuted provider/device boundary",
+        "native": "explicit unexecuted provider/device boundary",
+        "raw_receipt_sha256": "canonical actual raw receipt without trailing newline",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_session_start_dna.OriginalDnaHTTPContractTests.test_actual_cached_offer_keeps_original_committed_basis_and_lease",
+      "predecessor": "examples/client_contracts/for_you_original_dna_v1/music-canvas-parallel-20261128-d262f072.json",
+      "predecessor_sha256": "ce78420876a336eee2bce6ced0d643d27108de01ef170405506b8981904f2a23",
+      "current": "examples/client_contracts/for_you_original_dna_v1/llm-backend-status-20261128-d262f072.json",
+      "current_sha256": "40c1fb937a7bdce170676db2020a6639dc867aeaf186fd00680611f8fcc7355b",
+      "field_provenance": {
+        "harness_pins": "actual executed current harness/helper map",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_spotify_scope_qualification.SpotifyScopeQualificationTests.test_actual_callback_configflow_refresh_and_store_bind_current_source",
+      "predecessor": "examples/client_contracts/spotify_scope_evidence_v1/music-canvas-parallel-20261128-cdcb1b5b.json",
+      "predecessor_sha256": "aea83af6e454142882a84029dbfef5ed5e835a7fe486315874c3010c8d63207a",
+      "current": "examples/client_contracts/spotify_scope_evidence_v1/llm-backend-status-20261128-cdcb1b5b.json",
+      "current_sha256": "33a982c65417c1c83534454db680edb0aa603768dc81b9c0857ddc6bf128e68e",
+      "field_provenance": {
+        "native_installed_acceptance": "explicit unexecuted provider/device boundary",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    },
+    {
+      "test": "test_surface_registration.PassiveRegistrationTests.test_actual_HA_fixture_joins_exact_product_and_closed_acceptance",
+      "predecessor": "examples/client_contracts/passive_surface_registration_v1/music-canvas-parallel-20261128-9fdac8f1.json",
+      "predecessor_sha256": "ccc033d5703d8884e7ec08f98818cd28e589b36f0e3df54176700eac824ee760",
+      "current": "examples/client_contracts/passive_surface_registration_v1/llm-backend-status-20261128-9fdac8f1.json",
+      "current_sha256": "25e8473d9f1095913e4bc60436ce588e5fdd5c95be9d176ef2483321e6341e11",
+      "field_provenance": {
+        "actual_temporary_entry_rotation_failed_await_ABA_stays_retired": "actual raw field",
+        "cases": "actual raw field",
+        "external_provider_calls": "actual raw field",
+        "model_calls": "actual raw field",
+        "positive_purpose_commit_native_installed_provider": "actual raw field",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_hashes": "entire361 candidate product manifest verified before and after actual executions",
+        "status": "actual raw field"
+      }
+    },
+    {
+      "test": "test_music_origin.MusicOriginActualHAProofTest.test_actual_origin_and_freeform_receipt_bind_current_source",
+      "predecessor": "examples/client_contracts/music_origin_v1/music-canvas-parallel-20261128-15edebf2.json",
+      "predecessor_sha256": "3dbfa3b162e7c43b1a7b3ea9b894c0bf1ceae4b51f481cb65e909e8abfed4ba7",
+      "current": "examples/client_contracts/music_origin_v1/llm-backend-status-20261128-15edebf2.json",
+      "current_sha256": "e3e80daded16b7eebf1a0ba7edae2f1b4cec084d12cab60ba3b2e422cecc1ed9",
+      "field_provenance": {
+        "editorial": "explicit unqualified editorial boundary",
+        "harness_pins": "actual executed current harness/helper map",
+        "installed": "explicit unexecuted provider/device boundary",
+        "raw_receipt_sha256": "canonical actual raw receipt without trailing newline",
+        "real_provider": "explicit unexecuted provider/device boundary",
+        "receipt": "actual new raw receipt",
+        "source_before_after_equal": "full361 manifest comparison",
+        "source_pins": "entire361 candidate product manifest verified before and after actual executions"
+      }
+    }
+  ]
+}

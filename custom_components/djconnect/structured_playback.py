@@ -205,6 +205,7 @@ async def generate(hass, *, agent_id, task_id, prompt, brief=None, admission, ar
     from homeassistant.components import ai_task
     from homeassistant.helpers import chat_session
     from .ask_dj.dialogue import DialogueError
+    from .pipeline import llm_backend_observation_key, llm_failure_state, observe_llm_backend
     binding = capture_task(hass, agent_id, task_id)
     admission()
     # Call the exported API with its public schema type, never an entity
@@ -236,6 +237,7 @@ async def generate(hass, *, agent_id, task_id, prompt, brief=None, admission, ar
     result = None
     wire = None
     owned_session = None
+    health_key = llm_backend_observation_key(binding.entity)
     try:
         # Do not use wait_for/create_task: their separate ContextVar context
         # would hide the public task's session when its await is cancelled.
@@ -254,6 +256,10 @@ async def generate(hass, *, agent_id, task_id, prompt, brief=None, admission, ar
                 wire = validate_typed_reply(result.data, structure)
             except ValueError:
                 raise DialogueError("structured_playback_result_invalid", 502) from None
+            observe_llm_backend(hass, "structured", binding.entity, health_key, "active")
+    except Exception as exc:
+        observe_llm_backend(hass, "structured", binding.entity, health_key, llm_failure_state(exc))
+        raise
     finally:
         primary = sys.exception()
         try:
