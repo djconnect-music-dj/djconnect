@@ -163,7 +163,7 @@ def _samsung_current_preview(art, device, owned_preview_id, preview_file, *, req
 
 
 def samsung_action(device, action, *, content=None, content_id=None, displayed_content_id=None,
-                   preview_file=None, require_current=False):
+                   preserve_current_content_id=None, preview_file=None, require_current=False):
     """Blocking protocol library is confined to an executor and one connection."""
     from samsungtvws import SamsungTVWS
     remote = SamsungTVWS(device["host"], port=8002, token=device.get("token"),
@@ -218,6 +218,10 @@ def samsung_action(device, action, *, content=None, content_id=None, displayed_c
                     available_ids = {row["content_id"] for row in available}
                     if displayed_content_id in available_ids and content_id not in available_ids:
                         return {"deleted": True}  # Confirmed absent after an earlier cleanup.
+            if preserve_current_content_id is not None:
+                shown = art.get_current()
+                need(isinstance(shown, dict) and shown.get("content_id") == preserve_current_content_id
+                     and content_id != preserve_current_content_id, "canvas_cleanup_required", 409)
             return {"deleted": art.delete(content_id) is True}
         if action == "observe":
             return {"current": art.get_current()}

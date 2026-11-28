@@ -110,6 +110,9 @@ async def qualify(hass, manager, history, request, client):
             events.append("readback")
             return {"content_id": "owned-art"}
         def select_image(self, content_id, show): events.append("select")
+        def delete(self, content_id):
+            events.append(("delete", content_id))
+            return True
         def close(self): events.append("close")
     art = Art()
     class Remote:
@@ -128,6 +131,17 @@ async def qualify(hass, manager, history, request, client):
         assert uploaded["content_id"] == "owned-art" and "select" not in events
         result = adapters.samsung_action(device, "select", content_id="owned-art")
         assert result["displayed"] and events.index("select") < events.index("readback")
+        owned = {**device, "owned_content": ["older-art", "owned-art"]}
+        assert adapters.samsung_action(owned, "cleanup", content_id="older-art",
+            preserve_current_content_id="owned-art")["deleted"]
+        for content_id, witness in (("owned-art", "owned-art"), ("older-art", "no-longer-current")):
+            try:
+                adapters.samsung_action(owned, "cleanup", content_id=content_id,
+                    preserve_current_content_id=witness)
+                raise AssertionError("unsafe re-enable cleanup accepted")
+            except CanvasError as exc:
+                assert exc.code == "canvas_cleanup_required"
+        assert [event for event in events if isinstance(event, tuple)] == [("delete", "older-art")]
 
     # Actual Session owner + lifecycle scheduler, with declared image/hardware seams.
     import io
@@ -189,6 +203,10 @@ async def qualify(hass, manager, history, request, client):
         if action == "upload":
             upload_serial[0] += 1
             return {"content_id": "owned-" + str(upload_serial[0])}
+        if action == "cleanup" and "preserve_current_content_id" in kwargs:
+            assert kwargs["preserve_current_content_id"] == observed_content[device["id"]]
+            assert kwargs["content_id"] in device["owned_content"]
+            assert kwargs["content_id"] != observed_content[device["id"]]
         if action == "select":
             observed_content[device["id"]] = kwargs["content_id"]
         return {"displayed": True, "deleted": True}
@@ -449,24 +467,44 @@ async def qualify(hass, manager, history, request, client):
         except asyncio.CancelledError:
             pass
         assert not runtime.effect_lock.locked()
-        # A manual art selection suspends Canvas durably, without paid generation.
+        # A confirmed external choice unchecks one screen and a new check resumes it.
         current = await runtime.repository.read()
         device = current["devices"]["samsung:fixture-a"]
-        observed_content[device["id"]] = "manually-selected-art"
+        target = device["id"]
+        observed_content[target] = None
         try:
             async with runtime.effect_lock:
-                await runtime.observe_samsung(device, lambda: True)
+                await runtime.observe_samsung("profile-a", device, lambda: True)
+            raise AssertionError("missing readback accepted")
+        except CanvasError as exc:
+            assert exc.code == "canvas_target_unavailable"
+        assert (await runtime.repository.read())["profiles"] == current["profiles"]
+        observed_content[target] = "manually-selected-art"
+        try:
+            async with runtime.effect_lock:
+                await runtime.observe_samsung("profile-a", device, lambda: True)
             raise AssertionError("manual takeover ignored")
         except CanvasError as exc:
             assert exc.code == "canvas_manual_takeover"
-        before_manual = len(generations)
-        await runtime.tick()
-        await runtime.jobs["profile-a"]
-        assert runtime.states[device["id"]] == "canvas_manual_takeover"
-        assert len(generations) == before_manual
-        # Explicit lab reset, not a claim that user art is automatically overridden.
-        await runtime.repository.mutate(lambda state: state["devices"][device["id"]].update(manual_takeover=False), lambda: True)
-        observed_content[device["id"]] = device["last_selected_content"]
+        paused, code = await call("read")
+        assert code == 200 and paused["revision"] > current["profiles"]["profile-a"]["revision"]
+        assert paused["preferences"]["selected_targets"] == [x for x in targets if x != target]
+        assert paused["preferences"]["enabled"] is True
+        def retain_old_canvas_art(state):
+            owned = state["devices"][target]["owned_content"]
+            if len(owned) == 1:
+                owned.insert(0, "retained-owned-art")
+        await runtime.repository.mutate(retain_old_canvas_art, lambda: True)
+        before_manual_resume = len(deliveries)
+        restored, code = await call("update", dict(binding=binding, operation_id=str(uuid.uuid4()),
+            expected_revision=paused["revision"], patch={"selected_targets": list(targets)}))
+        assert code == 200, restored
+        await await_canvas_refresh()
+        resumed_actions = [action for key, action in deliveries[before_manual_resume:] if key == target]
+        assert resumed_actions.count("upload") == 1
+        assert resumed_actions[:resumed_actions.index("upload")].count("cleanup") == 1
+        assert observed_content[target] != "manually-selected-art"
+        assert (await runtime.repository.read())["devices"][target]["manual_takeover"] is False
         # A settings-independent track change can complete an interval render;
         # the same late track is rejected in per-track mode. Force only due-time.
         for mode in ("1800", "track"):

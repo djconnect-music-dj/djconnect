@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class ForYouLateConfirmationContractTests(unittest.TestCase):
     def test_original_source_sample_confirms_same_mix_without_second_dispatch(self):
-        wire = json.loads((ROOT / 'examples/client_contracts/for_you_late_confirmation_v1/push-rollout-20261128-8b5dc650.json').read_text())
+        wire = json.loads((ROOT / 'examples/client_contracts/for_you_late_confirmation_v1/canvas-screen-resume-20261128-8b5dc650.json').read_text())
         self.assertTrue(wire['source_before_after_equal'])
         self.assertEqual(len(wire['source_pins']), 361)
         for name, expected in {**wire['source_pins'], **wire['harness_pins']}.items():
