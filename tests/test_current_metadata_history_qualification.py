@@ -11,7 +11,7 @@ class CurrentMetadataHistoryQualificationTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         proof = json.loads(
             (
-                root / 'examples/client_contracts/current_metadata_history_v1/canvas-screen-resume-20261128-98b259cd.json'
+                root / 'examples/client_contracts/current_metadata_history_v1/canvas-confirmed-slot-20261128-98b259cd.json'
             ).read_text()
         )
         self.assertTrue(proof["source_before_after_equal"])

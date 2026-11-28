@@ -256,27 +256,30 @@ class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(runtime.states["frame"], "displayed")
         self.assertIn("frame", runtime.next_probe)
 
-    async def test_confirmed_cleanup_releases_upload_slot_and_records_selected_art(self):
+    async def test_confirmed_cleanup_releases_upload_slot_and_preserves_selected_art(self):
         from custom_components.djconnect.music_canvas_runtime import CanvasEffects, CanvasRuntime
 
-        device = {"id": "frame", "epoch": 3, "owned_content": ["old", "latest"]}
-        state = {"devices": {"frame": {**device, "owned_content": ["old", "latest"]}}}
+        for displayed, unused in (("latest", "old"), ("old", "latest")):
+            with self.subTest(displayed=displayed):
+                device = {"id": "frame", "epoch": 3, "owned_content": ["old", "latest"],
+                          "last_selected_content": displayed}
+                state = {"devices": {"frame": {**device, "owned_content": ["old", "latest"]}}}
 
-        async def mutate(commit, authorize):
-            self.assertTrue(authorize())
-            return commit(state)
+                async def mutate(commit, authorize):
+                    self.assertTrue(authorize())
+                    return commit(state)
 
-        runtime = CanvasRuntime.__new__(CanvasRuntime)
-        runtime.effect_lock = CanvasEffects()
-        runtime.repository = types.SimpleNamespace(mutate=mutate)
-        runtime.protocol = AsyncMock(return_value={"deleted": True})
-        async with runtime.effect_lock:
-            recovered = await runtime.reconcile_samsung_uploads(device, lambda: True)
-        cleanup = runtime.protocol.await_args.args[0]
-        self.assertEqual(cleanup.keywords, {"content_id": "old", "displayed_content_id": "latest"})
-        self.assertEqual(recovered["owned_content"], ["latest"])
-        self.assertEqual(recovered["last_selected_content"], "latest")
-        self.assertEqual(device["owned_content"], ["old", "latest"])
+                runtime = CanvasRuntime.__new__(CanvasRuntime)
+                runtime.effect_lock = CanvasEffects()
+                runtime.repository = types.SimpleNamespace(mutate=mutate)
+                runtime.protocol = AsyncMock(return_value={"deleted": True})
+                async with runtime.effect_lock:
+                    recovered = await runtime.reconcile_samsung_uploads(device, lambda: True, current_content=displayed)
+                cleanup = runtime.protocol.await_args.args[0]
+                self.assertEqual(cleanup.keywords, {"content_id": unused, "displayed_content_id": displayed})
+                self.assertEqual(recovered["owned_content"], [displayed])
+                self.assertEqual(recovered["last_selected_content"], displayed)
+                self.assertEqual(device["owned_content"], ["old", "latest"])
 
     def test_samsung_preview_reads_only_the_still_displayed_artwork(self):
         from PIL import Image
@@ -969,12 +972,12 @@ class CanvasDomainTests(unittest.TestCase):
         import hashlib
         import json
         root = Path(__file__).resolve().parents[1]
-        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/canvas-screen-resume-20261128-actual-ha.json").read_text())
+        proof = json.loads((root/"examples/client_contracts/music_canvas_v1/canvas-confirmed-slot-20261128-actual-ha.json").read_text())
         self.assertEqual(len(proof["source_pins"]), 361)
         for name, expected in {**proof["source_pins"], **proof["harness_pins"]}.items():
             self.assertEqual(hashlib.sha256((root/name).read_bytes()).hexdigest(), expected, name)
         self.assertTrue(proof["source_before_after_equal"])
-        matrix = json.loads((root/"docs/verification/canvas-screen-resume-actual-ha-matrix-20261128.json").read_text())
+        matrix = json.loads((root/"docs/verification/canvas-confirmed-slot-actual-ha-matrix-20261128.json").read_text())
         self.assertEqual(matrix["source_pins"], proof["source_pins"])
         self.assertTrue(matrix["source_before_after_equal"])
         self.assertEqual(len(matrix["results"]), 54)

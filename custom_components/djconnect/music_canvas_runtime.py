@@ -1074,16 +1074,18 @@ class CanvasRuntime:
         return content_id
 
     async def reconcile_samsung_uploads(self, device, authorize, *, current_content=None):
-        """Retire an older owned upload after the TV confirms the latest one."""
+        """Free one upload slot while preserving the artwork confirmed on the TV."""
         import functools
         owned = device["owned_content"]
-        previous, latest = owned
-        resumed = current_content is not None and not device.get("last_selected_content")
-        if resumed:
-            previous = next(item for item in owned if item != current_content)
-            cleanup_scope = {"preserve_current_content_id": current_content}
+        confirmed = device.get("last_selected_content")
+        shown = current_content or confirmed
+        need(shown and (not confirmed or shown == confirmed), "canvas_cleanup_required", 409)
+        previous = next(item for item in owned if item != shown)
+        if shown in owned:
+            cleanup_scope = {"displayed_content_id": shown}
         else:
-            cleanup_scope = {"displayed_content_id": latest}
+            # A freshly re-enabled screen may still be showing the user's own art.
+            cleanup_scope = {"preserve_current_content_id": shown}
         need(authorize(), "canvas_context_changed", 409)
 
         async def cleanup_and_record():
@@ -1095,10 +1097,9 @@ class CanvasRuntime:
             def record(state):
                 row = state["devices"].get(device["id"])
                 need(row and row["epoch"] == device["epoch"] and row["owned_content"] == owned
-                     and not row.get("forgetting"), "canvas_context_changed", 409)
+                     and row.get("last_selected_content") == confirmed and not row.get("forgetting"),
+                     "canvas_context_changed", 409)
                 row["owned_content"].remove(previous)
-                if not resumed:
-                    row["last_selected_content"] = latest
                 row["cleanup_supported"] = True
                 return deepcopy(row)
 

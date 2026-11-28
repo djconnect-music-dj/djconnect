@@ -109,13 +109,17 @@ def validate(plan, previous_validator):
     current = {str(path.relative_to(ROOT)): sha(path)
                for path in (ROOT / "custom_components/djconnect").rglob("*")
                if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"}
-    successor = ROOT / "docs/verification/canvas-screen-resume-actual-ha-matrix-20261128.json"
+    successor_proof = json.loads(
+        (ROOT / "docs/verification/canvas-confirmed-slot-shared-qualification-20261128.json").read_bytes()
+    )
+    successor = ROOT / "docs/verification/canvas-confirmed-slot-actual-ha-matrix-20261128.json"
     successor_matrix = json.loads(successor.read_bytes())
     successor_rows = successor_matrix["results"]
-    check(current == successor_matrix["source_pins"]
-          == json.loads((ROOT / "docs/verification/canvas-screen-resume-product-manifest-20261128.json").read_bytes())
-          and successor_matrix["source_before_after_equal"] is True
-          and len(current) == 361 and len(successor_rows) == 54
+    check(current == successor_matrix["source_pins"] == successor_proof["source_pins"]
+          and successor_proof["matrix_path"] == str(successor.relative_to(ROOT))
+          and successor_proof["matrix_sha256"] == sha(successor)
+          and successor_matrix["source_before_after_equal"] is successor_proof["source_before_after_equal"] is True
+          and len(current) == 361 and len(successor_rows) == successor_proof["execution_count"] == 54
           and all(row["exit_code"] == 0 and sha(historical_verification_source(
               ROOT, row["harness"], row["harness_sha256"])) == row["harness_sha256"]
                   for row in successor_rows), "current Music Canvas exact-source HA requalification")
