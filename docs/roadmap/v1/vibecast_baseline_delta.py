@@ -81,6 +81,7 @@ def validate(plan, previous_validator):
           "software scope and open acceptance")
     retained = receipt.get("retained_files", [])
     archived_inputs = {
+        "API_CONTRACT.md",
         "SYNC_PROMPTS.md",
         "docs/technical/MUSIC_CANVAS_V1_CONTRACT.md",
         "docs/technical/VIBECAST_GUEST_PARTICIPATION_V1.md",
