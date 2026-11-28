@@ -5,6 +5,7 @@ import hashlib
 import logging
 import re
 import time
+from collections.abc import Callable
 from typing import Any
 
 from .central_api import (
@@ -268,6 +269,36 @@ async def async_bootstrap(
     }
 
 
+async def async_send_ask_dj_device_event(
+    hass: Any,
+    runtime: Any,
+    *,
+    user_id: str | None,
+    device_id: str,
+    client_type: str,
+    history_revision: int,
+    needs_confirmation: bool,
+    is_current: Callable[[], bool],
+) -> None:
+    """Notify only the paired device that requested this committed reply."""
+    if not _device_id_matches_client_type(device_id, client_type) or type(history_revision) is not int or history_revision < 1:
+        return
+    event = EVENT_ASK_DJ_CONFIRM if needs_confirmation else EVENT_ASK_DJ_RESPONSE
+    if not is_current() or not should_send_push(
+        runtime, user_id=user_id, event_type=event, source_device_id=device_id,
+        client_type=client_type, explicit_user_request=True,
+    ).get("send"):
+        return
+    payload = build_relay_event_payload(runtime, user_id=user_id, event_type=event, history_revision=history_revision)
+    payload.update(ha_user_hash=_hash_value(user_id), target_device_id=device_id, client_types=[client_type])
+    # Older relays reject these event names instead of ignoring the target.
+    payload["event_type"] = "ask_dj_device_confirm" if needs_confirmation else "ask_dj_device_response"
+    try:
+        await async_central_post(hass, runtime, "/v1/push/event", payload, retry=False, timeout=5)
+    except DJConnectCentralApiError:
+        return
+
+
 async def async_send_event(
     hass: Any,
     runtime: Any,
@@ -510,6 +541,17 @@ def _registration_payload(
         or not push_environment
     ):
         return {}
+    categories = ["ask_dj"]
+    # Watch Moment consent is owned by the separate signed preference operation.
+    # Older native hosts omit categories and keep the Ask DJ default.
+    if client_type in {"ios", "macos"} and "categories" in payload:
+        requested = payload["categories"]
+        if not isinstance(requested, list) or len(requested) > 2 or any(
+            not isinstance(category, str) or category not in {"ask_dj", "dj_moments_v1"}
+            for category in requested
+        ):
+            return {}
+        categories = list(dict.fromkeys(requested))
     bundle_id = _clean_text(payload.get("app_bundle_id"), 200)
     return {
         "ha_install_id": ensure_ha_install_id(runtime),
@@ -521,8 +563,7 @@ def _registration_payload(
         "app_bundle_id": bundle_id,
         "app_version": _clean_text(payload.get("app_version"), 64),
         "locale": _clean_text(payload.get("locale"), 32),
-        # Moment preferences require a separately signed, versioned operation.
-        "categories": ["ask_dj"],
+        "categories": categories,
     }
 
 
