@@ -15,7 +15,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-PRODUCT_MANIFEST = 'docs/verification/llm-backend-status-product-manifest-20261128.json'
+PRODUCT_MANIFEST = 'docs/verification/push-rollout-product-manifest-20261128.json'
 PRODUCT_FILE_COUNT = 361
 sys.path.insert(0, str(ROOT))
 from tools.verification.run_help_catalogue_qualification_20261023 import (  # noqa: E402
