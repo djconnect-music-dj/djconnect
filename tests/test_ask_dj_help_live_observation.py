@@ -48,7 +48,7 @@ class HelpObservationTests(unittest.IsolatedAsyncioTestCase):
         root = Path(__file__).resolve().parents[1]
         receipts = root / 'examples/client_contracts/ask_dj_help_context_v1'
         original = json.loads((receipts / 'actual-ha-wire-live-impression-20261119-requested-moments-20261120.json').read_text())
-        fixture = json.loads((receipts / 'music-canvas-refresh-20261126-6c1d4a34.json').read_text())
+        fixture = json.loads((receipts / 'music-canvas-parallel-20261128-6c1d4a34.json').read_text())
         self.assertEqual(fixture['status'], 'PASS')
         self.assertTrue(fixture['source_before_after_equal'])
         self.assertEqual(len(fixture['source_hashes']), 361)
