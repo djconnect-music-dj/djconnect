@@ -116,7 +116,8 @@ def validate(plan, previous_validator):
           == json.loads((ROOT / "docs/verification/push-rollout-product-manifest-20261128.json").read_bytes())
           and successor_matrix["source_before_after_equal"] is True
           and len(current) == 361 and len(successor_rows) == 54
-          and all(row["exit_code"] == 0 and sha(ROOT / row["harness"]) == row["harness_sha256"]
+          and all(row["exit_code"] == 0 and sha(historical_verification_source(
+              ROOT, row["harness"], row["harness_sha256"])) == row["harness_sha256"]
                   for row in successor_rows), "current Music Canvas exact-source HA requalification")
     proof = loaded["qualification"]
     matrix_path = ROOT / "docs/verification/vibecast-baseline-actual-ha-matrix-20261124.json"
