@@ -4,7 +4,7 @@ import io
 import json
 from pathlib import Path
 
-from .music_canvas import DEFAULT_MATTE_SIZE, FRAME_MATTE_PREFIX, need
+from .music_canvas import DEFAULT_MATTE_SIZE, FRAME_MATTE_PREFIX, CanvasError, need
 
 MAX_IMAGE = 24 * 1024 * 1024
 TITLE_FONT = Path(__file__).with_name("music_canvas_assets") / "SourceSerif4-Semibold.ttf"
@@ -222,6 +222,20 @@ def generation_available(hass):
     return bool(entity and entity.available and AITaskEntityFeature.GENERATE_IMAGE in entity.supported_features)
 
 
+def image_provider_failure(error):
+    """Return a bounded status without exposing provider messages or account details."""
+    billing_codes = {"billing_not_active", "billing_hard_limit_reached", "insufficient_quota"}
+    for candidate in (error, error.__cause__, error.__context__):
+        if candidate is None:
+            continue
+        code = getattr(candidate, "code", None)
+        message = str(candidate).lower()
+        if (isinstance(code, str) and code in billing_codes) or (
+                "account is not active" in message and "billing" in message):
+            return CanvasError("canvas_image_provider_billing", 503)
+    return CanvasError("canvas_image_provider_failed", 503)
+
+
 async def generate(hass, prompt):
     """Use existing explicitly selected HA entity without creating public media."""
     from homeassistant.components.ai_task import GenImageTask
@@ -232,8 +246,11 @@ async def generate(hass, prompt):
     with async_get_chat_session(hass) as session:
         # Same HA entity boundary as ai_task.async_generate_image, without its
         # shared media-directory persistence or bearer-signed generic media URL.
-        result = await entity.internal_async_generate_image(
-            session, GenImageTask(name="Music Canvas", instructions=prompt, attachments=None), None)
+        try:
+            result = await entity.internal_async_generate_image(
+                session, GenImageTask(name="Music Canvas", instructions=prompt, attachments=None), None)
+        except Exception as exc:
+            raise image_provider_failure(exc) from None
     need(result.mime_type in {"image/png", "image/jpeg", "image/webp"}
          and isinstance(result.image_data, bytes) and len(result.image_data) <= MAX_IMAGE,
          "canvas_image_invalid", 503)

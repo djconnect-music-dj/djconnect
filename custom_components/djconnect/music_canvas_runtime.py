@@ -901,8 +901,11 @@ class CanvasRuntime:
                 prompt = render.art_prompt(inspiration_title, mood, composition,
                     width, height, latitude=getattr(self.hass.config, "latitude", None),
                     month=datetime.now().month, alternative=alternative, spectra6=spectra6)
-                async with asyncio.timeout(120):
-                    return await render.generate(self.hass, prompt)
+                try:
+                    async with asyncio.timeout(120):
+                        return await render.generate(self.hass, prompt)
+                except TimeoutError:
+                    raise CanvasError("canvas_image_provider_failed", 503) from None
 
         async def render_group(group):
             width, height, per_track, presentation, replacement, matte_size, spectra6 = group
