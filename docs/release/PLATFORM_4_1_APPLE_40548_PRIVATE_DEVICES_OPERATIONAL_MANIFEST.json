@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "kind": "platform_release_operational_manifest",
+  "manifest_id": "release-apple-internal-4.1.0-40548-private-devices",
+  "status": "APPROVED_DEPLOYMENT_DISPATCH_PENDING",
+  "platform_version": "4.1",
+  "release_version": "4.1.0",
+  "release_profile": "INTERNAL_RELEASE",
+  "approval": {
+    "state": "APPROVED",
+    "effect": "Private installation on the iPhone 17 Pro and paired Apple Watch, iPad Pro, iPad mini, Mac mini and MacBook.",
+    "authority_record": "Peter approved Apple build 40548 and exact private assets 804397166, 804397159, 804397165 and 804397161 for iPhone 17 Pro with Watch, iPad Pro, iPad mini, Mac mini and MacBook in Codex thread 01a20e46-be6f-7610-97c7-5bc7c6ccf8b3 on 2026-11-28."
+  },
+  "repositories": [
+    {
+      "repository": "djconnect-music-dj/djconnect-app",
+      "source_sha": "408237a84f19c816b55e8463558aa0b0dbcac32e",
+      "version": "4.1.0",
+      "build_number": "40548"
+    }
+  ],
+  "artifact_bindings": [
+    {
+      "target": "apple_private_device",
+      "target_device": "macmini",
+      "artifact_id": "804397161",
+      "artifact_sha256": "a08b3a5c421302c54677a24cf29d1ac7383bce979988f32f67598592e6e99a70",
+      "github_repository_id": 1444773078,
+      "github_release_asset_id": 804397161,
+      "signing": "local_developer_provisioning_required",
+      "paired_watch_validation": "disabled"
+    },
+    {
+      "target": "apple_private_device",
+      "target_device": "ipad",
+      "artifact_id": "804397159",
+      "artifact_sha256": "7355cdb72d698007da3d26e33c6a590f4d37c75b478092a75122162baa069b90",
+      "github_repository_id": 1444773078,
+      "github_release_asset_id": 804397159,
+      "signing": "local_developer_provisioning_required"
+    },
+    {
+      "target": "apple_private_device",
+      "target_device": "ipad-mini",
+      "artifact_id": "804397165",
+      "artifact_sha256": "7355cdb72d698007da3d26e33c6a590f4d37c75b478092a75122162baa069b90",
+      "github_repository_id": 1444773078,
+      "github_release_asset_id": 804397165,
+      "signing": "local_developer_provisioning_required"
+    },
+    {
+      "target": "apple_private_device",
+      "target_device": "iphone",
+      "artifact_id": "804397166",
+      "artifact_sha256": "b41e1d743e1ca61d0a034f5dd8fea0f054182978f80bd876b6d2dcd0166b1dbb",
+      "github_repository_id": 1444773078,
+      "github_release_asset_id": 804397166,
+      "signing": "local_developer_provisioning_required",
+      "paired_watch_validation": "required"
+    },
+    {
+      "target": "apple_private_device",
+      "target_device": "macbook",
+      "artifact_id": "804397161",
+      "artifact_sha256": "a08b3a5c421302c54677a24cf29d1ac7383bce979988f32f67598592e6e99a70",
+      "github_repository_id": 1444773078,
+      "github_release_asset_id": 804397161,
+      "signing": "local_developer_provisioning_required",
+      "paired_watch_validation": "disabled"
+    }
+  ],
+  "deployment_constraints": {
+    "dispatch_now": [
+      "iphone",
+      "ipad",
+      "ipad-mini",
+      "macmini",
+      "macbook"
+    ],
+    "iphone_and_watch": "COMBINED_ROUTE_REQUIRED_TARGET_PREFLIGHT_REQUIRED",
+    "iphone_only_route": "NOT_QUALIFIED",
+    "paired_watch_validation": "required"
+  }
+}
