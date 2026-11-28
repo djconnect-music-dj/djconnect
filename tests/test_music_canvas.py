@@ -190,6 +190,28 @@ class CanvasMoodRefreshTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(image_provider.await_count, 2)
                 self.assertEqual(runtime.deliver.await_count, 3)
 
+                active.mood_revision += 1
+                delivered = set()
+                other_screens_done = asyncio.Event()
+
+                async def probe(device, _):
+                    if device is state["devices"]["second-tv"]:
+                        await asyncio.wait_for(other_screens_done.wait(), timeout=1)
+                        raise CanvasError("canvas_screen_offline", 503)
+
+                async def deliver_despite_offline_screen(*args, **_):
+                    target = args[3]
+                    async with runtime.effect_lock.for_target(target):
+                        delivered.add(target)
+                        if delivered == {"tv", "frame"}:
+                            other_screens_done.set()
+
+                runtime.observe_samsung.side_effect = probe
+                runtime.deliver.side_effect = deliver_despite_offline_screen
+                await runtime.run(owner, active, config, state)
+                self.assertEqual(delivered, {"tv", "frame"})
+                self.assertEqual(runtime.states["second-tv"], "canvas_screen_offline")
+
 
 class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
     async def test_confirmed_display_survives_cleanup_failure(self):
