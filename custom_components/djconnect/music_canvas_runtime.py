@@ -1,7 +1,8 @@
 """Installation-owned Canvas lifecycle, original operations and bounded assets."""
 from __future__ import annotations
 import asyncio
-from collections import deque
+from collections import Counter, deque
+from contextlib import asynccontextmanager
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -25,6 +26,7 @@ PREPARE_AHEAD_SECONDS = 45
 PREPARED_LIFETIME_SECONDS = 180
 MAX_PREPARED_BYTES = 64 * 1024 * 1024
 MAX_PREPARED_ENTRIES = 128
+MAX_PARALLEL_GENERATIONS = 3
 
 
 @dataclass(frozen=True)
@@ -55,12 +57,56 @@ class ArtworkReplacement:
     source_image: str | None
 
 
+class CanvasEffects:
+    """Allow screen effects in parallel and give installation-wide changes exclusive access."""
+
+    def __init__(self):
+        self.changed = asyncio.Condition()
+        self.targets = set()
+        self.exclusive = False
+        self.waiting_exclusive = 0
+
+    def locked(self):
+        return self.exclusive or bool(self.targets)
+
+    async def __aenter__(self):
+        async with self.changed:
+            self.waiting_exclusive += 1
+            try:
+                await self.changed.wait_for(lambda: not self.locked())
+                self.exclusive = True
+            finally:
+                self.waiting_exclusive -= 1
+                self.changed.notify_all()
+
+    async def __aexit__(self, *_):
+        async with self.changed:
+            self.exclusive = False
+            self.changed.notify_all()
+
+    @asynccontextmanager
+    async def for_target(self, target, *, wait=True):
+        async with self.changed:
+            def available():
+                return not self.exclusive and not self.waiting_exclusive and target not in self.targets
+
+            need(wait or available(), "canvas_preview_unavailable", 404)
+            await self.changed.wait_for(available)
+            self.targets.add(target)
+        try:
+            yield
+        finally:
+            async with self.changed:
+                self.targets.remove(target)
+                self.changed.notify_all()
+
+
 class CanvasRuntime:
     def __init__(self, hass):
         self.hass = hass
         self.repository = CanvasRepository(persistence_service(hass))
         self.lock = asyncio.Lock()
-        self.effect_lock = asyncio.Lock()
+        self.effect_lock = CanvasEffects()
         self.asset_lock = asyncio.Lock()
         self.cadence = Cadence()
         self.jobs = {}
@@ -77,7 +123,7 @@ class CanvasRuntime:
         self.claims = {}
         self.revisions = {}
         self.generation_lock = asyncio.Lock()
-        self.inflight_files = set()
+        self.inflight_files = Counter()
         self.next_probe = {}
         self.generation_attempts = deque()
         self.management_operations = set()
@@ -428,8 +474,7 @@ class CanvasRuntime:
         from functools import partial
 
         # Yield to upload/setup/forget rather than queuing a background TV read.
-        need(not self.effect_lock.locked(), "canvas_preview_unavailable", 404)
-        async with self.effect_lock:
+        async with self.effect_lock.for_target(target, wait=False):
             state = await self.repository.read(authorize)
             device = state["devices"].get(target)
             need(device and target in profile(state, owner)["preferences"]["selected_targets"]
@@ -517,7 +562,7 @@ class CanvasRuntime:
             now = time.time()
             self.leases = {k: v for k, v in self.leases.items() if v["expires"] > now}
             live |= {v["file"] for v in self.leases.values()}
-            live |= self.inflight_files
+            live.update(self.inflight_files)
             live |= {item.preview for item in self.replacements.values() if item.preview}
             def clean():
                 if self.asset_root.is_dir():
@@ -763,35 +808,35 @@ class CanvasRuntime:
                     and time.monotonic()-active.broadcast.passive_observation[0] <= 30)
         inspiration_title = upcoming.title if upcoming else playback.title
         groups = {}
-        for target in prefs["selected_targets"]:
+        async def prepare_target(target):
             device = state["devices"].get(target)
             if (not device or device.get("forgetting")
                     or (owner, target) in self.awaiting_artwork_previews):
-                continue
+                return None
             if device.get("manual_takeover"):
                 self.claims[target] = owner
                 self.states[target] = "canvas_manual_takeover"
-                continue
+                return None
             if device.get("upload_pending"):
                 self.states[target] = "canvas_upload_unknown"
-                continue
+                return None
             if self.claims.get(target, owner) != owner:
                 self.states[target] = "busy"
-                continue
+                return None
             screen = device["screen"]
             if device["state"] != "ready" or not {"width", "height", "orientation"} <= screen.keys():
                 self.states[target] = "needs_setup"
-                continue
+                return None
             if device["adapter"] == "switchbot":
                 if not self.hass.data["djconnect"].get("music_canvas_asset_origin"):
                     self.states[target] = "canvas_public_asset_required"
-                    continue
+                    return None
                 if not self.hass.services.has_service("switchbot_cloud", "upload_art_frame_image"):
                     self.states[target] = "canvas_switchbot_setup_required"
-                    continue
+                    return None
                 if sum(v["target"] == target for v in self.leases.values()) >= 2 or len(self.leases) >= 32:
                     self.states[target] = "waiting_screen"
-                    continue
+                    return None
             key = (owner, active.session_id, target)
             presentation = screen_presentation(prefs, target, device)
             matte_size = screen_matte_size(prefs, target, presentation[1])
@@ -800,16 +845,16 @@ class CanvasRuntime:
             replacement = self.replacements.get((owner, target))
             if upcoming:
                 if cadence != "track" or replacement:
-                    continue
+                    return None
             elif not replacement and not self.cadence.due(key, occurrence, cadence, time.monotonic(),
                                                           mood_revision, settings_revision):
-                continue
+                return None
             spectra6 = device["adapter"] == "switchbot"
             if device["adapter"] == "samsung" and not upcoming:
                 if self.next_probe.get(target, 0) > time.monotonic():
-                    continue
+                    return None
                 try:
-                    async with self.effect_lock:
+                    async with self.effect_lock.for_target(target):
                         current = await self.repository.read()
                         row = current["devices"].get(target)
                         need(scope_current(cadence == "track") and row and row["epoch"] == device["epoch"]
@@ -826,19 +871,49 @@ class CanvasRuntime:
                 except Exception as exc:
                     self.next_probe[target] = time.monotonic()+30
                     self.states[target] = exc.code if isinstance(exc, CanvasError) else "unavailable"
-                    continue
+                    return None
             if not upcoming:
                 self.claims[target] = owner
-            groups.setdefault((screen["width"], screen["height"], cadence == "track", presentation,
-                               replacement, matte_size, spectra6), []).append((target, device, key, settings_revision))
+            return ((screen["width"], screen["height"], cadence == "track", presentation,
+                     replacement, matte_size, spectra6), (target, device, key, settings_revision))
+
+        candidates = await asyncio.gather(*(prepare_target(target) for target in prefs["selected_targets"]))
+        for candidate in candidates:
+            if candidate is not None:
+                group, target = candidate
+                groups.setdefault(group, []).append(target)
+
         if not groups:
             return
 
         pending_attempts = {}
         replacement_attempts = {}
-        generated = {}
-        try:
-            for (width, height, per_track, presentation, replacement, matte_size, spectra6), targets in groups.items():
+        generation_tasks = {}
+        generation_slots = asyncio.Semaphore(MAX_PARALLEL_GENERATIONS)
+
+        async def generate(width, height, composition, replacement, spectra6, current_scope):
+            async with generation_slots:
+                need(current_scope(), "canvas_context_changed", 409)
+                alternative = None
+                if replacement:
+                    rejected = self.asset_root / replacement.preview if replacement.preview else None
+                    alternative = await self.hass.async_add_executor_job(
+                        render.alternative_direction, replacement.operation_id, rejected)
+                    need(current_scope(), "canvas_context_changed", 409)
+                now = time.monotonic()
+                while self.generation_attempts and now-self.generation_attempts[0] >= 3600:
+                    self.generation_attempts.popleft()
+                need(len(self.generation_attempts) < 48, "canvas_generation_budget_wait", 429)
+                self.generation_attempts.append(now)
+                prompt = render.art_prompt(inspiration_title, mood, composition,
+                    width, height, latitude=getattr(self.hass.config, "latitude", None),
+                    month=datetime.now().month, alternative=alternative, spectra6=spectra6)
+                async with asyncio.timeout(120):
+                    return await render.generate(self.hass, prompt)
+
+        async def process_group(group, targets):
+            width, height, per_track, presentation, replacement, matte_size, spectra6 = group
+            try:
                 composition, matte, show_title = presentation
                 def current_scope():
                     return scope_current(per_track) and all(
@@ -851,7 +926,7 @@ class CanvasRuntime:
                 prepared = self.prepared.get(prepared_key) if per_track and not replacement else None
                 if upcoming:
                     if prepared or len(self.prepared) >= MAX_PREPARED_ENTRIES:
-                        continue
+                        return
                     # A failed speculative attempt must not spin on each observation.
                     self.prepared[prepared_key] = PreparedArtwork(time.monotonic() + PREPARED_LIFETIME_SECONDS)
                 elif prepared and (prepared.expires <= time.monotonic() or not prepared.image):
@@ -860,7 +935,7 @@ class CanvasRuntime:
                     if not upcoming:
                         for target, _, _, _ in targets:
                             self.states[target] = "image_provider_required"
-                    continue
+                    return
                 for target, _, key, settings_revision in targets if not upcoming else ():
                     self.states[target] = "preparing"
                     # At most one attempt per cadence or accepted change, including an unknown outcome.
@@ -872,26 +947,12 @@ class CanvasRuntime:
                 generation_key = (width, height, per_track, composition, replacement, spectra6)
                 if prepared:
                     raw = prepared.raw
-                elif generation_key in generated:
-                    raw = generated[generation_key]
                 else:
-                    now = time.monotonic()
-                    while self.generation_attempts and now-self.generation_attempts[0] >= 3600:
-                        self.generation_attempts.popleft()
-                    need(len(self.generation_attempts) < 48, "canvas_generation_budget_wait", 429)
-                    alternative = None
-                    if replacement:
-                        rejected = self.asset_root / replacement.preview if replacement.preview else None
-                        alternative = await self.hass.async_add_executor_job(
-                            render.alternative_direction, replacement.operation_id, rejected)
-                        need(current_scope(), "canvas_context_changed", 409)
-                    self.generation_attempts.append(time.monotonic())
-                    prompt = render.art_prompt(inspiration_title, mood, composition,
-                        width, height, latitude=getattr(self.hass.config, "latitude", None),
-                        month=datetime.now().month, alternative=alternative, spectra6=spectra6)
-                    async with asyncio.timeout(120):
-                        raw = await render.generate(self.hass, prompt)
-                    generated[generation_key] = raw
+                    task = generation_tasks.get(generation_key)
+                    if task is None:
+                        task = asyncio.create_task(generate(width, height, composition, replacement, spectra6, current_scope))
+                        generation_tasks[generation_key] = task
+                    raw = await task
                 need(current_scope(), "canvas_context_changed", 409)
                 art = prepared.image if prepared else await self.hass.async_add_executor_job(
                     render.compose, raw, width, height, composition, matte,
@@ -901,7 +962,7 @@ class CanvasRuntime:
                     if current_scope() and total + len(raw) + len(art) <= MAX_PREPARED_BYTES:
                         self.prepared[prepared_key] = PreparedArtwork(
                             time.monotonic() + PREPARED_LIFETIME_SECONDS, raw, art)
-                    continue
+                    return
                 if prepared:
                     self.prepared.pop(prepared_key, None)
                 filename = hashlib.sha256(art).hexdigest()+".jpg"
@@ -911,8 +972,8 @@ class CanvasRuntime:
                          "canvas_alternative_unchanged", 409)
                 artwork_source = {"session_id": active.session_id, "mood_revision": mood_revision,
                                   "track_title": inspiration_title, "spectra6": spectra6}
-                self.inflight_files.add(filename)
-                self.inflight_files.add(source_file)
+                files = (filename, source_file)
+                self.inflight_files.update(files)
                 def save():
                     self.asset_root.mkdir(parents=True, exist_ok=True, mode=0o700)
                     path = self.asset_root/filename
@@ -926,7 +987,7 @@ class CanvasRuntime:
                 try:
                     async with self.asset_lock:
                         await self.protocol(save)
-                    for target, device, key, _ in targets:
+                    async def deliver_target(target, device, key, _):
                         # Once delivery starts it may have had a physical effect,
                         # even if the acknowledgement or profile is withdrawn.
                         pending_attempts.pop(key, None)
@@ -938,18 +999,26 @@ class CanvasRuntime:
                             self.states[target] = exc.code
                         except Exception:
                             self.states[target] = "unavailable"
+
+                    async with asyncio.TaskGroup() as deliveries:
+                        for target in targets:
+                            deliveries.create_task(deliver_target(*target))
                 finally:
                     # No cancellable await may strand these bounded references.
                     # Added durable references commit under asset_lock first.
-                    self.inflight_files.discard(filename)
-                    self.inflight_files.discard(source_file)
-        except asyncio.CancelledError:
-            raise
-        except Exception as exc:
-            if not upcoming:
-                for targets in groups.values():
+                    for path in files:
+                        self.inflight_files[path] -= 1
+                        if not self.inflight_files[path]:
+                            del self.inflight_files[path]
+            except Exception as exc:
+                if not upcoming:
                     for target, _, _, _ in targets:
                         self.states[target] = exc.code if isinstance(exc, CanvasError) else "unavailable"
+
+        try:
+            async with asyncio.TaskGroup() as artwork:
+                for group, targets in groups.items():
+                    artwork.create_task(process_group(group, targets))
         finally:
             for key, (replacement, per_track) in replacement_attempts.items():
                 if self.replacements.get(key) is replacement and scope_current(per_track):
@@ -998,7 +1067,7 @@ class CanvasRuntime:
 
     async def deliver(self, owner, config, active, target, device, filename, art, scope_current, source_file,
                       *, artwork_source=None, source_track=None, replacement=None):
-        async with self.effect_lock:
+        async with self.effect_lock.for_target(target):
             current = await self.repository.read()
             def authorized():
                 row = current["devices"].get(target)

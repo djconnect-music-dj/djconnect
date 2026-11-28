@@ -96,11 +96,13 @@ class CanvasMoodRefreshTests(unittest.IsolatedAsyncioTestCase):
         owner, session = "profile", "session"
         state = fresh_state()
         config = state["profiles"][owner] = profile(state, owner)
-        config["preferences"].update(enabled=True, selected_targets=["tv", "frame"],
-                                     cadence_overrides={"tv": "track", "frame": "3600"})
-        for target, width, height, orientation in (("tv", 640, 360, "landscape"), ("frame", 360, 640, "portrait")):
+        config["preferences"].update(enabled=True, selected_targets=["tv", "second-tv", "frame"],
+                                     cadence_overrides={"tv": "track", "second-tv": "track", "frame": "3600"})
+        screens = (("tv", 640, 360, "landscape"), ("second-tv", 640, 360, "landscape"),
+                   ("frame", 360, 640, "portrait"))
+        for target, width, height, orientation in screens:
             state["devices"][target] = {
-                "adapter": "samsung" if target == "tv" else "switchbot",
+                "adapter": "switchbot" if target == "frame" else "samsung",
                 "epoch": 1, "state": "ready", "owned_content": [],
                 "screen": dict(width=width, height=height, orientation=orientation),
                 "preview_owner": owner, "presentation": ["full", "off", False],
@@ -126,7 +128,18 @@ class CanvasMoodRefreshTests(unittest.IsolatedAsyncioTestCase):
                 runtime = canvas.CanvasRuntime(hass)
             runtime.repository = types.SimpleNamespace(read=AsyncMock(return_value=state))
             runtime.observe_samsung = AsyncMock()
-            runtime.deliver = AsyncMock()
+            started_deliveries = set()
+            deliveries_ready = asyncio.Event()
+
+            async def deliver(*args, **_):
+                target = args[3]
+                async with runtime.effect_lock.for_target(target):
+                    started_deliveries.add(target)
+                    if len(started_deliveries) == 3:
+                        deliveries_ready.set()
+                    await asyncio.wait_for(deliveries_ready.wait(), timeout=1)
+
+            runtime.deliver = AsyncMock(side_effect=deliver)
             previous = digest([session, playback.item_id])
             for target in state["devices"]:
                 key = (owner, session, target)
@@ -138,7 +151,17 @@ class CanvasMoodRefreshTests(unittest.IsolatedAsyncioTestCase):
             runtime.leases = {"old": {"owner": owner, "target": "frame"},
                               "older": {"owner": owner, "target": "frame"},
                               "unrelated": {"owner": "other", "target": "other-screen"}}
-            image_provider = AsyncMock(side_effect=[b"new landscape", b"new portrait"])
+            prompts = []
+            generations_ready = asyncio.Event()
+
+            async def generate(_, prompt):
+                prompts.append(prompt)
+                if len(prompts) == 2:
+                    generations_ready.set()
+                await asyncio.wait_for(generations_ready.wait(), timeout=1)
+                return prompt.encode()
+
+            image_provider = AsyncMock(side_effect=generate)
             with patch.dict(sys.modules, {"custom_components.djconnect.profile_context":
                             types.SimpleNamespace(profile_storage=lambda _: storage)}), \
                  patch.object(canvas.render, "generation_available", return_value=True), \
@@ -152,7 +175,10 @@ class CanvasMoodRefreshTests(unittest.IsolatedAsyncioTestCase):
                 await runtime.jobs[owner]
                 self.assertTrue(stale.cancelled())
                 self.assertEqual(set(runtime.leases), {"unrelated"})
-                self.assertEqual([call.args[3] for call in runtime.deliver.await_args_list], ["tv", "frame"])
+                self.assertCountEqual([call.args[3] for call in runtime.deliver.await_args_list],
+                                      ["tv", "second-tv", "frame"])
+                self.assertTrue(deliveries_ready.is_set())
+                self.assertTrue(generations_ready.is_set())
                 self.assertEqual(image_provider.await_count, 2)
                 for call in image_provider.await_args_list:
                     self.assertIn("expressive, richly layered", call.args[1])
@@ -162,13 +188,13 @@ class CanvasMoodRefreshTests(unittest.IsolatedAsyncioTestCase):
                     device["presentation"] = ["central", "off", False]
                 await runtime.run(owner, active, config, state)
                 self.assertEqual(image_provider.await_count, 2)
-                self.assertEqual(runtime.deliver.await_count, 2)
+                self.assertEqual(runtime.deliver.await_count, 3)
 
 
 class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
     async def test_confirmed_display_survives_cleanup_failure(self):
         from copy import deepcopy
-        from custom_components.djconnect.music_canvas_runtime import CanvasRuntime
+        from custom_components.djconnect.music_canvas_runtime import CanvasEffects, CanvasRuntime
 
         device = {"id": "frame", "adapter": "samsung", "epoch": 3, "owned_content": ["old"]}
         state = fresh_state()
@@ -193,7 +219,7 @@ class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
             raise CanvasError("canvas_cleanup_required", 409)
 
         runtime = CanvasRuntime.__new__(CanvasRuntime)
-        runtime.effect_lock = asyncio.Lock()
+        runtime.effect_lock = CanvasEffects()
         runtime.asset_lock = asyncio.Lock()
         runtime.repository = types.SimpleNamespace(read=AsyncMock(return_value=deepcopy(state)), mutate=mutate)
         runtime.registry_art_current = lambda _: True
@@ -209,7 +235,7 @@ class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("frame", runtime.next_probe)
 
     async def test_confirmed_cleanup_releases_upload_slot_and_records_selected_art(self):
-        from custom_components.djconnect.music_canvas_runtime import CanvasRuntime
+        from custom_components.djconnect.music_canvas_runtime import CanvasEffects, CanvasRuntime
 
         device = {"id": "frame", "epoch": 3, "owned_content": ["old", "latest"]}
         state = {"devices": {"frame": {**device, "owned_content": ["old", "latest"]}}}
@@ -219,7 +245,7 @@ class CanvasSamsungDiscoveryTests(unittest.IsolatedAsyncioTestCase):
             return commit(state)
 
         runtime = CanvasRuntime.__new__(CanvasRuntime)
-        runtime.effect_lock = asyncio.Lock()
+        runtime.effect_lock = CanvasEffects()
         runtime.repository = types.SimpleNamespace(mutate=mutate)
         runtime.protocol = AsyncMock(return_value={"deleted": True})
         async with runtime.effect_lock:
