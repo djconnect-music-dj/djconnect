@@ -107,7 +107,7 @@ jobs:
       - id: app-token
         if: github.repository_id == '1258575431' && (github.repository == 'pcvantol/djconnect' || github.repository == 'djconnect-music-dj/djconnect') && steps.target.outputs.repository_owner == 'pcvantol'
         name: Mint scoped central authorization token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         with:
           app-id: ${{ vars.DJCONNECT_TRUSTED_DELIVERY_APP_ID }}
           private-key: ${{ secrets.DJCONNECT_TRUSTED_DELIVERY_PRIVATE_KEY }}
@@ -116,7 +116,7 @@ jobs:
       - id: org-app-token
         if: github.repository_id == '1258575431' && (github.repository == 'pcvantol/djconnect' || github.repository == 'djconnect-music-dj/djconnect') && steps.target.outputs.repository_owner == 'djconnect-music-dj'
         name: Mint scoped organization authorization token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         with:
           app-id: '5695866'
           private-key: ${{ secrets.DJCONNECT_ORG_OWNER_AUTHORIZATION_PRIVATE_KEY }}
